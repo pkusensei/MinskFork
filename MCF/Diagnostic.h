@@ -12,8 +12,10 @@ private:
 	TextSpan _span;
 	std::string _message;
 public:
-	Diagnostic(TextSpan span, std::string& message);
-	~Diagnostic();
+	MCF_API Diagnostic(TextSpan span, const std::string& message);
+	MCF_API ~Diagnostic();
+	Diagnostic(Diagnostic&& other);
+	Diagnostic& operator=(Diagnostic&& other);
 
 	TextSpan Span() const { return _span; }
 	std::string Message() const {return _message; }
@@ -22,17 +24,22 @@ public:
 class DiagnosticBag final
 {
 private:
-	std::vector<std::unique_ptr<Diagnostic>> _diagnostics;
-	void Report(TextSpan span, std::string& message);
+	std::vector<Diagnostic> _diagnostics;
+	void Report(TextSpan span, const std::string& message);
 public:
+	DiagnosticBag();
 	~DiagnosticBag();
-	class iterator;
-	Diagnostic* GetOneDiagnostic (int idx) const;
-	iterator begin();
-	iterator end();
-	void AddRange(DiagnosticBag& other);
+	DiagnosticBag(DiagnosticBag&& other);
+	size_t size() const { return _diagnostics.size(); }
 
-	void ReportInvalidNumber(TextSpan span, const std::string& text, const std::type_index& type);
+	class iterator;
+	const Diagnostic& GetOneDiagnostic (int idx) const;
+	MCF_API iterator begin();
+	MCF_API iterator end();
+
+	void AddRange(DiagnosticBag& other);
+	void ReportInvalidNumber(TextSpan span, const std::string& text, const std::type_info& type);
+	void ReportBadCharacter(int position, char character);
 };
 
 class DiagnosticBag::iterator
@@ -43,9 +50,9 @@ private:
 public:
 	iterator(int pos, DiagnosticBag& bag);
 
-	Diagnostic* operator*() const;
-	iterator& operator++(int); //i++
-	iterator& operator++(); //++i
+	MCF_API const Diagnostic& operator*() const;
+	MCF_API iterator& operator++(int); //i++
+	MCF_API iterator& operator++(); //++i
 	bool operator!=(const iterator& other)const { return _position != other._position; }
 };
 

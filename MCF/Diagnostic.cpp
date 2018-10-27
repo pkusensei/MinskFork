@@ -1,25 +1,52 @@
 #include "stdafx.h"
 #include "Diagnostic.h"
+#include <iostream>
 
 namespace MCF {
 
-Diagnostic::Diagnostic(TextSpan span, std::string& message)
+Diagnostic::Diagnostic(TextSpan span, const std::string& message)
 	:_span(span), _message(message)
 {
 }
 
 Diagnostic::~Diagnostic() = default;
 
-void DiagnosticBag::Report(TextSpan span, std::string& message)
+Diagnostic::Diagnostic(Diagnostic && other)
+	:_span(other._span), _message(other._message)
 {
-	_diagnostics.emplace_back(std::make_unique<Diagnostic>(span, message));
+}
+
+Diagnostic& Diagnostic::operator=(Diagnostic && other)
+{
+	_span = std::move(other._span);
+	_message = std::move(other._message);
+	return *this;
+}
+
+void DiagnosticBag::Report(TextSpan span, const std::string& message)
+{
+	//if(_diagnostics==nullptr)
+	_diagnostics.emplace_back(span, message);
+}
+
+DiagnosticBag::DiagnosticBag()
+	:_diagnostics(std::vector<Diagnostic>())
+{
 }
 
 DiagnosticBag::~DiagnosticBag() = default;
 
-Diagnostic * DiagnosticBag::GetOneDiagnostic(int idx) const
+DiagnosticBag::DiagnosticBag(DiagnosticBag && other)
 {
-	return _diagnostics[idx].get();
+	for (auto& d : other._diagnostics)
+	{
+		_diagnostics.emplace_back(d.Span(), d.Message());
+	}
+}
+
+const Diagnostic& DiagnosticBag::GetOneDiagnostic(int idx) const
+{
+	return _diagnostics[idx];
 }
 
 DiagnosticBag::iterator DiagnosticBag::begin()
@@ -36,14 +63,20 @@ void DiagnosticBag::AddRange(DiagnosticBag& other)
 {
 	_diagnostics.reserve(_diagnostics.size() + other._diagnostics.size());
 	_diagnostics.insert(_diagnostics.end(), 
-						std::make_move_iterator(other._diagnostics.begin()), 
-						std::make_move_iterator(other._diagnostics.end()));
+						std::make_move_iterator(other._diagnostics.begin()), std::make_move_iterator(other._diagnostics.end()));
 }
 
-void DiagnosticBag::ReportInvalidNumber(TextSpan span, const std::string & text, const std::type_index & type)
+void DiagnosticBag::ReportInvalidNumber(TextSpan span, const std::string & text, const std::type_info & type)
 {
 	auto message = "The number " + text + " is not valid " + type.name();
 	Report(span, message);
+}
+
+void DiagnosticBag::ReportBadCharacter(int position, char character)
+{
+	std::string message{"Bad character in input: "};
+	message.append(&character);
+	Report(TextSpan(position, 1, position + 1), message);
 }
 
 DiagnosticBag::iterator::iterator(int pos, DiagnosticBag & bag)
@@ -51,7 +84,7 @@ DiagnosticBag::iterator::iterator(int pos, DiagnosticBag & bag)
 {
 }
 
-Diagnostic * DiagnosticBag::iterator::operator*() const
+const Diagnostic& DiagnosticBag::iterator::operator*() const
 {
 	return _bag->GetOneDiagnostic(_position);
 }

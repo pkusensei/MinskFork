@@ -18,7 +18,7 @@ std::vector<SyntaxNode*> SyntaxToken::GetChildren() const
 }
 
 Lexer::Lexer(std::string text)
-	:_text(text)
+	:_text(text), _diagnostics(std::make_unique<DiagnosticBag>())
 {
 }
 
@@ -110,8 +110,64 @@ SyntaxToken Lexer::Lex()
 			Next();
 			return SyntaxToken(SyntaxKind::SlashToken, start, "/", NULL);
 		}
+		case '(':
+		{
+			Next();
+			return SyntaxToken(SyntaxKind::OpenParenthesisToken, start, "(", NULL);
+		}
+		case ')':
+		{
+			Next();
+			return SyntaxToken(SyntaxKind::CloseParenthesisToken, start, ")", NULL);
+		}
+		case '&':
+		{
+			if (Lookahead() == '&')
+			{
+				_position += 2;
+				return SyntaxToken(SyntaxKind::AmpersandAmpersandToken, start, "&&", NULL);
+			}
+			break;
+		}
+		case '|':
+		{
+			if (Lookahead() == '|')
+			{
+				_position += 2;
+				return SyntaxToken(SyntaxKind::PipePipeToken, start, "||", NULL);
+			}
+			break;
+		}
+		case '=':
+		{
+			if (Lookahead() == '=')
+			{
+				_position += 2;
+				return SyntaxToken(SyntaxKind::EqualsEqualsToken, start, "==", NULL);
+			} else
+			{
+				Next();
+				return SyntaxToken(SyntaxKind::EqualsToken, start, "=", NULL);
+			}
+		}
+		case '!':
+		{
+			if (Lookahead() == '=')
+			{
+				_position += 2;
+				return SyntaxToken(SyntaxKind::BangEqualsToken, start, "!=", NULL);
+			} else
+			{
+				Next();
+				return SyntaxToken(SyntaxKind::BangToken, start, "!", NULL);
+			}
+		}
 	}
+	
 	// TODO
+	//_diagnostics->ReportBadCharacter(_position, Current());
+
+	return SyntaxToken(SyntaxKind::BadToken, _position, _text.substr(_position, 1), NULL);
 }
 
 }//MCF

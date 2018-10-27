@@ -4,12 +4,6 @@
 
 #include "common.h"
 
-#ifdef MCF_EXPORTS
-#define MCF_API __declspec(dllexport)
-#else
-#define MCF_API __declspec(dllimport)
-#endif
-
 namespace MCF {
 
 class DiagnosticBag;
@@ -69,7 +63,7 @@ public:
 	MCF_API virtual ~SyntaxToken();
 
 	// Inherited via SyntaxNode
-	virtual SyntaxKind Kind() const override { return _kind; }
+	MCF_API virtual SyntaxKind Kind() const override { return _kind; }
 	MCF_API virtual std::vector<SyntaxNode*> GetChildren() const override;
 
 	int Position() const { return _position; }
@@ -95,5 +89,6 @@ public:
 	static SyntaxKind GetKeywordKind(const std::string& text);
 
 	MCF_API SyntaxToken Lex();
+	MCF_API DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
 };
 }//MCF
