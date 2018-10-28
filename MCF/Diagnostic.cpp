@@ -79,6 +79,12 @@ void DiagnosticBag::ReportBadCharacter(int position, char character)
 	Report(TextSpan(position, 1, position + 1), message);
 }
 
+void DiagnosticBag::ReportUnexpectedToken(TextSpan span, SyntaxKind actualKind, SyntaxKind expectedKind)
+{
+	std::string message{"Unexpected token"};
+	Report(span, message);
+}
+
 DiagnosticBag::iterator::iterator(int pos, DiagnosticBag & bag)
 	:_position(pos), _bag(&bag)
 {

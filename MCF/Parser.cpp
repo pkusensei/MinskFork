@@ -57,7 +57,7 @@ SyntaxToken Parser::MatchToken(SyntaxKind kind)
 SyntaxTree Parser::Parse()
 {
 	// TODO
-	//auto expression = std::make_unique<ExpressionSyntax>(ParseExpression());
+	auto expression = std::make_unique<ExpressionSyntax>(ParseExpression());
 	auto endOfFileToken = MatchToken(SyntaxKind::EndOfFileToken);
 	return SyntaxTree(_diagnostics, expression, endOfFileToken);
 }

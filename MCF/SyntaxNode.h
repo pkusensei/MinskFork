@@ -58,9 +58,9 @@ private:
 	const ValueType _value;
 
 public:
-	MCF_API SyntaxToken(SyntaxKind kind, int position, const std::string& text, ValueType value);
-	//SyntaxToken(const SyntaxToken& other);
-	MCF_API virtual ~SyntaxToken();
+	SyntaxToken(SyntaxKind kind, int position, const std::string& text, ValueType value);
+	SyntaxToken(const SyntaxToken& other);
+	virtual ~SyntaxToken();
 
 	// Inherited via SyntaxNode
 	MCF_API virtual SyntaxKind Kind() const override { return _kind; }
@@ -69,6 +69,7 @@ public:
 	int Position() const { return _position; }
 	std::string Text() const { return _text; }
 	ValueType Value() const { return _value; }
+	TextSpan Span()const { return TextSpan(_position, _text.length(), _position + _text.length()); }
 };
 
 class Lexer final
@@ -83,12 +84,12 @@ private:
 	char Lookahead() { return Peek(1); }
 	void Next() { _position++; }
 public:
-	MCF_API Lexer(std::string text);
-	MCF_API ~Lexer();
+	Lexer(std::string text);
+	~Lexer();
 
 	static SyntaxKind GetKeywordKind(const std::string& text);
 
-	MCF_API SyntaxToken Lex();
-	MCF_API DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
+	SyntaxToken Lex();
+	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
 };
 }//MCF

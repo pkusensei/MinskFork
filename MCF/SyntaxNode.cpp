@@ -10,6 +10,11 @@ SyntaxToken::SyntaxToken(SyntaxKind kind, int position, const std::string& text,
 {
 }
 
+SyntaxToken::SyntaxToken(const SyntaxToken & other)
+	:_kind(other._kind), _position(other._position), _text(other._text), _value(other._value)
+{
+}
+
 SyntaxToken::~SyntaxToken() = default;
 
 std::vector<SyntaxNode*> SyntaxToken::GetChildren() const

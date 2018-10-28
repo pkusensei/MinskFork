@@ -6,6 +6,8 @@
 
 namespace MCF {
 
+enum class SyntaxKind;
+
 class Diagnostic final
 {
 private:
@@ -40,6 +42,7 @@ public:
 	void AddRange(DiagnosticBag& other);
 	void ReportInvalidNumber(TextSpan span, const std::string& text, const std::type_info& type);
 	void ReportBadCharacter(int position, char character);
+	void ReportUnexpectedToken(TextSpan span, SyntaxKind actualKind, SyntaxKind expectedKind);
 };
 
 class DiagnosticBag::iterator

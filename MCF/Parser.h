@@ -27,10 +27,10 @@ private:
 	SyntaxToken NextToken();
 	SyntaxToken MatchToken(SyntaxKind kind);
 
-	/*ExpressionSyntax ParseExpression() const;
-	ExpressionSyntax ParseAssignmentExpression() const;
-	ExpressionSyntax ParseBinaryExpression(int parentPrecedence = 0) const;
-	ExpressionSyntax ParsePrimaryExpression() const;*/
+	//ExpressionSyntax ParseExpression() const;
+	//ExpressionSyntax ParseAssignmentExpression() const;
+	//ExpressionSyntax ParseBinaryExpression(int parentPrecedence = 0) const;
+	//ExpressionSyntax ParsePrimaryExpression() const;
 public:
 	MCF_API Parser(std::string text);
 	MCF_API ~Parser();
