@@ -15,7 +15,7 @@ private:
 	std::string _message;
 public:
 	MCF_API Diagnostic(TextSpan span, const std::string& message);
-	MCF_API ~Diagnostic();
+	MCF_API ~Diagnostic() = default;
 	Diagnostic(Diagnostic&& other);
 	Diagnostic& operator=(Diagnostic&& other);
 
@@ -30,7 +30,7 @@ private:
 	void Report(TextSpan span, const std::string& message);
 public:
 	DiagnosticBag();
-	~DiagnosticBag();
+	~DiagnosticBag() = default;
 	DiagnosticBag(DiagnosticBag&& other);
 	size_t size() const { return _diagnostics.size(); }
 

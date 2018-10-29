@@ -9,8 +9,6 @@ Diagnostic::Diagnostic(TextSpan span, const std::string& message)
 {
 }
 
-Diagnostic::~Diagnostic() = default;
-
 Diagnostic::Diagnostic(Diagnostic && other)
 	:_span(other._span), _message(other._message)
 {
@@ -23,18 +21,10 @@ Diagnostic& Diagnostic::operator=(Diagnostic && other)
 	return *this;
 }
 
-void DiagnosticBag::Report(TextSpan span, const std::string& message)
-{
-	//if(_diagnostics==nullptr)
-	_diagnostics.emplace_back(span, message);
-}
-
 DiagnosticBag::DiagnosticBag()
 	:_diagnostics(std::vector<Diagnostic>())
 {
 }
-
-DiagnosticBag::~DiagnosticBag() = default;
 
 DiagnosticBag::DiagnosticBag(DiagnosticBag && other)
 {
@@ -42,6 +32,12 @@ DiagnosticBag::DiagnosticBag(DiagnosticBag && other)
 	{
 		_diagnostics.emplace_back(d.Span(), d.Message());
 	}
+}
+
+void DiagnosticBag::Report(TextSpan span, const std::string& message)
+{
+	//if(_diagnostics==nullptr)
+	_diagnostics.emplace_back(span, message);
 }
 
 const Diagnostic& DiagnosticBag::GetOneDiagnostic(int idx) const
