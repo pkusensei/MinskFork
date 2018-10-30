@@ -6,6 +6,7 @@
 namespace MCF {
 
 Parser::Parser(const std::string& text)
+	:_position(0), _diagnostics(std::make_unique<DiagnosticBag>())
 {
 	_tokens = std::vector<std::unique_ptr<SyntaxToken>>();
 	Lexer lexer(text);
@@ -142,7 +143,6 @@ int Parser::GetUnaryOperatorPrecedence(SyntaxKind kind)
 {
 	switch (kind)
 	{
-
 		case MCF::SyntaxKind::PlusToken:
 		case MCF::SyntaxKind::MinusToken:
 		case MCF::SyntaxKind::BangToken:

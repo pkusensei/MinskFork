@@ -28,7 +28,7 @@ std::vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 #pragma region Lexer
 
 Lexer::Lexer(std::string text)
-	:_text(text), _diagnostics(std::make_unique<DiagnosticBag>())
+	:_text(text), _position(0), _diagnostics(std::make_unique<DiagnosticBag>())
 {
 }
 
