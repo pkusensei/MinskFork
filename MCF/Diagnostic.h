@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <typeindex>
 #include "common.h"
 
 namespace MCF {
@@ -12,22 +11,22 @@ class Diagnostic final
 {
 private:
 	TextSpan _span;
-	std::string _message;
+	string _message;
 public:
-	MCF_API Diagnostic(TextSpan span, const std::string& message);
+	MCF_API Diagnostic(TextSpan span, const string& message);
 	MCF_API ~Diagnostic() = default;
 	Diagnostic(Diagnostic&& other);
 	Diagnostic& operator=(Diagnostic&& other);
 
 	TextSpan Span() const { return _span; }
-	std::string Message() const {return _message; }
+	string Message() const {return _message; }
 };
 
 class DiagnosticBag final
 {
 private:
-	std::vector<Diagnostic> _diagnostics;
-	void Report(TextSpan span, const std::string& message);
+	vector<Diagnostic> _diagnostics;
+	void Report(TextSpan span, const string& message);
 public:
 	DiagnosticBag();
 	~DiagnosticBag() = default;
@@ -40,7 +39,7 @@ public:
 	MCF_API iterator end();
 
 	void AddRange(DiagnosticBag& other);
-	void ReportInvalidNumber(TextSpan span, const std::string& text, const std::type_info& type);
+	void ReportInvalidNumber(TextSpan span, const string& text, const type_info& type);
 	void ReportBadCharacter(int position, char character);
 	void ReportUnexpectedToken(TextSpan span, SyntaxKind actualKind, SyntaxKind expectedKind);
 };

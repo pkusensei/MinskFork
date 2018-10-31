@@ -4,13 +4,13 @@
 
 namespace MCF {
 
-Diagnostic::Diagnostic(TextSpan span, const std::string& message)
+Diagnostic::Diagnostic(TextSpan span, const string& message)
 	:_span(span), _message(message)
 {
 }
 
 Diagnostic::Diagnostic(Diagnostic && other)
-	:_span(other._span), _message(other._message)
+	:_span(std::move(other._span)), _message(std::move(other._message))
 {
 }
 
@@ -22,7 +22,7 @@ Diagnostic& Diagnostic::operator=(Diagnostic && other)
 }
 
 DiagnosticBag::DiagnosticBag()
-	:_diagnostics(std::vector<Diagnostic>())
+	:_diagnostics(vector<Diagnostic>())
 {
 }
 
@@ -32,9 +32,10 @@ DiagnosticBag::DiagnosticBag(DiagnosticBag && other)
 	{
 		_diagnostics.emplace_back(d.Span(), d.Message());
 	}
+	other._diagnostics.clear();
 }
 
-void DiagnosticBag::Report(TextSpan span, const std::string& message)
+void DiagnosticBag::Report(TextSpan span, const string& message)
 {
 	//if(_diagnostics==nullptr)
 	_diagnostics.emplace_back(span, message);
@@ -59,10 +60,10 @@ void DiagnosticBag::AddRange(DiagnosticBag& other)
 {
 	_diagnostics.reserve(_diagnostics.size() + other._diagnostics.size());
 	_diagnostics.insert(_diagnostics.end(), 
-						std::make_move_iterator(other._diagnostics.begin()), std::make_move_iterator(other._diagnostics.end()));
+						make_move_iterator(other._diagnostics.begin()), make_move_iterator(other._diagnostics.end()));
 }
 
-void DiagnosticBag::ReportInvalidNumber(TextSpan span, const std::string & text, const std::type_info & type)
+void DiagnosticBag::ReportInvalidNumber(TextSpan span, const string & text, const type_info & type)
 {
 	auto message = "The number " + text + " is not valid " + type.name();
 	Report(span, message);
@@ -70,14 +71,14 @@ void DiagnosticBag::ReportInvalidNumber(TextSpan span, const std::string & text,
 
 void DiagnosticBag::ReportBadCharacter(int position, char character)
 {
-	std::string message{"Bad character in input: "};
+	string message{"Bad character in input: "};
 	message.append(&character);
 	Report(TextSpan(position, 1, position + 1), message);
 }
 
 void DiagnosticBag::ReportUnexpectedToken(TextSpan span, SyntaxKind actualKind, SyntaxKind expectedKind)
 {
-	std::string message{"Unexpected token"};
+	string message{"Unexpected token"};
 	Report(span, message);
 }
 

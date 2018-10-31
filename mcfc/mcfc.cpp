@@ -14,9 +14,9 @@ void PrintTree(const MCF::SyntaxNode* node, std::string indent = "", bool isLast
 	std::string marker = isLast ? "+--" : "---";//"└──" : "├──";
 	std::cout << indent << marker;
 	auto token = dynamic_cast<const MCF::SyntaxToken*>(node);
-	if (token != nullptr && token->Value().has_value())
+	if (token != nullptr && token->Value().HasValue())
 	{
-		std::cout << " " << std::any_cast<unsigned long>(token->Value());
+		std::cout << " " << token->Value().GetValue<unsigned>();
 	}
 	std::cout << std::endl;
 	indent += isLast ? "   " : "|  ";

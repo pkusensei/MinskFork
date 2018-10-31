@@ -1,12 +1,13 @@
 #include "stdafx.h"
 #include <cctype>
+#include <typeinfo>
 #include "SyntaxNode.h"
 #include "Diagnostic.h"
 
 namespace MCF {
 
 #pragma region SyntaxToken
-SyntaxToken::SyntaxToken(SyntaxKind kind, size_t position, const std::string& text, ValueType value)
+SyntaxToken::SyntaxToken(SyntaxKind kind, size_t position, const string& text, ValueType value)
 	:_kind(kind), _position(position), _text(text), _value(value)
 {
 }
@@ -19,20 +20,20 @@ SyntaxToken::SyntaxToken(SyntaxToken && other)
 {
 }
 
-std::vector<const SyntaxNode*> SyntaxToken::GetChildren() const
+vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 {
-	return std::vector<const SyntaxNode*>(0);
+	return vector<const SyntaxNode*>(0);
 }
 
 #pragma endregion
-#pragma region Lexer
 
-Lexer::Lexer(std::string text)
+#pragma region Lexer
+Lexer::Lexer(string text)
 	:_text(text), _position(0), _diagnostics(std::make_unique<DiagnosticBag>())
 {
 }
 
-SyntaxKind Lexer::GetKeywordKind(const std::string & text)
+SyntaxKind Lexer::GetKeywordKind(const string & text)
 {
 	if (text == "true")
 		return SyntaxKind::TrueKeyword;
@@ -53,7 +54,7 @@ SyntaxToken Lexer::Lex()
 {
 	if (_position >= _text.length())
 	{
-		auto end = std::string{"\0"};
+		auto end = string{"\0"};
 		return SyntaxToken(SyntaxKind::EndOfFileToken, _position, end, ValueType());
 	}
 
@@ -65,11 +66,11 @@ SyntaxToken Lexer::Lex()
 		auto length = _position - start;
 		auto text = _text.substr(start, length);
 		// HACK
-		unsigned long value;
+		unsigned int value;
 		try
 		{
 			value = std::stoul(text);
-			return SyntaxToken(SyntaxKind::NumberToken, start, text, value);
+			return SyntaxToken(SyntaxKind::NumberToken, start, text, std::any(value));
 		} catch (...)
 		{
 			_diagnostics->ReportInvalidNumber(TextSpan(start, length, start + length), text, typeid(value));
@@ -181,13 +182,13 @@ SyntaxToken Lexer::Lex()
 
 #pragma endregion
 
-std::vector<const SyntaxNode*> ExpressionSyntax::GetChildren() const
+vector<const SyntaxNode*> ExpressionSyntax::GetChildren() const
 {
-	return std::vector<const SyntaxNode*>(0);
+	return vector<const SyntaxNode*>(0);
 }
 
 #pragma region AssignmentExpression
-AssignmentExpressionSyntax::AssignmentExpressionSyntax(SyntaxToken & identifier, SyntaxToken & equals, std::unique_ptr<ExpressionSyntax>& expression)
+AssignmentExpressionSyntax::AssignmentExpressionSyntax(SyntaxToken & identifier, SyntaxToken & equals, unique_ptr<ExpressionSyntax>& expression)
 	:_identifierToken(identifier), _equalsToken(equals)
 {
 	_expression.swap(expression);
@@ -200,9 +201,9 @@ AssignmentExpressionSyntax::AssignmentExpressionSyntax(AssignmentExpressionSynta
 	_expression.swap(other._expression);
 }
 
-std::vector<const SyntaxNode*> AssignmentExpressionSyntax::GetChildren() const
+vector<const SyntaxNode*> AssignmentExpressionSyntax::GetChildren() const
 {
-	auto result = std::vector<const SyntaxNode*>();
+	auto result = vector<const SyntaxNode*>();
 	result.emplace_back(&_identifierToken);
 	result.emplace_back(&_equalsToken);
 	result.emplace_back(_expression.get());
@@ -211,7 +212,7 @@ std::vector<const SyntaxNode*> AssignmentExpressionSyntax::GetChildren() const
 #pragma endregion
 
 #pragma region UnaryExpression
-UnaryExpressionSyntax::UnaryExpressionSyntax(SyntaxToken & operatorToken, std::unique_ptr<ExpressionSyntax>& operand)
+UnaryExpressionSyntax::UnaryExpressionSyntax(SyntaxToken & operatorToken, unique_ptr<ExpressionSyntax>& operand)
 	:_operatorToken(std::move(operatorToken))
 {
 	_operand.swap(operand);
@@ -223,9 +224,9 @@ UnaryExpressionSyntax::UnaryExpressionSyntax(UnaryExpressionSyntax && other)
 	_operand.swap(other._operand);
 }
 
-std::vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const
+vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const
 {
-	auto result = std::vector<const SyntaxNode*>();
+	auto result = vector<const SyntaxNode*>();
 	result.emplace_back(&_operatorToken);
 	result.emplace_back(_operand.get());
 	return result;
@@ -233,7 +234,7 @@ std::vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const
 #pragma endregion
 
 #pragma region BinaryExpression
-BinaryExpressionSyntax::BinaryExpressionSyntax(std::unique_ptr<ExpressionSyntax>& left, SyntaxToken & operatorToken, std::unique_ptr<ExpressionSyntax>& right)
+BinaryExpressionSyntax::BinaryExpressionSyntax(unique_ptr<ExpressionSyntax>& left, SyntaxToken & operatorToken, unique_ptr<ExpressionSyntax>& right)
 	:_operatorToken(operatorToken)
 {
 	_left.swap(left);
@@ -247,9 +248,9 @@ BinaryExpressionSyntax::BinaryExpressionSyntax(BinaryExpressionSyntax && other)
 	_right.swap(other._right);
 }
 
-std::vector<const SyntaxNode*> BinaryExpressionSyntax::GetChildren() const
+vector<const SyntaxNode*> BinaryExpressionSyntax::GetChildren() const
 {
-	auto result = std::vector<const SyntaxNode*>();
+	auto result = vector<const SyntaxNode*>();
 	result.emplace_back(_left.get());
 	result.emplace_back(&_operatorToken);
 	result.emplace_back(_right.get());
@@ -258,7 +259,7 @@ std::vector<const SyntaxNode*> BinaryExpressionSyntax::GetChildren() const
 #pragma endregion
 
 #pragma region ParenthesizedExpression
-ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(SyntaxToken & open, std::unique_ptr<ExpressionSyntax>& expression, SyntaxToken & close)
+ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(SyntaxToken & open, unique_ptr<ExpressionSyntax>& expression, SyntaxToken & close)
 	:_openParenthesisToken(open), _closeParenthesisToken(close)
 {
 	_expression.swap(expression);
@@ -271,9 +272,9 @@ ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(ParenthesizedExpres
 	_expression.swap(other._expression);
 }
 
-std::vector<const SyntaxNode*> ParenthesizedExpressionSyntax::GetChildren() const
+vector<const SyntaxNode*> ParenthesizedExpressionSyntax::GetChildren() const
 {
-	auto result = std::vector<const SyntaxNode*>();
+	auto result = vector<const SyntaxNode*>();
 	result.emplace_back(&_openParenthesisToken);
 	result.emplace_back(_expression.get());
 	result.emplace_back(&_closeParenthesisToken);
@@ -297,9 +298,9 @@ LiteralExpressionSyntax::LiteralExpressionSyntax(LiteralExpressionSyntax && othe
 {
 }
 
-std::vector<const SyntaxNode*> LiteralExpressionSyntax::GetChildren() const
+vector<const SyntaxNode*> LiteralExpressionSyntax::GetChildren() const
 {
-	auto result = std::vector<const SyntaxNode*>();
+	auto result = vector<const SyntaxNode*>();
 	result.emplace_back(&_literalToken);
 	return result;
 }
@@ -316,9 +317,9 @@ NameExpressionSyntax::NameExpressionSyntax(NameExpressionSyntax && other)
 {
 }
 
-std::vector<const SyntaxNode*> NameExpressionSyntax::GetChildren() const
+vector<const SyntaxNode*> NameExpressionSyntax::GetChildren() const
 {
-	auto result = std::vector<const SyntaxNode*>();
+	auto result = vector<const SyntaxNode*>();
 	result.emplace_back(&_identifierToken);
 	return result;
 }

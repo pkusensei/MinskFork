@@ -5,12 +5,12 @@
 
 namespace MCF {
 
-Parser::Parser(const std::string& text)
+Parser::Parser(const string& text)
 	:_position(0), _diagnostics(std::make_unique<DiagnosticBag>())
 {
-	_tokens = std::vector<std::unique_ptr<SyntaxToken>>();
+	_tokens = vector<unique_ptr<SyntaxToken>>();
 	Lexer lexer(text);
-	std::unique_ptr<SyntaxToken> pToken;
+	unique_ptr<SyntaxToken> pToken;
 	SyntaxKind kind;
 	do
 	{
@@ -19,7 +19,7 @@ Parser::Parser(const std::string& text)
 			pToken->Kind() != SyntaxKind::BadToken)
 		{
 			kind = pToken->Kind();
-			_tokens.emplace_back(std::move(pToken));
+			_tokens.emplace_back(move(pToken));
 		}
 	} while (kind != SyntaxKind::EndOfFileToken);
 	// TODO
@@ -30,7 +30,7 @@ SyntaxToken* Parser::Peek(int offset) const
 {
 	auto idx = _position + offset;
 	if (idx >= _tokens.size())
-		return _tokens.end()->get();
+		return _tokens.back().get();
 	return _tokens[idx].get();
 }
 
@@ -56,12 +56,12 @@ SyntaxToken* Parser::MatchToken(SyntaxKind kind)
 	return current;
 }
 
-std::unique_ptr<ExpressionSyntax> Parser::ParseExpression()
+unique_ptr<ExpressionSyntax> Parser::ParseExpression()
 {
 	return ParseAssignmentExpression();
 }
 
-std::unique_ptr<ExpressionSyntax> Parser::ParseAssignmentExpression()
+unique_ptr<ExpressionSyntax> Parser::ParseAssignmentExpression()
 {
 	if (Peek(0)->Kind() == SyntaxKind::IdentifierToken &&
 		Peek(1)->Kind() == SyntaxKind::EqualsToken)
@@ -74,7 +74,7 @@ std::unique_ptr<ExpressionSyntax> Parser::ParseAssignmentExpression()
 	return ParseBinaryExpression();
 }
 
-std::unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
+unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 {
 	auto left = std::make_unique<ExpressionSyntax>();
 	auto unaryOperatorPrecedence = GetUnaryOperatorPrecedence(Current()->Kind());
@@ -101,7 +101,7 @@ std::unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPreced
 	return left;
 }
 
-std::unique_ptr<ExpressionSyntax> Parser::ParsePrimaryExpression()
+unique_ptr<ExpressionSyntax> Parser::ParsePrimaryExpression()
 {
 	switch (Current()->Kind())
 	{
@@ -116,7 +116,7 @@ std::unique_ptr<ExpressionSyntax> Parser::ParsePrimaryExpression()
 		case SyntaxKind::FalseKeyword:
 		{
 			auto keywordToken = NextToken();
-			auto value = ValueType(keywordToken->Kind() == SyntaxKind::TrueKeyword);
+			auto value = ValueType(std::any(keywordToken->Kind() == SyntaxKind::TrueKeyword));
 			return std::make_unique<LiteralExpressionSyntax>(*keywordToken, value);
 		}
 		case SyntaxKind::IdentifierToken:
@@ -174,7 +174,7 @@ int Parser::GetBinaryOperatorPrecedence(SyntaxKind kind)
 	}
 }
 
-SyntaxTree::SyntaxTree(std::unique_ptr<DiagnosticBag>& diagnostics, std::unique_ptr<ExpressionSyntax>& root,
+SyntaxTree::SyntaxTree(unique_ptr<DiagnosticBag>& diagnostics, unique_ptr<ExpressionSyntax>& root,
 					   SyntaxToken& endOfFileToken)
 {
 	_diagnostics.swap(diagnostics);
@@ -189,7 +189,7 @@ SyntaxTree::SyntaxTree(SyntaxTree && other)
 	_endOfFileToken.swap(other._endOfFileToken);
 }
 
-SyntaxTree SyntaxTree::Parse(const std::string & text)
+SyntaxTree SyntaxTree::Parse(const string & text)
 {
 	Parser parser(text);
 	return parser.Parse();

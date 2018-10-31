@@ -8,7 +8,9 @@ enum class BoundNodeKind
 	VariableExpression,
 	AssignmentExpression,
 	UnaryExpression,
-	BinaryExpression
+	BinaryExpression,
+
+	EmptyExpression //HACK
 };
 
 enum class BoundUnaryOperatorKind
@@ -28,6 +30,23 @@ enum class BoundBinaryOperatorKind
 	LogicalOr,
 	Equals,
 	NotEquals
+};
+
+class BoundNode
+{
+public:
+	virtual ~BoundNode() = default;
+	virtual BoundNodeKind Kind() const = 0;
+};
+
+class BoundExpression :public BoundNode
+{
+	// HACK
+public:
+	virtual ~BoundExpression() = default;
+	// Inherited via BoundNode
+	virtual BoundNodeKind Kind() const override { return BoundNodeKind::EmptyExpression; }
+	virtual size_t TypeHash() const { return NULL; }
 };
 
 //class Binder
