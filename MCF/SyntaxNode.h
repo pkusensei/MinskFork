@@ -60,7 +60,7 @@ private:
 
 public:
 	SyntaxToken(SyntaxKind kind, size_t position, const string& text, ValueType value);
-	SyntaxToken(const SyntaxToken& other);
+	SyntaxToken(const SyntaxToken& other) = default;
 	SyntaxToken(SyntaxToken&& other);
 	virtual ~SyntaxToken() = default;
 
@@ -78,21 +78,30 @@ class Lexer final
 {
 private:
 	const string _text;
-	size_t _position;
 	unique_ptr<DiagnosticBag> _diagnostics;
 
+	size_t _position;
+	size_t _start;
+	SyntaxKind _kind;
+	ValueType _value;
+
 	char Peek(int offset) const;
-	char Current() { return Peek(0); }
-	char Lookahead() { return Peek(1); }
+	char Current() const { return Peek(0); }
+	char Lookahead() const { return Peek(1); }
 	void Next() { _position++; }
+
+	void ReadWhiteSpace();
+	void ReadNumberToken();
+	void ReadIdentifierOrKeyword();
 public:
 	explicit Lexer(string text);
 	~Lexer() = default;
 
-	static SyntaxKind GetKeywordKind(const string& text);
-
 	SyntaxToken Lex();
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
+
+	static SyntaxKind GetKeywordKind(const string& text);
+	static string GetText(SyntaxKind kind);
 };
 
 class ExpressionSyntax :public SyntaxNode
@@ -189,7 +198,7 @@ private:
 	SyntaxToken _literalToken;
 	ValueType _value;
 public:
-	LiteralExpressionSyntax(SyntaxToken& literalToken, ValueType& value);
+	LiteralExpressionSyntax(SyntaxToken& literalToken, const ValueType& value);
 	explicit LiteralExpressionSyntax(SyntaxToken& literalToken);
 	virtual ~LiteralExpressionSyntax() = default;
 	LiteralExpressionSyntax(LiteralExpressionSyntax&& other);

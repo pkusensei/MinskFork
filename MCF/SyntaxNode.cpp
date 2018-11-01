@@ -12,10 +12,8 @@ SyntaxToken::SyntaxToken(SyntaxKind kind, size_t position, const string& text, V
 {
 }
 
-SyntaxToken::SyntaxToken(const SyntaxToken & other) = default;
-
 SyntaxToken::SyntaxToken(SyntaxToken && other)
-	:_kind(std::move(other._kind)), _position(std::move(other._position)), 
+	:_kind(std::move(other._kind)), _position(std::move(other._position)),
 	_text(std::move(other._text)), _value(std::move(other._value))
 {
 }
@@ -29,7 +27,8 @@ vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 
 #pragma region Lexer
 Lexer::Lexer(string text)
-	:_text(text), _position(0), _diagnostics(std::make_unique<DiagnosticBag>())
+	:_text(text), _diagnostics(std::make_unique<DiagnosticBag>()),
+	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(ValueType())
 {
 }
 
@@ -42,6 +41,28 @@ SyntaxKind Lexer::GetKeywordKind(const string & text)
 	else return SyntaxKind::IdentifierToken;
 }
 
+string Lexer::GetText(SyntaxKind kind)
+{
+	switch (kind)
+	{
+		case SyntaxKind::PlusToken: return "+";
+		case SyntaxKind::MinusToken: return "-";
+		case SyntaxKind::StarToken: return "*";
+		case SyntaxKind::SlashToken: return "/";
+		case SyntaxKind::BangToken: return "!";
+		case SyntaxKind::EqualsToken: return "=";
+		case SyntaxKind::AmpersandAmpersandToken: return "&&";
+		case SyntaxKind::PipePipeToken: return "||";
+		case SyntaxKind::EqualsEqualsToken: return "==";
+		case SyntaxKind::BangEqualsToken: return "!=";
+		case SyntaxKind::OpenParenthesisToken: return "(";
+		case SyntaxKind::CloseParenthesisToken: return ")";
+		case SyntaxKind::FalseKeyword: return "false";
+		case SyntaxKind::TrueKeyword: return "true";
+		default: return "";
+	}
+}
+
 char Lexer::Peek(int offset) const
 {
 	size_t idx = _position + offset;
@@ -52,134 +73,139 @@ char Lexer::Peek(int offset) const
 
 SyntaxToken Lexer::Lex()
 {
-	if (_position >= _text.length())
+	_start = _position;
+	_kind = SyntaxKind::BadToken;
+	_value = ValueType();
+	auto character = Current();
+
+	switch (character)
 	{
-		auto end = string{"\0"};
-		return SyntaxToken(SyntaxKind::EndOfFileToken, _position, end, ValueType());
-	}
-
-	auto start = _position;
-	if (std::isdigit(Current()))
-	{
-		while (std::isdigit(Current()))
+		case '\0':
+			_kind = SyntaxKind::EndOfFileToken;
+			break;
+		case '+':		
 			Next();
-		auto length = _position - start;
-		auto text = _text.substr(start, length);
-		// HACK
-		unsigned int value;
-		try
-		{
-			value = std::stoul(text);
-			return SyntaxToken(SyntaxKind::NumberToken, start, text, std::any(value));
-		} catch (...)
-		{
-			_diagnostics->ReportInvalidNumber(TextSpan(start, length, start + length), text, typeid(value));
-		}
-	}
-
-	if (std::isspace(Current()))
-	{
-		while (std::isspace(Current()))
+			_kind = SyntaxKind::PlusToken;
+			break;		
+		case '-':		
 			Next();
-		auto length = _position - start;
-		auto text = _text.substr(start, length);
-
-		return SyntaxToken(SyntaxKind::WhitespaceToken, start, text, ValueType());
-	}
-
-	if (std::isalpha(Current()))
-	{
-		while (std::isalpha(Current()))
+			_kind = SyntaxKind::MinusToken;
+			break;		
+		case '*':		
 			Next();
-		auto length = _position - start;
-		auto text = _text.substr(start, length);
-		auto kind = GetKeywordKind(text);
-
-		return SyntaxToken(kind, start, text, ValueType());
-	}
-
-	switch (Current())
-	{
-		case '+':
-		{
+			_kind = SyntaxKind::StarToken;
+			break;		
+		case '/':		
 			Next();
-			return SyntaxToken(SyntaxKind::PlusToken, start, "+", ValueType());
-		}
-		case '-':
-		{
+			_kind = SyntaxKind::SlashToken;
+			break;		
+		case '(':		
 			Next();
-			return SyntaxToken(SyntaxKind::MinusToken, start, "-", ValueType());
-		}
-		case '*':
-		{
+			_kind = SyntaxKind::OpenParenthesisToken;
+			break;		
+		case ')':		
 			Next();
-			return SyntaxToken(SyntaxKind::StarToken, start, "*", ValueType());
-		}
-		case '/':
-		{
-			Next();
-			return SyntaxToken(SyntaxKind::SlashToken, start, "/", ValueType());
-		}
-		case '(':
-		{
-			Next();
-			return SyntaxToken(SyntaxKind::OpenParenthesisToken, start, "(", ValueType());
-		}
-		case ')':
-		{
-			Next();
-			return SyntaxToken(SyntaxKind::CloseParenthesisToken, start, ")", ValueType());
-		}
+			_kind = SyntaxKind::CloseParenthesisToken;
+			break;		
 		case '&':
-		{
 			if (Lookahead() == '&')
 			{
 				_position += 2;
-				return SyntaxToken(SyntaxKind::AmpersandAmpersandToken, start, "&&", ValueType());
+				_kind = SyntaxKind::AmpersandAmpersandToken;
 			}
 			break;
-		}
 		case '|':
-		{
 			if (Lookahead() == '|')
 			{
 				_position += 2;
-				return SyntaxToken(SyntaxKind::PipePipeToken, start, "||", ValueType());
+				_kind = SyntaxKind::PipePipeToken;
 			}
 			break;
-		}
 		case '=':
-		{
 			if (Lookahead() == '=')
 			{
 				_position += 2;
-				return SyntaxToken(SyntaxKind::EqualsEqualsToken, start, "==", ValueType());
+				_kind = SyntaxKind::EqualsEqualsToken;
 			} else
 			{
 				Next();
-				return SyntaxToken(SyntaxKind::EqualsToken, start, "=", ValueType());
+				_kind = SyntaxKind::EqualsToken;
 			}
-		}
+			break;
 		case '!':
-		{
 			if (Lookahead() == '=')
 			{
 				_position += 2;
-				return SyntaxToken(SyntaxKind::BangEqualsToken, start, "!=", ValueType());
+				_kind = SyntaxKind::BangEqualsToken;
 			} else
 			{
 				Next();
-				return SyntaxToken(SyntaxKind::BangToken, start, "!", ValueType());
+				_kind = SyntaxKind::BangToken;
 			}
-		}
+			break;
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+			ReadNumberToken();
+			break;
+		case ' ': case '\n': case '\t': case '\r':
+			ReadWhiteSpace();
+			break;
+		default:
+			if (std::isalpha(character))
+				ReadIdentifierOrKeyword();
+			else if (std::isspace(character))
+				ReadWhiteSpace();
+			else
+			{
+				// TODO
+				//_diagnostics->ReportBadCharacter(_position, Current());
+				Next();
+			}
+			break;
 	}
+	auto length = _position - _start;
+	auto text = GetText(_kind);
+	if (text.length() < 1)
+		text = _text.substr(_start, length);
 
-	// TODO
-	//_diagnostics->ReportBadCharacter(_position, Current());
-
-	return SyntaxToken(SyntaxKind::BadToken, _position, _text.substr(_position, 1), ValueType());
+	return SyntaxToken(_kind, _start, text, _value);
 }
 
+void Lexer::ReadWhiteSpace()
+{
+	while (std::isspace(Current()))
+		Next();
+	_kind = SyntaxKind::WhitespaceToken;
+}
+
+void Lexer::ReadNumberToken()
+{
+	while (std::isdigit(Current()))
+		Next();
+	auto length = _position - _start;
+	auto text = _text.substr(_start, length);
+
+	// HACK
+	long value;
+	try
+	{
+		value = std::stoul(text);
+	} catch (...)
+	{
+		_diagnostics->ReportInvalidNumber(TextSpan(_start, length, _start + length), text, typeid(value));
+	}
+	_value = ValueType(value);
+	_kind = SyntaxKind::NumberToken;
+}
+
+void Lexer::ReadIdentifierOrKeyword()
+{
+	while (std::isalpha(Current()))
+		Next();
+	auto length = _position - _start;
+	auto text = _text.substr(_start, length);
+	_kind = GetKeywordKind(text);
+}
 #pragma endregion
 
 vector<const SyntaxNode*> ExpressionSyntax::GetChildren() const
@@ -195,7 +221,7 @@ AssignmentExpressionSyntax::AssignmentExpressionSyntax(SyntaxToken & identifier,
 }
 
 AssignmentExpressionSyntax::AssignmentExpressionSyntax(AssignmentExpressionSyntax && other)
-	: _identifierToken(std::move(other._identifierToken)), 
+	: _identifierToken(std::move(other._identifierToken)),
 	_equalsToken(std::move(other._equalsToken))
 {
 	_expression.swap(other._expression);
@@ -266,7 +292,7 @@ ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(SyntaxToken & open,
 }
 
 ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax && other)
-	: _openParenthesisToken(std::move(other._openParenthesisToken)), 
+	: _openParenthesisToken(std::move(other._openParenthesisToken)),
 	_closeParenthesisToken(std::move(other._closeParenthesisToken))
 {
 	_expression.swap(other._expression);
@@ -283,7 +309,7 @@ vector<const SyntaxNode*> ParenthesizedExpressionSyntax::GetChildren() const
 #pragma endregion
 
 #pragma region LiteralExpression
-LiteralExpressionSyntax::LiteralExpressionSyntax(SyntaxToken& literalToken, ValueType& value)
+LiteralExpressionSyntax::LiteralExpressionSyntax(SyntaxToken& literalToken, const ValueType& value)
 	:_literalToken(literalToken), _value(value)
 {
 }
@@ -313,7 +339,7 @@ NameExpressionSyntax::NameExpressionSyntax(SyntaxToken & identifier)
 }
 
 NameExpressionSyntax::NameExpressionSyntax(NameExpressionSyntax && other)
-	:_identifierToken(std::move(other._identifierToken))
+	: _identifierToken(std::move(other._identifierToken))
 {
 }
 

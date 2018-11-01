@@ -1,6 +1,6 @@
 #pragma once
 #include <tuple>
-#include <any>
+#include <variant>
 
 #ifdef MCF_EXPORTS
 #define MCF_API __declspec(dllexport)
@@ -19,23 +19,23 @@ using TextSpan = std::tuple<int, int, int>;
 class ValueType final
 {
 private:
-	std::any _inner;
+	std::variant<std::monostate, long, bool> _inner;
 
 public:
-	ValueType() { _inner.reset(); }
-	// stays implicit
-	ValueType(const std::any& value) :_inner(value) {}
+	ValueType() { }
 	~ValueType() = default;
 	ValueType(const ValueType& other) :_inner(other._inner) {}
 
-	// Hack
-	size_t TypeHash()const { return HasValue() ? _inner.type().hash_code() : NULL; }
-	bool HasValue()const { return _inner.has_value(); }
+	// stays implicit
+	ValueType(const long& value):_inner(value) { }
+	ValueType(const bool& value):_inner(value) { }
+
+	bool HasValue()const { return !std::holds_alternative<std::monostate>(_inner); }
 
 	template<typename T>
 	decltype(auto) GetValue() const
 	{
-		return std::any_cast<T>(_inner);
+		return std::get<T>(_inner);
 	}	
 };
 

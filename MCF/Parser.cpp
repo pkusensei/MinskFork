@@ -19,7 +19,7 @@ Parser::Parser(const string& text)
 			pToken->Kind() != SyntaxKind::BadToken)
 		{
 			kind = pToken->Kind();
-			_tokens.emplace_back(move(pToken));
+			_tokens.emplace_back(std::move(pToken));
 		}
 	} while (kind != SyntaxKind::EndOfFileToken);
 	// TODO
@@ -106,30 +106,43 @@ unique_ptr<ExpressionSyntax> Parser::ParsePrimaryExpression()
 	switch (Current()->Kind())
 	{
 		case SyntaxKind::OpenParenthesisToken:
-		{
-			auto left = NextToken();
-			auto expression = ParseExpression();
-			auto right = MatchToken(SyntaxKind::CloseParenthesisToken);
-			return std::make_unique<ParenthesizedExpressionSyntax>(*left, expression, *right);
-		}
+			return ParseParenthesizedExpression();
 		case SyntaxKind::TrueKeyword:
 		case SyntaxKind::FalseKeyword:
-		{
-			auto keywordToken = NextToken();
-			auto value = ValueType(std::any(keywordToken->Kind() == SyntaxKind::TrueKeyword));
-			return std::make_unique<LiteralExpressionSyntax>(*keywordToken, value);
-		}
+			return ParseBooleanLiteral();
+		case SyntaxKind::NumberToken:
+			return ParseNumberLiteral();
 		case SyntaxKind::IdentifierToken:
-		{
-			auto identifier = NextToken();
-			return std::make_unique<NameExpressionSyntax>(*identifier);
-		}
-		default:
-		{
-			auto numberToken = NextToken();
-			return std::make_unique<LiteralExpressionSyntax>(*numberToken);
-		}
+		default:		
+			return ParseNameExpression();
 	}
+}
+
+unique_ptr<ExpressionSyntax> Parser::ParseParenthesizedExpression()
+{
+	auto left = MatchToken(SyntaxKind::OpenParenthesisToken);
+	auto expression = ParseExpression();
+	auto right = MatchToken(SyntaxKind::CloseParenthesisToken);
+	return std::make_unique<ParenthesizedExpressionSyntax>(*left, expression, *right);
+}
+
+unique_ptr<ExpressionSyntax> Parser::ParseBooleanLiteral()
+{
+	auto isTrue = Current()->Kind() == SyntaxKind::TrueKeyword;
+	auto keywordToken = isTrue ? MatchToken(SyntaxKind::TrueKeyword) : MatchToken(SyntaxKind::FalseKeyword);
+	return std::make_unique<LiteralExpressionSyntax>(*keywordToken, isTrue);
+}
+
+unique_ptr<ExpressionSyntax> Parser::ParseNumberLiteral()
+{
+	auto numberToken = MatchToken(SyntaxKind::NumberToken);
+	return std::make_unique<LiteralExpressionSyntax>(*numberToken);
+}
+
+unique_ptr<ExpressionSyntax> Parser::ParseNameExpression()
+{
+	auto identifier = MatchToken(SyntaxKind::IdentifierToken);
+	return std::make_unique<NameExpressionSyntax>(*identifier);
 }
 
 SyntaxTree Parser::Parse()

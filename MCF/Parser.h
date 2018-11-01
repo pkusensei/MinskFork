@@ -30,7 +30,14 @@ private:
 	unique_ptr<ExpressionSyntax> ParseAssignmentExpression();
 	unique_ptr<ExpressionSyntax> ParseBinaryExpression(int parentPrecedence = 0);
 	unique_ptr<ExpressionSyntax> ParsePrimaryExpression();
+
+	unique_ptr<ExpressionSyntax> ParseParenthesizedExpression();
+	unique_ptr<ExpressionSyntax> ParseBooleanLiteral();
+	unique_ptr<ExpressionSyntax> ParseNumberLiteral();
+	unique_ptr<ExpressionSyntax> ParseNameExpression();
+
 public:
+	//Parser() :Parser("") {}
 	explicit Parser(const string& text);
 	~Parser() = default;
 
