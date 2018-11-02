@@ -1,5 +1,5 @@
 #pragma once
-#include <vector>
+
 #include <memory>
 
 #include "common.h"
@@ -7,40 +7,6 @@
 namespace MCF {
 
 class DiagnosticBag;
-
-enum class SyntaxKind
-{
-	// Tokens
-	BadToken,
-	EndOfFileToken,
-	WhitespaceToken,
-	NumberToken,
-	PlusToken,
-	MinusToken,
-	StarToken,
-	SlashToken,
-	BangToken,
-	EqualsToken,
-	AmpersandAmpersandToken,
-	PipePipeToken,
-	EqualsEqualsToken,
-	BangEqualsToken,
-	OpenParenthesisToken,
-	CloseParenthesisToken,
-	IdentifierToken,
-
-	// Keywords
-	FalseKeyword,
-	TrueKeyword,
-
-	// Expressions
-	LiteralExpression,
-	NameExpression,
-	UnaryExpression,
-	BinaryExpression,
-	ParenthesizedExpression,
-	AssignmentExpression
-};
 
 class SyntaxNode
 {
@@ -61,7 +27,6 @@ private:
 public:
 	SyntaxToken(SyntaxKind kind, size_t position, const string& text, ValueType value);
 	SyntaxToken(const SyntaxToken& other) = default;
-	SyntaxToken(SyntaxToken&& other);
 	virtual ~SyntaxToken() = default;
 
 	// Inherited via SyntaxNode
@@ -99,9 +64,6 @@ public:
 
 	SyntaxToken Lex();
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
-
-	static SyntaxKind GetKeywordKind(const string& text);
-	static string GetText(SyntaxKind kind);
 };
 
 class ExpressionSyntax :public SyntaxNode
@@ -121,7 +83,7 @@ private:
 	unique_ptr<ExpressionSyntax> _expression;
 
 public:
-	AssignmentExpressionSyntax(SyntaxToken& identifier, SyntaxToken& equals,
+	AssignmentExpressionSyntax(const SyntaxToken& identifier, const SyntaxToken& equals,
 							   unique_ptr<ExpressionSyntax>& expression);
 	virtual ~AssignmentExpressionSyntax() = default;
 	AssignmentExpressionSyntax(AssignmentExpressionSyntax&& other);
@@ -141,7 +103,7 @@ private:
 	SyntaxToken _operatorToken;
 	unique_ptr<ExpressionSyntax> _operand;
 public:
-	UnaryExpressionSyntax(SyntaxToken& operatorToken, unique_ptr<ExpressionSyntax>& operand);
+	UnaryExpressionSyntax(const SyntaxToken& operatorToken, unique_ptr<ExpressionSyntax>& operand);
 	virtual ~UnaryExpressionSyntax() = default;
 	UnaryExpressionSyntax(UnaryExpressionSyntax&& other);
 
@@ -160,7 +122,7 @@ private:
 	unique_ptr<ExpressionSyntax> _left;
 	unique_ptr<ExpressionSyntax> _right;
 public:
-	BinaryExpressionSyntax(unique_ptr<ExpressionSyntax>& left, SyntaxToken& operatorToken, unique_ptr<ExpressionSyntax>& right);
+	BinaryExpressionSyntax(unique_ptr<ExpressionSyntax>& left, const SyntaxToken& operatorToken, unique_ptr<ExpressionSyntax>& right);
 	virtual ~BinaryExpressionSyntax() = default;
 	BinaryExpressionSyntax(BinaryExpressionSyntax&& other);
 
@@ -180,7 +142,7 @@ private:
 	SyntaxToken _closeParenthesisToken;
 	unique_ptr<ExpressionSyntax> _expression;
 public:
-	ParenthesizedExpressionSyntax(SyntaxToken& open, unique_ptr<ExpressionSyntax>& expression, SyntaxToken& close);
+	ParenthesizedExpressionSyntax(const SyntaxToken& open, unique_ptr<ExpressionSyntax>& expression, const SyntaxToken& close);
 	virtual ~ParenthesizedExpressionSyntax() = default;
 	ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax&& other);
 	// Inherited via ExpressionSyntax
@@ -192,14 +154,14 @@ public:
 	ExpressionSyntax* Expression()const { return _expression.get(); }
 };
 
-class LiteralExpressionSyntax :public ExpressionSyntax
+class LiteralExpressionSyntax final :public ExpressionSyntax
 {
 private:
 	SyntaxToken _literalToken;
 	ValueType _value;
 public:
-	LiteralExpressionSyntax(SyntaxToken& literalToken, const ValueType& value);
-	explicit LiteralExpressionSyntax(SyntaxToken& literalToken);
+	LiteralExpressionSyntax(const SyntaxToken& literalToken, const ValueType& value);
+	explicit LiteralExpressionSyntax(const SyntaxToken& literalToken);
 	virtual ~LiteralExpressionSyntax() = default;
 	LiteralExpressionSyntax(LiteralExpressionSyntax&& other);
 	// Inherited via ExpressionSyntax
@@ -210,12 +172,12 @@ public:
 	ValueType Value()const { return _value; }
 };
 
-class NameExpressionSyntax :public ExpressionSyntax
+class NameExpressionSyntax final :public ExpressionSyntax
 {
 private:
 	SyntaxToken _identifierToken;
 public:
-	explicit NameExpressionSyntax(SyntaxToken& identifier);
+	explicit NameExpressionSyntax(const SyntaxToken& identifier);
 	virtual ~NameExpressionSyntax() = default;
 	NameExpressionSyntax(NameExpressionSyntax&& other);
 	// Inherited via ExpressionSyntax

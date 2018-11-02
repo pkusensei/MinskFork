@@ -164,6 +164,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Binder.cpp" />
+    <ClCompile Include="common.cpp" />
     <ClCompile Include="Diagnostic.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="MCF.cpp" />

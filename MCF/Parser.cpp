@@ -152,43 +152,8 @@ SyntaxTree Parser::Parse()
 	return SyntaxTree(_diagnostics, expression, *endOfFileToken);
 }
 
-int Parser::GetUnaryOperatorPrecedence(SyntaxKind kind)
-{
-	switch (kind)
-	{
-		case MCF::SyntaxKind::PlusToken:
-		case MCF::SyntaxKind::MinusToken:
-		case MCF::SyntaxKind::BangToken:
-			return 6;
-		default:
-			return 0;
-	}
-}
-
-int Parser::GetBinaryOperatorPrecedence(SyntaxKind kind)
-{
-	switch (kind)
-	{
-		case MCF::SyntaxKind::StarToken:
-		case MCF::SyntaxKind::SlashToken:
-			return 5;
-		case MCF::SyntaxKind::PlusToken:
-		case MCF::SyntaxKind::MinusToken:
-			return 4;
-		case MCF::SyntaxKind::EqualsEqualsToken:
-		case MCF::SyntaxKind::BangEqualsToken:
-			return 3;
-		case MCF::SyntaxKind::AmpersandAmpersandToken:
-			return 2;
-		case MCF::SyntaxKind::PipePipeToken:
-			return 1;
-		default:
-			return 0;
-	}
-}
-
 SyntaxTree::SyntaxTree(unique_ptr<DiagnosticBag>& diagnostics, unique_ptr<ExpressionSyntax>& root,
-					   SyntaxToken& endOfFileToken)
+					   const SyntaxToken& endOfFileToken)
 {
 	_diagnostics.swap(diagnostics);
 	_root.swap(root);

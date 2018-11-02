@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vector>
 #include <memory>
 
 #include "common.h"
@@ -10,7 +9,6 @@ namespace MCF {
 class SyntaxNode;
 class SyntaxToken;
 class DiagnosticBag;
-enum class SyntaxKind;
 class ExpressionSyntax;
 class SyntaxTree;
 
@@ -43,9 +41,6 @@ public:
 
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
 	SyntaxTree Parse();
-
-	static int GetUnaryOperatorPrecedence(SyntaxKind kind);
-	static int GetBinaryOperatorPrecedence(SyntaxKind kind);
 };
 
 class SyntaxTree final
@@ -56,7 +51,7 @@ private:
 	unique_ptr<SyntaxToken> _endOfFileToken;
 public:
 	SyntaxTree(unique_ptr<DiagnosticBag>& diagnostics, unique_ptr<ExpressionSyntax>& root,
-			   SyntaxToken& endOfFileToken);
+			   const SyntaxToken& endOfFileToken);
 	~SyntaxTree() = default;
 	SyntaxTree(SyntaxTree&& other);
 

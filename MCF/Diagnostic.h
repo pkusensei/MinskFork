@@ -1,11 +1,8 @@
 #pragma once
-#include <string>
-#include <vector>
+
 #include "common.h"
 
 namespace MCF {
-
-enum class SyntaxKind;
 
 class Diagnostic final
 {

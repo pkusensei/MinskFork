@@ -12,12 +12,6 @@ SyntaxToken::SyntaxToken(SyntaxKind kind, size_t position, const string& text, V
 {
 }
 
-SyntaxToken::SyntaxToken(SyntaxToken && other)
-	:_kind(std::move(other._kind)), _position(std::move(other._position)),
-	_text(std::move(other._text)), _value(std::move(other._value))
-{
-}
-
 vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 {
 	return vector<const SyntaxNode*>(0);
@@ -30,37 +24,6 @@ Lexer::Lexer(string text)
 	:_text(text), _diagnostics(std::make_unique<DiagnosticBag>()),
 	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(ValueType())
 {
-}
-
-SyntaxKind Lexer::GetKeywordKind(const string & text)
-{
-	if (text == "true")
-		return SyntaxKind::TrueKeyword;
-	else if (text == "false")
-		return SyntaxKind::FalseKeyword;
-	else return SyntaxKind::IdentifierToken;
-}
-
-string Lexer::GetText(SyntaxKind kind)
-{
-	switch (kind)
-	{
-		case SyntaxKind::PlusToken: return "+";
-		case SyntaxKind::MinusToken: return "-";
-		case SyntaxKind::StarToken: return "*";
-		case SyntaxKind::SlashToken: return "/";
-		case SyntaxKind::BangToken: return "!";
-		case SyntaxKind::EqualsToken: return "=";
-		case SyntaxKind::AmpersandAmpersandToken: return "&&";
-		case SyntaxKind::PipePipeToken: return "||";
-		case SyntaxKind::EqualsEqualsToken: return "==";
-		case SyntaxKind::BangEqualsToken: return "!=";
-		case SyntaxKind::OpenParenthesisToken: return "(";
-		case SyntaxKind::CloseParenthesisToken: return ")";
-		case SyntaxKind::FalseKeyword: return "false";
-		case SyntaxKind::TrueKeyword: return "true";
-		default: return "";
-	}
 }
 
 char Lexer::Peek(int offset) const
@@ -158,7 +121,7 @@ SyntaxToken Lexer::Lex()
 			else
 			{
 				// TODO
-				//_diagnostics->ReportBadCharacter(_position, Current());
+				//_diagnostics->ReportBadCharacter(_position, character);
 				Next();
 			}
 			break;
@@ -189,7 +152,7 @@ void Lexer::ReadNumberToken()
 	long value;
 	try
 	{
-		value = std::stoul(text);
+		value = std::stol(text);
 	} catch (...)
 	{
 		_diagnostics->ReportInvalidNumber(TextSpan(_start, length, _start + length), text, typeid(value));
@@ -214,7 +177,9 @@ vector<const SyntaxNode*> ExpressionSyntax::GetChildren() const
 }
 
 #pragma region AssignmentExpression
-AssignmentExpressionSyntax::AssignmentExpressionSyntax(SyntaxToken & identifier, SyntaxToken & equals, unique_ptr<ExpressionSyntax>& expression)
+AssignmentExpressionSyntax::AssignmentExpressionSyntax(const SyntaxToken & identifier, 
+													   const SyntaxToken & equals, 
+													   unique_ptr<ExpressionSyntax>& expression)
 	:_identifierToken(identifier), _equalsToken(equals)
 {
 	_expression.swap(expression);
@@ -238,7 +203,8 @@ vector<const SyntaxNode*> AssignmentExpressionSyntax::GetChildren() const
 #pragma endregion
 
 #pragma region UnaryExpression
-UnaryExpressionSyntax::UnaryExpressionSyntax(SyntaxToken & operatorToken, unique_ptr<ExpressionSyntax>& operand)
+UnaryExpressionSyntax::UnaryExpressionSyntax(const SyntaxToken & operatorToken,
+											 unique_ptr<ExpressionSyntax>& operand)
 	:_operatorToken(std::move(operatorToken))
 {
 	_operand.swap(operand);
@@ -260,7 +226,9 @@ vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const
 #pragma endregion
 
 #pragma region BinaryExpression
-BinaryExpressionSyntax::BinaryExpressionSyntax(unique_ptr<ExpressionSyntax>& left, SyntaxToken & operatorToken, unique_ptr<ExpressionSyntax>& right)
+BinaryExpressionSyntax::BinaryExpressionSyntax(unique_ptr<ExpressionSyntax>& left, 
+											   const SyntaxToken & operatorToken, 
+											   unique_ptr<ExpressionSyntax>& right)
 	:_operatorToken(operatorToken)
 {
 	_left.swap(left);
@@ -285,7 +253,9 @@ vector<const SyntaxNode*> BinaryExpressionSyntax::GetChildren() const
 #pragma endregion
 
 #pragma region ParenthesizedExpression
-ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(SyntaxToken & open, unique_ptr<ExpressionSyntax>& expression, SyntaxToken & close)
+ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(const SyntaxToken & open, 
+															 unique_ptr<ExpressionSyntax>& expression, 
+															 const SyntaxToken & close)
 	:_openParenthesisToken(open), _closeParenthesisToken(close)
 {
 	_expression.swap(expression);
@@ -309,12 +279,12 @@ vector<const SyntaxNode*> ParenthesizedExpressionSyntax::GetChildren() const
 #pragma endregion
 
 #pragma region LiteralExpression
-LiteralExpressionSyntax::LiteralExpressionSyntax(SyntaxToken& literalToken, const ValueType& value)
+LiteralExpressionSyntax::LiteralExpressionSyntax(const SyntaxToken& literalToken, const ValueType& value)
 	:_literalToken(literalToken), _value(value)
 {
 }
 
-LiteralExpressionSyntax::LiteralExpressionSyntax(SyntaxToken& literalToken)
+LiteralExpressionSyntax::LiteralExpressionSyntax(const SyntaxToken& literalToken)
 	: _literalToken(literalToken), _value(literalToken.Value())
 {
 }
@@ -333,7 +303,7 @@ vector<const SyntaxNode*> LiteralExpressionSyntax::GetChildren() const
 #pragma endregion
 
 #pragma region NameExpression
-NameExpressionSyntax::NameExpressionSyntax(SyntaxToken & identifier)
+NameExpressionSyntax::NameExpressionSyntax(const SyntaxToken & identifier)
 	:_identifierToken(identifier)
 {
 }
