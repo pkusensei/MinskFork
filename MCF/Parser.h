@@ -57,6 +57,7 @@ public:
 
 	const ExpressionSyntax* Root()const { return _root.get(); }
 	const SyntaxToken* EndOfFileToken() const { return _endOfFileToken.get(); }
+	DiagnosticBag* Diagnostics() const { return _diagnostics.get(); }
 
 	MCF_API static SyntaxTree Parse(const string& text);
 };

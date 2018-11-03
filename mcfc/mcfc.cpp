@@ -11,7 +11,7 @@
 void PrintTree(const MCF::SyntaxNode* node, std::string indent = "", bool isLast = true)
 {
 	std::string marker = isLast ? "+--" : "---";//"└──" : "├──";
-	std::cout << indent << marker;
+	std::cout << indent << marker << MCF::GetSyntaxKindName(node->Kind());
 	auto token = dynamic_cast<const MCF::SyntaxToken*>(node);
 	if (token != nullptr && token->Value().HasValue())
 	{
@@ -35,7 +35,12 @@ int main()
 	while (std::getline(std::cin, input) && input != "Q")
 	{
 		auto tree = MCF::SyntaxTree::Parse(input);
-		PrintTree(tree.Root());
+		auto diagnostics = tree.Diagnostics();
+		if (diagnostics->size() > 0)
+			for (const auto& it : *diagnostics)
+				std::cout << it.Message() << "\n";
+		else
+			PrintTree(tree.Root());
 		std::cout << "> ";
 	}
 	return 0;

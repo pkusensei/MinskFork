@@ -79,14 +79,125 @@ int GetValueTypeId(const type_index & inType)
 	return types[inType];
 }
 
+string GetTypeName(const type_index & inType)
+{
+	auto id = GetValueTypeId(inType);
+	switch (id)
+	{
+		case 1: return "long";
+		case 2:return "bool";
+		case 0:
+		default:
+			return "std::monostate";
+	}
+}
+
+string GetSyntaxKindName(SyntaxKind kind)
+{
+	switch (kind)
+	{
+		case MCF::SyntaxKind::BadToken:
+			return "BadToken";
+		case MCF::SyntaxKind::EndOfFileToken:
+			return "EndOfFileToken";
+		case MCF::SyntaxKind::WhitespaceToken:
+			return "WhitespaceToken";
+		case MCF::SyntaxKind::NumberToken:
+			return "NumberToken";
+		case MCF::SyntaxKind::PlusToken:
+			return "PlusToken";
+		case MCF::SyntaxKind::MinusToken:
+			return "MinusToken";
+		case MCF::SyntaxKind::StarToken:
+			return "StarToken";
+		case MCF::SyntaxKind::SlashToken:
+			return "SlashToken";
+		case MCF::SyntaxKind::BangToken:
+			return "BangToken";
+		case MCF::SyntaxKind::EqualsToken:
+			return "EqualsToken";
+		case MCF::SyntaxKind::AmpersandAmpersandToken:
+			return "AmpersandAmpersandToken";
+		case MCF::SyntaxKind::PipePipeToken:
+			return "PipePipeToken";
+		case MCF::SyntaxKind::EqualsEqualsToken:
+			return "EqualsEqualsToken";
+		case MCF::SyntaxKind::BangEqualsToken:
+			return "BangEqualsToken";
+		case MCF::SyntaxKind::OpenParenthesisToken:
+			return "OpenParenthesisToken";
+		case MCF::SyntaxKind::CloseParenthesisToken:
+			return "CloseParenthesisToken";
+		case MCF::SyntaxKind::IdentifierToken:
+			return "IdentifierToken";
+		case MCF::SyntaxKind::FalseKeyword:
+			return "FalseKeyword";
+		case MCF::SyntaxKind::TrueKeyword:
+			return "TrueKeyword";
+		case MCF::SyntaxKind::LiteralExpression:
+			return "LiteralExpression";
+		case MCF::SyntaxKind::NameExpression:
+			return "NameExpression";
+		case MCF::SyntaxKind::UnaryExpression:
+			return "UnaryExpression";
+		case MCF::SyntaxKind::BinaryExpression:
+			return "BinaryExpression";
+		case MCF::SyntaxKind::ParenthesizedExpression:
+			return "ParenthesizedExpression";
+		case MCF::SyntaxKind::AssignmentExpression:
+			return "AssignmentExpression";
+		default:
+			return "Unknown"; // HACK
+	}
+}
+
+TextSpan::TextSpan(size_t start, size_t length)
+	:_span(start, length)
+{
+}
+
+TextSpan TextSpan::FromBounds(size_t start, size_t end)
+{
+	return TextSpan(start, end - start);
+}
+
+type_index ValueType::Type() const
+{
+	switch (_inner.index())
+	{
+		case 1:
+			return typeid(long);
+		case 2:
+			return typeid(bool);
+		case 0:
+		default:
+			return typeid(std::monostate);
+	}
+}
+
 VariableSymbol::VariableSymbol(const string& name, const type_index& type)
 	:_name(name), _type(type)
 {
 }
 
 VariableSymbol::VariableSymbol(const string & name, const std::type_info & type)
-	:VariableSymbol(name, type_index(type))
+	: VariableSymbol(name, type_index(type))
 {
+}
+
+VariableSymbol::VariableSymbol()
+	: VariableSymbol("", typeid(std::monostate))
+{
+}
+
+bool VariableSymbol::operator==(const VariableSymbol & other) const
+{
+	return _name == other._name && _type == other._type;
+}
+
+bool VariableSymbol::operator!=(const VariableSymbol & other) const
+{
+	return !(*this == other);
 }
 
 }

@@ -4,7 +4,7 @@
 
 namespace MCF {
 
-Diagnostic::Diagnostic(TextSpan span, const string& message)
+Diagnostic::Diagnostic(const TextSpan& span, const string& message)
 	:_span(span), _message(message)
 {
 }
@@ -35,7 +35,7 @@ DiagnosticBag::DiagnosticBag(DiagnosticBag && other)
 	other._diagnostics.clear();
 }
 
-void DiagnosticBag::Report(TextSpan span, const string& message)
+void DiagnosticBag::Report(const TextSpan& span, const string& message)
 {
 	//if(_diagnostics==nullptr)
 	_diagnostics.emplace_back(span, message);
@@ -46,12 +46,12 @@ const Diagnostic& DiagnosticBag::GetOneDiagnostic(int idx) const
 	return _diagnostics[idx];
 }
 
-DiagnosticBag::iterator DiagnosticBag::begin()
+ DiagnosticBag::iterator DiagnosticBag::begin()
 {
 	return iterator(0, *this);
 }
 
-DiagnosticBag::iterator DiagnosticBag::end()
+ DiagnosticBag::iterator DiagnosticBag::end()
 {
 	return iterator(_diagnostics.size(), *this);
 }
@@ -63,7 +63,7 @@ void DiagnosticBag::AddRange(DiagnosticBag& other)
 						make_move_iterator(other._diagnostics.begin()), make_move_iterator(other._diagnostics.end()));
 }
 
-void DiagnosticBag::ReportInvalidNumber(TextSpan span, const string & text, const type_info & type)
+void DiagnosticBag::ReportInvalidNumber(const TextSpan& span, const string & text, const type_index & type)
 {
 	auto message = "The number " + text + " is not valid " + type.name();
 	Report(span, message);
@@ -73,12 +73,34 @@ void DiagnosticBag::ReportBadCharacter(int position, char character)
 {
 	string message{"Bad character in input: "};
 	message.append(&character);
-	Report(TextSpan(position, 1, position + 1), message);
+	Report(TextSpan(position, 1), message);
 }
 
-void DiagnosticBag::ReportUnexpectedToken(TextSpan span, SyntaxKind actualKind, SyntaxKind expectedKind)
+void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span, SyntaxKind actualKind, SyntaxKind expectedKind)
 {
-	string message{"Unexpected token"};
+	string message{"Unexpected token <"};
+	message += GetSyntaxKindName(actualKind) + ">, expected <" + GetSyntaxKindName(expectedKind) + ">.";
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportUndefinedName(const TextSpan & span, const string & name)
+{
+	string message{"Variable "};
+	message += name + " doesn't exist.";
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportUndefinedUnaryOperator(const TextSpan & span, const string & operatorText, const type_index & operandType)
+{
+	string message{"Unary operator '"};
+	message += operatorText + "' is not defined for type " + GetTypeName(operandType);
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan & span, const string & operatorText, const type_index& leftType, const type_index& rightType)
+{
+	string message{"Binary operator '"};
+	message += "' is not defined for types " + GetTypeName(leftType) + " and " + GetTypeName(rightType);
 	Report(span, message);
 }
 

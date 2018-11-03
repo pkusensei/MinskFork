@@ -22,8 +22,7 @@ Parser::Parser(const string& text)
 			_tokens.emplace_back(std::move(pToken));
 		}
 	} while (kind != SyntaxKind::EndOfFileToken);
-	// TODO
-	//_diagnostics->AddRange(*lexer.Diagnostics());
+	_diagnostics->AddRange(*lexer.Diagnostics());
 }
 
 SyntaxToken* Parser::Peek(int offset) const
@@ -52,7 +51,7 @@ SyntaxToken* Parser::MatchToken(SyntaxKind kind)
 	if (current->Kind() == kind)
 		return NextToken();
 	_diagnostics->ReportUnexpectedToken(current->Span(), current->Kind(), kind);
-	// HACK
+	// HACK 
 	return current;
 }
 

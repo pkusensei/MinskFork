@@ -13,7 +13,7 @@ class SyntaxNode
 public:
 	virtual ~SyntaxNode() = default;
 	virtual SyntaxKind Kind() const = 0;
-	virtual vector<const SyntaxNode*> GetChildren() const = 0;
+	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
 };
 
 class SyntaxToken final :public SyntaxNode
@@ -31,12 +31,12 @@ public:
 
 	// Inherited via SyntaxNode
 	MCF_API virtual SyntaxKind Kind() const override { return _kind; }
-	MCF_API virtual vector<const SyntaxNode*> GetChildren() const override;
+	MCF_API virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	size_t Position() const { return _position; }
 	string Text() const { return _text; }
 	ValueType Value() const { return _value; }
-	TextSpan Span()const { return TextSpan(_position, _text.length(), _position + _text.length()); }
+	TextSpan Span()const { return TextSpan(_position, _text.length()); }
 };
 
 class Lexer final
@@ -72,7 +72,7 @@ public:
 	virtual ~ExpressionSyntax() = default;
 	// Inherited via SyntaxNode
 	virtual SyntaxKind Kind() const override { return SyntaxKind::BadToken; }// HACK
-	virtual vector<const SyntaxNode*> GetChildren() const override;
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
 };
 
 class AssignmentExpressionSyntax final :public ExpressionSyntax
@@ -90,11 +90,11 @@ public:
 
 	// Inherited via ExpressionSyntax
 	virtual SyntaxKind Kind() const override { return SyntaxKind::AssignmentExpression; }
-	virtual vector<const SyntaxNode*> GetChildren() const override;
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken IdentifierToken() const { return _identifierToken; }
 	SyntaxToken EqualsToken() const { return _equalsToken; }
-	ExpressionSyntax* Expression() const { return _expression.get(); }
+	const ExpressionSyntax* Expression() const { return _expression.get(); }
 };
 
 class UnaryExpressionSyntax final :public ExpressionSyntax
@@ -109,10 +109,10 @@ public:
 
 	// Inherited via ExpressionSyntax
 	virtual SyntaxKind Kind() const override { return SyntaxKind::UnaryExpression; }
-	virtual vector<const SyntaxNode*> GetChildren() const override;
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken OperatorToken() const { return _operatorToken; }
-	ExpressionSyntax* Operand() const { return _operand.get(); }
+	const ExpressionSyntax* Operand() const { return _operand.get(); }
 };
 
 class BinaryExpressionSyntax final :public ExpressionSyntax
@@ -128,11 +128,11 @@ public:
 
 	// Inherited via ExpressionSyntax
 	virtual SyntaxKind Kind() const override { return SyntaxKind::BinaryExpression; }
-	virtual vector<const SyntaxNode*> GetChildren() const override;
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken OperatorToken() const { return _operatorToken; }
-	ExpressionSyntax* Left()const { return _left.get(); }
-	ExpressionSyntax* right()const { return _right.get(); }
+	const ExpressionSyntax* Left()const { return _left.get(); }
+	const ExpressionSyntax* Right()const { return _right.get(); }
 };
 
 class ParenthesizedExpressionSyntax final :public ExpressionSyntax
@@ -147,11 +147,11 @@ public:
 	ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax&& other);
 	// Inherited via ExpressionSyntax
 	virtual SyntaxKind Kind() const override { return SyntaxKind::ParenthesizedExpression; }
-	virtual vector<const SyntaxNode*> GetChildren() const override;
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken OpenParenthesisToken()const { return _openParenthesisToken; }
 	SyntaxToken CloseParenthesisToken() const { return _closeParenthesisToken; }
-	ExpressionSyntax* Expression()const { return _expression.get(); }
+	const ExpressionSyntax* Expression()const { return _expression.get(); }
 };
 
 class LiteralExpressionSyntax final :public ExpressionSyntax
@@ -166,7 +166,7 @@ public:
 	LiteralExpressionSyntax(LiteralExpressionSyntax&& other);
 	// Inherited via ExpressionSyntax
 	virtual SyntaxKind Kind() const override { return SyntaxKind::LiteralExpression; }
-	virtual vector<const SyntaxNode*> GetChildren() const override;
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken LiteralToken()const { return _literalToken; }
 	ValueType Value()const { return _value; }
@@ -182,7 +182,7 @@ public:
 	NameExpressionSyntax(NameExpressionSyntax&& other);
 	// Inherited via ExpressionSyntax
 	virtual SyntaxKind Kind() const override { return SyntaxKind::NameExpression; }
-	virtual vector<const SyntaxNode*> GetChildren() const override;
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken IdentifierToken()const { return _identifierToken; }
 };

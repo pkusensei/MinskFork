@@ -18,7 +18,6 @@ using std::string;
 using std::type_index;
 using std::unique_ptr;
 using std::vector;
-using TextSpan = std::tuple<int, int, int>;
 
 enum class SyntaxKind
 {
@@ -60,8 +59,29 @@ string GetText(SyntaxKind kind);
 int GetUnaryOperatorPrecedence(SyntaxKind kind);
 int GetBinaryOperatorPrecedence(SyntaxKind kind);
 int GetValueTypeId(const type_index& inType);
+string GetTypeName(const type_index& inType);
+MCF_API string GetSyntaxKindName(SyntaxKind kind);
 
-class ValueType final
+class TextSpan final
+{
+private:
+	std::tuple<size_t, size_t> _span;
+public:
+	TextSpan(size_t start, size_t length);
+	~TextSpan() = default;
+	//TextSpan(const TextSpan&) = default;
+	//TextSpan(TextSpan&&) = default;
+	//TextSpan& operator=(const TextSpan&) = default;
+	//TextSpan& operator=(TextSpan&&) = default;
+
+	size_t Start()const { return std::get<0>(_span); }
+	size_t Length()const { return std::get<1>(_span); }
+	size_t End()const { return std::get<0>(_span) + std::get<1>(_span); }
+
+	static TextSpan FromBounds(size_t start, size_t end);
+};
+
+class MCF_API ValueType final
 {
 private:
 	std::variant<std::monostate, long, bool> _inner;
@@ -76,6 +96,7 @@ public:
 	ValueType(const bool& value) :_inner(value) {}
 
 	bool HasValue()const { return !std::holds_alternative<std::monostate>(_inner); }
+	type_index Type()const;
 
 	template<typename T>
 	decltype(auto) GetValue() const
@@ -84,18 +105,33 @@ public:
 	}
 };
 
-class VariableSymbol final
+class MCF_API VariableSymbol final
 {
 private:
 	string _name;
-	type_index _type;
+	type_index _type; // no move
 public:
 	VariableSymbol(const string& name, const type_index& type);
 	VariableSymbol(const string& name, const std::type_info& type);
+	VariableSymbol();
 	~VariableSymbol() = default;
 
 	string Name()const { return _name; }
 	type_index Type()const { return _type; }
+
+	bool operator==(const VariableSymbol& other) const;
+	bool operator!=(const VariableSymbol& other) const;
 };
+
+struct VariableHash
+{
+	size_t operator()(const VariableSymbol& variable) const noexcept
+	{
+		auto h1 = std::hash<string>{}(variable.Name());
+		auto h2 = variable.Type().hash_code();
+		return h1 ^ (h2 << 1);
+	}
+};
+
 
 }//MCF

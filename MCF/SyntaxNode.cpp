@@ -12,7 +12,7 @@ SyntaxToken::SyntaxToken(SyntaxKind kind, size_t position, const string& text, V
 {
 }
 
-vector<const SyntaxNode*> SyntaxToken::GetChildren() const
+const vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 {
 	return vector<const SyntaxNode*>(0);
 }
@@ -120,8 +120,7 @@ SyntaxToken Lexer::Lex()
 				ReadWhiteSpace();
 			else
 			{
-				// TODO
-				//_diagnostics->ReportBadCharacter(_position, character);
+				_diagnostics->ReportBadCharacter(_position, character);
 				Next();
 			}
 			break;
@@ -155,7 +154,7 @@ void Lexer::ReadNumberToken()
 		value = std::stol(text);
 	} catch (...)
 	{
-		_diagnostics->ReportInvalidNumber(TextSpan(_start, length, _start + length), text, typeid(value));
+		_diagnostics->ReportInvalidNumber(TextSpan(_start, length), text, typeid(value));
 	}
 	_value = ValueType(value);
 	_kind = SyntaxKind::NumberToken;
@@ -171,7 +170,7 @@ void Lexer::ReadIdentifierOrKeyword()
 }
 #pragma endregion
 
-vector<const SyntaxNode*> ExpressionSyntax::GetChildren() const
+const vector<const SyntaxNode*> ExpressionSyntax::GetChildren() const
 {
 	return vector<const SyntaxNode*>(0);
 }
@@ -192,7 +191,7 @@ AssignmentExpressionSyntax::AssignmentExpressionSyntax(AssignmentExpressionSynta
 	_expression.swap(other._expression);
 }
 
-vector<const SyntaxNode*> AssignmentExpressionSyntax::GetChildren() const
+const vector<const SyntaxNode*> AssignmentExpressionSyntax::GetChildren() const
 {
 	auto result = vector<const SyntaxNode*>();
 	result.emplace_back(&_identifierToken);
@@ -216,7 +215,7 @@ UnaryExpressionSyntax::UnaryExpressionSyntax(UnaryExpressionSyntax && other)
 	_operand.swap(other._operand);
 }
 
-vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const
+const vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const
 {
 	auto result = vector<const SyntaxNode*>();
 	result.emplace_back(&_operatorToken);
@@ -242,7 +241,7 @@ BinaryExpressionSyntax::BinaryExpressionSyntax(BinaryExpressionSyntax && other)
 	_right.swap(other._right);
 }
 
-vector<const SyntaxNode*> BinaryExpressionSyntax::GetChildren() const
+const vector<const SyntaxNode*> BinaryExpressionSyntax::GetChildren() const
 {
 	auto result = vector<const SyntaxNode*>();
 	result.emplace_back(_left.get());
@@ -268,7 +267,7 @@ ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(ParenthesizedExpres
 	_expression.swap(other._expression);
 }
 
-vector<const SyntaxNode*> ParenthesizedExpressionSyntax::GetChildren() const
+const vector<const SyntaxNode*> ParenthesizedExpressionSyntax::GetChildren() const
 {
 	auto result = vector<const SyntaxNode*>();
 	result.emplace_back(&_openParenthesisToken);
@@ -294,7 +293,7 @@ LiteralExpressionSyntax::LiteralExpressionSyntax(LiteralExpressionSyntax && othe
 {
 }
 
-vector<const SyntaxNode*> LiteralExpressionSyntax::GetChildren() const
+const vector<const SyntaxNode*> LiteralExpressionSyntax::GetChildren() const
 {
 	auto result = vector<const SyntaxNode*>();
 	result.emplace_back(&_literalToken);
@@ -313,7 +312,7 @@ NameExpressionSyntax::NameExpressionSyntax(NameExpressionSyntax && other)
 {
 }
 
-vector<const SyntaxNode*> NameExpressionSyntax::GetChildren() const
+const vector<const SyntaxNode*> NameExpressionSyntax::GetChildren() const
 {
 	auto result = vector<const SyntaxNode*>();
 	result.emplace_back(&_identifierToken);
