@@ -58,8 +58,8 @@ SyntaxKind GetKeywordKind(const string& text);
 string GetText(SyntaxKind kind);
 int GetUnaryOperatorPrecedence(SyntaxKind kind);
 int GetBinaryOperatorPrecedence(SyntaxKind kind);
-int GetValueTypeId(const type_index& inType);
-string GetTypeName(const type_index& inType);
+MCF_API int GetValueTypeId(const type_index& inType);
+MCF_API string GetTypeName(const type_index& inType);
 MCF_API string GetSyntaxKindName(SyntaxKind kind);
 
 class TextSpan final
@@ -69,10 +69,10 @@ private:
 public:
 	TextSpan(size_t start, size_t length);
 	~TextSpan() = default;
-	//TextSpan(const TextSpan&) = default;
-	//TextSpan(TextSpan&&) = default;
-	//TextSpan& operator=(const TextSpan&) = default;
-	//TextSpan& operator=(TextSpan&&) = default;
+	TextSpan(const TextSpan&) = default;
+	TextSpan(TextSpan&&) = default;
+	TextSpan& operator=(const TextSpan&);
+	TextSpan& operator=(TextSpan&&) = default;
 
 	size_t Start()const { return std::get<0>(_span); }
 	size_t Length()const { return std::get<1>(_span); }
@@ -97,6 +97,9 @@ public:
 
 	bool HasValue()const { return !std::holds_alternative<std::monostate>(_inner); }
 	type_index Type()const;
+
+	bool operator==(const ValueType& other)const { return _inner == other._inner; }
+	bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }
 
 	template<typename T>
 	decltype(auto) GetValue() const
@@ -123,7 +126,7 @@ public:
 	bool operator!=(const VariableSymbol& other) const;
 };
 
-struct VariableHash
+struct MCF_API VariableHash
 {
 	size_t operator()(const VariableSymbol& variable) const noexcept
 	{

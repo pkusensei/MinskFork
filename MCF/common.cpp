@@ -85,7 +85,7 @@ string GetTypeName(const type_index & inType)
 	switch (id)
 	{
 		case 1: return "long";
-		case 2:return "bool";
+		case 2: return "bool";
 		case 0:
 		default:
 			return "std::monostate";
@@ -147,13 +147,19 @@ string GetSyntaxKindName(SyntaxKind kind)
 		case MCF::SyntaxKind::AssignmentExpression:
 			return "AssignmentExpression";
 		default:
-			return "Unknown"; // HACK
+			throw std::exception();
 	}
 }
 
 TextSpan::TextSpan(size_t start, size_t length)
 	:_span(start, length)
 {
+}
+
+TextSpan & TextSpan::operator=(const TextSpan & other)
+{
+	_span = other._span;
+	return *this;
 }
 
 TextSpan TextSpan::FromBounds(size_t start, size_t end)

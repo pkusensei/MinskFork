@@ -1,6 +1,5 @@
 #pragma once
 
-#include <typeindex>
 #include <unordered_map>
 
 #include "common.h"
@@ -210,6 +209,14 @@ class Binder
 private:
 	unique_ptr<DiagnosticBag> _diagnostics;
 	std::unordered_map<VariableSymbol, ValueType, VariableHash>* _variables;
+
+	unique_ptr<BoundExpression> BindParenthesizedExpression(const ExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindLiteralExpression(const ExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindNameExpression(const ExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindAssignmentExpression(const ExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindUnaryExpression(const ExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindBinaryExpression(const ExpressionSyntax* syntax);
+
 public:
 	Binder(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables);
 	~Binder() = default;
@@ -217,12 +224,6 @@ public:
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
 
 	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindParenthesizedExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindLiteralExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindNameExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindAssignmentExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindUnaryExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindBinaryExpression(const ExpressionSyntax* syntax);
 };
 
 }//MCF

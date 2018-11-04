@@ -6,7 +6,6 @@
 
 namespace MCF {
 
-class SyntaxNode;
 class SyntaxToken;
 class DiagnosticBag;
 class ExpressionSyntax;
@@ -43,7 +42,7 @@ public:
 	SyntaxTree Parse();
 };
 
-class SyntaxTree final
+class MCF_API SyntaxTree final
 {
 private:
 	unique_ptr<DiagnosticBag> _diagnostics;
@@ -59,7 +58,7 @@ public:
 	const SyntaxToken* EndOfFileToken() const { return _endOfFileToken.get(); }
 	DiagnosticBag* Diagnostics() const { return _diagnostics.get(); }
 
-	MCF_API static SyntaxTree Parse(const string& text);
+	static SyntaxTree Parse(const string& text);
 };
 
 }//MCF
