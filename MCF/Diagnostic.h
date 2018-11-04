@@ -47,10 +47,10 @@ public:
 class MCF_API DiagnosticBag::iterator
 {
 private:
-	int _position;
+	size_t _position;
 	DiagnosticBag* _bag;
 public:
-	iterator(int pos, DiagnosticBag& bag);
+	iterator(size_t pos, DiagnosticBag& bag);
 
 	const Diagnostic& operator*() const;
 	iterator& operator++(int); //i++

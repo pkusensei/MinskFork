@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Diagnostic.h"
-#include <iostream>
 
 namespace MCF {
 
@@ -104,7 +103,7 @@ void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan & span, const s
 	Report(span, message);
 }
 
-DiagnosticBag::iterator::iterator(int pos, DiagnosticBag & bag)
+DiagnosticBag::iterator::iterator(size_t pos, DiagnosticBag & bag)
 	:_position(pos), _bag(&bag)
 {
 }
