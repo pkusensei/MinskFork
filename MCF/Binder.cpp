@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "Binder.h"
+
 #include "Diagnostic.h"
 #include "SyntaxNode.h"
+#include "SourceText.h"
 
 namespace MCF {
 

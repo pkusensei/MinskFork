@@ -1,8 +1,12 @@
 #pragma once
 
 #include "common.h"
+#include "SourceText.h" // HACK
+
 
 namespace MCF {
+
+class TextSpan;
 
 class MCF_API Diagnostic final
 {
@@ -11,7 +15,8 @@ private:
 	string _message;
 public:
 	Diagnostic(const TextSpan& span, const string& message);
-	~Diagnostic() = default;
+	//Diagnostic();
+	~Diagnostic();
 	Diagnostic(Diagnostic&& other);
 	Diagnostic& operator=(Diagnostic&& other);
 

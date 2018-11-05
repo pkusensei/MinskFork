@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "Parser.h"
+
 #include "SyntaxNode.h"
 #include "Diagnostic.h"
+#include "SourceText.h"
 
 namespace MCF {
 

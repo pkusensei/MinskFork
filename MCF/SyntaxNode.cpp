@@ -3,6 +3,7 @@
 #include <typeinfo>
 #include "SyntaxNode.h"
 #include "Diagnostic.h"
+#include "SourceText.h"
 
 namespace MCF {
 
@@ -15,6 +16,11 @@ SyntaxToken::SyntaxToken(SyntaxKind kind, size_t position, const string& text, V
 const vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 {
 	return vector<const SyntaxNode*>(0);
+}
+
+TextSpan SyntaxToken::Span() const
+{
+	return TextSpan(_position, _text.length());
 }
 
 #pragma endregion

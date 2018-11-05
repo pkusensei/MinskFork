@@ -4,9 +4,11 @@
 
 #include "common.h"
 
+
 namespace MCF {
 
 class DiagnosticBag;
+class TextSpan;
 
 class SyntaxNode
 {
@@ -36,7 +38,7 @@ public:
 	size_t Position() const { return _position; }
 	string Text() const { return _text; }
 	ValueType Value() const { return _value; }
-	TextSpan Span()const { return TextSpan(_position, _text.length()); }
+	TextSpan Span()const;
 };
 
 class Lexer final
@@ -71,7 +73,7 @@ class ExpressionSyntax :public SyntaxNode
 public:
 	virtual ~ExpressionSyntax() = default;
 	// Inherited via SyntaxNode
-	virtual SyntaxKind Kind() const override { return SyntaxKind::BadToken; }// HACK
+	virtual SyntaxKind Kind() const override { return SyntaxKind::BadToken; } // HACK
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 };
 

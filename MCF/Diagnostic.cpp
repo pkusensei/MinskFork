@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Diagnostic.h"
+#include "SourceText.h"
 
 namespace MCF {
 
@@ -7,6 +8,13 @@ Diagnostic::Diagnostic(const TextSpan& span, const string& message)
 	:_span(span), _message(message)
 {
 }
+
+//Diagnostic::Diagnostic()
+//	:Diagnostic(TextSpan(), "")
+//{
+//}
+
+Diagnostic::~Diagnostic() = default;
 
 Diagnostic::Diagnostic(Diagnostic && other)
 	:_span(std::move(other._span)), _message(std::move(other._message))
