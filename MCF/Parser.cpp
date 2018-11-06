@@ -7,8 +7,8 @@
 
 namespace MCF {
 
-Parser::Parser(const string& text)
-	:_position(0), _diagnostics(std::make_unique<DiagnosticBag>())
+Parser::Parser(const SourceText& text)
+	:_text(text), _position(0), _diagnostics(std::make_unique<DiagnosticBag>())
 {
 	_tokens = vector<unique_ptr<SyntaxToken>>();
 	Lexer lexer(text);
@@ -114,7 +114,7 @@ unique_ptr<ExpressionSyntax> Parser::ParsePrimaryExpression()
 		case SyntaxKind::NumberToken:
 			return ParseNumberLiteral();
 		case SyntaxKind::IdentifierToken:
-		default:		
+		default:
 			return ParseNameExpression();
 	}
 }
@@ -150,11 +150,12 @@ SyntaxTree Parser::Parse()
 {
 	auto expression = ParseExpression();
 	auto endOfFileToken = MatchToken(SyntaxKind::EndOfFileToken);
-	return SyntaxTree(_diagnostics, expression, *endOfFileToken);
+	return SyntaxTree(_text, _diagnostics, expression, *endOfFileToken);
 }
 
-SyntaxTree::SyntaxTree(unique_ptr<DiagnosticBag>& diagnostics, unique_ptr<ExpressionSyntax>& root,
-					   const SyntaxToken& endOfFileToken)
+SyntaxTree::SyntaxTree(const SourceText& text, unique_ptr<DiagnosticBag>& diagnostics,
+					   unique_ptr<ExpressionSyntax>& root, const SyntaxToken& endOfFileToken)
+	:_text(std::make_unique<SourceText>(text))
 {
 	_diagnostics.swap(diagnostics);
 	_root.swap(root);
@@ -163,12 +164,19 @@ SyntaxTree::SyntaxTree(unique_ptr<DiagnosticBag>& diagnostics, unique_ptr<Expres
 
 SyntaxTree::SyntaxTree(SyntaxTree && other)
 {
+	_text.swap(other._text);
 	_diagnostics.swap(other._diagnostics);
 	_root.swap(other._root);
 	_endOfFileToken.swap(other._endOfFileToken);
 }
 
 SyntaxTree SyntaxTree::Parse(const string & text)
+{
+	auto sourceText = SourceText::From(text);
+	return Parse(sourceText);
+}
+
+SyntaxTree SyntaxTree::Parse(const SourceText & text)
 {
 	Parser parser(text);
 	return parser.Parse();

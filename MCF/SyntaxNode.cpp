@@ -1,11 +1,49 @@
 #include "stdafx.h"
-#include <cctype>
-#include <typeinfo>
 #include "SyntaxNode.h"
+
+#include <cctype>
+#include <sstream>
+#include <typeinfo>
+
 #include "Diagnostic.h"
 #include "SourceText.h"
 
 namespace MCF {
+
+void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node, std::string indent, bool isLast)
+{
+	string marker = isLast ? "+--" : "---";//"©¸©¤©¤" : "©À©¤©¤";
+	out << indent << marker << GetSyntaxKindName(node->Kind());
+	auto token = dynamic_cast<const SyntaxToken*>(node);
+	if (token != nullptr && token->Value().HasValue())
+	{
+		out << " " << token->Value().GetValue<long>();
+	}
+	out << std::endl;
+	indent += isLast ? "   " : "|  ";
+	auto children = node->GetChildren();
+	if (children.size() > 0)
+	{
+		auto lastChild = children.back();
+		for (const auto& child : children)
+			PrettyPrint(out, child, indent, lastChild == child);
+	}
+}
+
+TextSpan SyntaxNode::Span() const
+{
+	auto children = GetChildren();
+	auto first = (*children.begin())->Span();
+	auto last = (*children.back()).Span();
+	return TextSpan::FromBounds(first.Start(), last.End());
+}
+
+string SyntaxNode::ToString() const
+{
+	std::stringstream ss;
+	WriteTo(ss);
+	return ss.str();
+}
 
 #pragma region SyntaxToken
 SyntaxToken::SyntaxToken(SyntaxKind kind, size_t position, const string& text, ValueType value)
@@ -18,7 +56,7 @@ const vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 	return vector<const SyntaxNode*>(0);
 }
 
-TextSpan SyntaxToken::Span() const
+TextSpan SyntaxToken::Span() const 
 {
 	return TextSpan(_position, _text.length());
 }
@@ -26,7 +64,7 @@ TextSpan SyntaxToken::Span() const
 #pragma endregion
 
 #pragma region Lexer
-Lexer::Lexer(string text)
+Lexer::Lexer(const SourceText& text)
 	:_text(text), _diagnostics(std::make_unique<DiagnosticBag>()),
 	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(ValueType())
 {
@@ -35,7 +73,7 @@ Lexer::Lexer(string text)
 char Lexer::Peek(int offset) const
 {
 	size_t idx = _position + offset;
-	if (idx >= _text.length())
+	if (idx >= _text.Length())
 		return '\0';
 	return _text[idx];
 }
@@ -134,7 +172,7 @@ SyntaxToken Lexer::Lex()
 	auto length = _position - _start;
 	auto text = GetText(_kind);
 	if (text.length() < 1)
-		text = _text.substr(_start, length);
+		text = _text.ToString(_start, length);
 
 	return SyntaxToken(_kind, _start, text, _value);
 }
@@ -151,7 +189,7 @@ void Lexer::ReadNumberToken()
 	while (std::isdigit(Current()))
 		Next();
 	auto length = _position - _start;
-	auto text = _text.substr(_start, length);
+	auto text = _text.ToString(_start, length);
 
 	// HACK
 	long value;
@@ -171,7 +209,7 @@ void Lexer::ReadIdentifierOrKeyword()
 	while (std::isalpha(Current()))
 		Next();
 	auto length = _position - _start;
-	auto text = _text.substr(_start, length);
+	auto text = _text.ToString(_start, length);
 	_kind = GetKeywordKind(text);
 }
 #pragma endregion

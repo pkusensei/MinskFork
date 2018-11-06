@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <tuple>
 #include <typeindex>
 #include <variant>
 #include <vector>
@@ -58,9 +57,11 @@ SyntaxKind GetKeywordKind(const string& text);
 string GetText(SyntaxKind kind);
 int GetUnaryOperatorPrecedence(SyntaxKind kind);
 int GetBinaryOperatorPrecedence(SyntaxKind kind);
+
+
 MCF_API int GetValueTypeId(const type_index& inType);
 MCF_API string GetTypeName(const type_index& inType);
-MCF_API string GetSyntaxKindName(SyntaxKind kind);
+string GetSyntaxKindName(SyntaxKind kind);
 
 class MCF_API ValueType final
 {
@@ -116,6 +117,5 @@ struct MCF_API VariableHash
 		return h1 ^ (h2 << 1);
 	}
 };
-
 
 }//MCF

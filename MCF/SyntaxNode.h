@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include "common.h"
 
 
@@ -9,13 +7,20 @@ namespace MCF {
 
 class DiagnosticBag;
 class TextSpan;
+class SourceText;
 
-class SyntaxNode
+class MCF_API SyntaxNode
 {
+private:
+	static void PrettyPrint(std::ostream& out, const SyntaxNode* node, std::string indent = "", bool isLast = true);
 public:
 	virtual ~SyntaxNode() = default;
 	virtual SyntaxKind Kind() const = 0;
+	virtual TextSpan Span()const;
 	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
+
+	void WriteTo(std::ostream& out)const { PrettyPrint(out, this); }
+	string ToString() const;
 };
 
 class SyntaxToken final :public SyntaxNode
@@ -32,19 +37,19 @@ public:
 	virtual ~SyntaxToken() = default;
 
 	// Inherited via SyntaxNode
-	MCF_API virtual SyntaxKind Kind() const override { return _kind; }
-	MCF_API virtual const vector<const SyntaxNode*> GetChildren() const override;
+	virtual SyntaxKind Kind() const override { return _kind; }
+	virtual TextSpan Span()const override;
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	size_t Position() const { return _position; }
 	string Text() const { return _text; }
 	ValueType Value() const { return _value; }
-	TextSpan Span()const;
 };
 
 class Lexer final
 {
 private:
-	const string _text;
+	const SourceText& _text;
 	unique_ptr<DiagnosticBag> _diagnostics;
 
 	size_t _position;
@@ -61,7 +66,7 @@ private:
 	void ReadNumberToken();
 	void ReadIdentifierOrKeyword();
 public:
-	explicit Lexer(string text);
+	explicit Lexer(const SourceText& text);
 	~Lexer() = default;
 
 	SyntaxToken Lex();

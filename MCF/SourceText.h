@@ -22,7 +22,7 @@ public:
 	size_t Length()const { return std::get<1>(_span); }
 	size_t End()const { return std::get<0>(_span) + std::get<1>(_span); }
 
-	static TextSpan FromBounds(size_t start, size_t end);
+	MCF_API static TextSpan FromBounds(size_t start, size_t end);
 };
 
 class TextLine final
@@ -46,7 +46,7 @@ public:
 	string ToString()const;
 };
 
-class SourceText final
+class MCF_API SourceText final
 {
 private:
 	const string _text;
@@ -62,7 +62,7 @@ public:
 
 	const vector<TextLine> Lines()const { return _lines; }
 	size_t Length()const { return _text.length(); }
-	const char operator[](size_t sub) { return _text[sub]; }
+	char operator[](size_t sub) const { return _text[sub]; }
 	size_t GetLineIndex(size_t position)const;
 
 	string ToString()const { return _text; }

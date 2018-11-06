@@ -45,12 +45,13 @@ public:
 class MCF_API Compilation final
 {
 private:
-	unique_ptr<SyntaxTree> _syntax;
+	const SyntaxTree* _syntax;
 public:
-	Compilation(unique_ptr<SyntaxTree>& tree);
+	explicit Compilation(const SyntaxTree& tree);
+	explicit Compilation(const unique_ptr<SyntaxTree>& tree);
 	~Compilation() = default;
 
-	SyntaxTree* Syntax()const { return _syntax.get(); }
+	const SyntaxTree* Syntax()const { return _syntax; }
 	EvaluationResult Evaluate(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables);
 };
 

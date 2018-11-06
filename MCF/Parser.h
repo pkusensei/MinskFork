@@ -10,10 +10,12 @@ class SyntaxToken;
 class DiagnosticBag;
 class ExpressionSyntax;
 class SyntaxTree;
+class SourceText;
 
 class Parser final
 {
 private:
+	const SourceText& _text;
 	vector<unique_ptr<SyntaxToken>> _tokens;
 	size_t _position;
 	unique_ptr<DiagnosticBag> _diagnostics;
@@ -35,7 +37,7 @@ private:
 
 public:
 	//Parser() :Parser("") {}
-	explicit Parser(const string& text);
+	explicit Parser(const SourceText& text);
 	~Parser() = default;
 
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
@@ -45,20 +47,23 @@ public:
 class MCF_API SyntaxTree final
 {
 private:
+	unique_ptr<SourceText> _text;
 	unique_ptr<DiagnosticBag> _diagnostics;
 	unique_ptr<ExpressionSyntax> _root;
 	unique_ptr<SyntaxToken> _endOfFileToken;
 public:
-	SyntaxTree(unique_ptr<DiagnosticBag>& diagnostics, unique_ptr<ExpressionSyntax>& root,
-			   const SyntaxToken& endOfFileToken);
+	SyntaxTree(const SourceText& text, unique_ptr<DiagnosticBag>& diagnostics,
+			   unique_ptr<ExpressionSyntax>& root, const SyntaxToken& endOfFileToken);
 	~SyntaxTree() = default;
 	SyntaxTree(SyntaxTree&& other);
 
+	const SourceText& Text() const { return *_text; }
 	const ExpressionSyntax* Root()const { return _root.get(); }
 	const SyntaxToken* EndOfFileToken() const { return _endOfFileToken.get(); }
 	DiagnosticBag* Diagnostics() const { return _diagnostics.get(); }
 
 	static SyntaxTree Parse(const string& text);
+	static SyntaxTree Parse(const SourceText& text);
 };
 
 }//MCF

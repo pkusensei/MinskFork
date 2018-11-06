@@ -113,9 +113,14 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundExpression * node)const
 	}
 }
 
-Compilation::Compilation(unique_ptr<SyntaxTree>& tree)
+Compilation::Compilation(const SyntaxTree & tree)
+	:_syntax(&tree)
 {
-	_syntax.swap(tree);
+}
+
+Compilation::Compilation(const unique_ptr<SyntaxTree>& tree)
+	:_syntax(tree.get())
+{
 }
 
 EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
