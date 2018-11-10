@@ -70,7 +70,7 @@ vector<TextLine> SourceText::ParseLines(SourceText * sourceText, const string & 
 			lineStart = position;
 		}
 	}
-	if (position > lineStart)
+	if (position >= lineStart)
 		AddLine(result, *sourceText, position, lineStart, 0);
 	result.shrink_to_fit();
 	return result;

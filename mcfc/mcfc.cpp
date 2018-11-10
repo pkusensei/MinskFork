@@ -23,7 +23,7 @@ void PrintValue(const MCF::ValueType& value)
 			std::cout << MCF::GetTypeName(value.Type()) << " " << static_cast<bool>(value.GetValue<bool>()) << std::endl;
 			break;
 		default:
-			std::cout << "Not valid value or type";
+			std::cout << "Not valid value or type.\n";
 			break;
 	}
 }
@@ -42,6 +42,7 @@ int main()
 	std::cout << "Enter expression.\n";
 	std::string text, input;
 	std::unordered_map<MCF::VariableSymbol, MCF::ValueType, MCF::VariableHash> variables;
+	MCF::Compilation previous;
 	while (true)
 	{
 		if (text.length() == 0)
@@ -52,13 +53,15 @@ int main()
 		auto isBlank = IsStringBlank(input);
 		if (text.length() == 0 && isBlank)
 			break;
-		
-		text += input+"\r"; // HACK "\r" works, "\n" doesn't
+
+		if (!std::cin.eof() && !std::cin.fail())
+			text += input + '\r'; // HACK Windows does "\r\n" together
 		auto tree = std::make_unique<MCF::SyntaxTree>(MCF::SyntaxTree::Parse(text));
 		if (!isBlank && tree->Diagnostics()->size() > 0)
 			continue;
 
-		MCF::Compilation compilation(tree);
+		auto compilation = previous.Syntax() == nullptr ?
+			MCF::Compilation(tree) : previous.ContinueWith(tree);
 		auto result = compilation.Evaluate(variables);
 		auto diagnostics = result.Diagnostics();
 		if (diagnostics == nullptr)

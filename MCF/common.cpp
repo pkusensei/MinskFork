@@ -7,10 +7,14 @@ namespace MCF {
 
 SyntaxKind GetKeywordKind(const string & text)
 {
-	if (text == "true")
-		return SyntaxKind::TrueKeyword;
-	else if (text == "false")
+	if (text == "false")
 		return SyntaxKind::FalseKeyword;
+	else if (text == "let")
+		return SyntaxKind::LetKeyword;
+	else if (text == "true")
+		return SyntaxKind::TrueKeyword;
+	else if (text == "var")
+		return SyntaxKind::VarKeyword;
 	else return SyntaxKind::IdentifierToken;
 }
 
@@ -30,8 +34,12 @@ string GetText(SyntaxKind kind)
 		case SyntaxKind::BangEqualsToken: return "!=";
 		case SyntaxKind::OpenParenthesisToken: return "(";
 		case SyntaxKind::CloseParenthesisToken: return ")";
+		case SyntaxKind::OpenBraceToken: return "{";
+		case SyntaxKind::CloseBraceToken: return "}";
 		case SyntaxKind::FalseKeyword: return "false";
+		case SyntaxKind::LetKeyword: return "let";
 		case SyntaxKind::TrueKeyword: return "true";
+		case SyntaxKind::VarKeyword: return "var";
 		default: return "";
 	}
 }
@@ -96,58 +104,80 @@ string GetSyntaxKindName(SyntaxKind kind)
 {
 	switch (kind)
 	{
-		case MCF::SyntaxKind::BadToken:
+		case SyntaxKind::BadToken:
 			return "BadToken";
-		case MCF::SyntaxKind::EndOfFileToken:
+		case SyntaxKind::EndOfFileToken:
 			return "EndOfFileToken";
-		case MCF::SyntaxKind::WhitespaceToken:
+		case SyntaxKind::WhitespaceToken:
 			return "WhitespaceToken";
-		case MCF::SyntaxKind::NumberToken:
+		case SyntaxKind::NumberToken:
 			return "NumberToken";
-		case MCF::SyntaxKind::PlusToken:
+		case SyntaxKind::PlusToken:
 			return "PlusToken";
-		case MCF::SyntaxKind::MinusToken:
+		case SyntaxKind::MinusToken:
 			return "MinusToken";
-		case MCF::SyntaxKind::StarToken:
+		case SyntaxKind::StarToken:
 			return "StarToken";
-		case MCF::SyntaxKind::SlashToken:
+		case SyntaxKind::SlashToken:
 			return "SlashToken";
-		case MCF::SyntaxKind::BangToken:
+		case SyntaxKind::BangToken:
 			return "BangToken";
-		case MCF::SyntaxKind::EqualsToken:
+		case SyntaxKind::EqualsToken:
 			return "EqualsToken";
-		case MCF::SyntaxKind::AmpersandAmpersandToken:
+		case SyntaxKind::AmpersandAmpersandToken:
 			return "AmpersandAmpersandToken";
-		case MCF::SyntaxKind::PipePipeToken:
+		case SyntaxKind::PipePipeToken:
 			return "PipePipeToken";
-		case MCF::SyntaxKind::EqualsEqualsToken:
+		case SyntaxKind::EqualsEqualsToken:
 			return "EqualsEqualsToken";
-		case MCF::SyntaxKind::BangEqualsToken:
+		case SyntaxKind::BangEqualsToken:
 			return "BangEqualsToken";
-		case MCF::SyntaxKind::OpenParenthesisToken:
+		case SyntaxKind::OpenParenthesisToken:
 			return "OpenParenthesisToken";
-		case MCF::SyntaxKind::CloseParenthesisToken:
+		case SyntaxKind::CloseParenthesisToken:
 			return "CloseParenthesisToken";
-		case MCF::SyntaxKind::IdentifierToken:
+		case SyntaxKind::OpenBraceToken:
+			return "OpenBraceToken";
+		case SyntaxKind::CloseBraceToken:
+			return "CloseBraceToken";
+		case SyntaxKind::IdentifierToken:
 			return "IdentifierToken";
-		case MCF::SyntaxKind::FalseKeyword:
+
+		case SyntaxKind::FalseKeyword:
 			return "FalseKeyword";
-		case MCF::SyntaxKind::TrueKeyword:
+		case SyntaxKind::LetKeyword:
+			return "LetKeyword";
+		case SyntaxKind::TrueKeyword:
 			return "TrueKeyword";
-		case MCF::SyntaxKind::LiteralExpression:
+		case SyntaxKind::VarKeyword:
+			return "VarKeyword";
+
+		case SyntaxKind::CompilationUnit:
+			return "CompilationUnit";
+
+		case SyntaxKind::BlockStatement:
+			return "VarKeyword";
+		case SyntaxKind::VariableDeclaration:
+			return "VariableDeclaration";
+		case SyntaxKind::ExpressionStatement:
+			return "ExpressionStatement";
+
+
+		case SyntaxKind::LiteralExpression:
 			return "LiteralExpression";
-		case MCF::SyntaxKind::NameExpression:
+		case SyntaxKind::NameExpression:
 			return "NameExpression";
-		case MCF::SyntaxKind::UnaryExpression:
+		case SyntaxKind::UnaryExpression:
 			return "UnaryExpression";
-		case MCF::SyntaxKind::BinaryExpression:
+		case SyntaxKind::BinaryExpression:
 			return "BinaryExpression";
-		case MCF::SyntaxKind::ParenthesizedExpression:
+		case SyntaxKind::ParenthesizedExpression:
 			return "ParenthesizedExpression";
-		case MCF::SyntaxKind::AssignmentExpression:
+		case SyntaxKind::AssignmentExpression:
 			return "AssignmentExpression";
+
 		default:
-			throw std::exception();
+			throw std::invalid_argument("Invalid syntax; no such token.");
 	}
 }
 
@@ -165,18 +195,18 @@ type_index ValueType::Type() const
 	}
 }
 
-VariableSymbol::VariableSymbol(const string& name, const type_index& type)
-	:_name(name), _type(type)
+VariableSymbol::VariableSymbol(const string& name, bool readOnly, const type_index& type)
+	:_name(name), _isReadOnly(readOnly), _type(type)
 {
 }
 
-VariableSymbol::VariableSymbol(const string & name, const std::type_info & type)
-	: VariableSymbol(name, type_index(type))
+VariableSymbol::VariableSymbol(const string & name, bool readOnly, const std::type_info & type)
+	: VariableSymbol(name, readOnly, type_index(type))
 {
 }
 
 VariableSymbol::VariableSymbol()
-	: VariableSymbol("", typeid(std::monostate))
+	: VariableSymbol("", true, typeid(std::monostate))
 {
 }
 

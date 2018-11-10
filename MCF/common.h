@@ -37,11 +37,23 @@ enum class SyntaxKind
 	BangEqualsToken,
 	OpenParenthesisToken,
 	CloseParenthesisToken,
+	OpenBraceToken,
+	CloseBraceToken,
 	IdentifierToken,
 
 	// Keywords
 	FalseKeyword,
+	LetKeyword,
 	TrueKeyword,
+	VarKeyword,
+
+	// Node
+	CompilationUnit,
+
+	// Statements
+	BlockStatement,
+	VariableDeclaration,
+	ExpressionStatement,
 
 	// Expressions
 	LiteralExpression,
@@ -57,7 +69,6 @@ SyntaxKind GetKeywordKind(const string& text);
 string GetText(SyntaxKind kind);
 int GetUnaryOperatorPrecedence(SyntaxKind kind);
 int GetBinaryOperatorPrecedence(SyntaxKind kind);
-
 
 MCF_API int GetValueTypeId(const type_index& inType);
 MCF_API string GetTypeName(const type_index& inType);
@@ -94,14 +105,16 @@ class MCF_API VariableSymbol final
 {
 private:
 	string _name;
+	bool _isReadOnly;
 	type_index _type; // no move
 public:
-	VariableSymbol(const string& name, const type_index& type);
-	VariableSymbol(const string& name, const std::type_info& type);
+	VariableSymbol(const string& name, bool readOnly, const type_index& type);
+	VariableSymbol(const string& name, bool readOnly, const std::type_info& type);
 	VariableSymbol();
 	~VariableSymbol() = default;
 
 	string Name()const { return _name; }
+	bool IsReadOnly()const { return _isReadOnly; }
 	type_index Type()const { return _type; }
 
 	bool operator==(const VariableSymbol& other) const;

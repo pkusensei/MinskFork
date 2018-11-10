@@ -73,6 +73,8 @@ public:
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
 };
 
+#pragma region Expression
+
 class ExpressionSyntax :public SyntaxNode
 {
 public:
@@ -192,6 +194,97 @@ public:
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken IdentifierToken()const { return _identifierToken; }
+};
+
+#pragma endregion
+
+class StatementSyntax :public SyntaxNode
+{
+public:
+	virtual ~StatementSyntax() = default;
+	// Inherited via SyntaxNode
+	virtual SyntaxKind Kind() const override { return SyntaxKind::BadToken; } // HACK
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
+};
+
+class BlockStatementSyntax final : public StatementSyntax
+{
+private:
+	SyntaxToken _openBraceToken;
+	SyntaxToken _closeBraceToken;
+	vector<unique_ptr<StatementSyntax>> _statements;
+
+public:
+	BlockStatementSyntax(const SyntaxToken& open, vector<unique_ptr<StatementSyntax>>& statements, const SyntaxToken& close);
+	virtual ~BlockStatementSyntax() = default;
+	BlockStatementSyntax(BlockStatementSyntax&& other);
+
+	// Inherited via StatementSyntax
+	virtual SyntaxKind Kind() const override { return SyntaxKind::BlockStatement; }
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
+
+	SyntaxToken OpenBraceToken()const { return _openBraceToken; }
+	SyntaxToken CloseBraceToken()const { return _closeBraceToken; }
+	const vector<const StatementSyntax*> Statements()const;
+};
+
+class VariableDeclarationSyntax final : public StatementSyntax
+{
+private:
+	SyntaxToken _keyword;
+	SyntaxToken _identifier;
+	SyntaxToken _equalsToken;
+	unique_ptr<ExpressionSyntax> _initializer;
+public:
+	VariableDeclarationSyntax(const SyntaxToken& keyword, const SyntaxToken& identifier,
+							  const SyntaxToken& equals, unique_ptr<ExpressionSyntax>& initializer);
+	virtual ~VariableDeclarationSyntax() = default;
+	VariableDeclarationSyntax(VariableDeclarationSyntax&& other);
+
+	// Inherited via StatementSyntax
+	virtual SyntaxKind Kind() const override { return SyntaxKind::VariableDeclaration; }
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
+
+	SyntaxToken Keyword()const { return _keyword; }
+	SyntaxToken Identifier()const { return _identifier; }
+	SyntaxToken EqualsToken()const { return _equalsToken; }
+	const ExpressionSyntax* Initializer()const { return _initializer.get(); }
+};
+
+class ExpressionStatementSyntax final : public StatementSyntax
+{
+private:
+	unique_ptr<ExpressionSyntax> _expression;
+
+public:
+	ExpressionStatementSyntax(unique_ptr<ExpressionSyntax>& expression);
+	virtual ~ExpressionStatementSyntax() = default;
+	ExpressionStatementSyntax(ExpressionStatementSyntax&& other);
+
+	// Inherited via StatementSyntax
+	virtual SyntaxKind Kind() const override { return SyntaxKind::ExpressionStatement; }
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
+
+	const ExpressionSyntax* Expression()const { return _expression.get(); }
+};
+
+class CompilationUnitSyntax final :public SyntaxNode
+{
+private:
+	unique_ptr<StatementSyntax> _statement;
+	SyntaxToken _endOfFileToken;
+
+public:
+	CompilationUnitSyntax(unique_ptr<StatementSyntax>& statement, const SyntaxToken& endOfFile);
+	virtual ~CompilationUnitSyntax() = default;
+	CompilationUnitSyntax(CompilationUnitSyntax&& other);
+
+	// Inherited via SyntaxNode
+	virtual SyntaxKind Kind() const override { return SyntaxKind::CompilationUnit; }
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
+
+	const StatementSyntax* Statement()const { return _statement.get(); }
+	SyntaxToken EndOfFileToken()const { return _endOfFileToken; }
 };
 
 }//MCF

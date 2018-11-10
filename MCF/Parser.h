@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 #include "common.h"
 
 namespace MCF {
@@ -9,6 +7,8 @@ namespace MCF {
 class SyntaxToken;
 class DiagnosticBag;
 class ExpressionSyntax;
+class StatementSyntax;
+class CompilationUnitSyntax;
 class SyntaxTree;
 class SourceText;
 
@@ -24,6 +24,11 @@ private:
 	SyntaxToken* Current() const;
 	SyntaxToken* NextToken();
 	SyntaxToken* MatchToken(SyntaxKind kind);
+
+	unique_ptr<StatementSyntax> ParseStatement();
+	unique_ptr<StatementSyntax> ParseBlockStatement();
+	unique_ptr<StatementSyntax> ParseVariableDeclaration();
+	unique_ptr<StatementSyntax> ParseExpressionStatement();
 
 	unique_ptr<ExpressionSyntax> ParseExpression();
 	unique_ptr<ExpressionSyntax> ParseAssignmentExpression();
@@ -41,7 +46,7 @@ public:
 	~Parser() = default;
 
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
-	SyntaxTree Parse();
+	unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
 };
 
 class MCF_API SyntaxTree final
@@ -49,17 +54,16 @@ class MCF_API SyntaxTree final
 private:
 	unique_ptr<SourceText> _text;
 	unique_ptr<DiagnosticBag> _diagnostics;
-	unique_ptr<ExpressionSyntax> _root;
-	unique_ptr<SyntaxToken> _endOfFileToken;
+	unique_ptr<CompilationUnitSyntax> _root;
+
+	SyntaxTree(const SourceText& text);
+
 public:
-	SyntaxTree(const SourceText& text, unique_ptr<DiagnosticBag>& diagnostics,
-			   unique_ptr<ExpressionSyntax>& root, const SyntaxToken& endOfFileToken);
 	~SyntaxTree() = default;
 	SyntaxTree(SyntaxTree&& other);
 
 	const SourceText& Text() const { return *_text; }
-	const ExpressionSyntax* Root()const { return _root.get(); }
-	const SyntaxToken* EndOfFileToken() const { return _endOfFileToken.get(); }
+	const CompilationUnitSyntax* Root()const { return _root.get(); }
 	DiagnosticBag* Diagnostics() const { return _diagnostics.get(); }
 
 	static SyntaxTree Parse(const string& text);

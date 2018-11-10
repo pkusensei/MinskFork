@@ -57,6 +57,52 @@ SyntaxToken* Parser::MatchToken(SyntaxKind kind)
 	return current;
 }
 
+unique_ptr<StatementSyntax> Parser::ParseStatement()
+{
+	switch (Current()->Kind())
+	{
+		case SyntaxKind::OpenBraceToken:
+			return ParseBlockStatement();
+		case SyntaxKind::LetKeyword:
+		case SyntaxKind::VarKeyword:
+			return ParseVariableDeclaration();
+		default:
+			return ParseExpressionStatement();
+	}
+}
+
+unique_ptr<StatementSyntax> Parser::ParseBlockStatement()
+{
+	auto statements = vector<unique_ptr<StatementSyntax>>();
+	auto openBraceToken = MatchToken(SyntaxKind::OpenBraceToken);
+
+	while (Current()->Kind() != SyntaxKind::EndOfFileToken &&
+		   Current()->Kind() != SyntaxKind::CloseBraceToken)
+	{
+		statements.emplace_back(ParseStatement());
+	}
+	auto closeBraceToken = MatchToken(SyntaxKind::CloseBraceToken);
+	return std::make_unique<BlockStatementSyntax>(*openBraceToken, statements, *closeBraceToken);
+}
+
+unique_ptr<StatementSyntax> Parser::ParseVariableDeclaration()
+{
+	auto expected = Current()->Kind() == SyntaxKind::LetKeyword ? SyntaxKind::LetKeyword
+		: SyntaxKind::VarKeyword;
+	auto keyword = MatchToken(expected);
+	auto identifier = MatchToken(SyntaxKind::IdentifierToken);
+	auto equals = MatchToken(SyntaxKind::EqualsToken);
+	auto initializer = ParseExpression();
+
+	return std::make_unique<VariableDeclarationSyntax>(*keyword, *identifier, *equals, initializer);
+}
+
+unique_ptr<StatementSyntax> Parser::ParseExpressionStatement()
+{
+	auto expression = ParseExpression();
+	return std::make_unique<ExpressionStatementSyntax>(expression);
+}
+
 unique_ptr<ExpressionSyntax> Parser::ParseExpression()
 {
 	return ParseAssignmentExpression();
@@ -146,20 +192,19 @@ unique_ptr<ExpressionSyntax> Parser::ParseNameExpression()
 	return std::make_unique<NameExpressionSyntax>(*identifier);
 }
 
-SyntaxTree Parser::Parse()
+unique_ptr<CompilationUnitSyntax> Parser::ParseCompilationUnit()
 {
-	auto expression = ParseExpression();
+	auto statement = ParseStatement();
 	auto endOfFileToken = MatchToken(SyntaxKind::EndOfFileToken);
-	return SyntaxTree(_text, _diagnostics, expression, *endOfFileToken);
+	return std::make_unique<CompilationUnitSyntax>(statement, *endOfFileToken);
 }
 
-SyntaxTree::SyntaxTree(const SourceText& text, unique_ptr<DiagnosticBag>& diagnostics,
-					   unique_ptr<ExpressionSyntax>& root, const SyntaxToken& endOfFileToken)
-	:_text(std::make_unique<SourceText>(text))
+SyntaxTree::SyntaxTree(const SourceText& text)
+	:_text(std::make_unique<SourceText>(text)),_diagnostics(std::make_unique<DiagnosticBag>())
 {
-	_diagnostics.swap(diagnostics);
-	_root.swap(root);
-	_endOfFileToken = std::make_unique<SyntaxToken>(endOfFileToken);
+	Parser parser(text);
+	_root = parser.ParseCompilationUnit();
+	_diagnostics->AddRange(*parser.Diagnostics());
 }
 
 SyntaxTree::SyntaxTree(SyntaxTree && other)
@@ -167,7 +212,6 @@ SyntaxTree::SyntaxTree(SyntaxTree && other)
 	_text.swap(other._text);
 	_diagnostics.swap(other._diagnostics);
 	_root.swap(other._root);
-	_endOfFileToken.swap(other._endOfFileToken);
 }
 
 SyntaxTree SyntaxTree::Parse(const string & text)
@@ -178,8 +222,7 @@ SyntaxTree SyntaxTree::Parse(const string & text)
 
 SyntaxTree SyntaxTree::Parse(const SourceText & text)
 {
-	Parser parser(text);
-	return parser.Parse();
+	return SyntaxTree(text);
 }
 
 }//MCF

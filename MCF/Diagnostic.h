@@ -1,5 +1,7 @@
 #pragma once
 
+#include <deque>
+
 #include "common.h"
 #include "SourceText.h" // HACK
 
@@ -15,7 +17,6 @@ private:
 	string _message;
 public:
 	Diagnostic(const TextSpan& span, const string& message);
-	//Diagnostic();
 	~Diagnostic();
 	Diagnostic(Diagnostic&& other);
 	Diagnostic& operator=(Diagnostic&& other);
@@ -27,7 +28,7 @@ public:
 class MCF_API DiagnosticBag final
 {
 private:
-	vector<Diagnostic> _diagnostics;
+	std::deque<Diagnostic> _diagnostics;
 	void Report(const TextSpan& span, const string& message);
 public:
 	DiagnosticBag();
@@ -40,13 +41,17 @@ public:
 	iterator begin();
 	iterator end();
 
+	void AddRangeFront(DiagnosticBag& other);
 	void AddRange(DiagnosticBag& other);
 	void ReportInvalidNumber(const TextSpan& span, const string& text, const type_index& type);
 	void ReportBadCharacter(int position, char character);
 	void ReportUnexpectedToken(const TextSpan& span, SyntaxKind actualKind, SyntaxKind expectedKind);
 	void ReportUndefinedName(const TextSpan& span, const string& name);
+	void ReportCannotConvert(const TextSpan& span, const type_index& fromType, const type_index& toType);
 	void ReportUndefinedUnaryOperator(const TextSpan& span, const string& operatorText, const type_index& operandType);
 	void ReportUndefinedBinaryOperator(const TextSpan& span, const string& operatorText, const type_index& leftType, const type_index& rightType);
+	void ReportVariableAlreadyDeclared(const TextSpan& span, const string& name);
+	void ReportCannotAssign(const TextSpan& span, const string& name);
 };
 
 class MCF_API DiagnosticBag::iterator

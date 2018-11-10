@@ -7,17 +7,25 @@
 namespace MCF {
 
 class DiagnosticBag;
+class StatementSyntax;
 class ExpressionSyntax;
+class CompilationUnitSyntax;
 
 enum class BoundNodeKind
 {
+	// Statements
+	BlockStatement,
+	VariableDeclaration,
+	ExpressionStatement,
+
+	// Expressions
 	LiteralExpression,
 	VariableExpression,
 	AssignmentExpression,
 	UnaryExpression,
 	BinaryExpression,
 
-	EmptyExpression //HACK
+	VoidExpression //HACK
 };
 
 enum class BoundUnaryOperatorKind
@@ -48,11 +56,11 @@ public:
 
 class BoundExpression :public BoundNode
 {
-	// HACK
+	// NOTE
 public:
 	virtual ~BoundExpression() = default;
 	// Inherited via BoundNode
-	virtual BoundNodeKind Kind() const override { return BoundNodeKind::EmptyExpression; }
+	virtual BoundNodeKind Kind() const override { return BoundNodeKind::VoidExpression; }
 	virtual type_index Type() const { return typeid(std::monostate); }
 };
 
@@ -204,12 +212,104 @@ public:
 	VariableSymbol Variable()const { return _variable; }
 };
 
-class Binder
+class BoundStatement :public BoundNode
+{
+public:
+	// Inherited via BoundNode
+	virtual BoundNodeKind Kind() const override { return BoundNodeKind::VoidExpression; }
+};
+
+class BoundBlockStatement final : public BoundStatement
+{
+private:
+	vector<unique_ptr<BoundStatement>> _statements;
+public:
+	BoundBlockStatement(vector<unique_ptr<BoundStatement>>& statements);
+	virtual ~BoundBlockStatement() = default;
+	BoundBlockStatement(BoundBlockStatement&& other);
+
+	// Inherited via BoundStatement
+	virtual BoundNodeKind Kind() const override { return BoundNodeKind::BlockStatement; }
+	const vector<BoundStatement*> Statements()const;
+};
+
+class BoundVariableDeclaration final :public BoundStatement
+{
+private:
+	VariableSymbol _variable;
+	unique_ptr<BoundExpression> _initializer;
+public:
+	BoundVariableDeclaration(const VariableSymbol& variable, unique_ptr<BoundExpression>& initializer);
+	virtual ~BoundVariableDeclaration() = default;
+	BoundVariableDeclaration(BoundVariableDeclaration&& other);
+
+	// Inherited via BoundStatement
+	virtual BoundNodeKind Kind() const override { return BoundNodeKind::VariableDeclaration; }
+
+	VariableSymbol Variable()const { return _variable; }
+	const BoundExpression* Initializer()const { return _initializer.get(); }
+};
+
+class BoundExpressionStatement final : public BoundStatement
+{
+private:
+	unique_ptr<BoundExpression> _expression;
+
+public:
+	BoundExpressionStatement(unique_ptr<BoundExpression>& expression);
+	virtual ~BoundExpressionStatement() = default;
+	BoundExpressionStatement(BoundExpressionStatement&& other);
+
+	// Inherited via BoundStatement
+	virtual BoundNodeKind Kind() const override { return BoundNodeKind::ExpressionStatement; }
+
+	const BoundExpression* Expression()const { return _expression.get(); }
+};
+
+class BoundScope final
+{
+private:
+	std::unordered_map<string, VariableSymbol> _variables;
+	const BoundScope* _parent;
+public:
+	explicit BoundScope(const BoundScope* parent);
+	explicit BoundScope(const unique_ptr<BoundScope>& parent);
+
+	const BoundScope* Parent()const { return _parent; }
+	bool TryDeclare(const VariableSymbol& variable);
+	bool TryLookup(const string& name, VariableSymbol& variable)const;
+	const vector<VariableSymbol> GetDeclaredVariables()const;
+};
+
+class BoundGlobalScope final
+{
+private:
+	const BoundGlobalScope* _previous;
+	unique_ptr<DiagnosticBag> _diagnostics;
+	const vector<VariableSymbol> _variables;
+	unique_ptr<BoundStatement> _statement;
+public:
+	BoundGlobalScope(const BoundGlobalScope* previous, unique_ptr<DiagnosticBag>& diagnostics,
+					 const vector<VariableSymbol>& variables, unique_ptr<BoundStatement>& statement);
+	
+	const BoundGlobalScope* Previous()const { return _previous; }
+	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
+	const vector<VariableSymbol> Variables()const { return _variables; }
+	const BoundStatement* Statement()const { return _statement.get(); }
+};
+
+class Binder final
 {
 private:
 	unique_ptr<DiagnosticBag> _diagnostics;
-	std::unordered_map<VariableSymbol, ValueType, VariableHash>* _variables;
+	unique_ptr<BoundScope> _scope;
 
+	unique_ptr<BoundStatement> BindStatement(const StatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindBlockStatement(const StatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindVariableDeclaration(const StatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindExpressionStatement(const StatementSyntax* syntax);
+
+	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindParenthesizedExpression(const ExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindLiteralExpression(const ExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindNameExpression(const ExpressionSyntax* syntax);
@@ -217,13 +317,14 @@ private:
 	unique_ptr<BoundExpression> BindUnaryExpression(const ExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindBinaryExpression(const ExpressionSyntax* syntax);
 
+	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
 public:
-	Binder(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables);
+	Binder(unique_ptr<BoundScope>& parent);
 	~Binder() = default;
 
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
 
-	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax);
+	static unique_ptr<BoundGlobalScope> BindGlobalScope(const BoundGlobalScope* previous, const CompilationUnitSyntax* syntax);
 };
 
 }//MCF

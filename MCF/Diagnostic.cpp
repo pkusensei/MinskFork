@@ -9,11 +9,6 @@ Diagnostic::Diagnostic(const TextSpan& span, const string& message)
 {
 }
 
-//Diagnostic::Diagnostic()
-//	:Diagnostic(TextSpan(), "")
-//{
-//}
-
 Diagnostic::~Diagnostic() = default;
 
 Diagnostic::Diagnostic(Diagnostic && other)
@@ -29,7 +24,7 @@ Diagnostic& Diagnostic::operator=(Diagnostic && other)
 }
 
 DiagnosticBag::DiagnosticBag()
-	:_diagnostics(vector<Diagnostic>())
+	:_diagnostics(std::deque<Diagnostic>())
 {
 }
 
@@ -53,20 +48,26 @@ const Diagnostic& DiagnosticBag::GetOneDiagnostic(int idx) const
 	return _diagnostics[idx];
 }
 
- DiagnosticBag::iterator DiagnosticBag::begin()
+DiagnosticBag::iterator DiagnosticBag::begin()
 {
 	return iterator(0, *this);
 }
 
- DiagnosticBag::iterator DiagnosticBag::end()
+DiagnosticBag::iterator DiagnosticBag::end()
 {
 	return iterator(_diagnostics.size(), *this);
 }
 
+void DiagnosticBag::AddRangeFront(DiagnosticBag & other)
+{
+	_diagnostics.insert(_diagnostics.begin(),
+						make_move_iterator(other._diagnostics.begin()), make_move_iterator(other._diagnostics.end()));
+
+}
+
 void DiagnosticBag::AddRange(DiagnosticBag& other)
 {
-	_diagnostics.reserve(_diagnostics.size() + other._diagnostics.size());
-	_diagnostics.insert(_diagnostics.end(), 
+	_diagnostics.insert(_diagnostics.end(),
 						make_move_iterator(other._diagnostics.begin()), make_move_iterator(other._diagnostics.end()));
 }
 
@@ -97,6 +98,13 @@ void DiagnosticBag::ReportUndefinedName(const TextSpan & span, const string & na
 	Report(span, message);
 }
 
+void DiagnosticBag::ReportCannotConvert(const TextSpan & span, const type_index & fromType, const type_index & toType)
+{
+	string message("Cannot convert type ");
+	message += GetTypeName(fromType) + " to " + GetTypeName(toType);
+	Report(span, message);
+}
+
 void DiagnosticBag::ReportUndefinedUnaryOperator(const TextSpan & span, const string & operatorText, const type_index & operandType)
 {
 	string message{"Unary operator '"};
@@ -104,10 +112,25 @@ void DiagnosticBag::ReportUndefinedUnaryOperator(const TextSpan & span, const st
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan & span, const string & operatorText, const type_index& leftType, const type_index& rightType)
+void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan & span, const string & operatorText, 
+												  const type_index& leftType, const type_index& rightType)
 {
 	string message{"Binary operator '"};
-	message += "' is not defined for types " + GetTypeName(leftType) + " and " + GetTypeName(rightType);
+	message += operatorText + "' is not defined for types " + GetTypeName(leftType) + " and " + GetTypeName(rightType);
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportVariableAlreadyDeclared(const TextSpan & span, const string & name)
+{
+	string message("Variable ");
+	message += name + " is already declared.";
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportCannotAssign(const TextSpan & span, const string & name)
+{
+	string message("Variable ");
+	message += name + " is read-only; cannot be assigned to.";
 	Report(span, message);
 }
 

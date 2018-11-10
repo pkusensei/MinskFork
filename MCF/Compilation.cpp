@@ -20,9 +20,60 @@ EvaluationResult::EvaluationResult(EvaluationResult && other)
 	other._value = ValueType();
 }
 
-Evaluator::Evaluator(const unique_ptr<BoundExpression>& root, std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
-	:_root(root.get()), _variables(&variables)
+Evaluator::Evaluator(const BoundStatement* root, std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
+	:_root(root), _variables(&variables)
 {
+}
+
+ValueType Evaluator::Evaluate()
+{
+	EvaluateStatement(_root);
+	return _lastValue;
+}
+
+void Evaluator::EvaluateStatement(const BoundStatement * node)
+{
+	switch (node->Kind())
+	{
+		case BoundNodeKind::BlockStatement:
+			EvaluateBlockStatement(node);
+			break;
+		case BoundNodeKind::VariableDeclaration:
+			EvaluateVariableDeclaration(node);
+			break;
+		case BoundNodeKind::ExpressionStatement:
+			EvaluateExpressionStatement(node);
+			break;
+		default:
+			throw std::invalid_argument("unexpected node.");
+	}
+
+}
+
+void Evaluator::EvaluateBlockStatement(const BoundStatement * node)
+{
+	auto p = dynamic_cast<const BoundBlockStatement*>(node);
+	if (p == nullptr) return;
+
+	for (const auto& it : p->Statements())
+		EvaluateStatement(it);
+}
+
+void Evaluator::EvaluateVariableDeclaration(const BoundStatement * node)
+{
+	auto p = dynamic_cast<const BoundVariableDeclaration*>(node);
+	if (p == nullptr) return;
+
+	auto value = EvaluateExpression(p->Initializer());
+	(*_variables)[p->Variable()] = value;
+	_lastValue = value;
+}
+
+void Evaluator::EvaluateExpressionStatement(const BoundStatement * node)
+{
+	auto p = dynamic_cast<const BoundExpressionStatement*>(node);
+	if (p == nullptr) return;
+	_lastValue = EvaluateExpression(p->Expression());
 }
 
 ValueType Evaluator::EvaluateExpression(const BoundExpression * node)const
@@ -40,7 +91,7 @@ ValueType Evaluator::EvaluateExpression(const BoundExpression * node)const
 		case BoundNodeKind::BinaryExpression:
 			return EvaluateBinaryExpression(node);
 		default:
-			throw std::exception();
+			throw std::invalid_argument("Invalid expression; evaluation failed.");
 	}
 }
 
@@ -79,7 +130,7 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundExpression * node)const
 		case BoundUnaryOperatorKind::LogicalNegation:
 			return !operand.GetValue<bool>();
 		default:
-			throw std::exception();
+			throw std::invalid_argument("Invalid unary operator.");
 	}
 }
 
@@ -109,31 +160,75 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundExpression * node)const
 		case BoundBinaryOperatorKind::NotEquals:
 			return left != right;
 		default:
-			throw std::exception();
+			throw std::invalid_argument("Invalid binary operator");
 	}
 }
 
+Compilation::Compilation()
+	:Compilation(nullptr, nullptr)
+{
+}
+
+Compilation::Compilation(const Compilation * previous, const SyntaxTree & tree)
+	:_previous(previous), _syntaxTree(&tree), _globalScope(nullptr)
+{
+}
+
+Compilation::Compilation(const Compilation * previous, const unique_ptr<SyntaxTree>& tree)
+	: _previous(previous), _syntaxTree(tree.get()), _globalScope(nullptr)
+{
+}
+
 Compilation::Compilation(const SyntaxTree & tree)
-	:_syntax(&tree)
+	: Compilation(nullptr, tree)
 {
 }
 
 Compilation::Compilation(const unique_ptr<SyntaxTree>& tree)
-	:_syntax(tree.get())
+	: Compilation(nullptr, tree)
 {
+}
+
+Compilation::~Compilation() = default;
+
+BoundGlobalScope * Compilation::GlobalScope()
+{
+	if (_globalScope == nullptr)
+	{
+		unique_ptr<BoundGlobalScope> tmp{nullptr};
+		if (_previous == nullptr)
+			tmp = Binder::BindGlobalScope(nullptr, _syntaxTree->Root());
+		else		
+			tmp = Binder::BindGlobalScope(std::remove_cv_t<Compilation*>(_previous)->GlobalScope(), _syntaxTree->Root());
+		
+		std::unique_lock<std::mutex> lock(_mtx, std::defer_lock);
+		if (lock.try_lock())
+		{
+			_globalScope.swap(tmp);
+		}
+	}
+	return _globalScope.get();
+}
+
+Compilation Compilation::ContinueWith(const SyntaxTree & tree)
+{
+	return Compilation(this, tree);
+}
+
+Compilation Compilation::ContinueWith(const unique_ptr<SyntaxTree>& tree)
+{
+	return Compilation(this, tree);
 }
 
 EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
 {
-	Binder binder(variables);
-	auto boundExpression = binder.BindExpression(_syntax->Root());
-	_syntax->Diagnostics()->AddRange(*binder.Diagnostics());
-	auto diagnostics = _syntax->Diagnostics();
-	
+	_syntaxTree->Diagnostics()->AddRange(*GlobalScope()->Diagnostics());
+	auto diagnostics = _syntaxTree->Diagnostics();
+
 	if (diagnostics->size() > 0)
 		return EvaluationResult(diagnostics, ValueType());
 
-	Evaluator evaluator(boundExpression, variables);
+	Evaluator evaluator(GlobalScope()->Statement(), variables);
 	auto value = evaluator.Evaluate();
 	return EvaluationResult(nullptr, value);
 }

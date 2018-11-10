@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Binder.h"
 
+#include <stack>
+
 #include "Diagnostic.h"
 #include "SyntaxNode.h"
 #include "SourceText.h"
@@ -96,7 +98,7 @@ BoundBinaryOperator BoundBinaryOperator::_operators[] = {
 
 BoundBinaryOperator BoundBinaryOperator::Bind(enum SyntaxKind synKind, type_index leftType, type_index rightType)
 {
-	for(const auto& op:_operators)
+	for (const auto& op : _operators)
 	{
 		if (op.SyntaxKind() == synKind && op.LeftType() == leftType && op.RightType() == rightType)
 			return op;
@@ -139,24 +141,168 @@ BoundLiteralExpression::BoundLiteralExpression(const ValueType & value)
 }
 
 BoundLiteralExpression::BoundLiteralExpression(BoundLiteralExpression && other)
-	:_value(std::move(other._value))
+	: _value(std::move(other._value))
 {
 }
 
 BoundVariableExpression::BoundVariableExpression(const VariableSymbol & variable)
-	:_variable(variable)
+	: _variable(variable)
 {
 }
 
 BoundVariableExpression::BoundVariableExpression(BoundVariableExpression && other)
-	:_variable(other._variable)
+	: _variable(other._variable)
 {
 	other._variable = {};
 }
 
-Binder::Binder(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
-	:_diagnostics(std::make_unique<DiagnosticBag>()), _variables(&variables)
+BoundBlockStatement::BoundBlockStatement(vector<unique_ptr<BoundStatement>>& statements)
+	: _statements(std::move(statements))
 {
+}
+
+BoundBlockStatement::BoundBlockStatement(BoundBlockStatement && other)
+	: _statements(std::move(other._statements))
+{
+}
+
+const vector<BoundStatement*> BoundBlockStatement::Statements() const
+{
+	auto result = vector<BoundStatement*>();
+	for (const auto& it : _statements)
+		result.emplace_back(it.get());
+	return result;
+}
+
+
+BoundVariableDeclaration::BoundVariableDeclaration(const VariableSymbol & variable, unique_ptr<BoundExpression>& initializer)
+	:_variable(variable), _initializer(std::move(initializer))
+{
+}
+
+BoundVariableDeclaration::BoundVariableDeclaration(BoundVariableDeclaration && other)
+	: _variable(std::move(other._variable)), _initializer(std::move(other._initializer))
+{
+}
+
+BoundExpressionStatement::BoundExpressionStatement(unique_ptr<BoundExpression>& expression)
+	: _expression(std::move(expression))
+{
+}
+
+BoundExpressionStatement::BoundExpressionStatement(BoundExpressionStatement && other)
+	: _expression(std::move(other._expression))
+{
+}
+
+BoundScope::BoundScope(const BoundScope* parent)
+	: _variables({}), _parent(parent)
+{
+}
+
+BoundScope::BoundScope(const unique_ptr<BoundScope>& parent)
+	:BoundScope(parent.get())
+{
+}
+
+bool BoundScope::TryDeclare(const VariableSymbol & variable)
+{
+	if (_variables.find(variable.Name()) == _variables.end())
+	{
+		_variables.emplace(variable.Name(), variable);
+		return true;
+	}
+	return false;
+}
+
+bool BoundScope::TryLookup(const string & name, VariableSymbol & variable)const
+{
+	if (_variables.find(name) != _variables.end())
+	{
+		variable = _variables.at(name);
+		return true;
+	}
+	if (_parent == nullptr)
+		return false;
+	return _parent->TryLookup(name, variable);
+}
+
+const vector<VariableSymbol> BoundScope::GetDeclaredVariables() const
+{
+	auto result = vector<VariableSymbol>();
+	for (const auto& it : _variables)
+		result.emplace_back(it.second);
+	return result;
+}
+
+
+BoundGlobalScope::BoundGlobalScope(const BoundGlobalScope* previous, unique_ptr<DiagnosticBag>& diagnostics,
+								   const vector<VariableSymbol>& variables, unique_ptr<BoundStatement>& statement)
+	:_previous(previous), _diagnostics(std::move(diagnostics)),
+	_variables(variables), _statement(std::move(statement))
+{
+}
+
+Binder::Binder(unique_ptr<BoundScope>& parent)
+	: _diagnostics(std::make_unique<DiagnosticBag>()),
+	_scope(std::make_unique<BoundScope>(parent))
+{
+}
+
+
+unique_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax * syntax)
+{
+	switch (syntax->Kind())
+	{
+		case SyntaxKind::BlockStatement:
+			return BindBlockStatement(syntax);
+		case SyntaxKind::VariableDeclaration:
+			return BindVariableDeclaration(syntax);
+		case SyntaxKind::ExpressionStatement:
+			return BindExpressionStatement(syntax);
+		default:
+			throw std::invalid_argument("Unexpected syntax.");
+	}
+}
+
+unique_ptr<BoundStatement> Binder::BindBlockStatement(const StatementSyntax * syntax)
+{
+	auto p = dynamic_cast<const BlockStatementSyntax*>(syntax);
+	if (p == nullptr) return nullptr;
+
+	auto statements = vector<unique_ptr<BoundStatement>>();
+	auto tmp = std::make_unique<BoundScope>(_scope);
+	_scope.swap(tmp);
+	for (const auto& it : p->Statements())
+			statements.emplace_back(BindStatement(it));
+	//_scope.reset(std::remove_cv_t<BoundScope*>(_scope->Parent()));
+	_scope.swap(tmp);
+	return std::make_unique<BoundBlockStatement>(statements);
+}
+
+unique_ptr<BoundStatement> Binder::BindVariableDeclaration(const StatementSyntax * syntax)
+{
+	auto p = dynamic_cast<const VariableDeclarationSyntax*>(syntax);
+	if (p == nullptr) return nullptr;
+
+	auto name = p->Identifier().Text();
+	auto readOnly = p->Keyword().Kind() == SyntaxKind::LetKeyword;
+	auto init = BindExpression(p->Initializer());
+	auto variable = VariableSymbol(name, readOnly, init->Type());
+
+	if (!_scope->TryDeclare(variable))
+		_diagnostics->ReportVariableAlreadyDeclared(p->Identifier().Span(), name);
+
+	return std::make_unique<BoundVariableDeclaration>(variable, init);
+}
+
+unique_ptr<BoundStatement> Binder::BindExpressionStatement(const StatementSyntax * syntax)
+{
+	auto p = dynamic_cast<const ExpressionStatementSyntax*>(syntax);
+	if (p == nullptr) return nullptr;
+	
+	auto expression = BindExpression(p->Expression());
+	return std::make_unique<BoundExpressionStatement>(expression);
 }
 
 unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * syntax)
@@ -176,7 +322,7 @@ unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * synt
 		case SyntaxKind::BinaryExpression:
 			return BindBinaryExpression(syntax);
 		default:
-			throw std::exception(); // TODO
+			throw std::invalid_argument("Invalid expression; binding failed.");
 	}
 }
 
@@ -198,11 +344,14 @@ unique_ptr<BoundExpression> Binder::BindNameExpression(const ExpressionSyntax * 
 	if (p == nullptr) return nullptr;
 
 	auto name = p->IdentifierToken().Text();
-	for (const auto& it : *_variables)	
-		if (it.first.Name() == name)
-			return std::make_unique<BoundVariableExpression>(it.first);
-	_diagnostics->ReportUndefinedName(p->IdentifierToken().Span(), name);
-	return std::make_unique<BoundLiteralExpression>(static_cast<long>(0));
+	VariableSymbol tmp;
+	VariableSymbol& variable = tmp;
+	if (!_scope->TryLookup(name, variable))
+	{
+		_diagnostics->ReportUndefinedName(p->IdentifierToken().Span(), name);
+		return std::make_unique<BoundLiteralExpression>(static_cast<long>(0));
+	}
+	return std::make_unique<BoundVariableExpression>(variable);
 }
 
 unique_ptr<BoundExpression> Binder::BindAssignmentExpression(const ExpressionSyntax * syntax)
@@ -212,20 +361,21 @@ unique_ptr<BoundExpression> Binder::BindAssignmentExpression(const ExpressionSyn
 
 	auto name = p->IdentifierToken().Text();
 	auto boundExpression = BindExpression(p->Expression());
+	VariableSymbol tmp;
+	VariableSymbol& variable = tmp;
 
-	VariableSymbol existingVariable;
-	bool found{false};
-	for (const auto& it : *_variables)
-		if (it.first.Name() == name)
-		{
-			existingVariable = it.first;
-			found = true;
-		}
-	if (found)
-		_variables->erase(existingVariable);
-
-	VariableSymbol variable(name, boundExpression->Type());
-	_variables->emplace(variable, ValueType());
+	if (!_scope->TryLookup(name, variable))
+	{
+		_diagnostics->ReportUndefinedName(p->IdentifierToken().Span(), name);
+		return boundExpression;
+	}
+	if (variable.IsReadOnly())
+		_diagnostics->ReportCannotAssign(p->EqualsToken().Span(), name);
+	if (boundExpression->Type() != variable.Type())
+	{
+		_diagnostics->ReportCannotConvert(p->Expression()->Span(), boundExpression->Type(), variable.Type());
+		return boundExpression;
+	}
 	return std::make_unique<BoundAssignmentExpression>(variable, boundExpression);
 }
 
@@ -263,6 +413,41 @@ unique_ptr<BoundExpression> Binder::BindBinaryExpression(const ExpressionSyntax 
 													boundLeft->Type(), boundRight->Type());
 		return boundLeft;
 	}
+}
+
+unique_ptr<BoundScope> Binder::CreateParentScope(const BoundGlobalScope * previous)
+{
+	auto stack = std::stack<const BoundGlobalScope*>();
+	while (previous != nullptr)
+	{
+		stack.emplace(previous);
+		previous = previous->Previous();
+	}
+	unique_ptr<BoundScope> parent{nullptr};
+	//auto parent = std::make_unique<BoundScope>();
+	while (!stack.empty())
+	{
+		previous = stack.top();
+		auto scope = std::make_unique<BoundScope>(parent);
+		for (const auto& it : previous->Variables())
+			scope->TryDeclare(it);
+		parent.swap(scope);
+		stack.pop();
+	}
+	return parent;
+}
+
+
+unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope * previous, const CompilationUnitSyntax * syntax)
+{
+	auto parentScope = CreateParentScope(previous);
+	Binder binder(parentScope);
+	auto expression = binder.BindStatement(syntax->Statement());
+	auto variables = binder._scope->GetDeclaredVariables();
+	auto diagnostics = binder.Diagnostics();
+	if (previous != nullptr)
+		diagnostics->AddRangeFront(*previous->Diagnostics());
+	return std::make_unique<BoundGlobalScope>(previous, binder._diagnostics, variables, expression);
 }
 
 }//MCF
