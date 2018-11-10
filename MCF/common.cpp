@@ -156,7 +156,7 @@ string GetSyntaxKindName(SyntaxKind kind)
 			return "CompilationUnit";
 
 		case SyntaxKind::BlockStatement:
-			return "VarKeyword";
+			return "BlockStatement";
 		case SyntaxKind::VariableDeclaration:
 			return "VariableDeclaration";
 		case SyntaxKind::ExpressionStatement:
