@@ -13,7 +13,7 @@
 void PrintValue(const MCF::ValueType& value)
 {
 	auto id = MCF::GetValueTypeId(value.Type());
-	std::cout << "Result value is ";
+	std::cout << "\n" << "Result value is ";
 	switch (id)
 	{
 		case 1:
@@ -26,6 +26,7 @@ void PrintValue(const MCF::ValueType& value)
 			std::cout << "Not valid value or type.\n";
 			break;
 	}
+	std::cout << "\n";
 }
 
 bool IsStringBlank(const std::string& s)
