@@ -43,7 +43,7 @@ private:
 public:
 	//Parser() :Parser("") {}
 	explicit Parser(const SourceText& text);
-	~Parser() = default;
+	~Parser();
 
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
 	unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
@@ -59,7 +59,7 @@ private:
 	SyntaxTree(const SourceText& text);
 
 public:
-	~SyntaxTree() = default;
+	~SyntaxTree();
 	SyntaxTree(SyntaxTree&& other);
 
 	const SourceText& Text() const { return *_text; }

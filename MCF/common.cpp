@@ -12,9 +12,19 @@ SyntaxKind& operator++(SyntaxKind& kind)
 	return kind;
 }
 
-MCF_API SyntaxKind & operator++(SyntaxKind & kind, int c)
+SyntaxKind & operator++(SyntaxKind & kind, int c)
 {
 	return ++kind;
+}
+
+const vector<SyntaxKind> GetAllSyntaxKinds()
+{
+	auto result = vector<SyntaxKind>();
+	for (auto kind = MCF::SyntaxKind::BadToken;
+		 kind != MCF::SyntaxKind::AssignmentExpression; kind++)
+		result.emplace_back(kind);
+	result.shrink_to_fit();
+	return result;
 }
 
 bool StringEndsWith(const string & sample, const string & ending)
@@ -95,6 +105,26 @@ int GetBinaryOperatorPrecedence(SyntaxKind kind)
 		default:
 			return 0;
 	}
+}
+
+vector<SyntaxKind> GetUnaryOperatorKinds()
+{
+	auto kinds = GetAllSyntaxKinds();
+	auto result = vector<SyntaxKind>();
+	for (const auto& it : kinds)
+		if (GetUnaryOperatorPrecedence(it) > 0)
+			result.emplace_back(it);
+	return result;
+}
+
+vector<SyntaxKind> GetBinaryOperatorKinds()
+{
+	auto kinds = GetAllSyntaxKinds();
+	auto result = vector<SyntaxKind>();
+	for (const auto& it : kinds)
+		if (GetBinaryOperatorPrecedence(it) > 0)
+			result.emplace_back(it);
+	return result;
 }
 
 int GetValueTypeId(const type_index & inType)

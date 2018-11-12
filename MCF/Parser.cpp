@@ -27,6 +27,8 @@ Parser::Parser(const SourceText& text)
 	_diagnostics->AddRange(*lexer.Diagnostics());
 }
 
+Parser::~Parser() = default;
+
 SyntaxToken* Parser::Peek(int offset) const
 {
 	auto idx = _position + offset;
@@ -206,6 +208,8 @@ SyntaxTree::SyntaxTree(const SourceText& text)
 	_root = parser.ParseCompilationUnit();
 	_diagnostics->AddRange(*parser.Diagnostics());
 }
+
+SyntaxTree::~SyntaxTree() = default;
 
 SyntaxTree::SyntaxTree(SyntaxTree && other)
 {
