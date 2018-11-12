@@ -5,6 +5,24 @@
 
 namespace MCF {
 
+SyntaxKind& operator++(SyntaxKind& kind)
+{
+	auto tmp = std::underlying_type<SyntaxKind>::type(kind);
+	kind = static_cast<SyntaxKind>(tmp + 1);
+	return kind;
+}
+
+MCF_API SyntaxKind & operator++(SyntaxKind & kind, int c)
+{
+	return ++kind;
+}
+
+bool StringEndsWith(const string & sample, const string & ending)
+{
+	if (sample.length() < ending.length()) return false;
+	return std::equal(ending.rbegin(), ending.rend(), sample.rbegin());
+}
+
 SyntaxKind GetKeywordKind(const string & text)
 {
 	if (text == "false")
@@ -177,7 +195,7 @@ string GetSyntaxKindName(SyntaxKind kind)
 			return "AssignmentExpression";
 
 		default:
-			throw std::invalid_argument("Invalid syntax; no such token.");
+			throw std::invalid_argument("Invalid syntax; no such syntax kind.");
 	}
 }
 

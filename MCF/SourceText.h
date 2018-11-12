@@ -56,8 +56,10 @@ private:
 						size_t position, size_t lineStart, size_t lineBreakWidth);
 	static size_t GetLineBreakWidth(const string& text, size_t position);
 	static vector<TextLine> ParseLines(SourceText* sourceText, const string& text);
-public:
+
 	SourceText(const string& text);
+
+public:
 	~SourceText() = default;
 
 	const vector<TextLine> Lines()const { return _lines; }

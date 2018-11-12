@@ -225,4 +225,24 @@ SyntaxTree SyntaxTree::Parse(const SourceText & text)
 	return SyntaxTree(text);
 }
 
+vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const string & text)
+{
+	auto source = SourceText::From(text);
+	return ParseTokens(source);
+}
+
+vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const SourceText & text)
+{
+	Lexer lexer(text);	
+	auto result= vector<unique_ptr<SyntaxToken>>();
+	while (true)
+	{
+		auto pToken = std::make_unique<SyntaxToken>(lexer.Lex());
+		if (pToken->Kind() == SyntaxKind::EndOfFileToken)
+			break;
+		result.emplace_back(std::move(pToken));
+	}
+	return result;
+}
+
 }//MCF

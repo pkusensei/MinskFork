@@ -68,6 +68,8 @@ public:
 
 	static SyntaxTree Parse(const string& text);
 	static SyntaxTree Parse(const SourceText& text);
+	static vector<unique_ptr<SyntaxToken>> ParseTokens(const string& text);
+	static vector<unique_ptr<SyntaxToken>> ParseTokens(const SourceText& text);
 };
 
 }//MCF
