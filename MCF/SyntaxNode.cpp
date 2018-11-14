@@ -10,7 +10,7 @@
 
 namespace MCF {
 
-void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node, std::string indent, bool isLast)
+void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node, string indent, bool isLast)
 {
 	string marker = isLast ? "+--" : "---";//"©¸©¤©¤" : "©À©¤©¤";
 	out << indent << marker << GetSyntaxKindName(node->Kind());
@@ -46,7 +46,7 @@ string SyntaxNode::ToString() const
 }
 
 #pragma region SyntaxToken
-SyntaxToken::SyntaxToken(SyntaxKind kind, size_t position, const string& text, ValueType value)
+SyntaxToken::SyntaxToken(SyntaxKind kind, size_t position, const string& text, const ValueType& value)
 	:_kind(kind), _position(position), _text(text), _value(value)
 {
 }
@@ -65,7 +65,7 @@ TextSpan SyntaxToken::Span() const
 
 #pragma region Lexer
 Lexer::Lexer(const SourceText& text)
-	:_text(text), _diagnostics(std::make_unique<DiagnosticBag>()),
+	:_text(&text), _diagnostics(std::make_unique<DiagnosticBag>()),
 	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(ValueType())
 {
 }
@@ -73,9 +73,9 @@ Lexer::Lexer(const SourceText& text)
 char Lexer::Peek(int offset) const
 {
 	size_t idx = _position + offset;
-	if (idx >= _text.Length())
+	if (idx >= _text->Length())
 		return '\0';
-	return _text[idx];
+	return (*_text)[idx];
 }
 
 SyntaxToken Lexer::Lex()
@@ -180,7 +180,7 @@ SyntaxToken Lexer::Lex()
 	auto length = _position - _start;
 	auto text = GetText(_kind);
 	if (text.length() < 1)
-		text = _text.ToString(_start, length);
+		text = _text->ToString(_start, length);
 
 	return SyntaxToken(_kind, _start, text, _value);
 }
@@ -197,7 +197,7 @@ void Lexer::ReadNumberToken()
 	while (std::isdigit(Current()))
 		Next();
 	auto length = _position - _start;
-	auto text = _text.ToString(_start, length);
+	auto text = _text->ToString(_start, length);
 
 	// HACK
 	long value;
@@ -217,7 +217,7 @@ void Lexer::ReadIdentifierOrKeyword()
 	while (std::isalpha(Current()))
 		Next();
 	auto length = _position - _start;
-	auto text = _text.ToString(_start, length);
+	auto text = _text->ToString(_start, length);
 	_kind = GetKeywordKind(text);
 }
 #pragma endregion
@@ -228,12 +228,11 @@ const vector<const SyntaxNode*> ExpressionSyntax::GetChildren() const
 }
 
 #pragma region AssignmentExpression
-AssignmentExpressionSyntax::AssignmentExpressionSyntax(const SyntaxToken & identifier,
-													   const SyntaxToken & equals,
-													   unique_ptr<ExpressionSyntax>& expression)
-	:_identifierToken(identifier), _equalsToken(equals)
+AssignmentExpressionSyntax::AssignmentExpressionSyntax(const SyntaxToken & identifier, const SyntaxToken & equals,
+													   const unique_ptr<ExpressionSyntax>& expression)
+	:_identifierToken(identifier), _equalsToken(equals),
+	_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
 {
-	_expression.swap(expression);
 }
 
 AssignmentExpressionSyntax::AssignmentExpressionSyntax(AssignmentExpressionSyntax && other)
@@ -245,20 +244,21 @@ AssignmentExpressionSyntax::AssignmentExpressionSyntax(AssignmentExpressionSynta
 
 const vector<const SyntaxNode*> AssignmentExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>();
-	result.emplace_back(&_identifierToken);
-	result.emplace_back(&_equalsToken);
-	result.emplace_back(_expression.get());
+	auto result = vector<const SyntaxNode*>{
+		&_identifierToken,
+		&_equalsToken,
+		_expression.get()
+	};
 	return result;
 }
 #pragma endregion
 
 #pragma region UnaryExpression
 UnaryExpressionSyntax::UnaryExpressionSyntax(const SyntaxToken & operatorToken,
-											 unique_ptr<ExpressionSyntax>& operand)
-	:_operatorToken(std::move(operatorToken))
+											 const unique_ptr<ExpressionSyntax>& operand)
+	:_operatorToken(std::move(operatorToken)),
+	_operand(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(operand)))
 {
-	_operand.swap(operand);
 }
 
 UnaryExpressionSyntax::UnaryExpressionSyntax(UnaryExpressionSyntax && other)
@@ -269,21 +269,21 @@ UnaryExpressionSyntax::UnaryExpressionSyntax(UnaryExpressionSyntax && other)
 
 const vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>();
-	result.emplace_back(&_operatorToken);
-	result.emplace_back(_operand.get());
+	auto result = vector<const SyntaxNode*>{
+		&_operatorToken,
+		_operand.get()
+	};
 	return result;
 }
 #pragma endregion
 
 #pragma region BinaryExpression
-BinaryExpressionSyntax::BinaryExpressionSyntax(unique_ptr<ExpressionSyntax>& left,
-											   const SyntaxToken & operatorToken,
-											   unique_ptr<ExpressionSyntax>& right)
-	:_operatorToken(operatorToken)
+BinaryExpressionSyntax::BinaryExpressionSyntax(const unique_ptr<ExpressionSyntax>& left, const SyntaxToken & operatorToken,
+											   const unique_ptr<ExpressionSyntax>& right)
+	:_operatorToken(operatorToken),
+	_left(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(left))),
+	_right(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(right)))
 {
-	_left.swap(left);
-	_right.swap(right);
 }
 
 BinaryExpressionSyntax::BinaryExpressionSyntax(BinaryExpressionSyntax && other)
@@ -295,21 +295,21 @@ BinaryExpressionSyntax::BinaryExpressionSyntax(BinaryExpressionSyntax && other)
 
 const vector<const SyntaxNode*> BinaryExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>();
-	result.emplace_back(_left.get());
-	result.emplace_back(&_operatorToken);
-	result.emplace_back(_right.get());
+	auto result = vector<const SyntaxNode*>{
+		_left.get(),
+		&_operatorToken,
+		_right.get(),
+	};
 	return result;
 }
 #pragma endregion
 
 #pragma region ParenthesizedExpression
-ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(const SyntaxToken & open,
-															 unique_ptr<ExpressionSyntax>& expression,
+ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(const SyntaxToken & open, const unique_ptr<ExpressionSyntax>& expression,
 															 const SyntaxToken & close)
-	:_openParenthesisToken(open), _closeParenthesisToken(close)
+	:_openParenthesisToken(open), _closeParenthesisToken(close),
+	_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
 {
-	_expression.swap(expression);
 }
 
 ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax && other)
@@ -321,10 +321,11 @@ ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(ParenthesizedExpres
 
 const vector<const SyntaxNode*> ParenthesizedExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>();
-	result.emplace_back(&_openParenthesisToken);
-	result.emplace_back(_expression.get());
-	result.emplace_back(&_closeParenthesisToken);
+	auto result = vector<const SyntaxNode*>{
+		&_openParenthesisToken,
+		_expression.get(),
+		&_closeParenthesisToken,
+	};
 	return result;
 }
 #pragma endregion
@@ -347,8 +348,7 @@ LiteralExpressionSyntax::LiteralExpressionSyntax(LiteralExpressionSyntax && othe
 
 const vector<const SyntaxNode*> LiteralExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>();
-	result.emplace_back(&_literalToken);
+	auto result = vector<const SyntaxNode*>{&_literalToken};
 	return result;
 }
 #pragma endregion
@@ -366,8 +366,7 @@ NameExpressionSyntax::NameExpressionSyntax(NameExpressionSyntax && other)
 
 const vector<const SyntaxNode*> NameExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>();
-	result.emplace_back(&_identifierToken);
+	auto result = vector<const SyntaxNode*>{&_identifierToken};
 	return result;
 }
 #pragma endregion
@@ -377,8 +376,10 @@ const vector<const SyntaxNode*> StatementSyntax::GetChildren() const
 	return vector<const SyntaxNode*>();
 }
 
-BlockStatementSyntax::BlockStatementSyntax(const SyntaxToken & open, vector<unique_ptr<StatementSyntax>>& statements, const SyntaxToken & close)
-	:_openBraceToken(open), _closeBraceToken(close), _statements(std::move(statements))
+BlockStatementSyntax::BlockStatementSyntax(const SyntaxToken & open, const vector<unique_ptr<StatementSyntax>>& statements,
+										   const SyntaxToken & close)
+	:_openBraceToken(open), _closeBraceToken(close),
+	_statements(std::move(std::remove_const_t<vector<unique_ptr<StatementSyntax>>&>(statements)))
 {
 }
 
@@ -408,9 +409,9 @@ const vector<const StatementSyntax*> BlockStatementSyntax::Statements() const
 }
 
 VariableDeclarationSyntax::VariableDeclarationSyntax(const SyntaxToken & keyword, const SyntaxToken & identifier,
-													 const SyntaxToken & equals, unique_ptr<ExpressionSyntax>& initializer)
+													 const SyntaxToken & equals, const unique_ptr<ExpressionSyntax>& initializer)
 	:_keyword(keyword), _identifier(identifier), _equalsToken(equals),
-	_initializer(std::move(initializer))
+	_initializer(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(initializer)))
 {
 }
 
@@ -422,16 +423,17 @@ VariableDeclarationSyntax::VariableDeclarationSyntax(VariableDeclarationSyntax &
 
 const vector<const SyntaxNode*> VariableDeclarationSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>();
-	result.emplace_back(&_keyword);
-	result.emplace_back(&_identifier);
-	result.emplace_back(&_equalsToken);
-	result.emplace_back(_initializer.get());
+	auto result = vector<const SyntaxNode*>{
+		&_keyword,
+		&_identifier,
+		&_equalsToken,
+		_initializer.get(),
+	};
 	return result;
 }
 
-ExpressionStatementSyntax::ExpressionStatementSyntax(unique_ptr<ExpressionSyntax>& expression)
-	:_expression(std::move(expression))
+ExpressionStatementSyntax::ExpressionStatementSyntax(const unique_ptr<ExpressionSyntax>& expression)
+	:_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
 {
 }
 
@@ -442,26 +444,27 @@ ExpressionStatementSyntax::ExpressionStatementSyntax(ExpressionStatementSyntax &
 
 const vector<const SyntaxNode*> ExpressionStatementSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>();
-	result.emplace_back(_expression.get());
+	auto result = vector<const SyntaxNode*>{_expression.get()};
 	return result;
 }
 
-CompilationUnitSyntax::CompilationUnitSyntax(unique_ptr<StatementSyntax>& statement, const SyntaxToken & endOfFile)
-	:_statement(std::move(statement)), _endOfFileToken(endOfFile)
+CompilationUnitSyntax::CompilationUnitSyntax(const unique_ptr<StatementSyntax>& statement, const SyntaxToken & endOfFile)
+	:_statement(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(statement))),
+	_endOfFileToken(endOfFile)
 {
 }
 
 CompilationUnitSyntax::CompilationUnitSyntax(CompilationUnitSyntax && other)
-	:_statement(std::move(other._statement)), _endOfFileToken(std::move(other._endOfFileToken))
+	: _statement(std::move(other._statement)), _endOfFileToken(std::move(other._endOfFileToken))
 {
 }
 
 const vector<const SyntaxNode*> CompilationUnitSyntax::GetChildren() const
 {
-	auto result= vector<const SyntaxNode*>();
-	result.emplace_back(_statement.get());
-	result.emplace_back(&_endOfFileToken);
+	auto result = vector<const SyntaxNode*>{
+		_statement.get(),
+		&_endOfFileToken,
+	};
 	return result;
 }
 

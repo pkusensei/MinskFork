@@ -55,24 +55,27 @@ public:
 class MCF_API Compilation final
 {
 private:
-	const Compilation* _previous;
-	const SyntaxTree* _syntaxTree;
-	unique_ptr<BoundGlobalScope> _globalScope;
+	unique_ptr<Compilation> _previous;
+	unique_ptr<SyntaxTree> _syntaxTree;
+	std::shared_ptr<BoundGlobalScope> _globalScope;
 
 	std::mutex _mtx;
 
-public:
-	Compilation();
 	Compilation(const Compilation* previous, const SyntaxTree& tree);
 	Compilation(const Compilation* previous, const unique_ptr<SyntaxTree>& tree);
+
+public:
+	Compilation();
 	explicit Compilation(const SyntaxTree& tree);
 	explicit Compilation(const unique_ptr<SyntaxTree>& tree);
 	~Compilation();
+	Compilation(Compilation&& other);
+	Compilation& operator=(Compilation&& other);
 
-	const Compilation*  Previous()const { return _previous; }
-	const SyntaxTree* Syntax()const { return _syntaxTree; }
+	Compilation*  Previous()const { return _previous.get(); }
+	const SyntaxTree* Syntax()const { return _syntaxTree.get(); }
 
-	BoundGlobalScope* GlobalScope();
+	std::weak_ptr<BoundGlobalScope> GlobalScope();
 	Compilation ContinueWith(const SyntaxTree& tree);
 	Compilation ContinueWith(const unique_ptr<SyntaxTree>& tree);
 

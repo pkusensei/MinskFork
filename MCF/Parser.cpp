@@ -8,7 +8,7 @@
 namespace MCF {
 
 Parser::Parser(const SourceText& text)
-	:_text(text), _position(0), _diagnostics(std::make_unique<DiagnosticBag>())
+	:_text(&text), _position(0), _diagnostics(std::make_unique<DiagnosticBag>())
 {
 	_tokens = vector<unique_ptr<SyntaxToken>>();
 	Lexer lexer(text);
@@ -202,7 +202,7 @@ unique_ptr<CompilationUnitSyntax> Parser::ParseCompilationUnit()
 }
 
 SyntaxTree::SyntaxTree(const SourceText& text)
-	:_text(std::make_unique<SourceText>(text)),_diagnostics(std::make_unique<DiagnosticBag>())
+	:_text(std::make_unique<SourceText>(text)), _diagnostics(std::make_unique<DiagnosticBag>())
 {
 	Parser parser(text);
 	_root = parser.ParseCompilationUnit();
@@ -237,8 +237,8 @@ vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const string & text)
 
 vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const SourceText & text)
 {
-	Lexer lexer(text);	
-	auto result= vector<unique_ptr<SyntaxToken>>();
+	Lexer lexer(text);
+	auto result = vector<unique_ptr<SyntaxToken>>();
 	while (true)
 	{
 		auto pToken = std::make_unique<SyntaxToken>(lexer.Lex());

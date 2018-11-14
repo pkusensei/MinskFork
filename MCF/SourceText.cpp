@@ -20,17 +20,27 @@ TextSpan TextSpan::FromBounds(size_t start, size_t end)
 }
 
 TextLine::TextLine(const SourceText & text, size_t start, size_t length, size_t lengthWithBreak)
-	:_text(text), _start(start), _length(length), _lengthIncludingLineBreak(lengthWithBreak)
+	:_text(&text), _start(start), _length(length), _lengthIncludingLineBreak(lengthWithBreak)
 {
 }
 
 string TextLine::ToString() const
 {
-	return _text.ToString(Span());
+	return _text->ToString(Span());
 }
 
 SourceText::SourceText(const string & text)
-	:_text(text), _lines(ParseLines(this, text))
+	:_text(text), _lines(ParseLines(this, _text))
+{
+}
+
+SourceText::SourceText(const SourceText & other)
+	:_text(other._text), _lines(other._lines)
+{
+}
+
+SourceText::SourceText(SourceText && other)
+	:_text(std::move(other._text)),_lines(std::move(other._lines))
 {
 }
 
@@ -53,7 +63,7 @@ size_t SourceText::GetLineBreakWidth(const string & text, size_t position)
 	else return 0;
 }
 
-vector<TextLine> SourceText::ParseLines(SourceText * sourceText, const string & text)
+vector<TextLine> SourceText::ParseLines(const SourceText * sourceText, const string & text)
 {
 	auto result = vector<TextLine>();
 	size_t position = 0;

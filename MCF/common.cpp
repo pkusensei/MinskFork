@@ -243,6 +243,25 @@ type_index ValueType::Type() const
 	}
 }
 
+void ValueType::WriteTo(std::ostream & out) const
+{
+	auto id = GetValueTypeId(Type());
+	out << "\n" << "Result value is ";
+	switch (id)
+	{
+		case 1:
+			out << GetTypeName(Type()) << " " << GetValue<long>() << std::endl;
+			break;
+		case 2:
+			out << GetTypeName(Type()) << " " << static_cast<bool>(GetValue<bool>()) << std::endl;
+			break;
+		default:
+			out << "Not valid value or type.\n";
+			break;
+	}
+	out << "\n";
+}
+
 VariableSymbol::VariableSymbol(const string& name, bool readOnly, const type_index& type)
 	:_name(name), _isReadOnly(readOnly), _type(type)
 {
@@ -260,7 +279,7 @@ VariableSymbol::VariableSymbol()
 
 bool VariableSymbol::operator==(const VariableSymbol & other) const
 {
-	return _name == other._name && _type == other._type;
+	return _name == other._name;
 }
 
 bool VariableSymbol::operator!=(const VariableSymbol & other) const

@@ -61,7 +61,7 @@ enum class SyntaxKind
 	UnaryExpression,
 	BinaryExpression,
 	ParenthesizedExpression,
-	AssignmentExpression
+	AssignmentExpression,
 };
 
 MCF_API SyntaxKind& operator++(SyntaxKind& kind);
@@ -95,10 +95,12 @@ public:
 
 	/// stays implicit
 	ValueType(const long& value) :_inner(value) {}
+	ValueType(const int& value):_inner(static_cast<long>(value)){}
 	ValueType(const bool& value) :_inner(value) {}
 
 	bool HasValue()const { return !std::holds_alternative<std::monostate>(_inner); }
 	type_index Type()const;
+	void WriteTo(std::ostream& out) const;
 
 	bool operator==(const ValueType& other)const { return _inner == other._inner; }
 	bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }

@@ -15,7 +15,7 @@ class SourceText;
 class Parser final
 {
 private:
-	const SourceText& _text;
+	const SourceText* _text;
 	vector<unique_ptr<SyntaxToken>> _tokens;
 	size_t _position;
 	unique_ptr<DiagnosticBag> _diagnostics;

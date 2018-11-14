@@ -74,9 +74,9 @@ private:
 	bool _isUseful = true;
 
 	BoundUnaryOperator(SyntaxKind synKind, BoundUnaryOperatorKind kind,
-					   type_index operandType, type_index resultType);
+					   const type_index& operandType, const type_index& resultType);
 	BoundUnaryOperator(SyntaxKind synKind, BoundUnaryOperatorKind kind,
-					   type_index operandType);
+					   const type_index& operandType);
 	BoundUnaryOperator();
 	static BoundUnaryOperator _operators[3];
 public:
@@ -88,7 +88,7 @@ public:
 	type_index Type()const { return _resultType; }
 	bool IsUseful()const { return _isUseful; }
 
-	static BoundUnaryOperator Bind(enum SyntaxKind synKind, type_index type);
+	static BoundUnaryOperator Bind(enum SyntaxKind synKind, const type_index& type);
 };
 
 class BoundUnaryExpression final : public BoundExpression
@@ -97,7 +97,7 @@ private:
 	unique_ptr<BoundUnaryOperator> _op;
 	unique_ptr<BoundExpression> _operand;
 public:
-	BoundUnaryExpression(const BoundUnaryOperator& op, unique_ptr<BoundExpression>& operand);
+	BoundUnaryExpression(const BoundUnaryOperator& op, const unique_ptr<BoundExpression>& operand);
 	virtual ~BoundUnaryExpression() = default;
 	BoundUnaryExpression(BoundUnaryExpression&& other);
 
@@ -120,10 +120,10 @@ private:
 	bool _isUseful = true;
 
 	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind,
-						type_index left, type_index right, type_index result);
+						const type_index& left, const type_index& right, const type_index& result);
 	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind,
-						type_index operandType, type_index resultType);
-	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind, type_index type);
+						const type_index& operandType, const type_index& resultType);
+	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind, const type_index& type);
 	BoundBinaryOperator();
 
 	static BoundBinaryOperator _operators[10];
@@ -148,7 +148,7 @@ private:
 	unique_ptr<BoundBinaryOperator> _op;
 
 public:
-	BoundBinaryExpression(unique_ptr<BoundExpression>& left, const BoundBinaryOperator& op, unique_ptr<BoundExpression>& right);
+	BoundBinaryExpression(const unique_ptr<BoundExpression>& left, const BoundBinaryOperator& op, const unique_ptr<BoundExpression>& right);
 	virtual ~BoundBinaryExpression() = default;
 	BoundBinaryExpression(BoundBinaryExpression&& other);
 
@@ -167,7 +167,7 @@ private:
 	VariableSymbol _variable;
 	unique_ptr<BoundExpression> _expression;
 public:
-	BoundAssignmentExpression(const VariableSymbol& variable, unique_ptr<BoundExpression>& expression);
+	BoundAssignmentExpression(const VariableSymbol& variable, const unique_ptr<BoundExpression>& expression);
 	virtual ~BoundAssignmentExpression() = default;
 	BoundAssignmentExpression(BoundAssignmentExpression&& other);
 
@@ -224,7 +224,7 @@ class BoundBlockStatement final : public BoundStatement
 private:
 	vector<unique_ptr<BoundStatement>> _statements;
 public:
-	BoundBlockStatement(vector<unique_ptr<BoundStatement>>& statements);
+	BoundBlockStatement(const vector<unique_ptr<BoundStatement>>& statements);
 	virtual ~BoundBlockStatement() = default;
 	BoundBlockStatement(BoundBlockStatement&& other);
 
@@ -239,7 +239,7 @@ private:
 	VariableSymbol _variable;
 	unique_ptr<BoundExpression> _initializer;
 public:
-	BoundVariableDeclaration(const VariableSymbol& variable, unique_ptr<BoundExpression>& initializer);
+	BoundVariableDeclaration(const VariableSymbol& variable, const unique_ptr<BoundExpression>& initializer);
 	virtual ~BoundVariableDeclaration() = default;
 	BoundVariableDeclaration(BoundVariableDeclaration&& other);
 
@@ -256,7 +256,7 @@ private:
 	unique_ptr<BoundExpression> _expression;
 
 public:
-	BoundExpressionStatement(unique_ptr<BoundExpression>& expression);
+	BoundExpressionStatement(const unique_ptr<BoundExpression>& expression);
 	virtual ~BoundExpressionStatement() = default;
 	BoundExpressionStatement(BoundExpressionStatement&& other);
 
@@ -270,12 +270,12 @@ class BoundScope final
 {
 private:
 	std::unordered_map<string, VariableSymbol> _variables;
-	const BoundScope* _parent;
+	std::shared_ptr<BoundScope> _parent;
 public:
-	explicit BoundScope(const BoundScope* parent);
-	explicit BoundScope(const unique_ptr<BoundScope>& parent);
+	explicit BoundScope(const std::weak_ptr<BoundScope>& parent);
+	explicit BoundScope(const std::shared_ptr<BoundScope>& parent);
 
-	const BoundScope* Parent()const { return _parent; }
+	std::weak_ptr<BoundScope> Parent()const { return _parent; }
 	bool TryDeclare(const VariableSymbol& variable);
 	bool TryLookup(const string& name, VariableSymbol& variable)const;
 	const vector<VariableSymbol> GetDeclaredVariables()const;
@@ -284,15 +284,17 @@ public:
 class BoundGlobalScope final
 {
 private:
-	const BoundGlobalScope* _previous;
+	std::shared_ptr<BoundGlobalScope> _previous;
 	unique_ptr<DiagnosticBag> _diagnostics;
 	const vector<VariableSymbol> _variables;
 	unique_ptr<BoundStatement> _statement;
 public:
-	BoundGlobalScope(const BoundGlobalScope* previous, unique_ptr<DiagnosticBag>& diagnostics,
-					 const vector<VariableSymbol>& variables, unique_ptr<BoundStatement>& statement);
-	
-	const BoundGlobalScope* Previous()const { return _previous; }
+	BoundGlobalScope(const std::shared_ptr<BoundGlobalScope>& previous, const unique_ptr<DiagnosticBag>& diagnostics,
+					 const vector<VariableSymbol>& variables, const unique_ptr<BoundStatement>& statement);
+	BoundGlobalScope(const std::weak_ptr<BoundGlobalScope>& previous, unique_ptr<DiagnosticBag>& diagnostics,
+					 const vector<VariableSymbol>& variables, const unique_ptr<BoundStatement>& statement);
+
+	std::weak_ptr<BoundGlobalScope> Previous()const { return _previous; }
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
 	const vector<VariableSymbol> Variables()const { return _variables; }
 	const BoundStatement* Statement()const { return _statement.get(); }
@@ -302,7 +304,7 @@ class Binder final
 {
 private:
 	unique_ptr<DiagnosticBag> _diagnostics;
-	unique_ptr<BoundScope> _scope;
+	std::shared_ptr<BoundScope> _scope;
 
 	unique_ptr<BoundStatement> BindStatement(const StatementSyntax* syntax);
 	unique_ptr<BoundStatement> BindBlockStatement(const StatementSyntax* syntax);
@@ -317,14 +319,14 @@ private:
 	unique_ptr<BoundExpression> BindUnaryExpression(const ExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindBinaryExpression(const ExpressionSyntax* syntax);
 
-	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
+	static std::shared_ptr<BoundScope> CreateParentScope(const std::shared_ptr<BoundGlobalScope>& previous);
 public:
-	Binder(unique_ptr<BoundScope>& parent);
+	explicit Binder(const std::shared_ptr<BoundScope>& parent);
 	~Binder() = default;
 
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
 
-	static unique_ptr<BoundGlobalScope> BindGlobalScope(const BoundGlobalScope* previous, const CompilationUnitSyntax* syntax);
+	static std::shared_ptr<BoundGlobalScope> BindGlobalScope(const std::weak_ptr<BoundGlobalScope>& previous, const CompilationUnitSyntax* syntax);
 };
 
 }//MCF

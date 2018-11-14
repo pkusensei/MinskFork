@@ -11,7 +11,7 @@ class TextSpan final
 private:
 	std::tuple<size_t, size_t> _span;
 public:
-	TextSpan(size_t start = 0, size_t length = 0);
+	explicit TextSpan(size_t start = 0, size_t length = 0);
 	~TextSpan() = default;
 	TextSpan(const TextSpan&) = default;
 	TextSpan(TextSpan&&) = default;
@@ -28,7 +28,7 @@ public:
 class TextLine final
 {
 private:
-	const SourceText& _text;
+	const SourceText* _text;
 	const size_t _start;
 	const size_t _length;
 	const size_t _lengthIncludingLineBreak;
@@ -36,7 +36,7 @@ public:
 	TextLine(const SourceText& text, size_t start, size_t length, size_t lengthWithBreak);
 	~TextLine() = default;
 
-	const SourceText* Text()const { return &_text; }
+	const SourceText* Text()const { return _text; }
 	size_t Start()const { return _start; }
 	size_t Length()const { return _length; }
 	size_t End()const { return _start + _length; }
@@ -55,12 +55,14 @@ private:
 	static void AddLine(vector<TextLine>& result, const SourceText& sourceText, 
 						size_t position, size_t lineStart, size_t lineBreakWidth);
 	static size_t GetLineBreakWidth(const string& text, size_t position);
-	static vector<TextLine> ParseLines(SourceText* sourceText, const string& text);
+	static vector<TextLine> ParseLines(const SourceText* sourceText, const string& text);
 
 	SourceText(const string& text);
 
 public:
 	~SourceText() = default;
+	SourceText(const SourceText& other);
+	SourceText(SourceText&& other);
 
 	const vector<TextLine> Lines()const { return _lines; }
 	size_t Length()const { return _text.length(); }

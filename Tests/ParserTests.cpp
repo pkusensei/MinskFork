@@ -3,6 +3,8 @@
 
 #include <stack>
 
+#include "..\MCF\Compilation.h"
+#include "..\MCF\Diagnostic.h"
 #include "..\MCF\Parser.h"
 #include "..\MCF\SourceText.h"
 #include "..\MCF\SyntaxNode.h"
@@ -214,6 +216,46 @@ public:
 			auto sourceText = MCF::SourceText::From(it.first);
 			auto lines = sourceText.Lines();
 			Assert::AreEqual(it.second, lines.size());
+		}
+	}
+};
+
+TEST_CLASS(EvaluationTests)
+{
+	TEST_METHOD(Evaluator_Computes_CorrectValues)
+	{
+		auto data = std::vector<std::pair<std::string, MCF::ValueType>>{
+					std::pair<std::string, MCF::ValueType>("1", 1),
+					std::pair<std::string, MCF::ValueType>("+34", 34),
+					std::pair<std::string, MCF::ValueType>("-42", -42),
+					std::pair<std::string, MCF::ValueType>("3 + 1", 4),
+					std::pair<std::string, MCF::ValueType>("2 * 4", 8),
+					std::pair<std::string, MCF::ValueType>("9 / 3", 3),
+					std::pair<std::string, MCF::ValueType>("(6 + 4)", 10),
+					std::pair<std::string, MCF::ValueType>("12 == 5", false),
+					std::pair<std::string, MCF::ValueType>("5 == 5", true),
+					std::pair<std::string, MCF::ValueType>("12 != 5", true),
+					std::pair<std::string, MCF::ValueType>("5 != 5", false),
+					std::pair<std::string, MCF::ValueType>("true == false", false),
+					std::pair<std::string, MCF::ValueType>("false == false", true),
+					std::pair<std::string, MCF::ValueType>("true != false", true),
+					std::pair<std::string, MCF::ValueType>("false != false", false),
+					std::pair<std::string, MCF::ValueType>("true", true),
+					std::pair<std::string, MCF::ValueType>("!true", false),
+					std::pair<std::string, MCF::ValueType>("false", false),
+					std::pair<std::string, MCF::ValueType>("!false", true),
+					std::pair<std::string, MCF::ValueType>("{var a = 0 (a = 10) * a }", 100),
+		};
+
+		for (const auto& it : data)
+		{
+			auto tree = MCF::SyntaxTree::Parse(it.first);
+			MCF::Compilation compilation(tree);
+			std::unordered_map<MCF::VariableSymbol, MCF::ValueType, MCF::VariableHash> variables;
+			auto result = compilation.Evaluate(variables);
+
+			Assert::IsTrue(result.Diagnostics()->size() == 0);
+			Assert::IsTrue(it.second == result.Value());
 		}
 	}
 };

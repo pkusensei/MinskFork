@@ -11,13 +11,13 @@ namespace MCF {
 
 #pragma region Unary
 BoundUnaryOperator::BoundUnaryOperator(enum SyntaxKind synKind, BoundUnaryOperatorKind kind,
-									   type_index operandType, type_index resultType)
+									   const type_index& operandType, const type_index& resultType)
 	:_syntaxKind(synKind), _kind(kind), _operandType(operandType), _resultType(resultType)
 {
 }
 
 BoundUnaryOperator::BoundUnaryOperator(enum SyntaxKind synKind, BoundUnaryOperatorKind kind,
-									   type_index operandType)
+									   const type_index& operandType)
 	: BoundUnaryOperator(synKind, kind, operandType, operandType)
 {
 }
@@ -34,7 +34,7 @@ BoundUnaryOperator BoundUnaryOperator::_operators[] = {
 	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation, typeid(long))
 };
 
-BoundUnaryOperator BoundUnaryOperator::Bind(enum SyntaxKind synKind, type_index type)
+BoundUnaryOperator BoundUnaryOperator::Bind(enum SyntaxKind synKind, const type_index& type)
 {
 	for (const auto& op : _operators)
 	{
@@ -44,10 +44,10 @@ BoundUnaryOperator BoundUnaryOperator::Bind(enum SyntaxKind synKind, type_index 
 	return BoundUnaryOperator();
 }
 
-BoundUnaryExpression::BoundUnaryExpression(const BoundUnaryOperator & op, unique_ptr<BoundExpression>& operand)
-	:_op(std::make_unique<BoundUnaryOperator>(op))
+BoundUnaryExpression::BoundUnaryExpression(const BoundUnaryOperator & op, const unique_ptr<BoundExpression>& operand)
+	:_op(std::make_unique<BoundUnaryOperator>(op)),
+	_operand(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(operand)))
 {
-	_operand.swap(operand);
 }
 
 BoundUnaryExpression::BoundUnaryExpression(BoundUnaryExpression && other)
@@ -59,18 +59,18 @@ BoundUnaryExpression::BoundUnaryExpression(BoundUnaryExpression && other)
 
 #pragma region Binary
 BoundBinaryOperator::BoundBinaryOperator(enum SyntaxKind synKind, BoundBinaryOperatorKind kind,
-										 type_index left, type_index right, type_index result)
+										 const type_index& left, const type_index& right, const type_index& result)
 	:_syntaxKind(synKind), _kind(kind), _leftType(left), _rightType(right), _resultType(result)
 {
 }
 
 BoundBinaryOperator::BoundBinaryOperator(enum SyntaxKind synKind, BoundBinaryOperatorKind kind,
-										 type_index operandType, type_index resultType)
+										 const type_index& operandType, const type_index& resultType)
 	: BoundBinaryOperator(synKind, kind, operandType, operandType, resultType)
 {
 }
 
-BoundBinaryOperator::BoundBinaryOperator(enum SyntaxKind synKind, BoundBinaryOperatorKind kind, type_index type)
+BoundBinaryOperator::BoundBinaryOperator(enum SyntaxKind synKind, BoundBinaryOperatorKind kind, const type_index& type)
 	: BoundBinaryOperator(synKind, kind, type, type, type)
 {
 }
@@ -106,11 +106,11 @@ BoundBinaryOperator BoundBinaryOperator::Bind(enum SyntaxKind synKind, type_inde
 	return BoundBinaryOperator();
 }
 
-BoundBinaryExpression::BoundBinaryExpression(unique_ptr<BoundExpression>& left, const BoundBinaryOperator & op, unique_ptr<BoundExpression>& right)
-	:_op(std::make_unique<BoundBinaryOperator>(op))
+BoundBinaryExpression::BoundBinaryExpression(const unique_ptr<BoundExpression>& left, const BoundBinaryOperator & op, const unique_ptr<BoundExpression>& right)
+	:_left(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(left))),
+	_right(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(right))),
+	_op(std::make_unique<BoundBinaryOperator>(op))
 {
-	_left.swap(left);
-	_right.swap(right);
 }
 
 BoundBinaryExpression::BoundBinaryExpression(BoundBinaryExpression && other)
@@ -121,10 +121,10 @@ BoundBinaryExpression::BoundBinaryExpression(BoundBinaryExpression && other)
 }
 #pragma endregion
 
-BoundAssignmentExpression::BoundAssignmentExpression(const VariableSymbol & variable, unique_ptr<BoundExpression>& expression)
-	:_variable(variable)
+BoundAssignmentExpression::BoundAssignmentExpression(const VariableSymbol & variable, const unique_ptr<BoundExpression>& expression)
+	:_variable(variable),
+	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
 {
-	_expression.swap(expression);
 }
 
 BoundAssignmentExpression::BoundAssignmentExpression(BoundAssignmentExpression && other)
@@ -156,8 +156,8 @@ BoundVariableExpression::BoundVariableExpression(BoundVariableExpression && othe
 	other._variable = {};
 }
 
-BoundBlockStatement::BoundBlockStatement(vector<unique_ptr<BoundStatement>>& statements)
-	: _statements(std::move(statements))
+BoundBlockStatement::BoundBlockStatement(const vector<unique_ptr<BoundStatement>>& statements)
+	: _statements(std::move(std::remove_const_t<vector<unique_ptr<BoundStatement>>&>(statements)))
 {
 }
 
@@ -175,8 +175,9 @@ const vector<BoundStatement*> BoundBlockStatement::Statements() const
 }
 
 
-BoundVariableDeclaration::BoundVariableDeclaration(const VariableSymbol & variable, unique_ptr<BoundExpression>& initializer)
-	:_variable(variable), _initializer(std::move(initializer))
+BoundVariableDeclaration::BoundVariableDeclaration(const VariableSymbol & variable, const unique_ptr<BoundExpression>& initializer)
+	:_variable(variable),
+	_initializer((std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(initializer))))
 {
 }
 
@@ -185,8 +186,8 @@ BoundVariableDeclaration::BoundVariableDeclaration(BoundVariableDeclaration && o
 {
 }
 
-BoundExpressionStatement::BoundExpressionStatement(unique_ptr<BoundExpression>& expression)
-	: _expression(std::move(expression))
+BoundExpressionStatement::BoundExpressionStatement(const unique_ptr<BoundExpression>& expression)
+	: _expression((std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression))))
 {
 }
 
@@ -195,13 +196,15 @@ BoundExpressionStatement::BoundExpressionStatement(BoundExpressionStatement && o
 {
 }
 
-BoundScope::BoundScope(const BoundScope* parent)
-	: _variables({}), _parent(parent)
+BoundScope::BoundScope(const std::weak_ptr<BoundScope>& parent)
+	: _parent(nullptr)
 {
+	if (!parent.expired())
+		_parent = parent.lock();
 }
 
-BoundScope::BoundScope(const unique_ptr<BoundScope>& parent)
-	:BoundScope(parent.get())
+BoundScope::BoundScope(const std::shared_ptr<BoundScope>& parent)
+	:_parent(parent)
 {
 }
 
@@ -235,20 +238,31 @@ const vector<VariableSymbol> BoundScope::GetDeclaredVariables() const
 	return result;
 }
 
-
-BoundGlobalScope::BoundGlobalScope(const BoundGlobalScope* previous, unique_ptr<DiagnosticBag>& diagnostics,
-								   const vector<VariableSymbol>& variables, unique_ptr<BoundStatement>& statement)
-	:_previous(previous), _diagnostics(std::move(diagnostics)),
-	_variables(variables), _statement(std::move(statement))
+BoundGlobalScope::BoundGlobalScope(const std::shared_ptr<BoundGlobalScope>& previous, const unique_ptr<DiagnosticBag>& diagnostics,
+								   const vector<VariableSymbol>& variables, const unique_ptr<BoundStatement>& statement)
+	:_previous(previous), 
+	_diagnostics(std::move(std::remove_const_t<unique_ptr<DiagnosticBag>&>(diagnostics))),
+	_variables(variables),
+	_statement(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(statement)))
 {
 }
 
-Binder::Binder(unique_ptr<BoundScope>& parent)
-	: _diagnostics(std::make_unique<DiagnosticBag>()),
-	_scope(std::make_unique<BoundScope>(parent))
+BoundGlobalScope::BoundGlobalScope(const std::weak_ptr<BoundGlobalScope>& previous, unique_ptr<DiagnosticBag>& diagnostics,
+								   const vector<VariableSymbol>& variables, const unique_ptr<BoundStatement>& statement)
+	:_previous(nullptr), 
+	_diagnostics(std::move(std::remove_const_t<unique_ptr<DiagnosticBag>&>(diagnostics))),
+	_variables(variables),
+	_statement(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(statement)))
 {
+	if (!previous.expired())
+		_previous = previous.lock();
 }
 
+Binder::Binder(const std::shared_ptr<BoundScope>& parent)
+	:_diagnostics(std::make_unique<DiagnosticBag>()),
+	_scope(std::make_shared<BoundScope>(parent))
+{
+}
 
 unique_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax * syntax)
 {
@@ -271,12 +285,11 @@ unique_ptr<BoundStatement> Binder::BindBlockStatement(const StatementSyntax * sy
 	if (p == nullptr) return nullptr;
 
 	auto statements = vector<unique_ptr<BoundStatement>>();
-	auto tmp = std::make_unique<BoundScope>(_scope);
-	_scope.swap(tmp);
+	//auto tmp = std::make_shared<BoundScope>(_scope);
+	_scope = std::make_shared<BoundScope>(_scope);
 	for (const auto& it : p->Statements())
-			statements.emplace_back(BindStatement(it));
-	//_scope.reset(std::remove_cv_t<BoundScope*>(_scope->Parent()));
-	_scope.swap(tmp);
+		statements.emplace_back(BindStatement(it));
+	_scope = _scope->Parent().lock();
 	return std::make_unique<BoundBlockStatement>(statements);
 }
 
@@ -300,7 +313,7 @@ unique_ptr<BoundStatement> Binder::BindExpressionStatement(const StatementSyntax
 {
 	auto p = dynamic_cast<const ExpressionStatementSyntax*>(syntax);
 	if (p == nullptr) return nullptr;
-	
+
 	auto expression = BindExpression(p->Expression());
 	return std::make_unique<BoundExpressionStatement>(expression);
 }
@@ -349,7 +362,7 @@ unique_ptr<BoundExpression> Binder::BindNameExpression(const ExpressionSyntax * 
 	if (!_scope->TryLookup(name, variable))
 	{
 		_diagnostics->ReportUndefinedName(p->IdentifierToken().Span(), name);
-		return std::make_unique<BoundLiteralExpression>(static_cast<long>(0));
+		return std::make_unique<BoundLiteralExpression>(0);
 	}
 	return std::make_unique<BoundVariableExpression>(variable);
 }
@@ -415,20 +428,20 @@ unique_ptr<BoundExpression> Binder::BindBinaryExpression(const ExpressionSyntax 
 	}
 }
 
-unique_ptr<BoundScope> Binder::CreateParentScope(const BoundGlobalScope * previous)
+std::shared_ptr<BoundScope> Binder::CreateParentScope(const std::shared_ptr<BoundGlobalScope>& previous)
 {
-	auto stack = std::stack<const BoundGlobalScope*>();
-	while (previous != nullptr)
+	auto stack = std::stack<std::weak_ptr<BoundGlobalScope>>();
+	auto current = std::remove_const_t<std::shared_ptr<BoundGlobalScope>&>(previous);
+	while (current != nullptr)
 	{
-		stack.emplace(previous);
-		previous = previous->Previous();
+		stack.emplace(current);
+		current = current->Previous().lock();
 	}
-	unique_ptr<BoundScope> parent{nullptr};
-	//auto parent = std::make_unique<BoundScope>();
+	std::shared_ptr<BoundScope> parent{nullptr};
 	while (!stack.empty())
 	{
-		previous = stack.top();
-		auto scope = std::make_unique<BoundScope>(parent);
+		current = stack.top().lock();
+		auto scope = std::make_shared<BoundScope>(parent);
 		for (const auto& it : previous->Variables())
 			scope->TryDeclare(it);
 		parent.swap(scope);
@@ -438,16 +451,22 @@ unique_ptr<BoundScope> Binder::CreateParentScope(const BoundGlobalScope * previo
 }
 
 
-unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope * previous, const CompilationUnitSyntax * syntax)
+std::shared_ptr<BoundGlobalScope> Binder::BindGlobalScope(const std::weak_ptr<BoundGlobalScope>& previous, const CompilationUnitSyntax * syntax)
 {
-	auto parentScope = CreateParentScope(previous);
+	std::shared_ptr<BoundScope> parentScope{nullptr};
+	if (previous.expired())
+		parentScope = CreateParentScope(nullptr);
+	else
+		parentScope = CreateParentScope(previous.lock());
 	Binder binder(parentScope);
 	auto expression = binder.BindStatement(syntax->Statement());
 	auto variables = binder._scope->GetDeclaredVariables();
 	auto diagnostics = binder.Diagnostics();
-	if (previous != nullptr)
-		diagnostics->AddRangeFront(*previous->Diagnostics());
-	return std::make_unique<BoundGlobalScope>(previous, binder._diagnostics, variables, expression);
+	if (!previous.expired())
+		diagnostics->AddRangeFront(*previous.lock()->Diagnostics());
+	return std::make_shared<BoundGlobalScope>(previous, binder._diagnostics, variables, expression);
 }
+
+
 
 }//MCF

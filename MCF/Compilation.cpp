@@ -165,22 +165,27 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundExpression * node)const
 }
 
 Compilation::Compilation()
-	:Compilation(nullptr, nullptr)
+	: Compilation(nullptr)
 {
 }
 
-Compilation::Compilation(const Compilation * previous, const SyntaxTree & tree)
-	:_previous(previous), _syntaxTree(&tree), _globalScope(nullptr)
+Compilation::Compilation(const Compilation* previous, const SyntaxTree& tree)
+	: _previous(std::remove_const_t<Compilation*>(previous)),
+	_syntaxTree(std::remove_const_t<SyntaxTree*>(&tree)),
+	_globalScope(nullptr)
 {
 }
 
-Compilation::Compilation(const Compilation * previous, const unique_ptr<SyntaxTree>& tree)
-	: _previous(previous), _syntaxTree(tree.get()), _globalScope(nullptr)
+Compilation::Compilation(const Compilation* previous, const unique_ptr<SyntaxTree>& tree)
+	: _previous(std::remove_const_t<Compilation*>(previous)),
+	_syntaxTree(std::move(std::remove_const_t<unique_ptr<SyntaxTree>&>(tree))),
+	_globalScope(nullptr)
 {
 }
+
 
 Compilation::Compilation(const SyntaxTree & tree)
-	: Compilation(nullptr, tree)
+	:Compilation(nullptr, tree)
 {
 }
 
@@ -191,23 +196,35 @@ Compilation::Compilation(const unique_ptr<SyntaxTree>& tree)
 
 Compilation::~Compilation() = default;
 
-BoundGlobalScope * Compilation::GlobalScope()
+Compilation::Compilation(Compilation&& other)
+	:_previous(std::move(other._previous)), _syntaxTree(std::move(other._syntaxTree)),
+	_globalScope(std::move(other._globalScope))
 {
-	if (_globalScope == nullptr)
+}
+
+Compilation& Compilation::operator=(Compilation&& other)
+{
+	_previous.swap(other._previous);
+	_syntaxTree.swap(other._syntaxTree);
+	_globalScope.swap(other._globalScope);
+	return *this;
+}
+
+std::weak_ptr<BoundGlobalScope> Compilation::GlobalScope()
+{
+	while (_globalScope == nullptr)
 	{
-		unique_ptr<BoundGlobalScope> tmp{nullptr};
+		std::shared_ptr<BoundGlobalScope> tmp{nullptr};
 		if (_previous == nullptr)
-			tmp = Binder::BindGlobalScope(nullptr, _syntaxTree->Root());
-		else		
-			tmp = Binder::BindGlobalScope(std::remove_cv_t<Compilation*>(_previous)->GlobalScope(), _syntaxTree->Root());
-		
+			tmp = Binder::BindGlobalScope({}, _syntaxTree->Root());
+		else
+			tmp = Binder::BindGlobalScope(_previous->GlobalScope(), _syntaxTree->Root());
+
 		std::unique_lock<std::mutex> lock(_mtx, std::defer_lock);
 		if (lock.try_lock())
-		{
 			_globalScope.swap(tmp);
-		}
 	}
-	return _globalScope.get();
+	return _globalScope;
 }
 
 Compilation Compilation::ContinueWith(const SyntaxTree & tree)
@@ -222,15 +239,15 @@ Compilation Compilation::ContinueWith(const unique_ptr<SyntaxTree>& tree)
 
 EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
 {
-	_syntaxTree->Diagnostics()->AddRange(*GlobalScope()->Diagnostics());
+	_syntaxTree->Diagnostics()->AddRange(*(GlobalScope().lock()->Diagnostics()));
 	auto diagnostics = _syntaxTree->Diagnostics();
 
 	if (diagnostics->size() > 0)
 		return EvaluationResult(diagnostics, ValueType());
 
-	Evaluator evaluator(GlobalScope()->Statement(), variables);
+	Evaluator evaluator(GlobalScope().lock()->Statement(), variables);
 	auto value = evaluator.Evaluate();
-	return EvaluationResult(nullptr, value);
+	return EvaluationResult(diagnostics, value);
 }
 
 }

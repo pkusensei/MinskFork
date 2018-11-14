@@ -12,7 +12,7 @@ class SourceText;
 class MCF_API SyntaxNode
 {
 private:
-	static void PrettyPrint(std::ostream& out, const SyntaxNode* node, std::string indent = "", bool isLast = true);
+	static void PrettyPrint(std::ostream& out, const SyntaxNode* node, string indent = "", bool isLast = true);
 public:
 	virtual ~SyntaxNode() = default;
 	virtual SyntaxKind Kind() const = 0;
@@ -32,7 +32,7 @@ private:
 	const ValueType _value;
 
 public:
-	SyntaxToken(SyntaxKind kind, size_t position, const string& text, ValueType value);
+	SyntaxToken(SyntaxKind kind, size_t position, const string& text, const ValueType& value);
 	SyntaxToken(const SyntaxToken& other) = default;
 	virtual ~SyntaxToken() = default;
 
@@ -49,7 +49,7 @@ public:
 class Lexer final
 {
 private:
-	const SourceText& _text;
+	const SourceText* _text;
 	unique_ptr<DiagnosticBag> _diagnostics;
 
 	size_t _position;
@@ -93,7 +93,7 @@ private:
 
 public:
 	AssignmentExpressionSyntax(const SyntaxToken& identifier, const SyntaxToken& equals,
-							   unique_ptr<ExpressionSyntax>& expression);
+							   const unique_ptr<ExpressionSyntax>& expression);
 	virtual ~AssignmentExpressionSyntax() = default;
 	AssignmentExpressionSyntax(AssignmentExpressionSyntax&& other);
 
@@ -112,7 +112,7 @@ private:
 	SyntaxToken _operatorToken;
 	unique_ptr<ExpressionSyntax> _operand;
 public:
-	UnaryExpressionSyntax(const SyntaxToken& operatorToken, unique_ptr<ExpressionSyntax>& operand);
+	UnaryExpressionSyntax(const SyntaxToken& operatorToken, const unique_ptr<ExpressionSyntax>& operand);
 	virtual ~UnaryExpressionSyntax() = default;
 	UnaryExpressionSyntax(UnaryExpressionSyntax&& other);
 
@@ -131,7 +131,7 @@ private:
 	unique_ptr<ExpressionSyntax> _left;
 	unique_ptr<ExpressionSyntax> _right;
 public:
-	BinaryExpressionSyntax(unique_ptr<ExpressionSyntax>& left, const SyntaxToken& operatorToken, unique_ptr<ExpressionSyntax>& right);
+	BinaryExpressionSyntax(const unique_ptr<ExpressionSyntax>& left, const SyntaxToken& operatorToken, const unique_ptr<ExpressionSyntax>& right);
 	virtual ~BinaryExpressionSyntax() = default;
 	BinaryExpressionSyntax(BinaryExpressionSyntax&& other);
 
@@ -151,7 +151,7 @@ private:
 	SyntaxToken _closeParenthesisToken;
 	unique_ptr<ExpressionSyntax> _expression;
 public:
-	ParenthesizedExpressionSyntax(const SyntaxToken& open, unique_ptr<ExpressionSyntax>& expression, const SyntaxToken& close);
+	ParenthesizedExpressionSyntax(const SyntaxToken& open, const unique_ptr<ExpressionSyntax>& expression, const SyntaxToken& close);
 	virtual ~ParenthesizedExpressionSyntax() = default;
 	ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax&& other);
 	// Inherited via ExpressionSyntax
@@ -215,7 +215,7 @@ private:
 	vector<unique_ptr<StatementSyntax>> _statements;
 
 public:
-	BlockStatementSyntax(const SyntaxToken& open, vector<unique_ptr<StatementSyntax>>& statements, const SyntaxToken& close);
+	BlockStatementSyntax(const SyntaxToken& open, const vector<unique_ptr<StatementSyntax>>& statements, const SyntaxToken& close);
 	virtual ~BlockStatementSyntax() = default;
 	BlockStatementSyntax(BlockStatementSyntax&& other);
 
@@ -237,7 +237,7 @@ private:
 	unique_ptr<ExpressionSyntax> _initializer;
 public:
 	VariableDeclarationSyntax(const SyntaxToken& keyword, const SyntaxToken& identifier,
-							  const SyntaxToken& equals, unique_ptr<ExpressionSyntax>& initializer);
+							  const SyntaxToken& equals, const unique_ptr<ExpressionSyntax>& initializer);
 	virtual ~VariableDeclarationSyntax() = default;
 	VariableDeclarationSyntax(VariableDeclarationSyntax&& other);
 
@@ -257,7 +257,7 @@ private:
 	unique_ptr<ExpressionSyntax> _expression;
 
 public:
-	ExpressionStatementSyntax(unique_ptr<ExpressionSyntax>& expression);
+	ExpressionStatementSyntax(const unique_ptr<ExpressionSyntax>& expression);
 	virtual ~ExpressionStatementSyntax() = default;
 	ExpressionStatementSyntax(ExpressionStatementSyntax&& other);
 
@@ -275,7 +275,7 @@ private:
 	SyntaxToken _endOfFileToken;
 
 public:
-	CompilationUnitSyntax(unique_ptr<StatementSyntax>& statement, const SyntaxToken& endOfFile);
+	CompilationUnitSyntax(const unique_ptr<StatementSyntax>& statement, const SyntaxToken& endOfFile);
 	virtual ~CompilationUnitSyntax() = default;
 	CompilationUnitSyntax(CompilationUnitSyntax&& other);
 
