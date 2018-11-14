@@ -3,8 +3,7 @@
 
 #include <set>
 
-#include "..\MCF\SyntaxNode.h"
-#include "..\MCF\Parser.h"
+#include "..\MCF\Syntax.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

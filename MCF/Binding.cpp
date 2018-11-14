@@ -1,10 +1,10 @@
 #include "stdafx.h"
-#include "Binder.h"
+#include "Binding.h"
 
 #include <stack>
 
 #include "Diagnostic.h"
-#include "SyntaxNode.h"
+#include "Syntax.h"
 #include "SourceText.h"
 
 namespace MCF {

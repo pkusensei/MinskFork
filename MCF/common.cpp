@@ -277,6 +277,22 @@ VariableSymbol::VariableSymbol()
 {
 }
 
+VariableSymbol::VariableSymbol(VariableSymbol && other)
+	:_name(std::move(other._name)), _isReadOnly(other._isReadOnly),
+	_type(other._type)
+{
+	other._type = typeid(std::monostate);
+}
+
+VariableSymbol & VariableSymbol::operator=(VariableSymbol && other)
+{
+	_name = std::move(other._name);
+	_isReadOnly = other._isReadOnly;
+	_type = other._type;
+	other._type = typeid(std::monostate);
+	return *this;
+}
+
 bool VariableSymbol::operator==(const VariableSymbol & other) const
 {
 	return _name == other._name;

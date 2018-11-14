@@ -2,9 +2,9 @@
 #include "Compilation.h"
 
 #include "Diagnostic.h"
-#include "Binder.h"
+#include "Binding.h"
 #include "Parser.h"
-#include "SyntaxNode.h"
+#include "Syntax.h"
 
 namespace MCF {
 

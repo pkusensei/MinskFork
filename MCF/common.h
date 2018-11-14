@@ -91,7 +91,6 @@ private:
 public:
 	ValueType() {}
 	~ValueType() = default;
-	ValueType(const ValueType& other) :_inner(other._inner) {}
 
 	/// stays implicit
 	ValueType(const long& value) :_inner(value) {}
@@ -123,6 +122,10 @@ public:
 	VariableSymbol(const string& name, bool readOnly, const std::type_info& type);
 	VariableSymbol();
 	~VariableSymbol() = default;
+	VariableSymbol(const VariableSymbol&) = default;
+	VariableSymbol(VariableSymbol&& other);
+	VariableSymbol& operator=(const VariableSymbol&) = default;
+	VariableSymbol& operator=(VariableSymbol&& other);
 
 	string Name()const { return _name; }
 	bool IsReadOnly()const { return _isReadOnly; }

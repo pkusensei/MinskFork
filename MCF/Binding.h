@@ -7,8 +7,8 @@
 namespace MCF {
 
 class DiagnosticBag;
-class StatementSyntax;
 class ExpressionSyntax;
+class StatementSyntax;
 class CompilationUnitSyntax;
 
 enum class BoundNodeKind

@@ -7,8 +7,7 @@
 
 #include "Compilation.h"
 #include "Diagnostic.h"
-#include "Parser.h"
-#include "SyntaxNode.h"
+#include "Syntax.h"
 
 void PrintValue(const MCF::ValueType& value)
 {
