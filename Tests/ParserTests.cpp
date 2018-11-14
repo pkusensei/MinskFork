@@ -247,7 +247,7 @@ TEST_CLASS(EvaluationTests)
 		};
 
 		for (const auto& it : data)
-		{
+		{	
 			auto tree = MCF::SyntaxTree::Parse(it.first);
 			MCF::Compilation compilation(tree);
 			std::unordered_map<MCF::VariableSymbol, MCF::ValueType, MCF::VariableHash> variables;

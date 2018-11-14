@@ -42,6 +42,7 @@ SourceText::SourceText(const SourceText & other)
 SourceText::SourceText(SourceText && other)
 	:_text(std::move(other._text)),_lines(std::move(other._lines))
 {
+	//other._text.clear();
 }
 
 void SourceText::AddLine(vector<TextLine>& result, const SourceText & sourceText, 

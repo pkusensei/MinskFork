@@ -169,16 +169,16 @@ Compilation::Compilation()
 {
 }
 
-Compilation::Compilation(const Compilation* previous, const SyntaxTree& tree)
-	: _previous(std::remove_const_t<Compilation*>(previous)),
-	_syntaxTree(std::remove_const_t<SyntaxTree*>(&tree)),
+Compilation::Compilation(const unique_ptr<Compilation>& previous, const SyntaxTree& tree)
+	: _previous(std::move(std::remove_const_t<unique_ptr<Compilation>&>(previous))),
+	_syntaxTree(&tree),
 	_globalScope(nullptr)
 {
 }
 
-Compilation::Compilation(const Compilation* previous, const unique_ptr<SyntaxTree>& tree)
-	: _previous(std::remove_const_t<Compilation*>(previous)),
-	_syntaxTree(std::move(std::remove_const_t<unique_ptr<SyntaxTree>&>(tree))),
+Compilation::Compilation(const unique_ptr<Compilation>& previous, const unique_ptr<SyntaxTree>& tree)
+	: _previous(std::move(std::remove_const_t<unique_ptr<Compilation>&>(previous))),
+	_syntaxTree(tree.get()),
 	_globalScope(nullptr)
 {
 }
@@ -197,7 +197,7 @@ Compilation::Compilation(const unique_ptr<SyntaxTree>& tree)
 Compilation::~Compilation() = default;
 
 Compilation::Compilation(Compilation&& other)
-	:_previous(std::move(other._previous)), _syntaxTree(std::move(other._syntaxTree)),
+	:_previous(std::move(other._previous)), _syntaxTree(other._syntaxTree),
 	_globalScope(std::move(other._globalScope))
 {
 }
@@ -205,7 +205,7 @@ Compilation::Compilation(Compilation&& other)
 Compilation& Compilation::operator=(Compilation&& other)
 {
 	_previous.swap(other._previous);
-	_syntaxTree.swap(other._syntaxTree);
+	_syntaxTree = other._syntaxTree;
 	_globalScope.swap(other._globalScope);
 	return *this;
 }
@@ -227,14 +227,14 @@ std::weak_ptr<BoundGlobalScope> Compilation::GlobalScope()
 	return _globalScope;
 }
 
-Compilation Compilation::ContinueWith(const SyntaxTree & tree)
+unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous, const SyntaxTree & tree)
 {
-	return Compilation(this, tree);
+	return std::make_unique<Compilation>(previous, tree);
 }
 
-Compilation Compilation::ContinueWith(const unique_ptr<SyntaxTree>& tree)
+unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous, const unique_ptr<SyntaxTree>& tree)
 {
-	return Compilation(this, tree);
+	return std::make_unique<Compilation>(previous, tree);
 }
 
 EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)

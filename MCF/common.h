@@ -67,6 +67,7 @@ enum class SyntaxKind
 MCF_API SyntaxKind& operator++(SyntaxKind& kind);
 MCF_API SyntaxKind& operator++(SyntaxKind& kind, int c);
 MCF_API const vector<SyntaxKind> GetAllSyntaxKinds();
+MCF_API string GetSyntaxKindName(SyntaxKind kind);
 
 /// helpers
 MCF_API bool StringEndsWith(const string& sample, const string& ending);
@@ -78,10 +79,6 @@ MCF_API int GetUnaryOperatorPrecedence(SyntaxKind kind);
 MCF_API int GetBinaryOperatorPrecedence(SyntaxKind kind);
 MCF_API vector<SyntaxKind> GetUnaryOperatorKinds();
 MCF_API vector<SyntaxKind> GetBinaryOperatorKinds();
-
-MCF_API int GetValueTypeId(const type_index& inType);
-MCF_API string GetTypeName(const type_index& inType);
-MCF_API string GetSyntaxKindName(SyntaxKind kind);
 
 class MCF_API ValueType final
 {
@@ -99,6 +96,7 @@ public:
 
 	bool HasValue()const { return !std::holds_alternative<std::monostate>(_inner); }
 	type_index Type()const;
+
 	void WriteTo(std::ostream& out) const;
 
 	bool operator==(const ValueType& other)const { return _inner == other._inner; }
@@ -109,6 +107,9 @@ public:
 	{
 		return std::get<T>(_inner);
 	}
+
+	static int GetValueTypeId(const type_index & inType);
+	static string GetTypeName(const type_index& inType);
 };
 
 class MCF_API VariableSymbol final

@@ -9,25 +9,6 @@
 #include "Diagnostic.h"
 #include "Syntax.h"
 
-void PrintValue(const MCF::ValueType& value)
-{
-	auto id = MCF::GetValueTypeId(value.Type());
-	std::cout << "\n" << "Result value is ";
-	switch (id)
-	{
-		case 1:
-			std::cout << MCF::GetTypeName(value.Type()) << " " << value.GetValue<long>() << std::endl;
-			break;
-		case 2:
-			std::cout << MCF::GetTypeName(value.Type()) << " " << static_cast<bool>(value.GetValue<bool>()) << std::endl;
-			break;
-		default:
-			std::cout << "Not valid value or type.\n";
-			break;
-	}
-	std::cout << "\n";
-}
-
 bool IsStringBlank(const std::string& s)
 {
 	bool result = true;
@@ -42,7 +23,7 @@ int main()
 	std::cout << "Enter expression.\n";
 	std::string text, input;
 	std::unordered_map<MCF::VariableSymbol, MCF::ValueType, MCF::VariableHash> variables;
-	MCF::Compilation previous;
+	auto previous = std::make_unique<MCF::Compilation>();
 	while (true)
 	{
 		if (text.length() == 0)
@@ -60,23 +41,23 @@ int main()
 		if (!isBlank && tree->Diagnostics()->size() > 0)
 			continue;
 
-		auto compilation = previous.Syntax() == nullptr ?
-			MCF::Compilation(tree) : previous.ContinueWith(tree);
-		auto result = compilation.Evaluate(variables);
+		auto compilation = previous->Syntax() == nullptr ? std::make_unique<MCF::Compilation>(tree) 
+			:MCF::Compilation::ContinueWith(previous,tree);
+		auto result = compilation->Evaluate(variables);
 		auto diagnostics = result.Diagnostics();
 		if (diagnostics->size() == 0)
 		{
 			auto value = result.Value();
 			value.WriteTo(std::cout);
-			compilation.Syntax()->Root()->WriteTo(std::cout);
+			tree->Root()->WriteTo(std::cout);
 			previous = std::move(compilation);
 		} else
 		{
 			for (const auto& diag : *diagnostics)
 			{
-				auto lineIndex = compilation.Syntax()->Text().GetLineIndex(diag.Span().Start());
+				auto lineIndex = tree->Text().GetLineIndex(diag.Span().Start());
 				auto lineNumber = lineIndex + 1;
-				auto line = compilation.Syntax()->Text().Lines()[lineIndex];
+				auto line = tree->Text().Lines()[lineIndex];
 				auto character = diag.Span().Start() - line.Start() + 1;
 
 				std::cout << "\n" << "(" << lineNumber << ", " << character << ") ";
@@ -85,9 +66,9 @@ int main()
 				auto prefixSpan = MCF::TextSpan::FromBounds(line.Start(), diag.Span().Start());
 				auto suffixSpan = MCF::TextSpan::FromBounds(diag.Span().End(), line.End());
 
-				auto prefix = compilation.Syntax()->Text().ToString(prefixSpan);
-				auto error = compilation.Syntax()->Text().ToString(diag.Span());
-				auto suffix = compilation.Syntax()->Text().ToString(suffixSpan);
+				auto prefix = tree->Text().ToString(prefixSpan);
+				auto error = tree->Text().ToString(diag.Span());
+				auto suffix = tree->Text().ToString(suffixSpan);
 				std::cout << "    " << prefix << error << suffix << "\n";
 			}
 			std::cout << std::endl;

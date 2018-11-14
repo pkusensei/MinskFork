@@ -101,14 +101,14 @@ void DiagnosticBag::ReportUndefinedName(const TextSpan & span, const string & na
 void DiagnosticBag::ReportCannotConvert(const TextSpan & span, const type_index & fromType, const type_index & toType)
 {
 	string message("Cannot convert type ");
-	message += GetTypeName(fromType) + " to " + GetTypeName(toType);
+	message += ValueType::GetTypeName(fromType) + " to " + ValueType::GetTypeName(toType);
 	Report(span, message);
 }
 
 void DiagnosticBag::ReportUndefinedUnaryOperator(const TextSpan & span, const string & operatorText, const type_index & operandType)
 {
 	string message{"Unary operator '"};
-	message += operatorText + "' is not defined for type " + GetTypeName(operandType);
+	message += operatorText + "' is not defined for type " + ValueType::GetTypeName(operandType);
 	Report(span, message);
 }
 
@@ -116,7 +116,7 @@ void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan & span, const s
 												  const type_index& leftType, const type_index& rightType)
 {
 	string message{"Binary operator '"};
-	message += operatorText + "' is not defined for types " + GetTypeName(leftType) + " and " + GetTypeName(rightType);
+	message += operatorText + "' is not defined for types " + ValueType::GetTypeName(leftType) + " and " + ValueType::GetTypeName(rightType);
 	Report(span, message);
 }
 

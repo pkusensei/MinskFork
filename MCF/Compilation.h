@@ -56,15 +56,14 @@ class MCF_API Compilation final
 {
 private:
 	unique_ptr<Compilation> _previous;
-	unique_ptr<SyntaxTree> _syntaxTree;
+	const SyntaxTree* _syntaxTree;
 	std::shared_ptr<BoundGlobalScope> _globalScope;
 
 	std::mutex _mtx;
 
-	Compilation(const Compilation* previous, const SyntaxTree& tree);
-	Compilation(const Compilation* previous, const unique_ptr<SyntaxTree>& tree);
-
 public:
+	Compilation(const unique_ptr<Compilation>& previous, const SyntaxTree& tree);
+	Compilation(const unique_ptr<Compilation>& previous, const unique_ptr<SyntaxTree>& tree);
 	Compilation();
 	explicit Compilation(const SyntaxTree& tree);
 	explicit Compilation(const unique_ptr<SyntaxTree>& tree);
@@ -73,11 +72,11 @@ public:
 	Compilation& operator=(Compilation&& other);
 
 	Compilation*  Previous()const { return _previous.get(); }
-	const SyntaxTree* Syntax()const { return _syntaxTree.get(); }
+	const SyntaxTree* Syntax()const { return _syntaxTree; }
 
 	std::weak_ptr<BoundGlobalScope> GlobalScope();
-	Compilation ContinueWith(const SyntaxTree& tree);
-	Compilation ContinueWith(const unique_ptr<SyntaxTree>& tree);
+	static unique_ptr<Compilation> ContinueWith(const unique_ptr<Compilation>& previous, const SyntaxTree& tree);
+	static unique_ptr<Compilation> ContinueWith(const unique_ptr<Compilation>& previous, const unique_ptr<SyntaxTree>& tree);
 
 	EvaluationResult Evaluate(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables);
 };

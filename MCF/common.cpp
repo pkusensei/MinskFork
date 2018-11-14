@@ -27,6 +27,87 @@ const vector<SyntaxKind> GetAllSyntaxKinds()
 	return result;
 }
 
+string GetSyntaxKindName(SyntaxKind kind)
+{
+	switch (kind)
+	{
+		case SyntaxKind::BadToken:
+			return "BadToken";
+		case SyntaxKind::EndOfFileToken:
+			return "EndOfFileToken";
+		case SyntaxKind::WhitespaceToken:
+			return "WhitespaceToken";
+		case SyntaxKind::NumberToken:
+			return "NumberToken";
+		case SyntaxKind::PlusToken:
+			return "PlusToken";
+		case SyntaxKind::MinusToken:
+			return "MinusToken";
+		case SyntaxKind::StarToken:
+			return "StarToken";
+		case SyntaxKind::SlashToken:
+			return "SlashToken";
+		case SyntaxKind::BangToken:
+			return "BangToken";
+		case SyntaxKind::EqualsToken:
+			return "EqualsToken";
+		case SyntaxKind::AmpersandAmpersandToken:
+			return "AmpersandAmpersandToken";
+		case SyntaxKind::PipePipeToken:
+			return "PipePipeToken";
+		case SyntaxKind::EqualsEqualsToken:
+			return "EqualsEqualsToken";
+		case SyntaxKind::BangEqualsToken:
+			return "BangEqualsToken";
+		case SyntaxKind::OpenParenthesisToken:
+			return "OpenParenthesisToken";
+		case SyntaxKind::CloseParenthesisToken:
+			return "CloseParenthesisToken";
+		case SyntaxKind::OpenBraceToken:
+			return "OpenBraceToken";
+		case SyntaxKind::CloseBraceToken:
+			return "CloseBraceToken";
+		case SyntaxKind::IdentifierToken:
+			return "IdentifierToken";
+
+		case SyntaxKind::FalseKeyword:
+			return "FalseKeyword";
+		case SyntaxKind::LetKeyword:
+			return "LetKeyword";
+		case SyntaxKind::TrueKeyword:
+			return "TrueKeyword";
+		case SyntaxKind::VarKeyword:
+			return "VarKeyword";
+
+		case SyntaxKind::CompilationUnit:
+			return "CompilationUnit";
+
+		case SyntaxKind::BlockStatement:
+			return "BlockStatement";
+		case SyntaxKind::VariableDeclaration:
+			return "VariableDeclaration";
+		case SyntaxKind::ExpressionStatement:
+			return "ExpressionStatement";
+
+
+		case SyntaxKind::LiteralExpression:
+			return "LiteralExpression";
+		case SyntaxKind::NameExpression:
+			return "NameExpression";
+		case SyntaxKind::UnaryExpression:
+			return "UnaryExpression";
+		case SyntaxKind::BinaryExpression:
+			return "BinaryExpression";
+		case SyntaxKind::ParenthesizedExpression:
+			return "ParenthesizedExpression";
+		case SyntaxKind::AssignmentExpression:
+			return "AssignmentExpression";
+
+		default:
+			throw std::invalid_argument("Invalid syntax; no such syntax kind.");
+	}
+}
+
 bool StringEndsWith(const string & sample, const string & ending)
 {
 	if (sample.length() < ending.length()) return false;
@@ -127,108 +208,6 @@ vector<SyntaxKind> GetBinaryOperatorKinds()
 	return result;
 }
 
-int GetValueTypeId(const type_index & inType)
-{
-	static std::unordered_map<type_index, int> types = {{typeid(std::monostate), 0},
-	{typeid(long), 1},{typeid(bool), 2}};
-
-	return types[inType];
-}
-
-string GetTypeName(const type_index & inType)
-{
-	auto id = GetValueTypeId(inType);
-	switch (id)
-	{
-		case 1: return "long";
-		case 2: return "bool";
-		case 0:
-		default:
-			return "std::monostate";
-	}
-}
-
-string GetSyntaxKindName(SyntaxKind kind)
-{
-	switch (kind)
-	{
-		case SyntaxKind::BadToken:
-			return "BadToken";
-		case SyntaxKind::EndOfFileToken:
-			return "EndOfFileToken";
-		case SyntaxKind::WhitespaceToken:
-			return "WhitespaceToken";
-		case SyntaxKind::NumberToken:
-			return "NumberToken";
-		case SyntaxKind::PlusToken:
-			return "PlusToken";
-		case SyntaxKind::MinusToken:
-			return "MinusToken";
-		case SyntaxKind::StarToken:
-			return "StarToken";
-		case SyntaxKind::SlashToken:
-			return "SlashToken";
-		case SyntaxKind::BangToken:
-			return "BangToken";
-		case SyntaxKind::EqualsToken:
-			return "EqualsToken";
-		case SyntaxKind::AmpersandAmpersandToken:
-			return "AmpersandAmpersandToken";
-		case SyntaxKind::PipePipeToken:
-			return "PipePipeToken";
-		case SyntaxKind::EqualsEqualsToken:
-			return "EqualsEqualsToken";
-		case SyntaxKind::BangEqualsToken:
-			return "BangEqualsToken";
-		case SyntaxKind::OpenParenthesisToken:
-			return "OpenParenthesisToken";
-		case SyntaxKind::CloseParenthesisToken:
-			return "CloseParenthesisToken";
-		case SyntaxKind::OpenBraceToken:
-			return "OpenBraceToken";
-		case SyntaxKind::CloseBraceToken:
-			return "CloseBraceToken";
-		case SyntaxKind::IdentifierToken:
-			return "IdentifierToken";
-
-		case SyntaxKind::FalseKeyword:
-			return "FalseKeyword";
-		case SyntaxKind::LetKeyword:
-			return "LetKeyword";
-		case SyntaxKind::TrueKeyword:
-			return "TrueKeyword";
-		case SyntaxKind::VarKeyword:
-			return "VarKeyword";
-
-		case SyntaxKind::CompilationUnit:
-			return "CompilationUnit";
-
-		case SyntaxKind::BlockStatement:
-			return "BlockStatement";
-		case SyntaxKind::VariableDeclaration:
-			return "VariableDeclaration";
-		case SyntaxKind::ExpressionStatement:
-			return "ExpressionStatement";
-
-
-		case SyntaxKind::LiteralExpression:
-			return "LiteralExpression";
-		case SyntaxKind::NameExpression:
-			return "NameExpression";
-		case SyntaxKind::UnaryExpression:
-			return "UnaryExpression";
-		case SyntaxKind::BinaryExpression:
-			return "BinaryExpression";
-		case SyntaxKind::ParenthesizedExpression:
-			return "ParenthesizedExpression";
-		case SyntaxKind::AssignmentExpression:
-			return "AssignmentExpression";
-
-		default:
-			throw std::invalid_argument("Invalid syntax; no such syntax kind.");
-	}
-}
-
 type_index ValueType::Type() const
 {
 	switch (_inner.index())
@@ -260,6 +239,27 @@ void ValueType::WriteTo(std::ostream & out) const
 			break;
 	}
 	out << "\n";
+}
+
+int ValueType::GetValueTypeId(const type_index & inType)
+{
+	static std::unordered_map<type_index, int> types = {{typeid(std::monostate), 0},
+		{typeid(long), 1},{typeid(bool), 2}};
+
+	return types[inType];
+}
+
+string ValueType::GetTypeName(const type_index & inType)
+{
+	auto id = GetValueTypeId(inType);
+	switch (id)
+	{
+		case 1: return "long";
+		case 2: return "bool";
+		case 0:
+		default:
+			return "std::monostate";
+	}
 }
 
 VariableSymbol::VariableSymbol(const string& name, bool readOnly, const type_index& type)
