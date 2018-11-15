@@ -57,7 +57,7 @@ class MCF_API Compilation final
 private:
 	unique_ptr<Compilation> _previous;
 	const SyntaxTree* _syntaxTree;
-	std::shared_ptr<BoundGlobalScope> _globalScope;
+	unique_ptr<BoundGlobalScope> _globalScope;
 
 	std::mutex _mtx;
 
@@ -71,10 +71,10 @@ public:
 	Compilation(Compilation&& other);
 	Compilation& operator=(Compilation&& other);
 
-	Compilation*  Previous()const { return _previous.get(); }
+	const Compilation* Previous()const { return _previous.get(); }
 	const SyntaxTree* Syntax()const { return _syntaxTree; }
 
-	std::weak_ptr<BoundGlobalScope> GlobalScope();
+	const BoundGlobalScope* GlobalScope();
 	static unique_ptr<Compilation> ContinueWith(const unique_ptr<Compilation>& previous, const SyntaxTree& tree);
 	static unique_ptr<Compilation> ContinueWith(const unique_ptr<Compilation>& previous, const unique_ptr<SyntaxTree>& tree);
 

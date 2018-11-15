@@ -210,11 +210,11 @@ Compilation& Compilation::operator=(Compilation&& other)
 	return *this;
 }
 
-std::weak_ptr<BoundGlobalScope> Compilation::GlobalScope()
+const BoundGlobalScope* Compilation::GlobalScope()
 {
 	while (_globalScope == nullptr)
 	{
-		std::shared_ptr<BoundGlobalScope> tmp{nullptr};
+		unique_ptr<BoundGlobalScope> tmp{nullptr};
 		if (_previous == nullptr)
 			tmp = Binder::BindGlobalScope({}, _syntaxTree->Root());
 		else
@@ -224,7 +224,7 @@ std::weak_ptr<BoundGlobalScope> Compilation::GlobalScope()
 		if (lock.try_lock() && _globalScope == nullptr)
 			_globalScope.swap(tmp);
 	}
-	return _globalScope;
+	return _globalScope.get();
 }
 
 unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous, const SyntaxTree & tree)
@@ -239,13 +239,13 @@ unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>&
 
 EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
 {
-	_syntaxTree->Diagnostics()->AddRange(*(GlobalScope().lock()->Diagnostics()));
+	_syntaxTree->Diagnostics()->AddRange(*(GlobalScope()->Diagnostics()));
 	auto diagnostics = _syntaxTree->Diagnostics();
 
 	if (diagnostics->size() > 0)
 		return EvaluationResult(diagnostics, ValueType());
 
-	Evaluator evaluator(GlobalScope().lock()->Statement(), variables);
+	Evaluator evaluator(GlobalScope()->Statement(), variables);
 	auto value = evaluator.Evaluate();
 	return EvaluationResult(diagnostics, value);
 }

@@ -196,15 +196,8 @@ BoundExpressionStatement::BoundExpressionStatement(BoundExpressionStatement && o
 {
 }
 
-BoundScope::BoundScope(const std::weak_ptr<BoundScope>& parent)
-	: _parent(nullptr)
-{
-	if (!parent.expired())
-		_parent = parent.lock();
-}
-
-BoundScope::BoundScope(const std::shared_ptr<BoundScope>& parent)
-	:_parent(parent)
+BoundScope::BoundScope(const unique_ptr<BoundScope>& parent)
+	: _parent(std::move((std::remove_const_t<unique_ptr<BoundScope>&>(parent))))
 {
 }
 
@@ -238,24 +231,19 @@ const vector<VariableSymbol> BoundScope::GetDeclaredVariables() const
 	return result;
 }
 
-BoundGlobalScope::BoundGlobalScope(const std::shared_ptr<BoundGlobalScope>& previous, const unique_ptr<DiagnosticBag>& diagnostics,
-								   const vector<VariableSymbol>& variables, const unique_ptr<BoundStatement>& statement)
-	:_previous(previous), 
-	_diagnostics(std::move(std::remove_const_t<unique_ptr<DiagnosticBag>&>(diagnostics))),
-	_variables(variables),
-	_statement(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(statement)))
+void BoundScope::ResetToParent(unique_ptr<BoundScope>& current)
 {
+	current.swap(current->_parent);
 }
 
-BoundGlobalScope::BoundGlobalScope(const std::weak_ptr<BoundGlobalScope>& previous, unique_ptr<DiagnosticBag>& diagnostics,
+
+BoundGlobalScope::BoundGlobalScope(const BoundGlobalScope* previous, const unique_ptr<DiagnosticBag>& diagnostics,
 								   const vector<VariableSymbol>& variables, const unique_ptr<BoundStatement>& statement)
-	:_previous(nullptr), 
+	:_previous(previous),
 	_diagnostics(std::move(std::remove_const_t<unique_ptr<DiagnosticBag>&>(diagnostics))),
 	_variables(variables),
 	_statement(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(statement)))
 {
-	if (!previous.expired())
-		_previous = previous.lock();
 }
 
 BoundGlobalScope::BoundGlobalScope(BoundGlobalScope && other)
@@ -264,9 +252,9 @@ BoundGlobalScope::BoundGlobalScope(BoundGlobalScope && other)
 {
 }
 
-Binder::Binder(const std::shared_ptr<BoundScope>& parent)
-	:_diagnostics(std::make_unique<DiagnosticBag>()),
-	_scope(std::make_shared<BoundScope>(parent))
+Binder::Binder(const unique_ptr<BoundScope>& parent)
+	: _diagnostics(std::make_unique<DiagnosticBag>()),
+	_scope(std::make_unique<BoundScope>(parent))
 {
 }
 
@@ -292,10 +280,10 @@ unique_ptr<BoundStatement> Binder::BindBlockStatement(const StatementSyntax * sy
 
 	auto statements = vector<unique_ptr<BoundStatement>>();
 	//auto tmp = std::make_shared<BoundScope>(_scope);
-	_scope = std::make_shared<BoundScope>(_scope);
+	_scope = std::make_unique<BoundScope>(_scope);
 	for (const auto& it : p->Statements())
 		statements.emplace_back(BindStatement(it));
-	_scope = _scope->Parent().lock();
+	BoundScope::ResetToParent(_scope);
 	return std::make_unique<BoundBlockStatement>(statements);
 }
 
@@ -433,21 +421,20 @@ unique_ptr<BoundExpression> Binder::BindBinaryExpression(const ExpressionSyntax 
 	}
 }
 
-std::shared_ptr<BoundScope> Binder::CreateParentScope(const std::shared_ptr<BoundGlobalScope>& previous)
+unique_ptr<BoundScope>  Binder::CreateParentScope(const BoundGlobalScope* previous)
 {
-	auto stack = std::stack<std::shared_ptr<BoundGlobalScope>>();
-	auto current = std::remove_const_t<std::shared_ptr<BoundGlobalScope>&>(previous);
-	while (current != nullptr)
+	auto stack = std::stack<const BoundGlobalScope*>();
+	while (previous != nullptr)
 	{
-		stack.emplace(current);
-		current = current->Previous().lock();
+		stack.emplace(previous);
+		previous = previous->Previous();
 	}
-	std::shared_ptr<BoundScope> parent{nullptr};
+	unique_ptr<BoundScope> parent{nullptr};
 	while (!stack.empty())
 	{
-		current = stack.top();
-		auto scope = std::make_shared<BoundScope>(parent);
-		for (const auto& it : previous->Variables())
+		auto current = stack.top();
+		auto scope = std::make_unique<BoundScope>(parent);
+		for (const auto& it : current->Variables())
 			scope->TryDeclare(it);
 		parent.swap(scope);
 		stack.pop();
@@ -456,22 +443,16 @@ std::shared_ptr<BoundScope> Binder::CreateParentScope(const std::shared_ptr<Boun
 }
 
 
-std::shared_ptr<BoundGlobalScope> Binder::BindGlobalScope(const std::weak_ptr<BoundGlobalScope>& previous, const CompilationUnitSyntax * syntax)
+unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* previous, const CompilationUnitSyntax* syntax)
 {
-	std::shared_ptr<BoundScope> parentScope{nullptr};
-	if (previous.expired())
-		parentScope = CreateParentScope(nullptr);
-	else
-		parentScope = CreateParentScope(previous.lock());
+	auto parentScope = CreateParentScope(previous);
 	Binder binder(parentScope);
 	auto expression = binder.BindStatement(syntax->Statement());
 	auto variables = binder._scope->GetDeclaredVariables();
 	auto diagnostics = binder.Diagnostics();
-	if (!previous.expired())
-		diagnostics->AddRangeFront(*previous.lock()->Diagnostics());
-	return std::make_shared<BoundGlobalScope>(previous, binder._diagnostics, variables, expression);
+	if (previous != nullptr)
+		diagnostics->AddRangeFront(*previous->Diagnostics());
+	return std::make_unique<BoundGlobalScope>(previous, binder._diagnostics, variables, expression);
 }
-
-
 
 }//MCF

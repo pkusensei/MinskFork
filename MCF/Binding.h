@@ -270,32 +270,30 @@ class BoundScope final
 {
 private:
 	std::unordered_map<string, VariableSymbol> _variables;
-	std::shared_ptr<BoundScope> _parent;
+	unique_ptr<BoundScope> _parent;
 public:
-	explicit BoundScope(const std::weak_ptr<BoundScope>& parent);
-	explicit BoundScope(const std::shared_ptr<BoundScope>& parent);
+	explicit BoundScope(const unique_ptr<BoundScope>& parent);
 
-	std::weak_ptr<BoundScope> Parent()const { return _parent; }
+	const BoundScope* Parent()const { return _parent.get(); }
 	bool TryDeclare(const VariableSymbol& variable);
 	bool TryLookup(const string& name, VariableSymbol& variable)const;
 	const vector<VariableSymbol> GetDeclaredVariables()const;
+	static void ResetToParent(unique_ptr<BoundScope>& current);
 };
 
 class BoundGlobalScope final
 {
 private:
-	std::shared_ptr<BoundGlobalScope> _previous;
+	const BoundGlobalScope* _previous;
 	unique_ptr<DiagnosticBag> _diagnostics;
 	vector<VariableSymbol> _variables;
 	unique_ptr<BoundStatement> _statement;
 public:
-	BoundGlobalScope(const std::shared_ptr<BoundGlobalScope>& previous, const unique_ptr<DiagnosticBag>& diagnostics,
-					 const vector<VariableSymbol>& variables, const unique_ptr<BoundStatement>& statement);
-	BoundGlobalScope(const std::weak_ptr<BoundGlobalScope>& previous, unique_ptr<DiagnosticBag>& diagnostics,
+	BoundGlobalScope(const BoundGlobalScope* previous, const unique_ptr<DiagnosticBag>& diagnostics,
 					 const vector<VariableSymbol>& variables, const unique_ptr<BoundStatement>& statement);
 	BoundGlobalScope(BoundGlobalScope&& other);
 
-	std::weak_ptr<BoundGlobalScope> Previous()const { return _previous; }
+	const BoundGlobalScope* Previous()const { return _previous; }
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
 	const vector<VariableSymbol> Variables()const { return _variables; }
 	const BoundStatement* Statement()const { return _statement.get(); }
@@ -305,7 +303,7 @@ class Binder final
 {
 private:
 	unique_ptr<DiagnosticBag> _diagnostics;
-	std::shared_ptr<BoundScope> _scope;
+	unique_ptr<BoundScope> _scope;
 
 	unique_ptr<BoundStatement> BindStatement(const StatementSyntax* syntax);
 	unique_ptr<BoundStatement> BindBlockStatement(const StatementSyntax* syntax);
@@ -320,14 +318,14 @@ private:
 	unique_ptr<BoundExpression> BindUnaryExpression(const ExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindBinaryExpression(const ExpressionSyntax* syntax);
 
-	static std::shared_ptr<BoundScope> CreateParentScope(const std::shared_ptr<BoundGlobalScope>& previous);
+	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
 public:
-	explicit Binder(const std::shared_ptr<BoundScope>& parent);
+	explicit Binder(const unique_ptr<BoundScope>& parent);
 	~Binder() = default;
 
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
 
-	static std::shared_ptr<BoundGlobalScope> BindGlobalScope(const std::weak_ptr<BoundGlobalScope>& previous, const CompilationUnitSyntax* syntax);
+	static unique_ptr<BoundGlobalScope> BindGlobalScope(const BoundGlobalScope* previous, const CompilationUnitSyntax* syntax);
 };
 
 }//MCF
