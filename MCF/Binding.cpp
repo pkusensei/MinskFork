@@ -258,6 +258,12 @@ BoundGlobalScope::BoundGlobalScope(const std::weak_ptr<BoundGlobalScope>& previo
 		_previous = previous.lock();
 }
 
+BoundGlobalScope::BoundGlobalScope(BoundGlobalScope && other)
+	:_previous(std::move(other._previous)), _diagnostics(std::move(other._diagnostics)),
+	_variables(std::move(other._variables)), _statement(std::move(other._statement))
+{
+}
+
 Binder::Binder(const std::shared_ptr<BoundScope>& parent)
 	:_diagnostics(std::make_unique<DiagnosticBag>()),
 	_scope(std::make_shared<BoundScope>(parent))
@@ -357,8 +363,7 @@ unique_ptr<BoundExpression> Binder::BindNameExpression(const ExpressionSyntax * 
 	if (p == nullptr) return nullptr;
 
 	auto name = p->IdentifierToken().Text();
-	VariableSymbol tmp;
-	VariableSymbol& variable = tmp;
+	VariableSymbol variable;
 	if (!_scope->TryLookup(name, variable))
 	{
 		_diagnostics->ReportUndefinedName(p->IdentifierToken().Span(), name);
@@ -374,8 +379,8 @@ unique_ptr<BoundExpression> Binder::BindAssignmentExpression(const ExpressionSyn
 
 	auto name = p->IdentifierToken().Text();
 	auto boundExpression = BindExpression(p->Expression());
-	VariableSymbol tmp;
-	VariableSymbol& variable = tmp;
+
+	VariableSymbol variable;
 
 	if (!_scope->TryLookup(name, variable))
 	{
@@ -430,7 +435,7 @@ unique_ptr<BoundExpression> Binder::BindBinaryExpression(const ExpressionSyntax 
 
 std::shared_ptr<BoundScope> Binder::CreateParentScope(const std::shared_ptr<BoundGlobalScope>& previous)
 {
-	auto stack = std::stack<std::weak_ptr<BoundGlobalScope>>();
+	auto stack = std::stack<std::shared_ptr<BoundGlobalScope>>();
 	auto current = std::remove_const_t<std::shared_ptr<BoundGlobalScope>&>(previous);
 	while (current != nullptr)
 	{
@@ -440,7 +445,7 @@ std::shared_ptr<BoundScope> Binder::CreateParentScope(const std::shared_ptr<Boun
 	std::shared_ptr<BoundScope> parent{nullptr};
 	while (!stack.empty())
 	{
-		current = stack.top().lock();
+		current = stack.top();
 		auto scope = std::make_shared<BoundScope>(parent);
 		for (const auto& it : previous->Variables())
 			scope->TryDeclare(it);

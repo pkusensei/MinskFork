@@ -23,7 +23,7 @@ int main()
 	std::cout << "Enter expression.\n";
 	std::string text, input;
 	std::unordered_map<MCF::VariableSymbol, MCF::ValueType, MCF::VariableHash> variables;
-	auto previous = std::make_unique<MCF::Compilation>();
+	std::unique_ptr<MCF::Compilation> previous{nullptr};
 	while (true)
 	{
 		if (text.length() == 0)
@@ -41,7 +41,7 @@ int main()
 		if (!isBlank && tree->Diagnostics()->size() > 0)
 			continue;
 
-		auto compilation = previous->Syntax() == nullptr ? std::make_unique<MCF::Compilation>(tree) 
+		auto compilation = previous == nullptr ? std::make_unique<MCF::Compilation>(tree) 
 			:MCF::Compilation::ContinueWith(previous,tree);
 		auto result = compilation->Evaluate(variables);
 		auto diagnostics = result.Diagnostics();

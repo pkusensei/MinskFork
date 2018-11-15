@@ -286,13 +286,14 @@ class BoundGlobalScope final
 private:
 	std::shared_ptr<BoundGlobalScope> _previous;
 	unique_ptr<DiagnosticBag> _diagnostics;
-	const vector<VariableSymbol> _variables;
+	vector<VariableSymbol> _variables;
 	unique_ptr<BoundStatement> _statement;
 public:
 	BoundGlobalScope(const std::shared_ptr<BoundGlobalScope>& previous, const unique_ptr<DiagnosticBag>& diagnostics,
 					 const vector<VariableSymbol>& variables, const unique_ptr<BoundStatement>& statement);
 	BoundGlobalScope(const std::weak_ptr<BoundGlobalScope>& previous, unique_ptr<DiagnosticBag>& diagnostics,
 					 const vector<VariableSymbol>& variables, const unique_ptr<BoundStatement>& statement);
+	BoundGlobalScope(BoundGlobalScope&& other);
 
 	std::weak_ptr<BoundGlobalScope> Previous()const { return _previous; }
 	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }

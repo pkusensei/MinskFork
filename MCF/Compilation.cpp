@@ -221,7 +221,7 @@ std::weak_ptr<BoundGlobalScope> Compilation::GlobalScope()
 			tmp = Binder::BindGlobalScope(_previous->GlobalScope(), _syntaxTree->Root());
 
 		std::unique_lock<std::mutex> lock(_mtx, std::defer_lock);
-		if (lock.try_lock())
+		if (lock.try_lock() && _globalScope == nullptr)
 			_globalScope.swap(tmp);
 	}
 	return _globalScope;

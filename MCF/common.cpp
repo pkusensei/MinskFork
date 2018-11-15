@@ -303,4 +303,11 @@ bool VariableSymbol::operator!=(const VariableSymbol & other) const
 	return !(*this == other);
 }
 
+size_t VariableHash::operator()(const VariableSymbol & variable) const noexcept
+{
+	auto h1 = std::hash<string>{}(variable.Name());
+	auto h2 = variable.Type().hash_code();
+	return h1 ^ (h2 << 1);
 }
+
+}// MCF
