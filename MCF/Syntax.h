@@ -255,6 +255,97 @@ public:
 	const ExpressionSyntax* Initializer()const { return _initializer.get(); }
 };
 
+class ElseClauseSyntax final :public SyntaxNode
+{
+private:
+	SyntaxToken _elseKeyword;
+	unique_ptr<StatementSyntax> _elseStatement;
+public:
+	ElseClauseSyntax(const SyntaxToken& elseKeyword, const unique_ptr<StatementSyntax>& elseStatement);
+	virtual ~ElseClauseSyntax() = default;
+	ElseClauseSyntax(ElseClauseSyntax&&) = default;
+
+	// Inherited via SyntaxNode
+	virtual SyntaxKind Kind() const override { return SyntaxKind::ElseClause; }
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
+
+	SyntaxToken ElseKeyword()const { return _elseKeyword; }
+	const StatementSyntax* ElseStatement()const { return _elseStatement.get(); }
+};
+
+class IfStatementSyntax final :public StatementSyntax
+{
+private:
+	SyntaxToken _ifKeyword;
+	unique_ptr<ExpressionSyntax> _condition;
+	unique_ptr<StatementSyntax> _thenStatement;
+	unique_ptr<ElseClauseSyntax> _elseClause;
+public:
+	IfStatementSyntax(const SyntaxToken& ifKeyword, const unique_ptr<ExpressionSyntax>& condition,
+					  const unique_ptr<StatementSyntax>& thenStatement, const unique_ptr<ElseClauseSyntax>& elseClause);
+	virtual ~IfStatementSyntax() = default;
+	IfStatementSyntax(IfStatementSyntax&&) = default;
+
+	// Inherited via StatementSyntax
+	virtual SyntaxKind Kind() const override { return SyntaxKind::IfStatement; }
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
+
+	SyntaxToken IfKeyword()const { return _ifKeyword; }
+	const ExpressionSyntax* Condition()const { return _condition.get(); }
+	const StatementSyntax* ThenStatement()const { return _thenStatement.get(); }
+	const ElseClauseSyntax* ElseClause()const { return _elseClause.get(); }
+};
+
+class WhileStatementSyntax final :public StatementSyntax
+{
+private:
+	SyntaxToken _whileKeyword;
+	unique_ptr<ExpressionSyntax> _condition;
+	unique_ptr<StatementSyntax> _body;
+public:
+	WhileStatementSyntax(const SyntaxToken& whileKeyword, const unique_ptr<ExpressionSyntax>& condition,
+						 const unique_ptr<StatementSyntax>& body);
+	virtual ~WhileStatementSyntax() = default;
+	WhileStatementSyntax(WhileStatementSyntax&&) = default;
+
+	// Inherited via StatementSyntax
+	virtual SyntaxKind Kind() const override { return SyntaxKind::WhileStatement; }
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
+
+	SyntaxToken WhileKeyword()const { return _whileKeyword; }
+	const ExpressionSyntax* Condition()const { return _condition.get(); }
+	const StatementSyntax* Body()const { return _body.get(); }
+};
+
+class ForStatementSyntax final :public StatementSyntax
+{
+private:
+	SyntaxToken _keyword;
+	SyntaxToken _identifier;
+	SyntaxToken _equalsToken;
+	unique_ptr<ExpressionSyntax> _lowerBound;
+	SyntaxToken _toKeyword;
+	unique_ptr<ExpressionSyntax> _upperBound;
+	unique_ptr<StatementSyntax> _body;
+public:
+	ForStatementSyntax(const SyntaxToken& keyword, const SyntaxToken& identifier, const SyntaxToken& equals,
+					   unique_ptr<ExpressionSyntax>& lowerBound, const SyntaxToken& toKeyword,
+					   unique_ptr<ExpressionSyntax>& upperBound, const unique_ptr<StatementSyntax>& body);
+	virtual ~ForStatementSyntax() = default;
+	ForStatementSyntax(ForStatementSyntax&&) = default;
+	// Inherited via StatementSyntax
+	virtual SyntaxKind Kind() const override { return SyntaxKind::ForStatement; }
+	virtual const vector<const SyntaxNode*> GetChildren() const override;
+
+	SyntaxToken Keyword() const { return _keyword; }
+	SyntaxToken Identifier() const { return _identifier; }
+	SyntaxToken EqualsToken()const { return _equalsToken; }
+	const ExpressionSyntax* LowerBound()const { return _lowerBound.get(); }
+	SyntaxToken ToKeyword()const { return _toKeyword; }
+	const ExpressionSyntax* UpperBound()const { return _upperBound.get(); }
+	const StatementSyntax* Body()const { return _body.get(); }
+};
+
 class ExpressionStatementSyntax final : public StatementSyntax
 {
 private:
@@ -309,6 +400,10 @@ private:
 	unique_ptr<StatementSyntax> ParseStatement();
 	unique_ptr<StatementSyntax> ParseBlockStatement();
 	unique_ptr<StatementSyntax> ParseVariableDeclaration();
+	unique_ptr<StatementSyntax> ParseIfStatement();
+	unique_ptr<ElseClauseSyntax> ParseElseClause();
+	unique_ptr<StatementSyntax> ParseWhileStatement();
+	unique_ptr<StatementSyntax> ParseForStatement();
 	unique_ptr<StatementSyntax> ParseExpressionStatement();
 
 	unique_ptr<ExpressionSyntax> ParseExpression();

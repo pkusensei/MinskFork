@@ -52,7 +52,7 @@ SyntaxToken::SyntaxToken(SyntaxKind kind, size_t position, const string& text, c
 }
 
 SyntaxToken::SyntaxToken(SyntaxToken && other)
-	:_kind(other._kind), _position(other._position), _text(std::move(other._text)),
+	: _kind(other._kind), _position(other._position), _text(std::move(other._text)),
 	_value(std::move(other._value))
 {
 }
@@ -162,6 +162,28 @@ SyntaxToken Lexer::Lex()
 			{
 				Next();
 				_kind = SyntaxKind::BangToken;
+			}
+			break;
+		case '<':
+			if (Lookahead() == '=')
+			{
+				_position += 2;
+				_kind = SyntaxKind::LessOrEqualsToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::LessToken;
+			}
+			break;
+		case '>':
+			if (Lookahead() == '=')
+			{
+				_position += 2;
+				_kind = SyntaxKind::GreaterOrEqualsToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::GreaterToken;
 			}
 			break;
 		case '0': case '1': case '2': case '3': case '4':
@@ -431,6 +453,81 @@ const vector<const SyntaxNode*> VariableDeclarationSyntax::GetChildren() const
 	return result;
 }
 
+
+ElseClauseSyntax::ElseClauseSyntax(const SyntaxToken & elseKeyword, const unique_ptr<StatementSyntax>& elseStatement)
+	:_elseKeyword(elseKeyword),
+	_elseStatement(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(elseStatement)))
+{
+}
+
+const vector<const SyntaxNode*> ElseClauseSyntax::GetChildren() const
+{
+	return vector<const SyntaxNode*>{
+		&_elseKeyword,
+			_elseStatement.get()
+	};
+}
+
+IfStatementSyntax::IfStatementSyntax(const SyntaxToken & ifKeyword, const unique_ptr<ExpressionSyntax>& condition,
+									 const unique_ptr<StatementSyntax>& thenStatement, const unique_ptr<ElseClauseSyntax>& elseClause)
+	:_ifKeyword(ifKeyword),
+	_condition(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(condition))),
+	_thenStatement(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(thenStatement))),
+	_elseClause(std::move(std::remove_const_t<unique_ptr<ElseClauseSyntax>&>(elseClause)))
+{
+}
+
+const vector<const SyntaxNode*> IfStatementSyntax::GetChildren() const
+{
+	return vector<const SyntaxNode*>{
+		&_ifKeyword,
+			_condition.get(),
+			_thenStatement.get(),
+			_elseClause.get()
+	};
+}
+
+WhileStatementSyntax::WhileStatementSyntax(const SyntaxToken & whileKeyword, const unique_ptr<ExpressionSyntax>& condition,
+										   const unique_ptr<StatementSyntax>& body)
+	:_whileKeyword(whileKeyword),
+	_condition(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(condition))),
+	_body(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(body)))
+{
+}
+
+const vector<const SyntaxNode*> WhileStatementSyntax::GetChildren() const
+{
+	return vector<const SyntaxNode*>{
+		&_whileKeyword,
+			_condition.get(),
+			_body.get()
+	};
+}
+
+ForStatementSyntax::ForStatementSyntax(const SyntaxToken & keyword, const SyntaxToken & identifier, const SyntaxToken & equals,
+									   unique_ptr<ExpressionSyntax>& lowerBound, const SyntaxToken & toKeyword,
+									   unique_ptr<ExpressionSyntax>& upperBound, const unique_ptr<StatementSyntax>& body)
+	:_keyword(keyword), _identifier(identifier), _equalsToken(equals), 
+	_lowerBound(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(lowerBound))),
+	_toKeyword(toKeyword),
+	_upperBound(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(upperBound))),
+	_body(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(body)))
+{
+}
+
+const vector<const SyntaxNode*> ForStatementSyntax::GetChildren() const
+{
+	return vector<const SyntaxNode*>{
+		&_keyword,
+			&_identifier,
+			&_equalsToken,
+			_lowerBound.get(),
+			&_toKeyword,
+			_upperBound.get(),
+			_body.get()
+	};
+}
+
 ExpressionStatementSyntax::ExpressionStatementSyntax(const unique_ptr<ExpressionSyntax>& expression)
 	:_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
 {
@@ -530,6 +627,12 @@ unique_ptr<StatementSyntax> Parser::ParseStatement()
 		case SyntaxKind::LetKeyword:
 		case SyntaxKind::VarKeyword:
 			return ParseVariableDeclaration();
+		case SyntaxKind::IfKeyword:
+			return ParseIfStatement();
+		case SyntaxKind::WhileKeyword:
+			return ParseWhileStatement();
+		case SyntaxKind::ForKeyword:
+			return ParseForStatement();
 		default:
 			return ParseExpressionStatement();
 	}
@@ -543,7 +646,15 @@ unique_ptr<StatementSyntax> Parser::ParseBlockStatement()
 	while (Current()->Kind() != SyntaxKind::EndOfFileToken &&
 		   Current()->Kind() != SyntaxKind::CloseBraceToken)
 	{
+		auto startToken = Current();
+
 		statements.emplace_back(ParseStatement());
+
+		// Make sure ParseStatement() consumes a token or more
+		if (Current() == startToken)
+			NextToken();
+
+		startToken = Current();
 	}
 	auto closeBraceToken = MatchToken(SyntaxKind::CloseBraceToken);
 	return std::make_unique<BlockStatementSyntax>(*openBraceToken, statements, *closeBraceToken);
@@ -559,6 +670,45 @@ unique_ptr<StatementSyntax> Parser::ParseVariableDeclaration()
 	auto initializer = ParseExpression();
 
 	return std::make_unique<VariableDeclarationSyntax>(*keyword, *identifier, *equals, initializer);
+}
+
+unique_ptr<StatementSyntax> Parser::ParseIfStatement()
+{
+	auto keyword = MatchToken(SyntaxKind::IfKeyword);
+	auto condition = ParseExpression();
+	auto statement = ParseStatement();
+	auto elseClause = ParseElseClause();
+	return std::make_unique<IfStatementSyntax>(*keyword, condition, statement, elseClause);
+}
+
+unique_ptr<ElseClauseSyntax> Parser::ParseElseClause()
+{
+	if (Current()->Kind() != SyntaxKind::ElseKeyword)
+		return nullptr;
+	auto keyword = MatchToken(SyntaxKind::ElseKeyword);
+	auto statement = ParseStatement();
+	return std::make_unique<ElseClauseSyntax>(*keyword, statement);
+}
+
+unique_ptr<StatementSyntax> Parser::ParseWhileStatement()
+{
+	auto keyword = MatchToken(SyntaxKind::WhileKeyword);
+	auto condition = ParseExpression();
+	auto body = ParseStatement();
+	return std::make_unique<WhileStatementSyntax>(*keyword, condition, body);
+}
+
+unique_ptr<StatementSyntax> Parser::ParseForStatement()
+{
+	auto keyword = MatchToken(SyntaxKind::ForKeyword);
+	auto identifier = MatchToken(SyntaxKind::IdentifierToken);
+	auto equalsToken = MatchToken(SyntaxKind::EqualsToken);
+	auto lowerBound = ParseExpression();
+	auto toKeyword = MatchToken(SyntaxKind::ToKeyword);
+	auto upperBound = ParseExpression();
+	auto body = ParseStatement();
+	return std::make_unique<ForStatementSyntax>(*keyword, *identifier, *equalsToken, lowerBound,
+												*toKeyword, upperBound, body);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseExpressionStatement()

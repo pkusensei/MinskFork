@@ -35,6 +35,10 @@ enum class SyntaxKind
 	PipePipeToken,
 	EqualsEqualsToken,
 	BangEqualsToken,
+	LessToken,
+	LessOrEqualsToken,
+	GreaterToken,
+	GreaterOrEqualsToken,
 	OpenParenthesisToken,
 	CloseParenthesisToken,
 	OpenBraceToken,
@@ -42,17 +46,26 @@ enum class SyntaxKind
 	IdentifierToken,
 
 	// Keywords
+	ElseKeyword,
 	FalseKeyword,
+	ForKeyword,
+	IfKeyword,
 	LetKeyword,
+	ToKeyword,
 	TrueKeyword,
 	VarKeyword,
+	WhileKeyword,
 
 	// Node
 	CompilationUnit,
+	ElseClause,
 
 	// Statements
 	BlockStatement,
 	VariableDeclaration,
+	IfStatement,
+	WhileStatement,
+	ForStatement,
 	ExpressionStatement,
 
 	// Expressions
@@ -64,8 +77,8 @@ enum class SyntaxKind
 	AssignmentExpression,
 };
 
-MCF_API SyntaxKind& operator++(SyntaxKind& kind);
-MCF_API SyntaxKind& operator++(SyntaxKind& kind, int c);
+SyntaxKind& operator++(SyntaxKind& kind);
+SyntaxKind& operator++(SyntaxKind& kind, int c);
 MCF_API const vector<SyntaxKind> GetAllSyntaxKinds();
 MCF_API string GetSyntaxKindName(SyntaxKind kind);
 

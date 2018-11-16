@@ -37,6 +37,9 @@ private:
 	void EvaluateStatement(const BoundStatement* node);
 	void EvaluateBlockStatement(const BoundStatement* node);
 	void EvaluateVariableDeclaration(const BoundStatement* node);
+	void EvaluateIfStatement(const BoundStatement* node);
+	void EvaluateWhileStatement(const BoundStatement* node);
+	void EvaluateForStatement(const BoundStatement* node);
 	void EvaluateExpressionStatement(const BoundStatement* node);
 
 	ValueType EvaluateExpression(const BoundExpression* node)const;

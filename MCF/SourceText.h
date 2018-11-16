@@ -21,6 +21,7 @@ public:
 	size_t Start()const { return std::get<0>(_span); }
 	size_t Length()const { return std::get<1>(_span); }
 	size_t End()const { return std::get<0>(_span) + std::get<1>(_span); }
+	string ToString() const { return std::to_string(Start()) + ".." + std::to_string(End()); }
 
 	MCF_API static TextSpan FromBounds(size_t start, size_t end);
 };

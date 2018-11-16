@@ -16,6 +16,9 @@ enum class BoundNodeKind
 	// Statements
 	BlockStatement,
 	VariableDeclaration,
+	IfStatement,
+	WhileStatement,
+	ForStatement,
 	ExpressionStatement,
 
 	// Expressions
@@ -44,7 +47,11 @@ enum class BoundBinaryOperatorKind
 	LogicalAnd,
 	LogicalOr,
 	Equals,
-	NotEquals
+	NotEquals,
+	Less,
+	LessOrEquals,
+	Greater,
+	GreaterOrEquals
 };
 
 class BoundNode
@@ -53,6 +60,8 @@ public:
 	virtual ~BoundNode() = default;
 	virtual BoundNodeKind Kind() const = 0;
 };
+
+#pragma region Expression
 
 class BoundExpression :public BoundNode
 {
@@ -126,7 +135,7 @@ private:
 	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind, const type_index& type);
 	BoundBinaryOperator();
 
-	static BoundBinaryOperator _operators[10];
+	static BoundBinaryOperator _operators[14];
 public:
 	BoundBinaryOperator(const BoundBinaryOperator&) = default;
 
@@ -212,6 +221,10 @@ public:
 	VariableSymbol Variable()const { return _variable; }
 };
 
+#pragma endregion
+
+#pragma region Statement
+
 class BoundStatement :public BoundNode
 {
 public:
@@ -250,6 +263,65 @@ public:
 	const BoundExpression* Initializer()const { return _initializer.get(); }
 };
 
+class BoundIfStatement final :public BoundStatement
+{
+private:
+	unique_ptr<BoundExpression> _condition;
+	unique_ptr<BoundStatement> _thenStatement;
+	unique_ptr<BoundStatement> _elseStatement;
+public:
+	BoundIfStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& thenStatement,
+					 const unique_ptr<BoundStatement>& elseStatement);
+	virtual ~BoundIfStatement() = default;
+	BoundIfStatement(BoundIfStatement&&) = default;
+
+	// Inherited via BoundStatement
+	virtual BoundNodeKind Kind() const override { return BoundNodeKind::IfStatement; }
+
+	const BoundExpression* Condition()const { return _condition.get(); }
+	const BoundStatement* ThenStatement()const { return _thenStatement.get(); }
+	const BoundStatement* ElseStatement()const { return _elseStatement.get(); }
+};
+
+class BoundWhileStatement final :public BoundStatement
+{
+private:
+	unique_ptr<BoundExpression> _condition;
+	unique_ptr<BoundStatement> _body;
+public:
+	BoundWhileStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& body);
+	virtual ~BoundWhileStatement() = default;
+	BoundWhileStatement(BoundWhileStatement&&) = default;
+
+	// Inherited via BoundStatement
+	virtual BoundNodeKind Kind() const override { return BoundNodeKind::WhileStatement; }
+
+	const BoundExpression* Condition()const { return _condition.get(); }
+	const BoundStatement* Body()const { return _body.get(); }
+};
+
+class BoundForStatement final :public BoundStatement
+{
+private:
+	VariableSymbol _variable;
+	unique_ptr<BoundExpression> _lowerBound;
+	unique_ptr<BoundExpression> _upperBound;
+	unique_ptr<BoundStatement> _body;
+public:
+	BoundForStatement(const VariableSymbol& variable, const unique_ptr<BoundExpression>& lowerBound,
+					  const unique_ptr<BoundExpression>& upperBound, const unique_ptr<BoundStatement>& body);
+	virtual ~BoundForStatement() = default;
+	BoundForStatement(BoundForStatement&&) = default;
+
+	// Inherited via BoundStatement
+	virtual BoundNodeKind Kind() const override { return BoundNodeKind::ForStatement; }
+
+	VariableSymbol Variable()const { return _variable; }
+	const BoundExpression* LowerBound()const { return _lowerBound.get(); }
+	const BoundExpression* UpperBound()const { return _upperBound.get(); }
+	const BoundStatement* Body()const { return _body.get(); }
+};
+
 class BoundExpressionStatement final : public BoundStatement
 {
 private:
@@ -265,6 +337,8 @@ public:
 
 	const BoundExpression* Expression()const { return _expression.get(); }
 };
+
+#pragma endregion
 
 class BoundScope final
 {
@@ -308,8 +382,12 @@ private:
 	unique_ptr<BoundStatement> BindStatement(const StatementSyntax* syntax);
 	unique_ptr<BoundStatement> BindBlockStatement(const StatementSyntax* syntax);
 	unique_ptr<BoundStatement> BindVariableDeclaration(const StatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindIfStatement(const StatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindWhileStatement(const StatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindForStatement(const StatementSyntax* syntax);
 	unique_ptr<BoundStatement> BindExpressionStatement(const StatementSyntax* syntax);
 
+	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax, const type_index& targetType);
 	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindParenthesizedExpression(const ExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindLiteralExpression(const ExpressionSyntax* syntax);

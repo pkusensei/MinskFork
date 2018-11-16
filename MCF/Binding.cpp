@@ -89,6 +89,10 @@ BoundBinaryOperator BoundBinaryOperator::_operators[] = {
 
 	BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, typeid(long), typeid(bool)),
 	BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, typeid(long), typeid(bool)),
+	BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less, typeid(long), typeid(bool)),
+	BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals, typeid(long), typeid(bool)),
+	BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater, typeid(long), typeid(bool)),
+	BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals, typeid(long), typeid(bool)),
 
 	BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd, typeid(bool)),
 	BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr, typeid(bool)),
@@ -177,12 +181,35 @@ const vector<BoundStatement*> BoundBlockStatement::Statements() const
 
 BoundVariableDeclaration::BoundVariableDeclaration(const VariableSymbol & variable, const unique_ptr<BoundExpression>& initializer)
 	:_variable(variable),
-	_initializer((std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(initializer))))
+	_initializer(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(initializer)))
 {
 }
 
 BoundVariableDeclaration::BoundVariableDeclaration(BoundVariableDeclaration && other)
 	: _variable(std::move(other._variable)), _initializer(std::move(other._initializer))
+{
+}
+
+BoundIfStatement::BoundIfStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& thenStatement,
+								   const unique_ptr<BoundStatement>& elseStatement)
+	: _condition(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition))),
+	_thenStatement(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(thenStatement))),
+	_elseStatement(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(elseStatement)))
+{
+}
+
+BoundWhileStatement::BoundWhileStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& body)
+	:_condition(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition))),
+	_body(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(body)))
+{
+}
+
+BoundForStatement::BoundForStatement(const VariableSymbol & variable, const unique_ptr<BoundExpression>& lowerBound, 
+									 const unique_ptr<BoundExpression>& upperBound, const unique_ptr<BoundStatement>& body)
+	:_variable(variable),
+	_lowerBound(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(lowerBound))),
+	_upperBound(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(upperBound))),
+	_body(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(body)))
 {
 }
 
@@ -266,6 +293,12 @@ unique_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax * syntax)
 			return BindBlockStatement(syntax);
 		case SyntaxKind::VariableDeclaration:
 			return BindVariableDeclaration(syntax);
+		case SyntaxKind::IfStatement:
+			return BindIfStatement(syntax);
+		case SyntaxKind::WhileStatement:
+			return BindWhileStatement(syntax);
+		case SyntaxKind::ForStatement:
+			return BindForStatement(syntax);
 		case SyntaxKind::ExpressionStatement:
 			return BindExpressionStatement(syntax);
 		default:
@@ -279,7 +312,6 @@ unique_ptr<BoundStatement> Binder::BindBlockStatement(const StatementSyntax * sy
 	if (p == nullptr) return nullptr;
 
 	auto statements = vector<unique_ptr<BoundStatement>>();
-	//auto tmp = std::make_shared<BoundScope>(_scope);
 	_scope = std::make_unique<BoundScope>(_scope);
 	for (const auto& it : p->Statements())
 		statements.emplace_back(BindStatement(it));
@@ -303,6 +335,48 @@ unique_ptr<BoundStatement> Binder::BindVariableDeclaration(const StatementSyntax
 	return std::make_unique<BoundVariableDeclaration>(variable, init);
 }
 
+unique_ptr<BoundStatement> Binder::BindIfStatement(const StatementSyntax * syntax)
+{
+	auto p = dynamic_cast<const IfStatementSyntax*>(syntax);
+	if (p == nullptr) return nullptr;
+
+	auto condition = BindExpression(p->Condition(), typeid(bool));
+	auto thenStatement = BindStatement(p->ThenStatement());
+	auto elseStatement = p->ElseClause() == nullptr ? nullptr 
+		: BindStatement(p->ElseClause()->ElseStatement());
+	return std::make_unique<BoundIfStatement>(condition, thenStatement, elseStatement);
+}
+
+unique_ptr<BoundStatement> Binder::BindWhileStatement(const StatementSyntax * syntax)
+{
+	auto p = dynamic_cast<const WhileStatementSyntax*>(syntax);
+	if (p == nullptr) return nullptr;
+
+	auto condition = BindExpression(p->Condition(), typeid(bool));
+	auto body = BindStatement(p->Body());
+	return std::make_unique<BoundWhileStatement>(condition, body);
+}
+
+unique_ptr<BoundStatement> Binder::BindForStatement(const StatementSyntax * syntax)
+{
+	auto p = dynamic_cast<const ForStatementSyntax*>(syntax);
+	if (p == nullptr) return nullptr;
+
+	auto lowerBound = BindExpression(p->LowerBound(), typeid(long));
+	auto upperBound = BindExpression(p->UpperBound(), typeid(long));
+
+	_scope = std::make_unique<BoundScope>(_scope);
+
+	auto name = p->Identifier().Text();
+	VariableSymbol variable(name, true, typeid(long));
+	if (!_scope->TryDeclare(variable))
+		_diagnostics->ReportVariableAlreadyDeclared(p->Identifier().Span(), name);
+	
+	auto body = BindStatement(p->Body());
+	BoundScope::ResetToParent(_scope);
+	return std::make_unique<BoundForStatement>(variable, lowerBound, upperBound, body);
+}
+
 unique_ptr<BoundStatement> Binder::BindExpressionStatement(const StatementSyntax * syntax)
 {
 	auto p = dynamic_cast<const ExpressionStatementSyntax*>(syntax);
@@ -310,6 +384,14 @@ unique_ptr<BoundStatement> Binder::BindExpressionStatement(const StatementSyntax
 
 	auto expression = BindExpression(p->Expression());
 	return std::make_unique<BoundExpressionStatement>(expression);
+}
+
+unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * syntax, const type_index & targetType)
+{
+	auto result = BindExpression(syntax);
+	if (result->Type() != targetType)
+		_diagnostics->ReportCannotConvert(syntax->Span(), result->Type(), targetType);
+	return result;
 }
 
 unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * syntax)

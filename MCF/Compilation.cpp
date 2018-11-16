@@ -41,6 +41,15 @@ void Evaluator::EvaluateStatement(const BoundStatement * node)
 		case BoundNodeKind::VariableDeclaration:
 			EvaluateVariableDeclaration(node);
 			break;
+		case BoundNodeKind::IfStatement:
+			EvaluateIfStatement(node);
+			break;
+		case BoundNodeKind::WhileStatement:
+			EvaluateWhileStatement(node);
+			break;
+		case BoundNodeKind::ForStatement:
+			EvaluateForStatement(node);
+			break;
 		case BoundNodeKind::ExpressionStatement:
 			EvaluateExpressionStatement(node);
 			break;
@@ -67,6 +76,41 @@ void Evaluator::EvaluateVariableDeclaration(const BoundStatement * node)
 	auto value = EvaluateExpression(p->Initializer());
 	(*_variables)[p->Variable()] = value;
 	_lastValue = value;
+}
+
+void Evaluator::EvaluateIfStatement(const BoundStatement * node)
+{
+	auto p = dynamic_cast<const BoundIfStatement*>(node);
+	if (p == nullptr) return;
+
+	auto condition = EvaluateExpression(p->Condition()).GetValue<bool>();
+	if (condition)
+		EvaluateStatement(p->ThenStatement());
+	else if (p->ElseStatement() != nullptr)
+		EvaluateStatement(p->ElseStatement());
+}
+
+void Evaluator::EvaluateWhileStatement(const BoundStatement * node)
+{
+	auto p = dynamic_cast<const BoundWhileStatement*>(node);
+	if (p == nullptr) return;
+
+	while (EvaluateExpression(p->Condition()).GetValue<bool>())
+		EvaluateStatement(p->Body());
+}
+
+void Evaluator::EvaluateForStatement(const BoundStatement * node)
+{
+	auto p = dynamic_cast<const BoundForStatement*>(node);
+	if (p == nullptr) return;
+
+	auto lowerBound = EvaluateExpression(p->LowerBound()).GetValue<long>();
+	auto upperBound = EvaluateExpression(p->UpperBound()).GetValue<long>();
+	for (auto i = lowerBound; i <= upperBound; ++i)
+	{
+		(*_variables)[p->Variable()] = i;
+		EvaluateStatement(p->Body());
+	}
 }
 
 void Evaluator::EvaluateExpressionStatement(const BoundStatement * node)
@@ -159,6 +203,15 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundExpression * node)const
 			return left == right;
 		case BoundBinaryOperatorKind::NotEquals:
 			return left != right;
+		case BoundBinaryOperatorKind::Less:
+			return left.GetValue<long>() < right.GetValue<long>();
+		case BoundBinaryOperatorKind::LessOrEquals:
+			return left.GetValue<long>() <= right.GetValue<long>();
+		case BoundBinaryOperatorKind::Greater:
+			return left.GetValue<long>() > right.GetValue<long>();
+		case BoundBinaryOperatorKind::GreaterOrEquals:
+			return left.GetValue<long>() >= right.GetValue<long>();
+
 		default:
 			throw std::invalid_argument("Invalid binary operator");
 	}
@@ -250,4 +303,4 @@ EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueT
 	return EvaluationResult(diagnostics, value);
 }
 
-}
+}//MCF

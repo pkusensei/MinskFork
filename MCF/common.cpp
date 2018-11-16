@@ -59,6 +59,14 @@ string GetSyntaxKindName(SyntaxKind kind)
 			return "EqualsEqualsToken";
 		case SyntaxKind::BangEqualsToken:
 			return "BangEqualsToken";
+		case SyntaxKind::LessToken:
+			return "LessToken";
+		case SyntaxKind::LessOrEqualsToken:
+			return "LessOrEqualsToken";
+		case SyntaxKind::GreaterToken:
+			return "GreaterToken";
+		case SyntaxKind::GreaterOrEqualsToken:
+			return "GreaterOrEqualsToken";
 		case SyntaxKind::OpenParenthesisToken:
 			return "OpenParenthesisToken";
 		case SyntaxKind::CloseParenthesisToken:
@@ -70,25 +78,42 @@ string GetSyntaxKindName(SyntaxKind kind)
 		case SyntaxKind::IdentifierToken:
 			return "IdentifierToken";
 
+		case SyntaxKind::ElseKeyword:
+			return "ElseKeyword";
 		case SyntaxKind::FalseKeyword:
 			return "FalseKeyword";
+		case SyntaxKind::ForKeyword:
+			return "ForKeyword";
+		case SyntaxKind::IfKeyword:
+			return "IfKeyword";
 		case SyntaxKind::LetKeyword:
 			return "LetKeyword";
+		case SyntaxKind::ToKeyword:
+			return "ToKeyword";
 		case SyntaxKind::TrueKeyword:
 			return "TrueKeyword";
 		case SyntaxKind::VarKeyword:
 			return "VarKeyword";
+		case SyntaxKind::WhileKeyword:
+			return "WhileKeyword";
 
 		case SyntaxKind::CompilationUnit:
 			return "CompilationUnit";
+		case SyntaxKind::ElseClause:
+			return "ElseClause";
 
 		case SyntaxKind::BlockStatement:
 			return "BlockStatement";
 		case SyntaxKind::VariableDeclaration:
 			return "VariableDeclaration";
+		case SyntaxKind::IfStatement:
+			return "IfStatement";
+		case SyntaxKind::WhileStatement:
+			return "WhileStatement";
+		case SyntaxKind::ForStatement:
+			return "ForStatement";
 		case SyntaxKind::ExpressionStatement:
 			return "ExpressionStatement";
-
 
 		case SyntaxKind::LiteralExpression:
 			return "LiteralExpression";
@@ -116,14 +141,24 @@ bool StringEndsWith(const string & sample, const string & ending)
 
 SyntaxKind GetKeywordKind(const string & text)
 {
-	if (text == "false")
+	if (text == "else")
+		return SyntaxKind::ElseKeyword;
+	else if (text == "false")
 		return SyntaxKind::FalseKeyword;
+	else if (text == "for")
+		return SyntaxKind::ForKeyword;
+	else if (text == "if")
+		return SyntaxKind::IfKeyword;
 	else if (text == "let")
 		return SyntaxKind::LetKeyword;
+	else if (text == "to")
+		return SyntaxKind::ToKeyword;
 	else if (text == "true")
 		return SyntaxKind::TrueKeyword;
 	else if (text == "var")
 		return SyntaxKind::VarKeyword;
+	else if (text == "while")
+		return SyntaxKind::WhileKeyword;
 	else return SyntaxKind::IdentifierToken;
 }
 
@@ -141,14 +176,23 @@ string GetText(SyntaxKind kind)
 		case SyntaxKind::PipePipeToken: return "||";
 		case SyntaxKind::EqualsEqualsToken: return "==";
 		case SyntaxKind::BangEqualsToken: return "!=";
+		case SyntaxKind::LessToken: return "<";
+		case SyntaxKind::LessOrEqualsToken: return "<=";
+		case SyntaxKind::GreaterToken: return ">";
+		case SyntaxKind::GreaterOrEqualsToken: return ">=";
 		case SyntaxKind::OpenParenthesisToken: return "(";
 		case SyntaxKind::CloseParenthesisToken: return ")";
 		case SyntaxKind::OpenBraceToken: return "{";
 		case SyntaxKind::CloseBraceToken: return "}";
+		case SyntaxKind::ElseKeyword: return "else";
 		case SyntaxKind::FalseKeyword: return "false";
+		case SyntaxKind::ForKeyword: return "for";
+		case SyntaxKind::IfKeyword: return "if";
 		case SyntaxKind::LetKeyword: return "let";
+		case SyntaxKind::ToKeyword: return "to";
 		case SyntaxKind::TrueKeyword: return "true";
 		case SyntaxKind::VarKeyword: return "var";
+		case SyntaxKind::WhileKeyword: return "while";
 		default: return "";
 	}
 }
@@ -157,9 +201,9 @@ int GetUnaryOperatorPrecedence(SyntaxKind kind)
 {
 	switch (kind)
 	{
-		case MCF::SyntaxKind::PlusToken:
-		case MCF::SyntaxKind::MinusToken:
-		case MCF::SyntaxKind::BangToken:
+		case SyntaxKind::PlusToken:
+		case SyntaxKind::MinusToken:
+		case SyntaxKind::BangToken:
 			return 6;
 		default:
 			return 0;
@@ -170,18 +214,22 @@ int GetBinaryOperatorPrecedence(SyntaxKind kind)
 {
 	switch (kind)
 	{
-		case MCF::SyntaxKind::StarToken:
-		case MCF::SyntaxKind::SlashToken:
+		case SyntaxKind::StarToken:
+		case SyntaxKind::SlashToken:
 			return 5;
-		case MCF::SyntaxKind::PlusToken:
-		case MCF::SyntaxKind::MinusToken:
+		case SyntaxKind::PlusToken:
+		case SyntaxKind::MinusToken:
 			return 4;
-		case MCF::SyntaxKind::EqualsEqualsToken:
-		case MCF::SyntaxKind::BangEqualsToken:
+		case SyntaxKind::EqualsEqualsToken:
+		case SyntaxKind::BangEqualsToken:
+		case SyntaxKind::LessToken:
+		case SyntaxKind::LessOrEqualsToken:
+		case SyntaxKind::GreaterToken:
+		case SyntaxKind::GreaterOrEqualsToken:
 			return 3;
-		case MCF::SyntaxKind::AmpersandAmpersandToken:
+		case SyntaxKind::AmpersandAmpersandToken:
 			return 2;
-		case MCF::SyntaxKind::PipePipeToken:
+		case SyntaxKind::PipePipeToken:
 			return 1;
 		default:
 			return 0;
@@ -278,7 +326,7 @@ VariableSymbol::VariableSymbol()
 }
 
 VariableSymbol::VariableSymbol(VariableSymbol && other)
-	:_name(std::move(other._name)), _isReadOnly(other._isReadOnly),
+	: _name(std::move(other._name)), _isReadOnly(other._isReadOnly),
 	_type(other._type)
 {
 	other._type = typeid(std::monostate);
@@ -310,4 +358,4 @@ size_t VariableHash::operator()(const VariableSymbol & variable) const noexcept
 	return h1 ^ (h2 << 1);
 }
 
-}// MCF
+}//MCF
