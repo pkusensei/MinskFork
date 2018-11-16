@@ -417,7 +417,6 @@ private:
 	unique_ptr<ExpressionSyntax> ParseNameExpression();
 
 public:
-	//Parser() :Parser("") {}
 	explicit Parser(const SourceText& text);
 	~Parser();
 
