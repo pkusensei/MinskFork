@@ -207,7 +207,7 @@ SyntaxToken Lexer::Lex()
 	}
 	auto length = _position - _start;
 	auto text = GetText(_kind);
-	if (text.length() < 1)
+	if (text.empty())
 		text = _text->ToString(_start, length);
 
 	return SyntaxToken(_kind, _start, text, _value);

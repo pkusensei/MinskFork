@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "common.h"
 
+#include <algorithm>
+#include <cctype>
 #include <unordered_map>
 
 namespace MCF {
@@ -137,6 +139,27 @@ bool StringEndsWith(const string & sample, const string & ending)
 {
 	if (sample.length() < ending.length()) return false;
 	return std::equal(ending.rbegin(), ending.rend(), sample.rbegin());
+}
+
+string TrimString(const string & text)
+{
+	return TrimStringStart(TrimStringEnd(text));
+}
+
+string TrimStringStart(const string & text)
+{
+	auto result = text;
+	result.erase(result.begin(), std::find_if(result.begin(), result.end(),
+											  [](char ch) {return !std::isspace(ch); }));
+	return result;
+}
+
+string TrimStringEnd(const string & text)
+{
+	auto result = text;
+	result.erase(std::find_if(result.rbegin(), result.rend(),
+							  [](char ch) {return !std::isspace(ch); }).base(), result.end());
+	return result;
 }
 
 SyntaxKind GetKeywordKind(const string & text)
@@ -343,7 +366,7 @@ VariableSymbol & VariableSymbol::operator=(VariableSymbol && other)
 
 bool VariableSymbol::operator==(const VariableSymbol & other) const
 {
-	return _name == other._name;
+	return _name == other._name && _type == other._type;
 }
 
 bool VariableSymbol::operator!=(const VariableSymbol & other) const

@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "CppUnitTest.h"
 
+#include <algorithm>
+#include <stack>
+
 #include "..\MCF\Compilation.h"
 #include "..\MCF\Diagnostic.h"
 #include "..\MCF\Syntax.h"
@@ -8,6 +11,100 @@
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace Tests {
+
+class AnnotatedText final
+{
+private:
+	std::string _text;
+	std::vector<MCF::TextSpan> _spans;
+
+	static std::string Dedent(const std::string& text)
+	{
+		auto lines = DedentLines(text);
+		std::string result;
+		for (const auto& it : lines)
+			result += it + '\n';
+		result.erase(--result.end());
+		return result;
+	}
+
+public:
+	AnnotatedText(const std::string& text, const std::vector<MCF::TextSpan>& spans)
+		:_text(text), _spans(spans)
+	{
+	}
+
+	std::string Text()const { return _text; }
+	std::vector<MCF::TextSpan> Spans()const { return _spans; }
+
+	static std::vector<std::string> DedentLines(const std::string& text)
+	{
+		auto lines = std::vector<std::string>();
+		{
+			std::stringstream ss(text);
+			std::string line;
+			while (std::getline(ss, line) && !line.empty())
+				lines.emplace_back(line);
+		}
+
+		auto minIndentation = SIZE_MAX;
+		for (size_t i = 0; i < lines.size(); ++i)
+		{
+			auto line = lines[i];
+			if (MCF::TrimString(line).empty())
+			{
+				lines[i] = std::string();
+				continue;
+			}
+			auto indentation = line.length() - MCF::TrimStringStart(line).length();
+			minIndentation = std::min(indentation, minIndentation);
+		}
+
+		for (size_t i = 0; i < lines.size(); ++i)
+		{
+			if (lines[i].empty())
+				continue;
+			lines[i] = lines[i].substr(minIndentation);
+		}
+		while (!lines.empty() && lines.begin()->empty())
+			lines.erase(lines.begin());
+		while (!lines.empty() && lines.back().empty())
+			lines.erase(--lines.end());
+		lines.shrink_to_fit();
+		return lines;
+	}
+
+	static AnnotatedText Parse(const std::string& input)
+	{
+		auto text = Dedent(input);
+		std::string result;
+		std::vector<MCF::TextSpan> spans;
+		std::stack<size_t> startStack;
+
+		size_t position = 0;
+		for (const auto& c : text)
+		{
+			if (c == '[')
+				startStack.emplace(position);
+			else if (c == ']')
+			{
+				if (startStack.empty())
+					throw std::invalid_argument("Too many ']' in input text");
+				auto start = startStack.top();
+				startStack.top();
+				auto end = position;
+				spans.emplace_back(MCF::TextSpan::FromBounds(start, end));
+			} else
+			{
+				++position;
+				result += c;
+			}
+		}
+		if (!startStack.empty())
+			throw std::invalid_argument("Missing ']' in input text");
+		return AnnotatedText(result, spans);
+	}
+};
 
 TEST_CLASS(EvaluationTests)
 {
@@ -55,14 +152,20 @@ public:
 
 		for (const auto& it : data)
 		{
-			auto tree = MCF::SyntaxTree::Parse(it.first);
-			MCF::Compilation compilation(tree);
-			std::unordered_map<MCF::VariableSymbol, MCF::ValueType, MCF::VariableHash> variables;
-			auto result = compilation.Evaluate(variables);
-
-			Assert::IsTrue(result.Diagnostics()->size() == 0);
-			Assert::IsTrue(it.second == result.Value());
+			AssertValue(it.first, it.second);
 		}
+	}
+
+private:
+	static void AssertValue(const std::string& text, const MCF::ValueType& value)
+	{
+		auto tree = MCF::SyntaxTree::Parse(text);
+		MCF::Compilation compilation(tree);
+		std::unordered_map<MCF::VariableSymbol, MCF::ValueType, MCF::VariableHash> variables;
+		auto result = compilation.Evaluate(variables);
+
+		Assert::IsTrue(result.Diagnostics()->size() == 0);
+		Assert::IsTrue(value == result.Value());
 	}
 };
 

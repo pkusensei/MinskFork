@@ -84,6 +84,9 @@ MCF_API string GetSyntaxKindName(SyntaxKind kind);
 
 /// helpers
 MCF_API bool StringEndsWith(const string& sample, const string& ending);
+MCF_API string TrimString(const string& text);
+MCF_API string TrimStringStart(const string& text);
+MCF_API string TrimStringEnd(const string& text);
 
 /// namespace-scope functions
 SyntaxKind GetKeywordKind(const string& text);

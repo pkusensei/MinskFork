@@ -65,7 +65,7 @@ public:
 
 class BoundExpression :public BoundNode
 {
-	// NOTE
+	// NOTE concrete type in unique_ptr
 public:
 	virtual ~BoundExpression() = default;
 	// Inherited via BoundNode

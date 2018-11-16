@@ -11,11 +11,10 @@
 
 bool IsStringBlank(const std::string& s)
 {
-	bool result = true;
 	for (const auto& c : s)
 		if (!std::isspace(c))
-			result = false;
-	return result;
+			return false;
+	return true;
 }
 
 int main()
@@ -26,13 +25,13 @@ int main()
 	std::unique_ptr<MCF::Compilation> previous{nullptr};
 	while (true)
 	{
-		if (text.length() == 0)
+		if (text.empty())
 			std::cout << "> ";
 		else std::cout << "| ";
 
 		std::getline(std::cin, input);
 		auto isBlank = IsStringBlank(input);
-		if (text.length() == 0 && isBlank)
+		if (text.empty() && isBlank)
 			break;
 
 		if (!std::cin.eof() && !std::cin.fail())
