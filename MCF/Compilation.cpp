@@ -106,7 +106,7 @@ void Evaluator::EvaluateForStatement(const BoundStatement * node)
 
 	auto lowerBound = EvaluateExpression(p->LowerBound()).GetValue<long>();
 	auto upperBound = EvaluateExpression(p->UpperBound()).GetValue<long>();
-	for (auto i = lowerBound; i <= upperBound; ++i)
+	for (auto i = lowerBound; i <= upperBound; ++i) // inclusive for loop
 	{
 		(*_variables)[p->Variable()] = i;
 		EvaluateStatement(p->Body());
