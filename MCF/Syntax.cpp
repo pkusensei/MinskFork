@@ -57,6 +57,17 @@ SyntaxToken::SyntaxToken(SyntaxToken && other)
 {
 }
 
+bool SyntaxToken::operator==(const SyntaxToken & other) const
+{
+	return _kind == other._kind && _position == other._position
+		&& _text == other._text && _value == other._value;
+}
+
+bool SyntaxToken::operator!=(const SyntaxToken & other) const
+{
+	return !(*this == other);
+}
+
 const vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 {
 	return vector<const SyntaxNode*>(0);
@@ -507,7 +518,7 @@ const vector<const SyntaxNode*> WhileStatementSyntax::GetChildren() const
 ForStatementSyntax::ForStatementSyntax(const SyntaxToken & keyword, const SyntaxToken & identifier, const SyntaxToken & equals,
 									   unique_ptr<ExpressionSyntax>& lowerBound, const SyntaxToken & toKeyword,
 									   unique_ptr<ExpressionSyntax>& upperBound, const unique_ptr<StatementSyntax>& body)
-	:_keyword(keyword), _identifier(identifier), _equalsToken(equals), 
+	:_keyword(keyword), _identifier(identifier), _equalsToken(equals),
 	_lowerBound(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(lowerBound))),
 	_toKeyword(toKeyword),
 	_upperBound(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(upperBound))),
@@ -601,21 +612,20 @@ SyntaxToken* Parser::Current() const
 	return Peek(0);
 }
 
-SyntaxToken* Parser::NextToken()
+SyntaxToken Parser::NextToken()
 {
 	auto current = Current();
 	_position++;
-	return current;
+	return *current;
 }
 
-SyntaxToken* Parser::MatchToken(SyntaxKind kind)
+SyntaxToken Parser::MatchToken(SyntaxKind kind)
 {
 	auto current = Current();
 	if (current->Kind() == kind)
 		return NextToken();
 	_diagnostics->ReportUnexpectedToken(current->Span(), current->Kind(), kind);
-	// HACK 
-	return current;
+	return SyntaxToken(kind, current->Position(), string(), ValueType());
 }
 
 unique_ptr<StatementSyntax> Parser::ParseStatement()
@@ -657,7 +667,7 @@ unique_ptr<StatementSyntax> Parser::ParseBlockStatement()
 		startToken = Current();
 	}
 	auto closeBraceToken = MatchToken(SyntaxKind::CloseBraceToken);
-	return std::make_unique<BlockStatementSyntax>(*openBraceToken, statements, *closeBraceToken);
+	return std::make_unique<BlockStatementSyntax>(openBraceToken, statements, closeBraceToken);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseVariableDeclaration()
@@ -669,7 +679,7 @@ unique_ptr<StatementSyntax> Parser::ParseVariableDeclaration()
 	auto equals = MatchToken(SyntaxKind::EqualsToken);
 	auto initializer = ParseExpression();
 
-	return std::make_unique<VariableDeclarationSyntax>(*keyword, *identifier, *equals, initializer);
+	return std::make_unique<VariableDeclarationSyntax>(keyword, identifier, equals, initializer);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseIfStatement()
@@ -678,7 +688,7 @@ unique_ptr<StatementSyntax> Parser::ParseIfStatement()
 	auto condition = ParseExpression();
 	auto statement = ParseStatement();
 	auto elseClause = ParseElseClause();
-	return std::make_unique<IfStatementSyntax>(*keyword, condition, statement, elseClause);
+	return std::make_unique<IfStatementSyntax>(keyword, condition, statement, elseClause);
 }
 
 unique_ptr<ElseClauseSyntax> Parser::ParseElseClause()
@@ -687,7 +697,7 @@ unique_ptr<ElseClauseSyntax> Parser::ParseElseClause()
 		return nullptr;
 	auto keyword = MatchToken(SyntaxKind::ElseKeyword);
 	auto statement = ParseStatement();
-	return std::make_unique<ElseClauseSyntax>(*keyword, statement);
+	return std::make_unique<ElseClauseSyntax>(keyword, statement);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseWhileStatement()
@@ -695,7 +705,7 @@ unique_ptr<StatementSyntax> Parser::ParseWhileStatement()
 	auto keyword = MatchToken(SyntaxKind::WhileKeyword);
 	auto condition = ParseExpression();
 	auto body = ParseStatement();
-	return std::make_unique<WhileStatementSyntax>(*keyword, condition, body);
+	return std::make_unique<WhileStatementSyntax>(keyword, condition, body);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseForStatement()
@@ -707,8 +717,8 @@ unique_ptr<StatementSyntax> Parser::ParseForStatement()
 	auto toKeyword = MatchToken(SyntaxKind::ToKeyword);
 	auto upperBound = ParseExpression();
 	auto body = ParseStatement();
-	return std::make_unique<ForStatementSyntax>(*keyword, *identifier, *equalsToken, lowerBound,
-												*toKeyword, upperBound, body);
+	return std::make_unique<ForStatementSyntax>(keyword, identifier, equalsToken, lowerBound,
+												toKeyword, upperBound, body);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseExpressionStatement()
@@ -730,7 +740,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseAssignmentExpression()
 		auto identifierToken = NextToken();
 		auto operatorToken = NextToken();
 		auto right = ParseAssignmentExpression();
-		return std::make_unique<AssignmentExpressionSyntax>(*identifierToken, *operatorToken, right);
+		return std::make_unique<AssignmentExpressionSyntax>(identifierToken, operatorToken, right);
 	}
 	return ParseBinaryExpression();
 }
@@ -744,7 +754,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 	{
 		auto operatorToken = NextToken();
 		auto operand = ParseBinaryExpression(unaryOperatorPrecedence);
-		left = std::make_unique<UnaryExpressionSyntax>(*operatorToken, operand);
+		left = std::make_unique<UnaryExpressionSyntax>(operatorToken, operand);
 	} else
 	{
 		left = ParsePrimaryExpression();
@@ -757,7 +767,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 			break;
 		auto operatorToken = NextToken();
 		auto right = ParseBinaryExpression(precedence);
-		left = std::make_unique<BinaryExpressionSyntax>(left, *operatorToken, right);
+		left = std::make_unique<BinaryExpressionSyntax>(left, operatorToken, right);
 	}
 	return left;
 }
@@ -784,33 +794,33 @@ unique_ptr<ExpressionSyntax> Parser::ParseParenthesizedExpression()
 	auto left = MatchToken(SyntaxKind::OpenParenthesisToken);
 	auto expression = ParseExpression();
 	auto right = MatchToken(SyntaxKind::CloseParenthesisToken);
-	return std::make_unique<ParenthesizedExpressionSyntax>(*left, expression, *right);
+	return std::make_unique<ParenthesizedExpressionSyntax>(left, expression, right);
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParseBooleanLiteral()
 {
 	auto isTrue = Current()->Kind() == SyntaxKind::TrueKeyword;
 	auto keywordToken = isTrue ? MatchToken(SyntaxKind::TrueKeyword) : MatchToken(SyntaxKind::FalseKeyword);
-	return std::make_unique<LiteralExpressionSyntax>(*keywordToken, isTrue);
+	return std::make_unique<LiteralExpressionSyntax>(keywordToken, isTrue);
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParseNumberLiteral()
 {
 	auto numberToken = MatchToken(SyntaxKind::NumberToken);
-	return std::make_unique<LiteralExpressionSyntax>(*numberToken);
+	return std::make_unique<LiteralExpressionSyntax>(numberToken);
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParseNameExpression()
 {
 	auto identifier = MatchToken(SyntaxKind::IdentifierToken);
-	return std::make_unique<NameExpressionSyntax>(*identifier);
+	return std::make_unique<NameExpressionSyntax>(identifier);
 }
 
 unique_ptr<CompilationUnitSyntax> Parser::ParseCompilationUnit()
 {
 	auto statement = ParseStatement();
 	auto endOfFileToken = MatchToken(SyntaxKind::EndOfFileToken);
-	return std::make_unique<CompilationUnitSyntax>(statement, *endOfFileToken);
+	return std::make_unique<CompilationUnitSyntax>(statement, endOfFileToken);
 }
 
 SyntaxTree::SyntaxTree(const SourceText& text)

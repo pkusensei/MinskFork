@@ -27,16 +27,20 @@ public:
 class SyntaxToken final :public SyntaxNode
 {
 private:
-	const SyntaxKind _kind;
-	const size_t _position;
-	const string _text;
-	const ValueType _value;
+	SyntaxKind _kind;
+	size_t _position;
+	string _text;
+	ValueType _value;
 
 public:
 	SyntaxToken(SyntaxKind kind, size_t position, const string& text, const ValueType& value);
 	virtual ~SyntaxToken() = default;
 	SyntaxToken(const SyntaxToken& other) = default;
 	SyntaxToken(SyntaxToken&& other);
+	SyntaxToken& operator=(const SyntaxToken& other) = default;
+
+	bool operator==(const SyntaxToken& other)const;
+	bool operator!=(const SyntaxToken& other)const;
 
 	// Inherited via SyntaxNode
 	virtual SyntaxKind Kind() const override { return _kind; }
@@ -394,8 +398,8 @@ private:
 
 	SyntaxToken* Peek(int offset) const;
 	SyntaxToken* Current() const;
-	SyntaxToken* NextToken();
-	SyntaxToken* MatchToken(SyntaxKind kind);
+	SyntaxToken NextToken();
+	SyntaxToken MatchToken(SyntaxKind kind);
 
 	unique_ptr<StatementSyntax> ParseStatement();
 	unique_ptr<StatementSyntax> ParseBlockStatement();

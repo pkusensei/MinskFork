@@ -23,6 +23,8 @@ public:
 	size_t End()const { return std::get<0>(_span) + std::get<1>(_span); }
 	string ToString() const { return std::to_string(Start()) + ".." + std::to_string(End()); }
 
+	MCF_API bool operator==(const TextSpan& other)const { return _span == other._span; }
+	MCF_API bool operator!=(const TextSpan& other)const { return _span != other._span; }
 	MCF_API static TextSpan FromBounds(size_t start, size_t end);
 };
 
@@ -53,7 +55,7 @@ private:
 	const string _text;
 	vector<TextLine> _lines;
 
-	static void AddLine(vector<TextLine>& result, const SourceText& sourceText, 
+	static void AddLine(vector<TextLine>& result, const SourceText& sourceText,
 						size_t position, size_t lineStart, size_t lineBreakWidth);
 	static size_t GetLineBreakWidth(const string& text, size_t position);
 	static vector<TextLine> ParseLines(const SourceText* sourceText, const string& text);
@@ -73,7 +75,7 @@ public:
 	string ToString()const { return _text; }
 	string ToString(size_t start, size_t length)const { return _text.substr(start, length); }
 	string ToString(const TextSpan& span)const { return ToString(span.Start(), span.Length()); }
-	
+
 	static SourceText From(const string& text) { return SourceText(text); }
 };
 

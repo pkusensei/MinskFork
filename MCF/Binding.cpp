@@ -204,9 +204,9 @@ BoundWhileStatement::BoundWhileStatement(const unique_ptr<BoundExpression>& cond
 {
 }
 
-BoundForStatement::BoundForStatement(const VariableSymbol & variable, const unique_ptr<BoundExpression>& lowerBound, 
+BoundForStatement::BoundForStatement(const VariableSymbol & variable, const unique_ptr<BoundExpression>& lowerBound,
 									 const unique_ptr<BoundExpression>& upperBound, const unique_ptr<BoundStatement>& body)
-	:_variable(variable),
+	: _variable(variable),
 	_lowerBound(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(lowerBound))),
 	_upperBound(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(upperBound))),
 	_body(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(body)))
@@ -230,7 +230,7 @@ BoundScope::BoundScope(const unique_ptr<BoundScope>& parent)
 
 bool BoundScope::TryDeclare(const VariableSymbol & variable)
 {
-	if (_variables.find(variable.Name()) == _variables.end())
+	if (_variables.find(variable.Name()) == _variables.end() && !variable.Name().empty())
 	{
 		_variables.emplace(variable.Name(), variable);
 		return true;
@@ -245,7 +245,7 @@ bool BoundScope::TryLookup(const string & name, VariableSymbol & variable)const
 		variable = _variables.at(name);
 		return true;
 	}
-	if (_parent == nullptr)
+	if (_parent == nullptr || name.empty())
 		return false;
 	return _parent->TryLookup(name, variable);
 }
@@ -342,7 +342,7 @@ unique_ptr<BoundStatement> Binder::BindIfStatement(const StatementSyntax * synta
 
 	auto condition = BindExpression(p->Condition(), typeid(bool));
 	auto thenStatement = BindStatement(p->ThenStatement());
-	auto elseStatement = p->ElseClause() == nullptr ? nullptr 
+	auto elseStatement = p->ElseClause() == nullptr ? nullptr
 		: BindStatement(p->ElseClause()->ElseStatement());
 	return std::make_unique<BoundIfStatement>(condition, thenStatement, elseStatement);
 }
@@ -371,7 +371,7 @@ unique_ptr<BoundStatement> Binder::BindForStatement(const StatementSyntax * synt
 	VariableSymbol variable(name, true, typeid(long));
 	if (!_scope->TryDeclare(variable))
 		_diagnostics->ReportVariableAlreadyDeclared(p->Identifier().Span(), name);
-	
+
 	auto body = BindStatement(p->Body());
 	BoundScope::ResetToParent(_scope);
 	return std::make_unique<BoundForStatement>(variable, lowerBound, upperBound, body);
@@ -433,6 +433,9 @@ unique_ptr<BoundExpression> Binder::BindNameExpression(const ExpressionSyntax * 
 	if (p == nullptr) return nullptr;
 
 	auto name = p->IdentifierToken().Text();
+	if (name.empty()) // NOTE this token was injected by Parser::MatchToken
+		return std::make_unique<BoundLiteralExpression>(0);
+
 	VariableSymbol variable;
 	if (!_scope->TryLookup(name, variable))
 	{

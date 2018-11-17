@@ -43,21 +43,23 @@ public:
 		{
 			std::stringstream ss(text);
 			std::string line;
-			while (std::getline(ss, line) && !line.empty())
-				lines.emplace_back(line);
+			while (std::getline(ss, line))
+				if (!line.empty())
+					lines.emplace_back(line);
 		}
 
 		auto minIndentation = SIZE_MAX;
 		for (size_t i = 0; i < lines.size(); ++i)
 		{
 			auto line = lines[i];
-			if (MCF::TrimString(line).empty())
+			if ((line = MCF::TrimString(line)).empty())
 			{
 				lines[i] = std::string();
 				continue;
 			}
-			auto indentation = line.length() - MCF::TrimStringStart(line).length();
+			auto indentation = line.length() - (line = MCF::TrimStringStart(line)).length();
 			minIndentation = std::min(indentation, minIndentation);
+			lines[i] = line;
 		}
 
 		for (size_t i = 0; i < lines.size(); ++i)
@@ -66,6 +68,7 @@ public:
 				continue;
 			lines[i] = lines[i].substr(minIndentation);
 		}
+
 		while (!lines.empty() && lines.begin()->empty())
 			lines.erase(lines.begin());
 		while (!lines.empty() && lines.back().empty())
@@ -91,7 +94,7 @@ public:
 				if (startStack.empty())
 					throw std::invalid_argument("Too many ']' in input text");
 				auto start = startStack.top();
-				startStack.top();
+				startStack.pop();
 				auto end = position;
 				spans.emplace_back(MCF::TextSpan::FromBounds(start, end));
 			} else
@@ -156,6 +159,159 @@ public:
 		}
 	}
 
+	TEST_METHOD(Evaluator_VariableDeclaration_Reports_Redeclaration)
+	{
+		std::string text = R"({
+					var x = 10
+					var y = 100
+					{
+						var x = 10
+					}
+					var [x] = 5
+				})";
+		std::string diag = R"(
+			Variable 'x' is already declared.
+		)";
+		AssertDiagnostics(text, diag);
+	}
+
+	TEST_METHOD(Evaluator_BlockStatement_NoInfiniteLoop)
+	{
+		std::string text = R"(
+			{
+			[)][]
+			)";
+		std::string diag = R"(
+				Unexpected token <CloseParenthesisToken>, expected <IdentifierToken>.
+				Unexpected token <EndOfFileToken>, expected <CloseBraceToken>.
+				)";
+		AssertDiagnostics(text, diag);
+	}
+
+	TEST_METHOD(Evaluator_IfStatement_Reports_CannotConvert)
+	{
+		std::string text = R"(
+			{
+                var x = 0
+                if [10]
+					x = 10              
+            }
+			)";
+		std::string diag = R"(
+                Cannot convert type 'long' to 'bool'.
+				)"; 
+		AssertDiagnostics(text, diag);
+	}
+
+	TEST_METHOD(Evaluator_WhileStatement_Reports_CannotConvert)
+	{
+		std::string text = R"(
+			{
+                var x = 0
+                while [10]
+                    x = 10              
+            }
+			)";
+		std::string diag = R"(
+                Cannot convert type 'long' to 'bool'.
+				)"; 
+		AssertDiagnostics(text, diag);
+	}
+
+	TEST_METHOD(Evaluator_ForStatement_Reports_CannotConvert_LowerBound)
+	{
+		std::string text = R"(
+			{
+                var result = 0
+                for i = [false] to 10
+                    result = result + i              
+            }
+			)";
+		std::string diag = R"(
+                Cannot convert type 'bool' to 'long'.
+				)";
+		AssertDiagnostics(text, diag);
+	}
+
+	TEST_METHOD(Evaluator_ForStatement_Reports_CannotConvert_UpperBound)
+	{
+		std::string text = R"(
+			{
+                var result = 0
+                for i = 1 to [true]
+                    result = result + i              
+            }
+			)";
+		std::string diag = R"(
+                Cannot convert type 'bool' to 'long'.
+				)";
+		AssertDiagnostics(text, diag);
+	}
+
+	TEST_METHOD(Evaluator_Name_Reports_Undefined)
+	{
+		std::string text = "[x] = 10";
+		std::string diag = R"(
+                Variable 'x' doesn't exist.
+				)";
+		AssertDiagnostics(text, diag);
+	}
+
+	TEST_METHOD(Evaluator_Name_Reports_NoErrorForInsertedToken)
+	{
+		std::string text = "[]";
+		std::string diag = R"(
+                Unexpected token <EndOfFileToken>, expected <IdentifierToken>.
+				)";
+		AssertDiagnostics(text, diag);
+	}
+
+	TEST_METHOD(Evaluator_Assignment_Reports_CannotAssign)
+	{
+		std::string text = R"(
+			{
+                let x = 10
+                x [=] 0                
+            }
+			)";
+		std::string diag = R"(
+                Variable 'x' is read-only; cannot be assigned to.
+				)";
+		AssertDiagnostics(text, diag);
+	}
+
+	TEST_METHOD(Evaluator_Assignment_Reports_CannotConvert)
+	{
+		std::string text = R"(
+			{
+                var x = 10
+                x = [true]               
+            }
+			)";
+		std::string diag = R"(
+                Cannot convert type 'bool' to 'long'.
+				)";
+		AssertDiagnostics(text, diag);
+	}
+
+	TEST_METHOD(Evaluator_Unary_Reports_Undefined)
+	{
+		std::string text = "[+] true";
+		std::string diag = R"(
+                Unary operator '+' is not defined for type 'bool'.
+				)";
+		AssertDiagnostics(text, diag);
+	}
+
+	TEST_METHOD(Evaluator_Binary_Reports_Undefined)
+	{
+		std::string text = "10 [*] false";
+		std::string diag = R"(
+                Binary operator '*' is not defined for types 'long' and 'bool'.
+				)";
+		AssertDiagnostics(text, diag);
+	}
+
 private:
 	static void AssertValue(const std::string& text, const MCF::ValueType& value)
 	{
@@ -166,6 +322,27 @@ private:
 
 		Assert::IsTrue(result.Diagnostics()->size() == 0);
 		Assert::IsTrue(value == result.Value());
+	}
+
+	void AssertDiagnostics(const std::string& text, const std::string& diagnosticText)
+	{
+		auto annotatedText = AnnotatedText::Parse(text);
+		auto tree = MCF::SyntaxTree::Parse(annotatedText.Text());
+		auto compilation = MCF::Compilation(tree);
+		std::unordered_map<MCF::VariableSymbol, MCF::ValueType, MCF::VariableHash> variables;
+		auto result = compilation.Evaluate(variables);
+		auto expectedDiagnostoics = AnnotatedText::DedentLines(diagnosticText);
+
+		if (annotatedText.Spans().size() != expectedDiagnostoics.size())
+			throw std::invalid_argument("ERROR: Must mark as many spans as there are expected diagnostics");
+		Assert::AreEqual(expectedDiagnostoics.size(), result.Diagnostics()->size());
+
+		for (size_t i = 0; i < expectedDiagnostoics.size(); ++i)
+		{
+			Assert::AreEqual(expectedDiagnostoics[i], (*result.Diagnostics())[i].Message());
+			Assert::IsTrue(annotatedText.Spans()[i] == (*result.Diagnostics())[i].Span());
+		}
+
 	}
 };
 

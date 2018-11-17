@@ -216,7 +216,7 @@ string GetText(SyntaxKind kind)
 		case SyntaxKind::TrueKeyword: return "true";
 		case SyntaxKind::VarKeyword: return "var";
 		case SyntaxKind::WhileKeyword: return "while";
-		default: return "";
+		default: return string();
 	}
 }
 
@@ -344,7 +344,7 @@ VariableSymbol::VariableSymbol(const string & name, bool readOnly, const std::ty
 }
 
 VariableSymbol::VariableSymbol()
-	: VariableSymbol("", true, typeid(std::monostate))
+	: VariableSymbol(string(), true, typeid(std::monostate))
 {
 }
 

@@ -18,7 +18,9 @@ private:
 public:
 	Diagnostic(const TextSpan& span, const string& message);
 	~Diagnostic();
+	Diagnostic(const Diagnostic&) = default;
 	Diagnostic(Diagnostic&& other);
+	Diagnostic& operator=(const Diagnostic& other) = default;
 	Diagnostic& operator=(Diagnostic&& other);
 
 	TextSpan Span() const { return _span; }
@@ -37,7 +39,7 @@ public:
 	size_t size() const { return _diagnostics.size(); }
 
 	class iterator;
-	const Diagnostic& GetOneDiagnostic (int idx) const;
+	const Diagnostic& operator[](size_t idx) const;
 	iterator begin();
 	iterator end();
 
