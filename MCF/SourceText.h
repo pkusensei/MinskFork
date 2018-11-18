@@ -11,20 +11,21 @@ class TextSpan final
 private:
 	std::tuple<size_t, size_t> _span;
 public:
-	explicit TextSpan(size_t start = 0, size_t length = 0);
+	constexpr explicit TextSpan(size_t start = 0, size_t length = 0)
+		:_span(start, length) { }
 	~TextSpan() = default;
 	TextSpan(const TextSpan&) = default;
-	TextSpan(TextSpan&&) = default;
+	TextSpan(TextSpan&&) noexcept= default;
 	TextSpan& operator=(const TextSpan&);
-	TextSpan& operator=(TextSpan&&) = default;
+	TextSpan& operator=(TextSpan&&) noexcept = default;
 
-	size_t Start()const { return std::get<0>(_span); }
-	size_t Length()const { return std::get<1>(_span); }
-	size_t End()const { return std::get<0>(_span) + std::get<1>(_span); }
+	size_t Start()const noexcept { return std::get<0>(_span); }
+	size_t Length()const noexcept { return std::get<1>(_span); }
+	size_t End()const noexcept { return std::get<0>(_span) + std::get<1>(_span); }
 	string ToString() const { return std::to_string(Start()) + ".." + std::to_string(End()); }
 
-	MCF_API bool operator==(const TextSpan& other)const { return _span == other._span; }
-	MCF_API bool operator!=(const TextSpan& other)const { return _span != other._span; }
+	MCF_API constexpr bool operator==(const TextSpan& other)const { return _span == other._span; }
+	MCF_API constexpr bool operator!=(const TextSpan& other)const { return _span != other._span; }
 	MCF_API static TextSpan FromBounds(size_t start, size_t end);
 };
 
@@ -39,11 +40,11 @@ public:
 	TextLine(const SourceText& text, size_t start, size_t length, size_t lengthWithBreak);
 	~TextLine() = default;
 
-	const SourceText* Text()const { return _text; }
-	size_t Start()const { return _start; }
-	size_t Length()const { return _length; }
-	size_t End()const { return _start + _length; }
-	size_t LengthIncludingLineBreak()const { return _lengthIncludingLineBreak; }
+	constexpr const SourceText* Text()const noexcept{ return _text; }
+	constexpr size_t Start()const noexcept { return _start; }
+	constexpr size_t Length()const noexcept { return _length; }
+	constexpr size_t End()const { return _start + _length; }
+	constexpr size_t LengthIncludingLineBreak()const noexcept { return _lengthIncludingLineBreak; }
 	TextSpan Span()const { return TextSpan(_start, _length); }
 	TextSpan SpanIncludingLineBreak()const { return TextSpan(_start, _lengthIncludingLineBreak); }
 	string ToString()const;
@@ -60,17 +61,17 @@ private:
 	static size_t GetLineBreakWidth(const string& text, size_t position);
 	static vector<TextLine> ParseLines(const SourceText* sourceText, const string& text);
 
-	SourceText(const string& text);
+	explicit SourceText(const string& text);
 
 public:
 	~SourceText() = default;
 	SourceText(const SourceText& other);
-	SourceText(SourceText&& other);
+	SourceText(SourceText&& other) noexcept;
 
 	const vector<TextLine> Lines()const { return _lines; }
-	size_t Length()const { return _text.length(); }
+	size_t Length()const noexcept { return _text.length(); }
 	char operator[](size_t sub) const { return _text[sub]; }
-	size_t GetLineIndex(size_t position)const;
+	size_t GetLineIndex(size_t position)const noexcept;
 
 	string ToString()const { return _text; }
 	string ToString(size_t start, size_t length)const { return _text.substr(start, length); }

@@ -93,7 +93,6 @@ void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span, SyntaxKind actua
 
 void DiagnosticBag::ReportUndefinedName(const TextSpan & span, const string & name)
 {
-	//if (name.empty()) return; // HACK discard empty strings
 	string message{"Variable '"};
 	message += name + "' doesn't exist.";
 	Report(span, message);

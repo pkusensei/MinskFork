@@ -36,20 +36,20 @@ public:
 	SyntaxToken(SyntaxKind kind, size_t position, const string& text, const ValueType& value);
 	virtual ~SyntaxToken() = default;
 	SyntaxToken(const SyntaxToken& other) = default;
-	SyntaxToken(SyntaxToken&& other);
+	SyntaxToken(SyntaxToken&& other) noexcept;
 	SyntaxToken& operator=(const SyntaxToken& other) = default;
 
-	bool operator==(const SyntaxToken& other)const;
-	bool operator!=(const SyntaxToken& other)const;
+	bool operator==(const SyntaxToken& other)const noexcept;
+	bool operator!=(const SyntaxToken& other)const noexcept;
 
 	// Inherited via SyntaxNode
-	virtual SyntaxKind Kind() const override { return _kind; }
+	virtual SyntaxKind Kind() const noexcept override { return _kind; }
 	virtual TextSpan Span()const override;
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
-	size_t Position() const { return _position; }
+	constexpr size_t Position() const noexcept { return _position; }
 	string Text() const { return _text; }
-	ValueType Value() const { return _value; }
+	constexpr ValueType Value() const noexcept { return _value; }
 };
 
 class Lexer final
@@ -66,7 +66,7 @@ private:
 	char Peek(int offset) const;
 	char Current() const { return Peek(0); }
 	char Lookahead() const { return Peek(1); }
-	void Next() { _position++; }
+	constexpr void Next() noexcept { _position++; }
 
 	void ReadWhiteSpace();
 	void ReadNumberToken();
@@ -76,7 +76,7 @@ public:
 	~Lexer() = default;
 
 	SyntaxToken Lex();
-	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
+	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
 };
 
 #pragma region Expression
@@ -86,7 +86,7 @@ class ExpressionSyntax :public SyntaxNode
 public:
 	virtual ~ExpressionSyntax() = default;
 	// Inherited via SyntaxNode
-	virtual SyntaxKind Kind() const override { return SyntaxKind::BadToken; } // HACK
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::BadToken; } // HACK
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 };
 
@@ -101,15 +101,15 @@ public:
 	AssignmentExpressionSyntax(const SyntaxToken& identifier, const SyntaxToken& equals,
 							   const unique_ptr<ExpressionSyntax>& expression);
 	virtual ~AssignmentExpressionSyntax() = default;
-	AssignmentExpressionSyntax(AssignmentExpressionSyntax&& other);
+	AssignmentExpressionSyntax(AssignmentExpressionSyntax&& other)noexcept;
 
 	// Inherited via ExpressionSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::AssignmentExpression; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::AssignmentExpression; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken IdentifierToken() const { return _identifierToken; }
 	SyntaxToken EqualsToken() const { return _equalsToken; }
-	const ExpressionSyntax* Expression() const { return _expression.get(); }
+	const ExpressionSyntax* Expression() const noexcept { return _expression.get(); }
 };
 
 class UnaryExpressionSyntax final :public ExpressionSyntax
@@ -120,14 +120,14 @@ private:
 public:
 	UnaryExpressionSyntax(const SyntaxToken& operatorToken, const unique_ptr<ExpressionSyntax>& operand);
 	virtual ~UnaryExpressionSyntax() = default;
-	UnaryExpressionSyntax(UnaryExpressionSyntax&& other);
+	UnaryExpressionSyntax(UnaryExpressionSyntax&& other)noexcept;
 
 	// Inherited via ExpressionSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::UnaryExpression; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::UnaryExpression; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken OperatorToken() const { return _operatorToken; }
-	const ExpressionSyntax* Operand() const { return _operand.get(); }
+	const ExpressionSyntax* Operand() const noexcept { return _operand.get(); }
 };
 
 class BinaryExpressionSyntax final :public ExpressionSyntax
@@ -139,15 +139,15 @@ private:
 public:
 	BinaryExpressionSyntax(const unique_ptr<ExpressionSyntax>& left, const SyntaxToken& operatorToken, const unique_ptr<ExpressionSyntax>& right);
 	virtual ~BinaryExpressionSyntax() = default;
-	BinaryExpressionSyntax(BinaryExpressionSyntax&& other);
+	BinaryExpressionSyntax(BinaryExpressionSyntax&& other)noexcept;
 
 	// Inherited via ExpressionSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::BinaryExpression; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::BinaryExpression; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken OperatorToken() const { return _operatorToken; }
-	const ExpressionSyntax* Left()const { return _left.get(); }
-	const ExpressionSyntax* Right()const { return _right.get(); }
+	const ExpressionSyntax* Left()const noexcept { return _left.get(); }
+	const ExpressionSyntax* Right()const noexcept { return _right.get(); }
 };
 
 class ParenthesizedExpressionSyntax final :public ExpressionSyntax
@@ -159,14 +159,14 @@ private:
 public:
 	ParenthesizedExpressionSyntax(const SyntaxToken& open, const unique_ptr<ExpressionSyntax>& expression, const SyntaxToken& close);
 	virtual ~ParenthesizedExpressionSyntax() = default;
-	ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax&& other);
+	ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax&& other)noexcept;
 	// Inherited via ExpressionSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::ParenthesizedExpression; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::ParenthesizedExpression; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken OpenParenthesisToken()const { return _openParenthesisToken; }
 	SyntaxToken CloseParenthesisToken() const { return _closeParenthesisToken; }
-	const ExpressionSyntax* Expression()const { return _expression.get(); }
+	const ExpressionSyntax* Expression()const noexcept { return _expression.get(); }
 };
 
 class LiteralExpressionSyntax final :public ExpressionSyntax
@@ -178,13 +178,13 @@ public:
 	LiteralExpressionSyntax(const SyntaxToken& literalToken, const ValueType& value);
 	explicit LiteralExpressionSyntax(const SyntaxToken& literalToken);
 	virtual ~LiteralExpressionSyntax() = default;
-	LiteralExpressionSyntax(LiteralExpressionSyntax&& other);
+	LiteralExpressionSyntax(LiteralExpressionSyntax&& other)noexcept;
 	// Inherited via ExpressionSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::LiteralExpression; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::LiteralExpression; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken LiteralToken()const { return _literalToken; }
-	ValueType Value()const { return _value; }
+	constexpr ValueType Value()const { return _value; }
 };
 
 class NameExpressionSyntax final :public ExpressionSyntax
@@ -194,9 +194,9 @@ private:
 public:
 	explicit NameExpressionSyntax(const SyntaxToken& identifier);
 	virtual ~NameExpressionSyntax() = default;
-	NameExpressionSyntax(NameExpressionSyntax&& other);
+	NameExpressionSyntax(NameExpressionSyntax&& other)noexcept;
 	// Inherited via ExpressionSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::NameExpression; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::NameExpression; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken IdentifierToken()const { return _identifierToken; }
@@ -211,7 +211,7 @@ class StatementSyntax :public SyntaxNode
 public:
 	virtual ~StatementSyntax() = default;
 	// Inherited via SyntaxNode
-	virtual SyntaxKind Kind() const override { return SyntaxKind::BadToken; } // HACK
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::BadToken; } // HACK
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 };
 
@@ -225,10 +225,10 @@ private:
 public:
 	BlockStatementSyntax(const SyntaxToken& open, const vector<unique_ptr<StatementSyntax>>& statements, const SyntaxToken& close);
 	virtual ~BlockStatementSyntax() = default;
-	BlockStatementSyntax(BlockStatementSyntax&& other);
+	BlockStatementSyntax(BlockStatementSyntax&& other)noexcept;
 
 	// Inherited via StatementSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::BlockStatement; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::BlockStatement; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken OpenBraceToken()const { return _openBraceToken; }
@@ -247,16 +247,16 @@ public:
 	VariableDeclarationSyntax(const SyntaxToken& keyword, const SyntaxToken& identifier,
 							  const SyntaxToken& equals, const unique_ptr<ExpressionSyntax>& initializer);
 	virtual ~VariableDeclarationSyntax() = default;
-	VariableDeclarationSyntax(VariableDeclarationSyntax&& other);
+	VariableDeclarationSyntax(VariableDeclarationSyntax&& other)noexcept;
 
 	// Inherited via StatementSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::VariableDeclaration; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::VariableDeclaration; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken Keyword()const { return _keyword; }
 	SyntaxToken Identifier()const { return _identifier; }
 	SyntaxToken EqualsToken()const { return _equalsToken; }
-	const ExpressionSyntax* Initializer()const { return _initializer.get(); }
+	const ExpressionSyntax* Initializer()const noexcept { return _initializer.get(); }
 };
 
 class ElseClauseSyntax final :public SyntaxNode
@@ -267,14 +267,14 @@ private:
 public:
 	ElseClauseSyntax(const SyntaxToken& elseKeyword, const unique_ptr<StatementSyntax>& elseStatement);
 	virtual ~ElseClauseSyntax() = default;
-	ElseClauseSyntax(ElseClauseSyntax&&) = default;
+	ElseClauseSyntax(ElseClauseSyntax&&)noexcept = default;
 
 	// Inherited via SyntaxNode
-	virtual SyntaxKind Kind() const override { return SyntaxKind::ElseClause; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::ElseClause; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken ElseKeyword()const { return _elseKeyword; }
-	const StatementSyntax* ElseStatement()const { return _elseStatement.get(); }
+	const StatementSyntax* ElseStatement()const noexcept { return _elseStatement.get(); }
 };
 
 class IfStatementSyntax final :public StatementSyntax
@@ -288,16 +288,16 @@ public:
 	IfStatementSyntax(const SyntaxToken& ifKeyword, const unique_ptr<ExpressionSyntax>& condition,
 					  const unique_ptr<StatementSyntax>& thenStatement, const unique_ptr<ElseClauseSyntax>& elseClause);
 	virtual ~IfStatementSyntax() = default;
-	IfStatementSyntax(IfStatementSyntax&&) = default;
+	IfStatementSyntax(IfStatementSyntax&&) noexcept = default;
 
 	// Inherited via StatementSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::IfStatement; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::IfStatement; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken IfKeyword()const { return _ifKeyword; }
-	const ExpressionSyntax* Condition()const { return _condition.get(); }
-	const StatementSyntax* ThenStatement()const { return _thenStatement.get(); }
-	const ElseClauseSyntax* ElseClause()const { return _elseClause.get(); }
+	const ExpressionSyntax* Condition()const noexcept { return _condition.get(); }
+	const StatementSyntax* ThenStatement()const noexcept { return _thenStatement.get(); }
+	const ElseClauseSyntax* ElseClause()const noexcept { return _elseClause.get(); }
 };
 
 class WhileStatementSyntax final :public StatementSyntax
@@ -310,15 +310,15 @@ public:
 	WhileStatementSyntax(const SyntaxToken& whileKeyword, const unique_ptr<ExpressionSyntax>& condition,
 						 const unique_ptr<StatementSyntax>& body);
 	virtual ~WhileStatementSyntax() = default;
-	WhileStatementSyntax(WhileStatementSyntax&&) = default;
+	WhileStatementSyntax(WhileStatementSyntax&&) noexcept = default;
 
 	// Inherited via StatementSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::WhileStatement; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::WhileStatement; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken WhileKeyword()const { return _whileKeyword; }
-	const ExpressionSyntax* Condition()const { return _condition.get(); }
-	const StatementSyntax* Body()const { return _body.get(); }
+	const ExpressionSyntax* Condition()const noexcept { return _condition.get(); }
+	const StatementSyntax* Body()const noexcept { return _body.get(); }
 };
 
 class ForStatementSyntax final :public StatementSyntax
@@ -336,18 +336,18 @@ public:
 					   unique_ptr<ExpressionSyntax>& lowerBound, const SyntaxToken& toKeyword,
 					   unique_ptr<ExpressionSyntax>& upperBound, const unique_ptr<StatementSyntax>& body);
 	virtual ~ForStatementSyntax() = default;
-	ForStatementSyntax(ForStatementSyntax&&) = default;
+	ForStatementSyntax(ForStatementSyntax&&) noexcept = default;
 	// Inherited via StatementSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::ForStatement; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::ForStatement; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken Keyword() const { return _keyword; }
 	SyntaxToken Identifier() const { return _identifier; }
 	SyntaxToken EqualsToken()const { return _equalsToken; }
-	const ExpressionSyntax* LowerBound()const { return _lowerBound.get(); }
+	const ExpressionSyntax* LowerBound()const noexcept { return _lowerBound.get(); }
 	SyntaxToken ToKeyword()const { return _toKeyword; }
-	const ExpressionSyntax* UpperBound()const { return _upperBound.get(); }
-	const StatementSyntax* Body()const { return _body.get(); }
+	const ExpressionSyntax* UpperBound()const noexcept { return _upperBound.get(); }
+	const StatementSyntax* Body()const noexcept { return _body.get(); }
 };
 
 class ExpressionStatementSyntax final : public StatementSyntax
@@ -358,13 +358,13 @@ private:
 public:
 	ExpressionStatementSyntax(const unique_ptr<ExpressionSyntax>& expression);
 	virtual ~ExpressionStatementSyntax() = default;
-	ExpressionStatementSyntax(ExpressionStatementSyntax&& other);
+	ExpressionStatementSyntax(ExpressionStatementSyntax&& other)noexcept;
 
 	// Inherited via StatementSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::ExpressionStatement; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::ExpressionStatement; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
-	const ExpressionSyntax* Expression()const { return _expression.get(); }
+	const ExpressionSyntax* Expression()const noexcept { return _expression.get(); }
 };
 
 #pragma endregion
@@ -378,13 +378,13 @@ private:
 public:
 	CompilationUnitSyntax(const unique_ptr<StatementSyntax>& statement, const SyntaxToken& endOfFile);
 	virtual ~CompilationUnitSyntax() = default;
-	CompilationUnitSyntax(CompilationUnitSyntax&& other);
+	CompilationUnitSyntax(CompilationUnitSyntax&& other)noexcept;
 
 	// Inherited via SyntaxNode
-	virtual SyntaxKind Kind() const override { return SyntaxKind::CompilationUnit; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::CompilationUnit; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
-	const StatementSyntax* Statement()const { return _statement.get(); }
+	const StatementSyntax* Statement()const noexcept { return _statement.get(); }
 	SyntaxToken EndOfFileToken()const { return _endOfFileToken; }
 };
 
@@ -424,7 +424,7 @@ public:
 	explicit Parser(const SourceText& text);
 	~Parser();
 
-	DiagnosticBag* Diagnostics()const { return _diagnostics.get(); }
+	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
 	unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
 };
 
@@ -435,15 +435,15 @@ private:
 	unique_ptr<DiagnosticBag> _diagnostics;
 	unique_ptr<CompilationUnitSyntax> _root;
 
-	SyntaxTree(const SourceText& text);
+	explicit SyntaxTree(const SourceText& text);
 
 public:
 	~SyntaxTree();
-	SyntaxTree(SyntaxTree&& other);
+	SyntaxTree(SyntaxTree&& other)noexcept;
 
 	const SourceText& Text() const { return *_text; }
-	const CompilationUnitSyntax* Root()const { return _root.get(); }
-	DiagnosticBag* Diagnostics() const { return _diagnostics.get(); }
+	const CompilationUnitSyntax* Root()const noexcept{ return _root.get(); }
+	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics.get(); }
 
 	static SyntaxTree Parse(const string& text);
 	static SyntaxTree Parse(const SourceText& text);

@@ -56,7 +56,7 @@ enum class SyntaxKind
 	VarKeyword,
 	WhileKeyword,
 
-	// Node
+	// Nodes
 	CompilationUnit,
 	ElseClause,
 
@@ -89,10 +89,10 @@ MCF_API string TrimStringStart(const string& text);
 MCF_API string TrimStringEnd(const string& text);
 
 /// namespace-scope functions
-SyntaxKind GetKeywordKind(const string& text);
+SyntaxKind GetKeywordKind(const string& text) noexcept;
 MCF_API string GetText(SyntaxKind kind);
-MCF_API int GetUnaryOperatorPrecedence(SyntaxKind kind);
-MCF_API int GetBinaryOperatorPrecedence(SyntaxKind kind);
+MCF_API int GetUnaryOperatorPrecedence(SyntaxKind kind)noexcept;
+MCF_API int GetBinaryOperatorPrecedence(SyntaxKind kind)noexcept;
 MCF_API vector<SyntaxKind> GetUnaryOperatorKinds();
 MCF_API vector<SyntaxKind> GetBinaryOperatorKinds();
 
@@ -102,24 +102,24 @@ private:
 	std::variant<std::monostate, long, bool> _inner;
 
 public:
-	ValueType() {}
+	constexpr ValueType() noexcept {}
 	~ValueType() = default;
 
 	/// stays implicit
-	ValueType(const long& value) :_inner(value) {}
-	ValueType(const int& value):_inner(static_cast<long>(value)){}
-	ValueType(const bool& value) :_inner(value) {}
+	constexpr ValueType(const long& value)noexcept :_inner(value) {}
+	constexpr ValueType(const int& value)noexcept :_inner(static_cast<long>(value)){}
+	constexpr ValueType(const bool& value)noexcept :_inner(value) {}
 
-	bool HasValue()const { return !std::holds_alternative<std::monostate>(_inner); }
+	constexpr bool HasValue()const noexcept{ return !std::holds_alternative<std::monostate>(_inner); }
 	type_index Type()const;
 
 	void WriteTo(std::ostream& out) const;
 
-	bool operator==(const ValueType& other)const { return _inner == other._inner; }
-	bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }
+	constexpr bool operator==(const ValueType& other)const { return _inner == other._inner; }
+	constexpr bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }
 
 	template<typename T>
-	decltype(auto) GetValue() const
+	constexpr decltype(auto) GetValue() const
 	{
 		return std::get<T>(_inner);
 	}
@@ -139,17 +139,17 @@ public:
 	VariableSymbol(const string& name, bool readOnly, const std::type_info& type);
 	VariableSymbol();
 	~VariableSymbol() = default;
-	VariableSymbol(const VariableSymbol&) = default;
+	VariableSymbol(const VariableSymbol&)= default;
 	VariableSymbol(VariableSymbol&& other);
 	VariableSymbol& operator=(const VariableSymbol&) = default;
 	VariableSymbol& operator=(VariableSymbol&& other);
 
 	string Name()const { return _name; }
-	bool IsReadOnly()const { return _isReadOnly; }
+	constexpr bool IsReadOnly()const noexcept { return _isReadOnly; }
 	type_index Type()const { return _type; }
 
-	bool operator==(const VariableSymbol& other) const;
-	bool operator!=(const VariableSymbol& other) const;
+	bool operator==(const VariableSymbol& other) const noexcept;
+	bool operator!=(const VariableSymbol& other) const noexcept;
 };
 
 struct MCF_API VariableHash

@@ -51,19 +51,19 @@ SyntaxToken::SyntaxToken(SyntaxKind kind, size_t position, const string& text, c
 {
 }
 
-SyntaxToken::SyntaxToken(SyntaxToken && other)
+SyntaxToken::SyntaxToken(SyntaxToken && other) noexcept
 	: _kind(other._kind), _position(other._position), _text(std::move(other._text)),
 	_value(std::move(other._value))
 {
 }
 
-bool SyntaxToken::operator==(const SyntaxToken & other) const
+bool SyntaxToken::operator==(const SyntaxToken & other) const noexcept
 {
 	return _kind == other._kind && _position == other._position
 		&& _text == other._text && _value == other._value;
 }
 
-bool SyntaxToken::operator!=(const SyntaxToken & other) const
+bool SyntaxToken::operator!=(const SyntaxToken & other) const noexcept
 {
 	return !(*this == other);
 }
@@ -238,7 +238,7 @@ void Lexer::ReadNumberToken()
 	auto length = _position - _start;
 	auto text = _text->ToString(_start, length);
 
-	// HACK
+	// HACK use long as interger type
 	long value;
 	try
 	{
@@ -275,7 +275,7 @@ AssignmentExpressionSyntax::AssignmentExpressionSyntax(const SyntaxToken & ident
 {
 }
 
-AssignmentExpressionSyntax::AssignmentExpressionSyntax(AssignmentExpressionSyntax && other)
+AssignmentExpressionSyntax::AssignmentExpressionSyntax(AssignmentExpressionSyntax && other)noexcept
 	: _identifierToken(std::move(other._identifierToken)),
 	_equalsToken(std::move(other._equalsToken))
 {
@@ -299,7 +299,7 @@ UnaryExpressionSyntax::UnaryExpressionSyntax(const SyntaxToken & operatorToken,
 {
 }
 
-UnaryExpressionSyntax::UnaryExpressionSyntax(UnaryExpressionSyntax && other)
+UnaryExpressionSyntax::UnaryExpressionSyntax(UnaryExpressionSyntax && other)noexcept
 	: _operatorToken(std::move(other._operatorToken))
 {
 	_operand.swap(other._operand);
@@ -322,7 +322,7 @@ BinaryExpressionSyntax::BinaryExpressionSyntax(const unique_ptr<ExpressionSyntax
 {
 }
 
-BinaryExpressionSyntax::BinaryExpressionSyntax(BinaryExpressionSyntax && other)
+BinaryExpressionSyntax::BinaryExpressionSyntax(BinaryExpressionSyntax && other)noexcept
 	:_operatorToken(std::move(other._operatorToken))
 {
 	_left.swap(other._left);
@@ -346,7 +346,7 @@ ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(const SyntaxToken &
 {
 }
 
-ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax && other)
+ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax && other)noexcept
 	: _openParenthesisToken(std::move(other._openParenthesisToken)),
 	_closeParenthesisToken(std::move(other._closeParenthesisToken))
 {
@@ -373,7 +373,7 @@ LiteralExpressionSyntax::LiteralExpressionSyntax(const SyntaxToken& literalToken
 {
 }
 
-LiteralExpressionSyntax::LiteralExpressionSyntax(LiteralExpressionSyntax && other)
+LiteralExpressionSyntax::LiteralExpressionSyntax(LiteralExpressionSyntax && other)noexcept
 	: _literalToken(std::move(other._literalToken)), _value(std::move(other._value))
 {
 }
@@ -389,7 +389,7 @@ NameExpressionSyntax::NameExpressionSyntax(const SyntaxToken & identifier)
 {
 }
 
-NameExpressionSyntax::NameExpressionSyntax(NameExpressionSyntax && other)
+NameExpressionSyntax::NameExpressionSyntax(NameExpressionSyntax && other)noexcept
 	: _identifierToken(std::move(other._identifierToken))
 {
 }
@@ -415,7 +415,7 @@ BlockStatementSyntax::BlockStatementSyntax(const SyntaxToken & open, const vecto
 {
 }
 
-BlockStatementSyntax::BlockStatementSyntax(BlockStatementSyntax && other)
+BlockStatementSyntax::BlockStatementSyntax(BlockStatementSyntax && other)noexcept
 	: _openBraceToken(std::move(other._openBraceToken)),
 	_closeBraceToken(std::move(other._closeBraceToken)),
 	_statements(std::move(other._statements))
@@ -447,7 +447,7 @@ VariableDeclarationSyntax::VariableDeclarationSyntax(const SyntaxToken & keyword
 {
 }
 
-VariableDeclarationSyntax::VariableDeclarationSyntax(VariableDeclarationSyntax && other)
+VariableDeclarationSyntax::VariableDeclarationSyntax(VariableDeclarationSyntax && other)noexcept
 	: _keyword(std::move(other._keyword)), _identifier(std::move(other._identifier)),
 	_equalsToken(std::move(other._equalsToken)), _initializer(std::move(other._initializer))
 {
@@ -544,7 +544,7 @@ ExpressionStatementSyntax::ExpressionStatementSyntax(const unique_ptr<Expression
 {
 }
 
-ExpressionStatementSyntax::ExpressionStatementSyntax(ExpressionStatementSyntax && other)
+ExpressionStatementSyntax::ExpressionStatementSyntax(ExpressionStatementSyntax && other)noexcept
 	: _expression(std::move(other._expression))
 {
 }
@@ -563,7 +563,7 @@ CompilationUnitSyntax::CompilationUnitSyntax(const unique_ptr<StatementSyntax>& 
 {
 }
 
-CompilationUnitSyntax::CompilationUnitSyntax(CompilationUnitSyntax && other)
+CompilationUnitSyntax::CompilationUnitSyntax(CompilationUnitSyntax && other)noexcept
 	: _statement(std::move(other._statement)), _endOfFileToken(std::move(other._endOfFileToken))
 {
 }
@@ -616,7 +616,7 @@ SyntaxToken Parser::NextToken()
 {
 	auto current = Current();
 	_position++;
-	return *current;
+	return *current; // NOTE to clone or not to clone
 }
 
 SyntaxToken Parser::MatchToken(SyntaxKind kind)
@@ -833,7 +833,7 @@ SyntaxTree::SyntaxTree(const SourceText& text)
 
 SyntaxTree::~SyntaxTree() = default;
 
-SyntaxTree::SyntaxTree(SyntaxTree && other)
+SyntaxTree::SyntaxTree(SyntaxTree && other)noexcept
 {
 	_text.swap(other._text);
 	_diagnostics.swap(other._diagnostics);

@@ -3,11 +3,6 @@
 
 namespace MCF {
 
-TextSpan::TextSpan(size_t start, size_t length)
-	:_span(start, length)
-{
-}
-
 TextSpan & TextSpan::operator=(const TextSpan & other)
 {
 	_span = other._span;
@@ -39,7 +34,7 @@ SourceText::SourceText(const SourceText & other)
 {
 }
 
-SourceText::SourceText(SourceText && other)
+SourceText::SourceText(SourceText && other)noexcept
 	:_text(std::move(other._text)),_lines(std::move(other._lines))
 {
 	//other._text.clear();
@@ -87,7 +82,7 @@ vector<TextLine> SourceText::ParseLines(const SourceText * sourceText, const str
 	return result;
 }
 
-size_t SourceText::GetLineIndex(size_t position) const
+size_t SourceText::GetLineIndex(size_t position) const noexcept
 {
 	size_t lower = 0;
 	size_t upper = _lines.size() - 1;

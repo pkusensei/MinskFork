@@ -162,7 +162,7 @@ string TrimStringEnd(const string & text)
 	return result;
 }
 
-SyntaxKind GetKeywordKind(const string & text)
+SyntaxKind GetKeywordKind(const string & text) noexcept
 {
 	if (text == "else")
 		return SyntaxKind::ElseKeyword;
@@ -220,7 +220,7 @@ string GetText(SyntaxKind kind)
 	}
 }
 
-int GetUnaryOperatorPrecedence(SyntaxKind kind)
+int GetUnaryOperatorPrecedence(SyntaxKind kind) noexcept
 {
 	switch (kind)
 	{
@@ -233,7 +233,7 @@ int GetUnaryOperatorPrecedence(SyntaxKind kind)
 	}
 }
 
-int GetBinaryOperatorPrecedence(SyntaxKind kind)
+int GetBinaryOperatorPrecedence(SyntaxKind kind) noexcept
 {
 	switch (kind)
 	{
@@ -364,12 +364,12 @@ VariableSymbol & VariableSymbol::operator=(VariableSymbol && other)
 	return *this;
 }
 
-bool VariableSymbol::operator==(const VariableSymbol & other) const
+bool VariableSymbol::operator==(const VariableSymbol & other) const noexcept
 {
 	return _name == other._name && _type == other._type;
 }
 
-bool VariableSymbol::operator!=(const VariableSymbol & other) const
+bool VariableSymbol::operator!=(const VariableSymbol & other) const noexcept
 {
 	return !(*this == other);
 }
