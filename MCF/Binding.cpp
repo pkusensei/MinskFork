@@ -50,7 +50,7 @@ BoundUnaryExpression::BoundUnaryExpression(const BoundUnaryOperator & op, const 
 {
 }
 
-BoundUnaryExpression::BoundUnaryExpression(BoundUnaryExpression && other)
+BoundUnaryExpression::BoundUnaryExpression(BoundUnaryExpression && other)noexcept
 {
 	_op.swap(other._op);
 	_operand.swap(other._operand);
@@ -117,7 +117,7 @@ BoundBinaryExpression::BoundBinaryExpression(const unique_ptr<BoundExpression>& 
 {
 }
 
-BoundBinaryExpression::BoundBinaryExpression(BoundBinaryExpression && other)
+BoundBinaryExpression::BoundBinaryExpression(BoundBinaryExpression && other)noexcept
 {
 	_left.swap(other._left);
 	_right.swap(other._right);
@@ -131,7 +131,7 @@ BoundAssignmentExpression::BoundAssignmentExpression(const VariableSymbol & vari
 {
 }
 
-BoundAssignmentExpression::BoundAssignmentExpression(BoundAssignmentExpression && other)
+BoundAssignmentExpression::BoundAssignmentExpression(BoundAssignmentExpression && other)noexcept
 	: _variable(other._variable)
 
 {
@@ -144,7 +144,7 @@ BoundLiteralExpression::BoundLiteralExpression(const ValueType & value)
 {
 }
 
-BoundLiteralExpression::BoundLiteralExpression(BoundLiteralExpression && other)
+BoundLiteralExpression::BoundLiteralExpression(BoundLiteralExpression && other)noexcept
 	: _value(std::move(other._value))
 {
 }
@@ -154,7 +154,7 @@ BoundVariableExpression::BoundVariableExpression(const VariableSymbol & variable
 {
 }
 
-BoundVariableExpression::BoundVariableExpression(BoundVariableExpression && other)
+BoundVariableExpression::BoundVariableExpression(BoundVariableExpression && other)noexcept
 	: _variable(other._variable)
 {
 	other._variable = {};
@@ -165,7 +165,7 @@ BoundBlockStatement::BoundBlockStatement(const vector<unique_ptr<BoundStatement>
 {
 }
 
-BoundBlockStatement::BoundBlockStatement(BoundBlockStatement && other)
+BoundBlockStatement::BoundBlockStatement(BoundBlockStatement && other)noexcept
 	: _statements(std::move(other._statements))
 {
 }
@@ -185,7 +185,7 @@ BoundVariableDeclaration::BoundVariableDeclaration(const VariableSymbol & variab
 {
 }
 
-BoundVariableDeclaration::BoundVariableDeclaration(BoundVariableDeclaration && other)
+BoundVariableDeclaration::BoundVariableDeclaration(BoundVariableDeclaration && other)noexcept
 	: _variable(std::move(other._variable)), _initializer(std::move(other._initializer))
 {
 }
@@ -218,7 +218,7 @@ BoundExpressionStatement::BoundExpressionStatement(const unique_ptr<BoundExpress
 {
 }
 
-BoundExpressionStatement::BoundExpressionStatement(BoundExpressionStatement && other)
+BoundExpressionStatement::BoundExpressionStatement(BoundExpressionStatement && other)noexcept
 	: _expression(std::move(other._expression))
 {
 }
@@ -260,6 +260,7 @@ const vector<VariableSymbol> BoundScope::GetDeclaredVariables() const
 
 void BoundScope::ResetToParent(unique_ptr<BoundScope>& current)
 {
+	if (current->Parent() == nullptr) return;
 	current.swap(current->_parent);
 }
 
@@ -273,7 +274,7 @@ BoundGlobalScope::BoundGlobalScope(const BoundGlobalScope* previous, const uniqu
 {
 }
 
-BoundGlobalScope::BoundGlobalScope(BoundGlobalScope && other)
+BoundGlobalScope::BoundGlobalScope(BoundGlobalScope && other)noexcept
 	:_previous(std::move(other._previous)), _diagnostics(std::move(other._diagnostics)),
 	_variables(std::move(other._variables)), _statement(std::move(other._statement))
 {

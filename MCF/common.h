@@ -107,10 +107,10 @@ public:
 
 	/// stays implicit
 	constexpr ValueType(const long& value)noexcept :_inner(value) {}
-	constexpr ValueType(const int& value)noexcept :_inner(static_cast<long>(value)){}
+	constexpr ValueType(const int& value)noexcept :_inner(static_cast<long>(value)) {}
 	constexpr ValueType(const bool& value)noexcept :_inner(value) {}
 
-	constexpr bool HasValue()const noexcept{ return !std::holds_alternative<std::monostate>(_inner); }
+	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
 	type_index Type()const;
 
 	void WriteTo(std::ostream& out) const;
@@ -139,7 +139,7 @@ public:
 	VariableSymbol(const string& name, bool readOnly, const std::type_info& type);
 	VariableSymbol();
 	~VariableSymbol() = default;
-	VariableSymbol(const VariableSymbol&)= default;
+	VariableSymbol(const VariableSymbol&) = default;
 	VariableSymbol(VariableSymbol&& other);
 	VariableSymbol& operator=(const VariableSymbol&) = default;
 	VariableSymbol& operator=(VariableSymbol&& other);

@@ -23,7 +23,7 @@ public:
 	~EvaluationResult() = default;
 	EvaluationResult(EvaluationResult&& other);
 
-	DiagnosticBag* Diagnostics() const { return _diagnostics; }
+	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics; }
 	ValueType Value()const { return _value; }
 };
 
@@ -71,11 +71,11 @@ public:
 	explicit Compilation(const SyntaxTree& tree);
 	explicit Compilation(const unique_ptr<SyntaxTree>& tree);
 	~Compilation();
-	Compilation(Compilation&& other);
-	Compilation& operator=(Compilation&& other);
+	Compilation(Compilation&& other)noexcept;
+	Compilation& operator=(Compilation&& other)noexcept;
 
-	const Compilation* Previous()const { return _previous.get(); }
-	const SyntaxTree* Syntax()const { return _syntaxTree; }
+	const Compilation* Previous()const noexcept { return _previous.get(); }
+	const SyntaxTree* Syntax()const noexcept { return _syntaxTree; }
 
 	const BoundGlobalScope* GlobalScope();
 	static unique_ptr<Compilation> ContinueWith(const unique_ptr<Compilation>& previous, const SyntaxTree& tree);

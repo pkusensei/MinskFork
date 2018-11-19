@@ -267,7 +267,7 @@ private:
 public:
 	ElseClauseSyntax(const SyntaxToken& elseKeyword, const unique_ptr<StatementSyntax>& elseStatement);
 	virtual ~ElseClauseSyntax() = default;
-	ElseClauseSyntax(ElseClauseSyntax&&)noexcept = default;
+	ElseClauseSyntax(ElseClauseSyntax&&) = default;
 
 	// Inherited via SyntaxNode
 	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::ElseClause; }
@@ -288,7 +288,7 @@ public:
 	IfStatementSyntax(const SyntaxToken& ifKeyword, const unique_ptr<ExpressionSyntax>& condition,
 					  const unique_ptr<StatementSyntax>& thenStatement, const unique_ptr<ElseClauseSyntax>& elseClause);
 	virtual ~IfStatementSyntax() = default;
-	IfStatementSyntax(IfStatementSyntax&&) noexcept = default;
+	IfStatementSyntax(IfStatementSyntax&&) = default;
 
 	// Inherited via StatementSyntax
 	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::IfStatement; }
@@ -310,7 +310,7 @@ public:
 	WhileStatementSyntax(const SyntaxToken& whileKeyword, const unique_ptr<ExpressionSyntax>& condition,
 						 const unique_ptr<StatementSyntax>& body);
 	virtual ~WhileStatementSyntax() = default;
-	WhileStatementSyntax(WhileStatementSyntax&&) noexcept = default;
+	WhileStatementSyntax(WhileStatementSyntax&&) = default;
 
 	// Inherited via StatementSyntax
 	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::WhileStatement; }
@@ -336,7 +336,7 @@ public:
 					   unique_ptr<ExpressionSyntax>& lowerBound, const SyntaxToken& toKeyword,
 					   unique_ptr<ExpressionSyntax>& upperBound, const unique_ptr<StatementSyntax>& body);
 	virtual ~ForStatementSyntax() = default;
-	ForStatementSyntax(ForStatementSyntax&&) noexcept = default;
+	ForStatementSyntax(ForStatementSyntax&&) = default;
 	// Inherited via StatementSyntax
 	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::ForStatement; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;

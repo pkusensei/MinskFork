@@ -250,13 +250,13 @@ Compilation::Compilation(const unique_ptr<SyntaxTree>& tree)
 
 Compilation::~Compilation() = default;
 
-Compilation::Compilation(Compilation&& other)
+Compilation::Compilation(Compilation&& other)noexcept
 	:_previous(std::move(other._previous)), _syntaxTree(other._syntaxTree),
 	_globalScope(std::move(other._globalScope))
 {
 }
 
-Compilation& Compilation::operator=(Compilation&& other)
+Compilation& Compilation::operator=(Compilation&& other)noexcept
 {
 	_previous.swap(other._previous);
 	_syntaxTree = other._syntaxTree;
