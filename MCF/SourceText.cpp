@@ -5,6 +5,7 @@ namespace MCF {
 
 TextSpan & TextSpan::operator=(const TextSpan & other)
 {
+	if (this == &other) return *this;
 	_span = other._span;
 	return *this;
 }
@@ -30,17 +31,16 @@ SourceText::SourceText(const string & text)
 }
 
 SourceText::SourceText(const SourceText & other)
-	:_text(other._text), _lines(other._lines)
+	: _text(other._text), _lines(other._lines)
 {
 }
 
 SourceText::SourceText(SourceText && other)noexcept
-	:_text(std::move(other._text)),_lines(std::move(other._lines))
+	:_text(std::move(other._text)), _lines(std::move(other._lines))
 {
-	//other._text.clear();
 }
 
-void SourceText::AddLine(vector<TextLine>& result, const SourceText & sourceText, 
+void SourceText::AddLine(vector<TextLine>& result, const SourceText & sourceText,
 						 size_t position, size_t lineStart, size_t lineBreakWidth)
 {
 	auto lineLength = position - lineStart;

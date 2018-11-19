@@ -18,6 +18,7 @@ Diagnostic::Diagnostic(Diagnostic && other)
 
 Diagnostic& Diagnostic::operator=(Diagnostic && other)
 {
+	if (this == &other)return *this;
 	_span = std::move(other._span);
 	_message = std::move(other._message);
 	return *this;

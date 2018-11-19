@@ -357,6 +357,8 @@ VariableSymbol::VariableSymbol(VariableSymbol && other)
 
 VariableSymbol & VariableSymbol::operator=(VariableSymbol && other)
 {
+	if (this == &other) return *this;
+
 	_name = std::move(other._name);
 	_isReadOnly = other._isReadOnly;
 	_type = other._type;

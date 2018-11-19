@@ -258,6 +258,7 @@ Compilation::Compilation(Compilation&& other)noexcept
 
 Compilation& Compilation::operator=(Compilation&& other)noexcept
 {
+	if (this == &other)return *this;
 	_previous.swap(other._previous);
 	_syntaxTree = other._syntaxTree;
 	_globalScope.swap(other._globalScope);
