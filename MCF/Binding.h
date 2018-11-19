@@ -35,7 +35,9 @@ enum class BoundUnaryOperatorKind
 {
 	Identity,
 	Negation,
-	LogicalNegation
+	LogicalNegation,
+	Increment,
+	Decrement
 };
 
 enum class BoundBinaryOperatorKind
@@ -87,7 +89,7 @@ private:
 	BoundUnaryOperator(const SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
 					   const type_index& operandType);
 	BoundUnaryOperator();
-	static BoundUnaryOperator _operators[3];
+	static BoundUnaryOperator _operators[5];
 public:
 	BoundUnaryOperator(const BoundUnaryOperator&) = default;
 

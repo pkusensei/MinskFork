@@ -50,7 +50,11 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 		case SyntaxKind::SlashToken:
 			return "SlashToken";
 		case SyntaxKind::BangToken:
-			return "BangToken";
+			return "BangToken";		
+		case SyntaxKind::PlusPlusToken:
+			return "PlusPlusToken";
+		case SyntaxKind::MinusMinusToken:
+			return "MinusMinusToken";
 		case SyntaxKind::EqualsToken:
 			return "EqualsToken";
 		case SyntaxKind::AmpersandAmpersandToken:
@@ -194,6 +198,8 @@ string GetText(const SyntaxKind& kind)
 		case SyntaxKind::StarToken: return "*";
 		case SyntaxKind::SlashToken: return "/";
 		case SyntaxKind::BangToken: return "!";
+		case SyntaxKind::PlusPlusToken: return "++";
+		case SyntaxKind::MinusMinusToken: return "--";
 		case SyntaxKind::EqualsToken: return "=";
 		case SyntaxKind::AmpersandAmpersandToken: return "&&";
 		case SyntaxKind::PipePipeToken: return "||";
@@ -227,6 +233,8 @@ int GetUnaryOperatorPrecedence(const SyntaxKind& kind) noexcept
 		case SyntaxKind::PlusToken:
 		case SyntaxKind::MinusToken:
 		case SyntaxKind::BangToken:
+		case SyntaxKind::PlusPlusToken:
+		case SyntaxKind::MinusMinusToken:
 			return 6;
 		default:
 			return 0;
@@ -284,7 +292,7 @@ type_index ValueType::Type() const
 	switch (_inner.index())
 	{
 		case 1:
-			return typeid(long);
+			return typeid(IntegerType);
 		case 2:
 			return typeid(bool);
 		case 0:
@@ -300,7 +308,7 @@ void ValueType::WriteTo(std::ostream & out) const
 	switch (id)
 	{
 		case 1:
-			out << GetTypeName(Type()) << " " << GetValue<long>() << std::endl;
+			out << GetTypeName(Type()) << " " << GetValue<IntegerType>() << std::endl;
 			break;
 		case 2:
 			out << GetTypeName(Type()) << " " << static_cast<bool>(GetValue<bool>()) << std::endl;
@@ -315,7 +323,7 @@ void ValueType::WriteTo(std::ostream & out) const
 int ValueType::GetValueTypeId(const type_index & inType)
 {
 	static std::unordered_map<type_index, int> types = {{typeid(std::monostate), 0},
-		{typeid(long), 1},{typeid(bool), 2}};
+		{typeid(IntegerType), 1},{typeid(bool), 2}};
 
 	return types[inType];
 }
@@ -325,7 +333,7 @@ string ValueType::GetTypeName(const type_index & inType)
 	auto id = GetValueTypeId(inType);
 	switch (id)
 	{
-		case 1: return "long";
+		case 1: return "IntegerType";
 		case 2: return "bool";
 		case 0:
 		default:

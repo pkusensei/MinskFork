@@ -17,7 +17,7 @@ void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node, string
 	auto token = dynamic_cast<const SyntaxToken*>(node);
 	if (token != nullptr && token->Value().HasValue())
 	{
-		out << " " << token->Value().GetValue<long>();
+		out << " " << token->Value().GetValue<IntegerType>();
 	}
 	out << std::endl;
 	indent += isLast ? "   " : "|  ";
@@ -108,12 +108,26 @@ SyntaxToken Lexer::Lex()
 			_kind = SyntaxKind::EndOfFileToken;
 			break;
 		case '+':
-			Next();
-			_kind = SyntaxKind::PlusToken;
+			if (Lookahead() == '+')
+			{
+				_position += 2;
+				_kind = SyntaxKind::PlusPlusToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::PlusToken;
+			}
 			break;
 		case '-':
-			Next();
-			_kind = SyntaxKind::MinusToken;
+			if (Lookahead() == '-')
+			{
+				_position += 2;
+				_kind = SyntaxKind::MinusMinusToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::MinusToken;
+			}
 			break;
 		case '*':
 			Next();
@@ -238,8 +252,7 @@ void Lexer::ReadNumberToken()
 	auto length = _position - _start;
 	auto text = _text->ToString(_start, length);
 
-	// HACK use long as interger type
-	long value;
+	IntegerType value;
 	try
 	{
 		value = std::stol(text);
@@ -758,6 +771,11 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 	} else
 	{
 		left = ParsePrimaryExpression();
+		if (Current()->Kind() == SyntaxKind::PlusPlusToken || Current()->Kind() == SyntaxKind::MinusMinusToken)
+		{
+			auto operatorToken = NextToken();
+			left = std::make_unique<UnaryExpressionSyntax>(operatorToken, left);
+		}
 	}
 
 	while (true)
