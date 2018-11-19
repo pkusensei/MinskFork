@@ -7,6 +7,7 @@
 
 #include "Compilation.h"
 #include "Diagnostic.h"
+#include "SourceText.h"
 #include "Syntax.h"
 
 bool IsStringBlank(const std::string& s)

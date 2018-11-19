@@ -39,8 +39,8 @@ public:
 
 	class iterator;
 	const Diagnostic& operator[](size_t idx) const;
-	iterator begin();
-	iterator end();
+	iterator begin()const;
+	iterator end()const;
 
 	void AddRangeFront(DiagnosticBag& other);
 	void AddRange(DiagnosticBag& other);
