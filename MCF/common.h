@@ -80,7 +80,7 @@ enum class SyntaxKind
 SyntaxKind& operator++(SyntaxKind& kind);
 SyntaxKind& operator++(SyntaxKind& kind, int c);
 MCF_API const vector<SyntaxKind> GetAllSyntaxKinds();
-MCF_API string GetSyntaxKindName(SyntaxKind kind);
+MCF_API string GetSyntaxKindName(const SyntaxKind& kind);
 
 /// helpers
 MCF_API bool StringEndsWith(const string& sample, const string& ending);
@@ -90,9 +90,9 @@ MCF_API string TrimStringEnd(const string& text);
 
 /// namespace-scope functions
 SyntaxKind GetKeywordKind(const string& text) noexcept;
-MCF_API string GetText(SyntaxKind kind);
-MCF_API int GetUnaryOperatorPrecedence(SyntaxKind kind)noexcept;
-MCF_API int GetBinaryOperatorPrecedence(SyntaxKind kind)noexcept;
+MCF_API string GetText(const SyntaxKind& kind);
+MCF_API int GetUnaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
+MCF_API int GetBinaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
 MCF_API vector<SyntaxKind> GetUnaryOperatorKinds();
 MCF_API vector<SyntaxKind> GetBinaryOperatorKinds();
 

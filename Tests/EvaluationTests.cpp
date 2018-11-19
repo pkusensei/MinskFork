@@ -6,6 +6,7 @@
 
 #include "..\MCF\Compilation.h"
 #include "..\MCF\Diagnostic.h"
+#include "..\MCF\SourceText.h"
 #include "..\MCF\Syntax.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

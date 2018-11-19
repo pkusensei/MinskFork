@@ -16,14 +16,14 @@ class SyntaxTree;
 class MCF_API EvaluationResult final
 {
 private:
-	DiagnosticBag* _diagnostics;
+	const DiagnosticBag* _diagnostics;
 	ValueType _value;
 public:
-	EvaluationResult(DiagnosticBag* diagnostics, const ValueType& value);
+	EvaluationResult(const DiagnosticBag* diagnostics, const ValueType& value);
 	~EvaluationResult() = default;
 	EvaluationResult(EvaluationResult&& other);
 
-	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics; }
+	const DiagnosticBag* Diagnostics() const noexcept { return _diagnostics; }
 	ValueType Value()const { return _value; }
 };
 
@@ -50,7 +50,7 @@ private:
 	ValueType EvaluateBinaryExpression(const BoundExpression* node)const;
 
 public:
-	Evaluator(const BoundStatement* root, std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables);
+	Evaluator(const BoundStatement* root, const std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables);
 
 	ValueType Evaluate();
 };

@@ -46,7 +46,7 @@ string SyntaxNode::ToString() const
 }
 
 #pragma region SyntaxToken
-SyntaxToken::SyntaxToken(SyntaxKind kind, size_t position, const string& text, const ValueType& value)
+SyntaxToken::SyntaxToken(const SyntaxKind& kind, size_t position, const string& text, const ValueType& value)
 	:_kind(kind), _position(position), _text(text), _value(value)
 {
 }
@@ -619,7 +619,7 @@ SyntaxToken Parser::NextToken()
 	return *current; // NOTE to clone or not to clone
 }
 
-SyntaxToken Parser::MatchToken(SyntaxKind kind)
+SyntaxToken Parser::MatchToken(const SyntaxKind& kind)
 {
 	auto current = Current();
 	if (current->Kind() == kind)

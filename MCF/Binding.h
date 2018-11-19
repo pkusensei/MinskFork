@@ -82,9 +82,9 @@ private:
 	type_index _resultType;
 	bool _isUseful = true;
 
-	BoundUnaryOperator(SyntaxKind synKind, BoundUnaryOperatorKind kind,
+	BoundUnaryOperator(const SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
 					   const type_index& operandType, const type_index& resultType);
-	BoundUnaryOperator(SyntaxKind synKind, BoundUnaryOperatorKind kind,
+	BoundUnaryOperator(const SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
 					   const type_index& operandType);
 	BoundUnaryOperator();
 	static BoundUnaryOperator _operators[3];
@@ -97,7 +97,7 @@ public:
 	type_index Type()const { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
-	static BoundUnaryOperator Bind(enum SyntaxKind synKind, const type_index& type);
+	static BoundUnaryOperator Bind(const enum SyntaxKind& synKind, const type_index& type);
 };
 
 class BoundUnaryExpression final : public BoundExpression
@@ -128,11 +128,11 @@ private:
 	type_index _resultType;
 	bool _isUseful = true;
 
-	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind,
+	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
 						const type_index& left, const type_index& right, const type_index& result);
-	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind,
+	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
 						const type_index& operandType, const type_index& resultType);
-	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind, const type_index& type);
+	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, const type_index& type);
 	BoundBinaryOperator();
 
 	static BoundBinaryOperator _operators[14];
@@ -146,7 +146,7 @@ public:
 	type_index Type()const { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
-	static BoundBinaryOperator Bind(enum SyntaxKind synKind, type_index leftType, type_index rightType);
+	static BoundBinaryOperator Bind(const enum SyntaxKind& synKind, const type_index& leftType, const type_index& rightType);
 };
 
 class BoundBinaryExpression final : public BoundExpression

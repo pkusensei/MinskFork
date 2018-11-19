@@ -5,23 +5,28 @@
 namespace MCF {
 
 Diagnostic::Diagnostic(const TextSpan& span, const string& message)
-	:_span(span), _message(message)
+	:_span(std::make_unique<TextSpan>(span.Start(), span.Length())), _message(message)
 {
 }
 
 Diagnostic::~Diagnostic() = default;
 
-Diagnostic::Diagnostic(Diagnostic && other)
+Diagnostic::Diagnostic(Diagnostic && other)noexcept
 	:_span(std::move(other._span)), _message(std::move(other._message))
 {
 }
 
-Diagnostic& Diagnostic::operator=(Diagnostic && other)
+Diagnostic& Diagnostic::operator=(Diagnostic && other)noexcept
 {
 	if (this == &other)return *this;
 	_span = std::move(other._span);
 	_message = std::move(other._message);
 	return *this;
+}
+
+TextSpan Diagnostic::Span() const
+{
+	return *_span;
 }
 
 DiagnosticBag::DiagnosticBag()
@@ -30,12 +35,8 @@ DiagnosticBag::DiagnosticBag()
 }
 
 DiagnosticBag::DiagnosticBag(DiagnosticBag && other)
+	: _diagnostics(std::move(other._diagnostics))
 {
-	for (auto& d : other._diagnostics)
-	{
-		_diagnostics.emplace_back(d.Span(), d.Message());
-	}
-	other._diagnostics.clear();
 }
 
 void DiagnosticBag::Report(const TextSpan& span, const string& message)
@@ -46,6 +47,8 @@ void DiagnosticBag::Report(const TextSpan& span, const string& message)
 
 const Diagnostic & DiagnosticBag::operator[](size_t idx) const
 {
+	if (idx >= size())
+		throw std::out_of_range("Index out of range of DiagnosticBag.");
 	return _diagnostics[idx];
 }
 
@@ -74,18 +77,18 @@ void DiagnosticBag::AddRange(DiagnosticBag& other)
 
 void DiagnosticBag::ReportInvalidNumber(const TextSpan& span, const string & text, const type_index & type)
 {
-	auto message = "The number " + text + " is not valid " + type.name();
+	auto message = "The number " + text + " is not valid " + ValueType::GetTypeName(type);
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportBadCharacter(int position, char character)
+void DiagnosticBag::ReportBadCharacter(size_t position, char character)
 {
 	string message{"Bad character in input: "};
 	message.append(&character);
 	Report(TextSpan(position, 1), message);
 }
 
-void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span, SyntaxKind actualKind, SyntaxKind expectedKind)
+void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span, const SyntaxKind& actualKind, const SyntaxKind& expectedKind)
 {
 	string message{"Unexpected token <"};
 	message += GetSyntaxKindName(actualKind) + ">, expected <" + GetSyntaxKindName(expectedKind) + ">.";
@@ -102,22 +105,22 @@ void DiagnosticBag::ReportUndefinedName(const TextSpan & span, const string & na
 void DiagnosticBag::ReportCannotConvert(const TextSpan & span, const type_index & fromType, const type_index & toType)
 {
 	string message("Cannot convert type '");
-	message += ValueType::GetTypeName(fromType) + "' to '" + ValueType::GetTypeName(toType)+"'.";
+	message += ValueType::GetTypeName(fromType) + "' to '" + ValueType::GetTypeName(toType) + "'.";
 	Report(span, message);
 }
 
 void DiagnosticBag::ReportUndefinedUnaryOperator(const TextSpan & span, const string & operatorText, const type_index & operandType)
 {
 	string message{"Unary operator '"};
-	message += operatorText + "' is not defined for type '" + ValueType::GetTypeName(operandType)+"'.";
+	message += operatorText + "' is not defined for type '" + ValueType::GetTypeName(operandType) + "'.";
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan & span, const string & operatorText, 
+void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan & span, const string & operatorText,
 												  const type_index& leftType, const type_index& rightType)
 {
 	string message{"Binary operator '"};
-	message += operatorText + "' is not defined for types '" + ValueType::GetTypeName(leftType) + "' and '" + ValueType::GetTypeName(rightType)+"'.";
+	message += operatorText + "' is not defined for types '" + ValueType::GetTypeName(leftType) + "' and '" + ValueType::GetTypeName(rightType) + "'.";
 	Report(span, message);
 }
 
@@ -135,7 +138,7 @@ void DiagnosticBag::ReportCannotAssign(const TextSpan & span, const string & nam
 	Report(span, message);
 }
 
-DiagnosticBag::iterator::iterator(size_t pos, DiagnosticBag & bag)
+DiagnosticBag::iterator::iterator(size_t pos, const DiagnosticBag & bag)
 	:_position(pos), _bag(&bag)
 {
 }
@@ -155,6 +158,11 @@ DiagnosticBag::iterator & DiagnosticBag::iterator::operator++()
 {
 	_position += 1;
 	return *this;
+}
+
+bool DiagnosticBag::iterator::operator==(const iterator & other) const noexcept
+{
+	return _position == other._position && _bag == other._bag;
 }
 
 }//MCF

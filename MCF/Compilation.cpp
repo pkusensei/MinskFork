@@ -3,12 +3,11 @@
 
 #include "Diagnostic.h"
 #include "Binding.h"
-#include "Parser.h"
 #include "Syntax.h"
 
 namespace MCF {
 
-EvaluationResult::EvaluationResult(DiagnosticBag* diagnostics, const ValueType & value)
+EvaluationResult::EvaluationResult(const DiagnosticBag* diagnostics, const ValueType & value)
 	:_diagnostics(diagnostics), _value(value)
 {
 }
@@ -20,8 +19,9 @@ EvaluationResult::EvaluationResult(EvaluationResult && other)
 	other._value = ValueType();
 }
 
-Evaluator::Evaluator(const BoundStatement* root, std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
-	:_root(root), _variables(&variables)
+Evaluator::Evaluator(const BoundStatement* root, const std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
+	:_root(root), 
+	_variables(std::remove_const_t<std::unordered_map<VariableSymbol, ValueType, VariableHash>*>(&variables))
 {
 }
 

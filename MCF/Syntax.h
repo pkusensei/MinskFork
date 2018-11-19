@@ -33,7 +33,7 @@ private:
 	ValueType _value;
 
 public:
-	SyntaxToken(SyntaxKind kind, size_t position, const string& text, const ValueType& value);
+	SyntaxToken(const SyntaxKind& kind, size_t position, const string& text, const ValueType& value);
 	virtual ~SyntaxToken() = default;
 	SyntaxToken(const SyntaxToken& other) = default;
 	SyntaxToken(SyntaxToken&& other) noexcept;
@@ -399,7 +399,7 @@ private:
 	SyntaxToken* Peek(int offset) const;
 	SyntaxToken* Current() const;
 	SyntaxToken NextToken();
-	SyntaxToken MatchToken(SyntaxKind kind);
+	SyntaxToken MatchToken(const SyntaxKind& kind);
 
 	unique_ptr<StatementSyntax> ParseStatement();
 	unique_ptr<StatementSyntax> ParseBlockStatement();

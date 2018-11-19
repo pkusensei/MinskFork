@@ -29,7 +29,7 @@ const vector<SyntaxKind> GetAllSyntaxKinds()
 	return result;
 }
 
-string GetSyntaxKindName(SyntaxKind kind)
+string GetSyntaxKindName(const SyntaxKind& kind)
 {
 	switch (kind)
 	{
@@ -185,7 +185,7 @@ SyntaxKind GetKeywordKind(const string & text) noexcept
 	else return SyntaxKind::IdentifierToken;
 }
 
-string GetText(SyntaxKind kind)
+string GetText(const SyntaxKind& kind)
 {
 	switch (kind)
 	{
@@ -220,7 +220,7 @@ string GetText(SyntaxKind kind)
 	}
 }
 
-int GetUnaryOperatorPrecedence(SyntaxKind kind) noexcept
+int GetUnaryOperatorPrecedence(const SyntaxKind& kind) noexcept
 {
 	switch (kind)
 	{
@@ -233,7 +233,7 @@ int GetUnaryOperatorPrecedence(SyntaxKind kind) noexcept
 	}
 }
 
-int GetBinaryOperatorPrecedence(SyntaxKind kind) noexcept
+int GetBinaryOperatorPrecedence(const SyntaxKind& kind) noexcept
 {
 	switch (kind)
 	{

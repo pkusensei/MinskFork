@@ -10,13 +10,13 @@
 namespace MCF {
 
 #pragma region Unary
-BoundUnaryOperator::BoundUnaryOperator(enum SyntaxKind synKind, BoundUnaryOperatorKind kind,
+BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
 									   const type_index& operandType, const type_index& resultType)
 	:_syntaxKind(synKind), _kind(kind), _operandType(operandType), _resultType(resultType)
 {
 }
 
-BoundUnaryOperator::BoundUnaryOperator(enum SyntaxKind synKind, BoundUnaryOperatorKind kind,
+BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
 									   const type_index& operandType)
 	: BoundUnaryOperator(synKind, kind, operandType, operandType)
 {
@@ -34,7 +34,7 @@ BoundUnaryOperator BoundUnaryOperator::_operators[] = {
 	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation, typeid(long))
 };
 
-BoundUnaryOperator BoundUnaryOperator::Bind(enum SyntaxKind synKind, const type_index& type)
+BoundUnaryOperator BoundUnaryOperator::Bind(const enum SyntaxKind& synKind, const type_index& type)
 {
 	for (const auto& op : _operators)
 	{
@@ -58,19 +58,19 @@ BoundUnaryExpression::BoundUnaryExpression(BoundUnaryExpression && other)noexcep
 #pragma endregion
 
 #pragma region Binary
-BoundBinaryOperator::BoundBinaryOperator(enum SyntaxKind synKind, BoundBinaryOperatorKind kind,
+BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
 										 const type_index& left, const type_index& right, const type_index& result)
 	:_syntaxKind(synKind), _kind(kind), _leftType(left), _rightType(right), _resultType(result)
 {
 }
 
-BoundBinaryOperator::BoundBinaryOperator(enum SyntaxKind synKind, BoundBinaryOperatorKind kind,
+BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
 										 const type_index& operandType, const type_index& resultType)
 	: BoundBinaryOperator(synKind, kind, operandType, operandType, resultType)
 {
 }
 
-BoundBinaryOperator::BoundBinaryOperator(enum SyntaxKind synKind, BoundBinaryOperatorKind kind, const type_index& type)
+BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, const type_index& type)
 	: BoundBinaryOperator(synKind, kind, type, type, type)
 {
 }
@@ -100,7 +100,7 @@ BoundBinaryOperator BoundBinaryOperator::_operators[] = {
 	BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, typeid(bool))
 };
 
-BoundBinaryOperator BoundBinaryOperator::Bind(enum SyntaxKind synKind, type_index leftType, type_index rightType)
+BoundBinaryOperator BoundBinaryOperator::Bind(const enum SyntaxKind& synKind, const type_index& leftType, const type_index& rightType)
 {
 	for (const auto& op : _operators)
 	{
