@@ -10,6 +10,10 @@
 namespace MCF {
 
 #pragma region Expression
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
 BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
 									   const type_index& operandType, const type_index& resultType)
 	:_syntaxKind(synKind), _kind(kind), _operandType(operandType), _resultType(resultType)

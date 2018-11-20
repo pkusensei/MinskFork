@@ -18,7 +18,7 @@ using std::type_index;
 using std::unique_ptr;
 using std::vector;
 
-using IntegerType = long; 	// HACK use long as interger type
+using IntegerType = long; // HACK use long as interger type
 
 enum class SyntaxKind
 {

@@ -442,7 +442,7 @@ public:
 	SyntaxTree(SyntaxTree&& other)noexcept;
 
 	const SourceText& Text() const { return *_text; }
-	const CompilationUnitSyntax* Root()const noexcept{ return _root.get(); }
+	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
 	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics.get(); }
 
 	static SyntaxTree Parse(const string& text);
