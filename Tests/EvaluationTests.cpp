@@ -199,7 +199,7 @@ public:
             }
 			)";
 		std::string diag = R"(
-                Cannot convert type 'long' to 'bool'.
+                Cannot convert type 'IntegerType' to 'bool'.
 				)"; 
 		AssertDiagnostics(text, diag);
 	}
@@ -214,7 +214,7 @@ public:
             }
 			)";
 		std::string diag = R"(
-                Cannot convert type 'long' to 'bool'.
+                Cannot convert type 'IntegerType' to 'bool'.
 				)"; 
 		AssertDiagnostics(text, diag);
 	}
@@ -229,7 +229,7 @@ public:
             }
 			)";
 		std::string diag = R"(
-                Cannot convert type 'bool' to 'long'.
+                Cannot convert type 'bool' to 'IntegerType'.
 				)";
 		AssertDiagnostics(text, diag);
 	}
@@ -244,7 +244,7 @@ public:
             }
 			)";
 		std::string diag = R"(
-                Cannot convert type 'bool' to 'long'.
+                Cannot convert type 'bool' to 'IntegerType'.
 				)";
 		AssertDiagnostics(text, diag);
 	}
@@ -290,7 +290,7 @@ public:
             }
 			)";
 		std::string diag = R"(
-                Cannot convert type 'bool' to 'long'.
+                Cannot convert type 'bool' to 'IntegerType'.
 				)";
 		AssertDiagnostics(text, diag);
 	}
@@ -308,7 +308,7 @@ public:
 	{
 		std::string text = "10 [*] false";
 		std::string diag = R"(
-                Binary operator '*' is not defined for types 'long' and 'bool'.
+                Binary operator '*' is not defined for types 'IntegerType' and 'bool'.
 				)";
 		AssertDiagnostics(text, diag);
 	}

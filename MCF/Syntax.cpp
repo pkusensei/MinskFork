@@ -108,7 +108,7 @@ SyntaxToken Lexer::Lex()
 			_kind = SyntaxKind::EndOfFileToken;
 			break;
 		case '+':
-			if (Lookahead() == '+')
+			if (Lookahead() == '+' )
 			{
 				_position += 2;
 				_kind = SyntaxKind::PlusPlusToken;
@@ -125,6 +125,7 @@ SyntaxToken Lexer::Lex()
 				_kind = SyntaxKind::MinusMinusToken;
 			} else
 			{
+				// NOTE "---" works as "-- -" so that "3---5" is -3
 				Next();
 				_kind = SyntaxKind::MinusToken;
 			}
