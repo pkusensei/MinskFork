@@ -20,7 +20,7 @@ EvaluationResult::EvaluationResult(EvaluationResult && other)
 }
 
 Evaluator::Evaluator(const BoundStatement* root, const std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
-	:_root(root), 
+	:_root(root),
 	_variables(std::remove_const_t<std::unordered_map<VariableSymbol, ValueType, VariableHash>*>(&variables))
 {
 }
@@ -104,8 +104,8 @@ void Evaluator::EvaluateForStatement(const BoundStatement * node)
 	auto p = dynamic_cast<const BoundForStatement*>(node);
 	if (p == nullptr) return;
 
-	auto lowerBound = EvaluateExpression(p->LowerBound()).GetValue<long>();
-	auto upperBound = EvaluateExpression(p->UpperBound()).GetValue<long>();
+	auto lowerBound = EvaluateExpression(p->LowerBound()).GetValue<IntegerType>();
+	auto upperBound = EvaluateExpression(p->UpperBound()).GetValue<IntegerType>();
 
 	for (auto i = lowerBound; i <= upperBound; ++i) // NOTE inclusive for loop
 	{
@@ -169,9 +169,9 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundExpression * node)const
 	switch (p->Op()->Kind())
 	{
 		case BoundUnaryOperatorKind::Identity:
-			return operand.GetValue<long>();
+			return operand.GetValue<IntegerType>();
 		case BoundUnaryOperatorKind::Negation:
-			return -operand.GetValue<long>();
+			return -operand.GetValue<IntegerType>();
 		case BoundUnaryOperatorKind::LogicalNegation:
 			return !operand.GetValue<bool>();
 		default:
@@ -189,13 +189,13 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundExpression * node)const
 	switch (p->Op()->Kind())
 	{
 		case BoundBinaryOperatorKind::Addition:
-			return left.GetValue<long>() + right.GetValue<long>();
+			return left.GetValue<IntegerType>() + right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::Subtraction:
-			return left.GetValue<long>() - right.GetValue<long>();
+			return left.GetValue<IntegerType>() - right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::Multiplication:
-			return left.GetValue<long>() * right.GetValue<long>();
+			return left.GetValue<IntegerType>() * right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::Division:
-			return left.GetValue<long>() / right.GetValue<long>();
+			return left.GetValue<IntegerType>() / right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::LogicalAnd:
 			return left.GetValue<bool>() && right.GetValue<bool>();
 		case BoundBinaryOperatorKind::LogicalOr:
@@ -205,13 +205,13 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundExpression * node)const
 		case BoundBinaryOperatorKind::NotEquals:
 			return left != right;
 		case BoundBinaryOperatorKind::Less:
-			return left.GetValue<long>() < right.GetValue<long>();
+			return left.GetValue<IntegerType>() < right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::LessOrEquals:
-			return left.GetValue<long>() <= right.GetValue<long>();
+			return left.GetValue<IntegerType>() <= right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::Greater:
-			return left.GetValue<long>() > right.GetValue<long>();
+			return left.GetValue<IntegerType>() > right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::GreaterOrEquals:
-			return left.GetValue<long>() >= right.GetValue<long>();
+			return left.GetValue<IntegerType>() >= right.GetValue<IntegerType>();
 
 		default:
 			throw std::invalid_argument("Invalid binary operator");

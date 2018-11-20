@@ -52,7 +52,7 @@ const Diagnostic & DiagnosticBag::operator[](size_t idx) const
 	return _diagnostics[idx];
 }
 
-DiagnosticBag::iterator DiagnosticBag::begin()const 
+DiagnosticBag::iterator DiagnosticBag::begin()const
 {
 	return iterator(0, *this);
 }

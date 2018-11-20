@@ -17,7 +17,7 @@ void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node, string
 	auto token = dynamic_cast<const SyntaxToken*>(node);
 	if (token != nullptr && token->Value().HasValue())
 	{
-		out << " " << token->Value().GetValue<long>();
+		out << " " << token->Value().GetValue<IntegerType>();
 	}
 	out << std::endl;
 	indent += isLast ? "   " : "|  ";
@@ -238,8 +238,7 @@ void Lexer::ReadNumberToken()
 	auto length = _position - _start;
 	auto text = _text->ToString(_start, length);
 
-	// HACK use long as interger type
-	long value;
+	IntegerType value;
 	try
 	{
 		value = std::stol(text);

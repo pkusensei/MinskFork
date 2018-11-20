@@ -9,7 +9,8 @@
 
 namespace MCF {
 
-#pragma region Unary
+#pragma region Expression
+
 BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
 									   const type_index& operandType, const type_index& resultType)
 	:_syntaxKind(synKind), _kind(kind), _operandType(operandType), _resultType(resultType)
@@ -30,8 +31,8 @@ BoundUnaryOperator::BoundUnaryOperator()
 
 BoundUnaryOperator BoundUnaryOperator::_operators[] = {
 	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation, typeid(bool)),
-	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity, typeid(long)),
-	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation, typeid(long))
+	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity, typeid(IntegerType)),
+	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation, typeid(IntegerType))
 };
 
 BoundUnaryOperator BoundUnaryOperator::Bind(const enum SyntaxKind& synKind, const type_index& type)
@@ -55,9 +56,7 @@ BoundUnaryExpression::BoundUnaryExpression(BoundUnaryExpression && other)noexcep
 	_op.swap(other._op);
 	_operand.swap(other._operand);
 }
-#pragma endregion
 
-#pragma region Binary
 BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
 										 const type_index& left, const type_index& right, const type_index& result)
 	:_syntaxKind(synKind), _kind(kind), _leftType(left), _rightType(right), _resultType(result)
@@ -82,17 +81,17 @@ BoundBinaryOperator::BoundBinaryOperator()
 }
 
 BoundBinaryOperator BoundBinaryOperator::_operators[] = {
-	BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, typeid(long)),
-	BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction, typeid(long)),
-	BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication, typeid(long)),
-	BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division, typeid(long)),
+	BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, typeid(IntegerType)),
+	BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction, typeid(IntegerType)),
+	BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication, typeid(IntegerType)),
+	BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division, typeid(IntegerType)),
 
-	BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, typeid(long), typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, typeid(long), typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less, typeid(long), typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals, typeid(long), typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater, typeid(long), typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals, typeid(long), typeid(bool)),
+	BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, typeid(IntegerType), typeid(bool)),
+	BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, typeid(IntegerType), typeid(bool)),
+	BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less, typeid(IntegerType), typeid(bool)),
+	BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals, typeid(IntegerType), typeid(bool)),
+	BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater, typeid(IntegerType), typeid(bool)),
+	BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals, typeid(IntegerType), typeid(bool)),
 
 	BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd, typeid(bool)),
 	BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr, typeid(bool)),
@@ -123,7 +122,6 @@ BoundBinaryExpression::BoundBinaryExpression(BoundBinaryExpression && other)noex
 	_right.swap(other._right);
 	_op.swap(other._op);
 }
-#pragma endregion
 
 BoundAssignmentExpression::BoundAssignmentExpression(const VariableSymbol & variable, const unique_ptr<BoundExpression>& expression)
 	:_variable(variable),
@@ -159,6 +157,10 @@ BoundVariableExpression::BoundVariableExpression(BoundVariableExpression && othe
 {
 	other._variable = {};
 }
+
+#pragma endregion
+
+#pragma region Statement
 
 BoundBlockStatement::BoundBlockStatement(const vector<unique_ptr<BoundStatement>>& statements)
 	: _statements(std::move(std::remove_const_t<vector<unique_ptr<BoundStatement>>&>(statements)))
@@ -222,6 +224,8 @@ BoundExpressionStatement::BoundExpressionStatement(BoundExpressionStatement && o
 	: _expression(std::move(other._expression))
 {
 }
+
+#pragma endregion
 
 BoundScope::BoundScope(const unique_ptr<BoundScope>& parent)
 	: _parent(std::move((std::remove_const_t<unique_ptr<BoundScope>&>(parent))))
@@ -363,13 +367,13 @@ unique_ptr<BoundStatement> Binder::BindForStatement(const StatementSyntax * synt
 	auto p = dynamic_cast<const ForStatementSyntax*>(syntax);
 	if (p == nullptr) return nullptr;
 
-	auto lowerBound = BindExpression(p->LowerBound(), typeid(long));
-	auto upperBound = BindExpression(p->UpperBound(), typeid(long));
+	auto lowerBound = BindExpression(p->LowerBound(), typeid(IntegerType));
+	auto upperBound = BindExpression(p->UpperBound(), typeid(IntegerType));
 
 	_scope = std::make_unique<BoundScope>(_scope);
 
 	auto name = p->Identifier().Text();
-	VariableSymbol variable(name, true, typeid(long));
+	VariableSymbol variable(name, true, typeid(IntegerType));
 	if (!_scope->TryDeclare(variable))
 		_diagnostics->ReportVariableAlreadyDeclared(p->Identifier().Span(), name);
 

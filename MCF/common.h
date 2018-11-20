@@ -18,6 +18,8 @@ using std::type_index;
 using std::unique_ptr;
 using std::vector;
 
+using IntegerType = long; // HACK use long as interger type
+
 enum class SyntaxKind
 {
 	// Tokens
@@ -99,15 +101,15 @@ MCF_API vector<SyntaxKind> GetBinaryOperatorKinds();
 class MCF_API ValueType final
 {
 private:
-	std::variant<std::monostate, long, bool> _inner;
+	std::variant<std::monostate, IntegerType, bool> _inner;
 
 public:
 	constexpr ValueType() noexcept {}
 	~ValueType() = default;
 
 	/// stays implicit
-	constexpr ValueType(const long& value)noexcept :_inner(value) {}
-	constexpr ValueType(const int& value)noexcept :_inner(static_cast<long>(value)) {}
+	constexpr ValueType(const IntegerType& value)noexcept :_inner(value) {}
+	constexpr ValueType(const int& value)noexcept :_inner(static_cast<IntegerType>(value)) {}
 	constexpr ValueType(const bool& value)noexcept :_inner(value) {}
 
 	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
