@@ -11,18 +11,9 @@ Diagnostic::Diagnostic(const TextSpan& span, const string& message)
 
 Diagnostic::~Diagnostic() = default;
 
-Diagnostic::Diagnostic(Diagnostic && other)noexcept
-	:_span(std::move(other._span)), _message(std::move(other._message))
-{
-}
+Diagnostic::Diagnostic(Diagnostic &&) = default;
 
-Diagnostic& Diagnostic::operator=(Diagnostic && other)noexcept
-{
-	if (this == &other)return *this;
-	_span = std::move(other._span);
-	_message = std::move(other._message);
-	return *this;
-}
+Diagnostic & Diagnostic::operator=(Diagnostic &&) = default;
 
 TextSpan Diagnostic::Span() const
 {
@@ -31,11 +22,6 @@ TextSpan Diagnostic::Span() const
 
 DiagnosticBag::DiagnosticBag()
 	:_diagnostics(std::deque<Diagnostic>())
-{
-}
-
-DiagnosticBag::DiagnosticBag(DiagnosticBag && other)
-	: _diagnostics(std::move(other._diagnostics))
 {
 }
 

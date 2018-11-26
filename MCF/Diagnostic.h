@@ -18,9 +18,9 @@ public:
 	Diagnostic(const TextSpan& span, const string& message);
 	~Diagnostic();
 	Diagnostic(const Diagnostic&) = default;
-	Diagnostic(Diagnostic&& other)noexcept;
+	Diagnostic(Diagnostic&&);
 	Diagnostic& operator=(const Diagnostic& other) = default;
-	Diagnostic& operator=(Diagnostic&& other)noexcept;
+	Diagnostic& operator=(Diagnostic&&);
 
 	TextSpan Span() const;
 	string Message() const { return _message; }
@@ -33,8 +33,9 @@ private:
 	void Report(const TextSpan& span, const string& message);
 public:
 	DiagnosticBag();
-	~DiagnosticBag() = default;
-	DiagnosticBag(DiagnosticBag&& other);
+	DiagnosticBag(DiagnosticBag&&) = default;
+	DiagnosticBag& operator=(DiagnosticBag&&) = default;
+
 	size_t size() const noexcept { return _diagnostics.size(); }
 
 	class iterator;

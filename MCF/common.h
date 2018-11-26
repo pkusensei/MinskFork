@@ -106,8 +106,7 @@ private:
 	std::variant<std::monostate, IntegerType, bool> _inner;
 
 public:
-	constexpr ValueType() noexcept {}
-	~ValueType() = default;
+	constexpr ValueType() noexcept :_inner(std::monostate()) {}
 
 	/// stays implicit
 	constexpr ValueType(const IntegerType& value)noexcept :_inner(value) {}
@@ -142,7 +141,6 @@ public:
 	VariableSymbol(const string& name, bool readOnly, const type_index& type);
 	VariableSymbol(const string& name, bool readOnly, const std::type_info& type);
 	VariableSymbol();
-	~VariableSymbol() = default;
 	VariableSymbol(const VariableSymbol&) = default;
 	VariableSymbol(VariableSymbol&& other);
 	VariableSymbol& operator=(const VariableSymbol&) = default;

@@ -20,8 +20,8 @@ private:
 	ValueType _value;
 public:
 	EvaluationResult(const DiagnosticBag* diagnostics, const ValueType& value);
-	~EvaluationResult() = default;
-	EvaluationResult(EvaluationResult&& other);
+	EvaluationResult(EvaluationResult&&) = default;
+	EvaluationResult& operator=(EvaluationResult&&) = default;
 
 	const DiagnosticBag* Diagnostics() const noexcept { return _diagnostics; }
 	ValueType Value()const { return _value; }
@@ -71,8 +71,8 @@ public:
 	explicit Compilation(const SyntaxTree& tree);
 	explicit Compilation(const unique_ptr<SyntaxTree>& tree);
 	~Compilation();
-	Compilation(Compilation&& other)noexcept;
-	Compilation& operator=(Compilation&& other)noexcept;
+	Compilation(Compilation&&) = default;
+	Compilation& operator=(Compilation&&) = default;
 
 	const Compilation* Previous()const noexcept { return _previous.get(); }
 	const SyntaxTree* Syntax()const noexcept { return _syntaxTree; }

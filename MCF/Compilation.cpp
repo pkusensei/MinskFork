@@ -12,15 +12,8 @@ EvaluationResult::EvaluationResult(const DiagnosticBag* diagnostics, const Value
 {
 }
 
-EvaluationResult::EvaluationResult(EvaluationResult && other)
-	: _diagnostics(other._diagnostics), _value(other._value)
-{
-	other._diagnostics = nullptr;
-	other._value = ValueType();
-}
-
 Evaluator::Evaluator(const BoundStatement* root, const std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
-	:_root(root),
+	: _root(root),
 	_variables(std::remove_const_t<std::unordered_map<VariableSymbol, ValueType, VariableHash>*>(&variables))
 {
 }
@@ -254,21 +247,6 @@ Compilation::Compilation(const unique_ptr<SyntaxTree>& tree)
 }
 
 Compilation::~Compilation() = default;
-
-Compilation::Compilation(Compilation&& other)noexcept
-	:_previous(std::move(other._previous)), _syntaxTree(other._syntaxTree),
-	_globalScope(std::move(other._globalScope))
-{
-}
-
-Compilation& Compilation::operator=(Compilation&& other)noexcept
-{
-	if (this == &other)return *this;
-	_previous.swap(other._previous);
-	_syntaxTree = other._syntaxTree;
-	_globalScope.swap(other._globalScope);
-	return *this;
-}
 
 const BoundGlobalScope* Compilation::GlobalScope()
 {

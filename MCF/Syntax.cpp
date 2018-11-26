@@ -51,12 +51,6 @@ SyntaxToken::SyntaxToken(const SyntaxKind& kind, size_t position, const string& 
 {
 }
 
-SyntaxToken::SyntaxToken(SyntaxToken && other) noexcept
-	: _kind(other._kind), _position(other._position), _text(std::move(other._text)),
-	_value(std::move(other._value))
-{
-}
-
 bool SyntaxToken::operator==(const SyntaxToken & other) const noexcept
 {
 	return _kind == other._kind && _position == other._position
@@ -289,13 +283,6 @@ AssignmentExpressionSyntax::AssignmentExpressionSyntax(const SyntaxToken & ident
 {
 }
 
-AssignmentExpressionSyntax::AssignmentExpressionSyntax(AssignmentExpressionSyntax && other)noexcept
-	: _identifierToken(std::move(other._identifierToken)),
-	_equalsToken(std::move(other._equalsToken))
-{
-	_expression.swap(other._expression);
-}
-
 const vector<const SyntaxNode*> AssignmentExpressionSyntax::GetChildren() const
 {
 	auto result = vector<const SyntaxNode*>{
@@ -311,12 +298,6 @@ UnaryExpressionSyntax::UnaryExpressionSyntax(const SyntaxToken & operatorToken,
 	:_operatorToken(operatorToken),
 	_operand(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(operand)))
 {
-}
-
-UnaryExpressionSyntax::UnaryExpressionSyntax(UnaryExpressionSyntax && other)noexcept
-	: _operatorToken(std::move(other._operatorToken))
-{
-	_operand.swap(other._operand);
 }
 
 const vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const
@@ -336,13 +317,6 @@ BinaryExpressionSyntax::BinaryExpressionSyntax(const unique_ptr<ExpressionSyntax
 {
 }
 
-BinaryExpressionSyntax::BinaryExpressionSyntax(BinaryExpressionSyntax && other)noexcept
-	:_operatorToken(std::move(other._operatorToken))
-{
-	_left.swap(other._left);
-	_right.swap(other._right);
-}
-
 const vector<const SyntaxNode*> BinaryExpressionSyntax::GetChildren() const
 {
 	auto result = vector<const SyntaxNode*>{
@@ -358,13 +332,6 @@ ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(const SyntaxToken &
 	:_openParenthesisToken(open), _closeParenthesisToken(close),
 	_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
 {
-}
-
-ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax && other)noexcept
-	: _openParenthesisToken(std::move(other._openParenthesisToken)),
-	_closeParenthesisToken(std::move(other._closeParenthesisToken))
-{
-	_expression.swap(other._expression);
 }
 
 const vector<const SyntaxNode*> ParenthesizedExpressionSyntax::GetChildren() const
@@ -387,11 +354,6 @@ LiteralExpressionSyntax::LiteralExpressionSyntax(const SyntaxToken& literalToken
 {
 }
 
-LiteralExpressionSyntax::LiteralExpressionSyntax(LiteralExpressionSyntax && other)noexcept
-	: _literalToken(std::move(other._literalToken)), _value(std::move(other._value))
-{
-}
-
 const vector<const SyntaxNode*> LiteralExpressionSyntax::GetChildren() const
 {
 	auto result = vector<const SyntaxNode*>{&_literalToken};
@@ -400,11 +362,6 @@ const vector<const SyntaxNode*> LiteralExpressionSyntax::GetChildren() const
 
 NameExpressionSyntax::NameExpressionSyntax(const SyntaxToken & identifier)
 	:_identifierToken(identifier)
-{
-}
-
-NameExpressionSyntax::NameExpressionSyntax(NameExpressionSyntax && other)noexcept
-	: _identifierToken(std::move(other._identifierToken))
 {
 }
 
@@ -426,13 +383,6 @@ BlockStatementSyntax::BlockStatementSyntax(const SyntaxToken & open, const vecto
 										   const SyntaxToken & close)
 	:_openBraceToken(open), _closeBraceToken(close),
 	_statements(std::move(std::remove_const_t<vector<unique_ptr<StatementSyntax>>&>(statements)))
-{
-}
-
-BlockStatementSyntax::BlockStatementSyntax(BlockStatementSyntax && other)noexcept
-	: _openBraceToken(std::move(other._openBraceToken)),
-	_closeBraceToken(std::move(other._closeBraceToken)),
-	_statements(std::move(other._statements))
 {
 }
 
@@ -458,12 +408,6 @@ VariableDeclarationSyntax::VariableDeclarationSyntax(const SyntaxToken & keyword
 													 const SyntaxToken & equals, const unique_ptr<ExpressionSyntax>& initializer)
 	:_keyword(keyword), _identifier(identifier), _equalsToken(equals),
 	_initializer(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(initializer)))
-{
-}
-
-VariableDeclarationSyntax::VariableDeclarationSyntax(VariableDeclarationSyntax && other)noexcept
-	: _keyword(std::move(other._keyword)), _identifier(std::move(other._identifier)),
-	_equalsToken(std::move(other._equalsToken)), _initializer(std::move(other._initializer))
 {
 }
 
@@ -558,11 +502,6 @@ ExpressionStatementSyntax::ExpressionStatementSyntax(const unique_ptr<Expression
 {
 }
 
-ExpressionStatementSyntax::ExpressionStatementSyntax(ExpressionStatementSyntax && other)noexcept
-	: _expression(std::move(other._expression))
-{
-}
-
 const vector<const SyntaxNode*> ExpressionStatementSyntax::GetChildren() const
 {
 	auto result = vector<const SyntaxNode*>{_expression.get()};
@@ -574,11 +513,6 @@ const vector<const SyntaxNode*> ExpressionStatementSyntax::GetChildren() const
 CompilationUnitSyntax::CompilationUnitSyntax(const unique_ptr<StatementSyntax>& statement, const SyntaxToken & endOfFile)
 	:_statement(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(statement))),
 	_endOfFileToken(endOfFile)
-{
-}
-
-CompilationUnitSyntax::CompilationUnitSyntax(CompilationUnitSyntax && other)noexcept
-	: _statement(std::move(other._statement)), _endOfFileToken(std::move(other._endOfFileToken))
 {
 }
 
@@ -610,8 +544,6 @@ Parser::Parser(const SourceText& text)
 	} while (kind != SyntaxKind::EndOfFileToken);
 	_diagnostics->AddRange(*lexer.Diagnostics());
 }
-
-Parser::~Parser() = default;
 
 SyntaxToken* Parser::Peek(int offset) const
 {
@@ -850,14 +782,14 @@ SyntaxTree::SyntaxTree(const SourceText& text)
 	_diagnostics->AddRange(*parser.Diagnostics());
 }
 
-SyntaxTree::~SyntaxTree() = default;
-
 SyntaxTree::SyntaxTree(SyntaxTree && other)noexcept
 {
 	_text.swap(other._text);
 	_diagnostics.swap(other._diagnostics);
 	_root.swap(other._root);
 }
+
+SyntaxTree::~SyntaxTree() = default;
 
 SyntaxTree SyntaxTree::Parse(const string & text)
 {
