@@ -67,9 +67,9 @@ class BoundExpression :public BoundNode
 {
 	// NOTE concrete type in unique_ptr
 public:
-	virtual ~BoundExpression() = default;
 	// Inherited via BoundNode
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
+
 	virtual type_index Type() const { return typeid(std::monostate); }
 };
 
@@ -89,7 +89,6 @@ private:
 	BoundUnaryOperator();
 	static BoundUnaryOperator _operators[3];
 public:
-	BoundUnaryOperator(const BoundUnaryOperator&) = default;
 
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
 	constexpr BoundUnaryOperatorKind Kind()const noexcept { return _kind; }
@@ -107,12 +106,12 @@ private:
 	unique_ptr<BoundExpression> _operand;
 public:
 	BoundUnaryExpression(const BoundUnaryOperator& op, const unique_ptr<BoundExpression>& operand);
-	virtual ~BoundUnaryExpression() = default;
-	BoundUnaryExpression(BoundUnaryExpression&& other)noexcept;
+	BoundUnaryExpression(BoundUnaryExpression&&) = default;
+	BoundUnaryExpression& operator=(BoundUnaryExpression&&) = default;
 
 	// Inherited via BoundExpression
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::UnaryExpression; }
-	virtual type_index Type() const override { return _op->Type(); }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::UnaryExpression; }
+	type_index Type() const override { return _op->Type(); }
 
 	const BoundUnaryOperator* Op()const noexcept { return _op.get(); }
 	const BoundExpression* Operand()const noexcept { return _operand.get(); }
@@ -137,8 +136,6 @@ private:
 
 	static BoundBinaryOperator _operators[14];
 public:
-	BoundBinaryOperator(const BoundBinaryOperator&) = default;
-
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
 	constexpr BoundBinaryOperatorKind Kind()const noexcept { return _kind; }
 	type_index LeftType()const { return _leftType; }
@@ -158,12 +155,12 @@ private:
 
 public:
 	BoundBinaryExpression(const unique_ptr<BoundExpression>& left, const BoundBinaryOperator& op, const unique_ptr<BoundExpression>& right);
-	virtual ~BoundBinaryExpression() = default;
-	BoundBinaryExpression(BoundBinaryExpression&& other)noexcept;
+	BoundBinaryExpression(BoundBinaryExpression&&) = default;
+	BoundBinaryExpression& operator=(BoundBinaryExpression&&) = default;
 
 	// Inherited via BoundExpression
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BinaryExpression; }
-	virtual type_index Type() const override { return _op->Type(); }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BinaryExpression; }
+	type_index Type() const override { return _op->Type(); }
 
 	const BoundExpression* Left()const noexcept { return _left.get(); }
 	const BoundExpression* Right()const noexcept { return _right.get(); }
@@ -177,12 +174,12 @@ private:
 	unique_ptr<BoundExpression> _expression;
 public:
 	BoundAssignmentExpression(const VariableSymbol& variable, const unique_ptr<BoundExpression>& expression);
-	virtual ~BoundAssignmentExpression() = default;
-	BoundAssignmentExpression(BoundAssignmentExpression&& other)noexcept;
+	BoundAssignmentExpression(BoundAssignmentExpression&&) = default;
+	BoundAssignmentExpression& operator=(BoundAssignmentExpression&&) = default;
 
 	// Inherited via BoundExpression
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::AssignmentExpression; }
-	virtual type_index Type() const override { return _expression->Type(); }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::AssignmentExpression; }
+	type_index Type() const override { return _expression->Type(); }
 
 	VariableSymbol Variable()const { return _variable; }
 	const BoundExpression* Expression()const noexcept { return _expression.get(); }
@@ -194,12 +191,12 @@ private:
 	ValueType _value;
 public:
 	BoundLiteralExpression(const ValueType& value);
-	virtual ~BoundLiteralExpression() = default;
-	BoundLiteralExpression(BoundLiteralExpression&& other)noexcept;
+	BoundLiteralExpression(BoundLiteralExpression&&) = default;
+	BoundLiteralExpression& operator=(BoundLiteralExpression&&) = default;
 
 	// Inherited via BoundExpression
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LiteralExpression; }
-	virtual type_index Type() const override { return _value.Type(); }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LiteralExpression; }
+	type_index Type() const override { return _value.Type(); }
 
 	ValueType Value()const { return _value; }
 
@@ -211,12 +208,12 @@ private:
 	VariableSymbol _variable;
 public:
 	BoundVariableExpression(const VariableSymbol& variable);
-	virtual ~BoundVariableExpression() = default;
-	BoundVariableExpression(BoundVariableExpression&& other)noexcept;
+	BoundVariableExpression(BoundVariableExpression&&) = default;
+	BoundVariableExpression& operator=(BoundVariableExpression&&) = default;
 
 	// Inherited via BoundExpression
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableExpression; }
-	virtual type_index Type() const override { return _variable.Type(); }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableExpression; }
+	type_index Type() const override { return _variable.Type(); }
 
 	VariableSymbol Variable()const { return _variable; }
 };
@@ -229,7 +226,7 @@ class BoundStatement :public BoundNode
 {
 public:
 	// Inherited via BoundNode
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
 };
 
 class BoundBlockStatement final : public BoundStatement
@@ -238,11 +235,12 @@ private:
 	vector<unique_ptr<BoundStatement>> _statements;
 public:
 	BoundBlockStatement(const vector<unique_ptr<BoundStatement>>& statements);
-	virtual ~BoundBlockStatement() = default;
-	BoundBlockStatement(BoundBlockStatement&& other)noexcept;
+	BoundBlockStatement(BoundBlockStatement&&) = default;
+	BoundBlockStatement& operator=(BoundBlockStatement&&) = default;
 
 	// Inherited via BoundStatement
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BlockStatement; }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BlockStatement; }
+
 	const vector<BoundStatement*> Statements()const;
 };
 
@@ -253,11 +251,11 @@ private:
 	unique_ptr<BoundExpression> _initializer;
 public:
 	BoundVariableDeclaration(const VariableSymbol& variable, const unique_ptr<BoundExpression>& initializer);
-	virtual ~BoundVariableDeclaration() = default;
-	BoundVariableDeclaration(BoundVariableDeclaration&& other)noexcept;
+	BoundVariableDeclaration(BoundVariableDeclaration&&) = default;
+	BoundVariableDeclaration& operator=(BoundVariableDeclaration&&) = default;
 
 	// Inherited via BoundStatement
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableDeclaration; }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableDeclaration; }
 
 	VariableSymbol Variable()const { return _variable; }
 	const BoundExpression* Initializer()const noexcept { return _initializer.get(); }
@@ -272,11 +270,11 @@ private:
 public:
 	BoundIfStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& thenStatement,
 					 const unique_ptr<BoundStatement>& elseStatement);
-	virtual ~BoundIfStatement() = default;
 	BoundIfStatement(BoundIfStatement&&) = default;
+	BoundIfStatement& operator=(BoundIfStatement&&) = default;
 
 	// Inherited via BoundStatement
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::IfStatement; }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::IfStatement; }
 
 	const BoundExpression* Condition()const noexcept { return _condition.get(); }
 	const BoundStatement* ThenStatement()const noexcept { return _thenStatement.get(); }
@@ -290,11 +288,11 @@ private:
 	unique_ptr<BoundStatement> _body;
 public:
 	BoundWhileStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& body);
-	virtual ~BoundWhileStatement() = default;
 	BoundWhileStatement(BoundWhileStatement&&) = default;
+	BoundWhileStatement& operator=(BoundWhileStatement&&) = default;
 
 	// Inherited via BoundStatement
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::WhileStatement; }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::WhileStatement; }
 
 	const BoundExpression* Condition()const noexcept { return _condition.get(); }
 	const BoundStatement* Body()const noexcept { return _body.get(); }
@@ -310,11 +308,11 @@ private:
 public:
 	BoundForStatement(const VariableSymbol& variable, const unique_ptr<BoundExpression>& lowerBound,
 					  const unique_ptr<BoundExpression>& upperBound, const unique_ptr<BoundStatement>& body);
-	virtual ~BoundForStatement() = default;
 	BoundForStatement(BoundForStatement&&) = default;
+	BoundForStatement& operator=(BoundForStatement&&) = default;
 
 	// Inherited via BoundStatement
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ForStatement; }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ForStatement; }
 
 	VariableSymbol Variable()const { return _variable; }
 	const BoundExpression* LowerBound()const noexcept { return _lowerBound.get(); }
@@ -329,11 +327,11 @@ private:
 
 public:
 	BoundExpressionStatement(const unique_ptr<BoundExpression>& expression);
-	virtual ~BoundExpressionStatement() = default;
-	BoundExpressionStatement(BoundExpressionStatement&& other)noexcept;
+	BoundExpressionStatement(BoundExpressionStatement&&) = default;
+	BoundExpressionStatement& operator=(BoundExpressionStatement&&) = default;
 
 	// Inherited via BoundStatement
-	virtual BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ExpressionStatement; }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ExpressionStatement; }
 
 	const BoundExpression* Expression()const noexcept { return _expression.get(); }
 };
@@ -365,7 +363,6 @@ private:
 public:
 	BoundGlobalScope(const BoundGlobalScope* previous, const unique_ptr<DiagnosticBag>& diagnostics,
 					 const vector<VariableSymbol>& variables, const unique_ptr<BoundStatement>& statement);
-	BoundGlobalScope(BoundGlobalScope&& other)noexcept;
 
 	const BoundGlobalScope* Previous()const noexcept { return _previous; }
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
@@ -399,7 +396,6 @@ private:
 	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
 public:
 	explicit Binder(const unique_ptr<BoundScope>& parent);
-	~Binder() = default;
 
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
 

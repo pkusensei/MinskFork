@@ -15,11 +15,6 @@ public:
 		:_span(start, length)
 	{
 	}
-	~TextSpan() = default;
-	TextSpan(const TextSpan&) = default;
-	TextSpan(TextSpan&&) = default;
-	TextSpan& operator=(const TextSpan&);
-	TextSpan& operator=(TextSpan&&) = default;
 
 	size_t Start()const noexcept { return _span.first; }
 	size_t Length()const noexcept { return _span.second; }
@@ -66,10 +61,6 @@ private:
 	explicit SourceText(const string& text);
 
 public:
-	~SourceText() = default;
-	SourceText(const SourceText& other);
-	SourceText(SourceText&& other) noexcept;
-
 	const vector<TextLine> Lines()const { return _lines; }
 	size_t Length()const noexcept { return _text.length(); }
 	char operator[](size_t sub) const { return _text[sub]; }

@@ -3,13 +3,6 @@
 
 namespace MCF {
 
-TextSpan & TextSpan::operator=(const TextSpan & other)
-{
-	if (this == &other) return *this;
-	_span = other._span;
-	return *this;
-}
-
 TextSpan TextSpan::FromBounds(size_t start, size_t end)
 {
 	return TextSpan(start, end - start);
@@ -27,16 +20,6 @@ string TextLine::ToString() const
 
 SourceText::SourceText(const string & text)
 	:_text(text), _lines(ParseLines(this, _text))
-{
-}
-
-SourceText::SourceText(const SourceText & other)
-	: _text(other._text), _lines(other._lines)
-{
-}
-
-SourceText::SourceText(SourceText && other)noexcept
-	:_text(std::move(other._text)), _lines(std::move(other._lines))
 {
 }
 
