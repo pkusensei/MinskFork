@@ -20,6 +20,12 @@ using std::vector;
 
 using IntegerType = long; // HACK use long as interger type
 
+/// helpers
+MCF_API bool StringEndsWith(const string& sample, const string& ending);
+MCF_API string TrimString(const string& text);
+MCF_API string TrimStringStart(const string& text);
+MCF_API string TrimStringEnd(const string& text);
+
 enum class SyntaxKind
 {
 	// Tokens
@@ -33,7 +39,11 @@ enum class SyntaxKind
 	SlashToken,
 	BangToken,
 	EqualsToken,
+	TildeToken,
+	HatToken,
+	AmpersandToken,
 	AmpersandAmpersandToken,
+	PipeToken,
 	PipePipeToken,
 	EqualsEqualsToken,
 	BangEqualsToken,
@@ -84,11 +94,6 @@ SyntaxKind& operator++(SyntaxKind& kind, int c);
 MCF_API const vector<SyntaxKind> GetAllSyntaxKinds();
 MCF_API string GetSyntaxKindName(const SyntaxKind& kind);
 
-/// helpers
-MCF_API bool StringEndsWith(const string& sample, const string& ending);
-MCF_API string TrimString(const string& text);
-MCF_API string TrimStringStart(const string& text);
-MCF_API string TrimStringEnd(const string& text);
 
 /// namespace-scope functions
 SyntaxKind GetKeywordKind(const string& text) noexcept;

@@ -167,6 +167,8 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundExpression * node)const
 			return -operand.GetValue<IntegerType>();
 		case BoundUnaryOperatorKind::LogicalNegation:
 			return !operand.GetValue<bool>();
+		case BoundUnaryOperatorKind::OnesComplement:
+			return ~operand.GetValue<IntegerType>();
 		default:
 			throw std::invalid_argument("Invalid unary operator.");
 	}
@@ -189,6 +191,18 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundExpression * node)const
 			return left.GetValue<IntegerType>() * right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::Division:
 			return left.GetValue<IntegerType>() / right.GetValue<IntegerType>();
+		case BoundBinaryOperatorKind::BitwiseAnd:
+			if (p->Type() == type_index(typeid(IntegerType)))
+				return left.GetValue<IntegerType>() & right.GetValue<IntegerType>();
+			else return left.GetValue<bool>() & right.GetValue<bool>();
+		case BoundBinaryOperatorKind::BitwiseOr:
+			if (p->Type() == type_index(typeid(IntegerType)))
+				return left.GetValue<IntegerType>() | right.GetValue<IntegerType>();
+			else return left.GetValue<bool>() | right.GetValue<bool>();
+		case BoundBinaryOperatorKind::BitwiseXor:
+			if (p->Type() == type_index(typeid(IntegerType)))
+				return left.GetValue<IntegerType>() ^ right.GetValue<IntegerType>();
+			else return left.GetValue<bool>() ^ right.GetValue<bool>();
 		case BoundBinaryOperatorKind::LogicalAnd:
 			return left.GetValue<bool>() && right.GetValue<bool>();
 		case BoundBinaryOperatorKind::LogicalOr:

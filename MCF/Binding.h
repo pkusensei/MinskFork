@@ -19,6 +19,9 @@ enum class BoundNodeKind
 	IfStatement,
 	WhileStatement,
 	ForStatement,
+	LabelStatement,
+	GotoStatement,
+	ConditionalGotoStatement,
 	ExpressionStatement,
 
 	// Expressions
@@ -35,7 +38,8 @@ enum class BoundUnaryOperatorKind
 {
 	Identity,
 	Negation,
-	LogicalNegation
+	LogicalNegation,
+	OnesComplement
 };
 
 enum class BoundBinaryOperatorKind
@@ -46,6 +50,9 @@ enum class BoundBinaryOperatorKind
 	Division,
 	LogicalAnd,
 	LogicalOr,
+	BitwiseAnd,
+	BitwiseOr,
+	BitwiseXor,
 	Equals,
 	NotEquals,
 	Less,
@@ -87,7 +94,7 @@ private:
 	BoundUnaryOperator(const SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
 					   const type_index& operandType);
 	BoundUnaryOperator();
-	static BoundUnaryOperator _operators[3];
+	static BoundUnaryOperator _operators[4];
 public:
 
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
@@ -134,7 +141,7 @@ private:
 	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, const type_index& type);
 	BoundBinaryOperator();
 
-	static BoundBinaryOperator _operators[14];
+	static BoundBinaryOperator _operators[20];
 public:
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
 	constexpr BoundBinaryOperatorKind Kind()const noexcept { return _kind; }

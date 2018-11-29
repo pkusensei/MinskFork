@@ -7,6 +7,33 @@
 
 namespace MCF {
 
+bool StringEndsWith(const string & sample, const string & ending)
+{
+	if (sample.length() < ending.length()) return false;
+	return std::equal(ending.rbegin(), ending.rend(), sample.rbegin());
+}
+
+string TrimString(const string & text)
+{
+	return TrimStringStart(TrimStringEnd(text));
+}
+
+string TrimStringStart(const string & text)
+{
+	auto result = text;
+	result.erase(result.begin(), std::find_if(result.begin(), result.end(),
+											  [](char ch) {return !std::isspace(ch); }));
+	return result;
+}
+
+string TrimStringEnd(const string & text)
+{
+	auto result = text;
+	result.erase(std::find_if(result.rbegin(), result.rend(),
+							  [](char ch) {return !std::isspace(ch); }).base(), result.end());
+	return result;
+}
+
 SyntaxKind& operator++(SyntaxKind& kind)
 {
 	auto tmp = std::underlying_type<SyntaxKind>::type(kind);
@@ -53,8 +80,16 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "BangToken";
 		case SyntaxKind::EqualsToken:
 			return "EqualsToken";
-		case SyntaxKind::AmpersandAmpersandToken:
+		case SyntaxKind::TildeToken: 
+			return "TildeToken";
+		case SyntaxKind::HatToken: 
+			return "HatToken";
+		case SyntaxKind::AmpersandToken: 
+			return "AmpersandToken";
+		case SyntaxKind::AmpersandAmpersandToken: 
 			return "AmpersandAmpersandToken";
+		case SyntaxKind::PipeToken: 
+			return "PipeToken";
 		case SyntaxKind::PipePipeToken:
 			return "PipePipeToken";
 		case SyntaxKind::EqualsEqualsToken:
@@ -135,33 +170,6 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 	}
 }
 
-bool StringEndsWith(const string & sample, const string & ending)
-{
-	if (sample.length() < ending.length()) return false;
-	return std::equal(ending.rbegin(), ending.rend(), sample.rbegin());
-}
-
-string TrimString(const string & text)
-{
-	return TrimStringStart(TrimStringEnd(text));
-}
-
-string TrimStringStart(const string & text)
-{
-	auto result = text;
-	result.erase(result.begin(), std::find_if(result.begin(), result.end(),
-											  [](char ch) {return !std::isspace(ch); }));
-	return result;
-}
-
-string TrimStringEnd(const string & text)
-{
-	auto result = text;
-	result.erase(std::find_if(result.rbegin(), result.rend(),
-							  [](char ch) {return !std::isspace(ch); }).base(), result.end());
-	return result;
-}
-
 SyntaxKind GetKeywordKind(const string & text) noexcept
 {
 	if (text == "else")
@@ -195,7 +203,11 @@ string GetText(const SyntaxKind& kind)
 		case SyntaxKind::SlashToken: return "/";
 		case SyntaxKind::BangToken: return "!";
 		case SyntaxKind::EqualsToken: return "=";
+		case SyntaxKind::TildeToken: return "~";
+		case SyntaxKind::HatToken: return "^";
+		case SyntaxKind::AmpersandToken: return "&";
 		case SyntaxKind::AmpersandAmpersandToken: return "&&";
+		case SyntaxKind::PipeToken: return "|";
 		case SyntaxKind::PipePipeToken: return "||";
 		case SyntaxKind::EqualsEqualsToken: return "==";
 		case SyntaxKind::BangEqualsToken: return "!=";
@@ -227,6 +239,7 @@ int GetUnaryOperatorPrecedence(const SyntaxKind& kind) noexcept
 		case SyntaxKind::PlusToken:
 		case SyntaxKind::MinusToken:
 		case SyntaxKind::BangToken:
+		case SyntaxKind::TildeToken:
 			return 6;
 		default:
 			return 0;
@@ -250,9 +263,12 @@ int GetBinaryOperatorPrecedence(const SyntaxKind& kind) noexcept
 		case SyntaxKind::GreaterToken:
 		case SyntaxKind::GreaterOrEqualsToken:
 			return 3;
+		case SyntaxKind::AmpersandToken:
 		case SyntaxKind::AmpersandAmpersandToken:
 			return 2;
+		case SyntaxKind::PipeToken:
 		case SyntaxKind::PipePipeToken:
+		case SyntaxKind::HatToken:
 			return 1;
 		default:
 			return 0;

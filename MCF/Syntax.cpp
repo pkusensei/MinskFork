@@ -133,61 +133,77 @@ SyntaxToken Lexer::Lex()
 			Next();
 			_kind = SyntaxKind::CloseBraceToken;
 			break;
+		case '~':
+			Next();
+			_kind = SyntaxKind::TildeToken;
+			break;
+		case '^':
+			Next();
+			_kind = SyntaxKind::HatToken;
+			break;
 		case '&':
+			Next();
 			if (Lookahead() == '&')
 			{
-				_position += 2;
+				_position++;
 				_kind = SyntaxKind::AmpersandAmpersandToken;
+			} else
+			{
+				_kind = SyntaxKind::AmpersandToken;
 			}
 			break;
 		case '|':
+			Next();
 			if (Lookahead() == '|')
 			{
-				_position += 2;
+				_position++;
 				_kind = SyntaxKind::PipePipeToken;
+			} else
+			{
+				_kind = SyntaxKind::PipeToken;
 			}
 			break;
 		case '=':
+			Next();
 			if (Lookahead() == '=')
 			{
-				_position += 2;
+				_position++;
 				_kind = SyntaxKind::EqualsEqualsToken;
 			} else
 			{
-				Next();
 				_kind = SyntaxKind::EqualsToken;
 			}
 			break;
 		case '!':
+			Next();
 			if (Lookahead() == '=')
 			{
-				_position += 2;
+				_position++;
 				_kind = SyntaxKind::BangEqualsToken;
 			} else
 			{
-				Next();
 				_kind = SyntaxKind::BangToken;
 			}
 			break;
 		case '<':
+			Next();
 			if (Lookahead() == '=')
 			{
-				_position += 2;
+				_position++;
 				_kind = SyntaxKind::LessOrEqualsToken;
 			} else
 			{
-				Next();
 				_kind = SyntaxKind::LessToken;
 			}
 			break;
 		case '>':
+			Next();
 			if (Lookahead() == '=')
 			{
-				_position += 2;
+				_position++;
 				_kind = SyntaxKind::GreaterOrEqualsToken;
 			} else
 			{
-				Next();
 				_kind = SyntaxKind::GreaterToken;
 			}
 			break;
