@@ -762,13 +762,8 @@ SyntaxTree::SyntaxTree(const SourceText& text)
 	_diagnostics->AddRange(*parser.Diagnostics());
 }
 
-SyntaxTree::SyntaxTree(SyntaxTree && other)noexcept
-{
-	_text.swap(other._text);
-	_diagnostics.swap(other._diagnostics);
-	_root.swap(other._root);
-}
-
+SyntaxTree::SyntaxTree(SyntaxTree && other) = default;
+SyntaxTree & SyntaxTree::operator=(SyntaxTree && other) = default;
 SyntaxTree::~SyntaxTree() = default;
 
 SyntaxTree SyntaxTree::Parse(const string & text)

@@ -434,7 +434,8 @@ private:
 	explicit SyntaxTree(const SourceText& text);
 
 public:
-	SyntaxTree(SyntaxTree&& other)noexcept;
+	SyntaxTree(SyntaxTree&& other);
+	SyntaxTree& operator=(SyntaxTree&& other);
 	~SyntaxTree();
 
 	const SourceText& Text() const { return *_text; }
