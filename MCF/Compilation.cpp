@@ -297,4 +297,10 @@ EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueT
 	return EvaluationResult(diagnostics, value);
 }
 
+void Compilation::EmitTree(std::ostream & out)
+{
+	auto statement = GlobalScope()->Statement();
+	statement->WriteTo(out);
+}
+
 }//MCF

@@ -82,6 +82,8 @@ public:
 	static unique_ptr<Compilation> ContinueWith(const unique_ptr<Compilation>& previous, const unique_ptr<SyntaxTree>& tree);
 
 	EvaluationResult Evaluate(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables);
+
+	void EmitTree(std::ostream& out);
 };
 
 }//MCF

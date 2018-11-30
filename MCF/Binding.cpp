@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Binding.h"
 
+#include <sstream>
 #include <stack>
 
 #include "Diagnostic.h"
@@ -9,7 +10,145 @@
 
 namespace MCF {
 
+string GetEnumText(const BoundNodeKind & kind)
+{
+	switch (kind)
+	{
+		case BoundNodeKind::BlockStatement:
+			return "BlockStatement";
+		case BoundNodeKind::VariableDeclaration:
+			return "VariableDeclaration";
+		case BoundNodeKind::IfStatement:
+			return "IfStatement";
+		case BoundNodeKind::WhileStatement:
+			return "WhileStatement";
+		case BoundNodeKind::ForStatement:
+			return "ForStatement";
+		case BoundNodeKind::LabelStatement:
+			return "LabelStatement";
+		case BoundNodeKind::GotoStatement:
+			return "GotoStatement";
+		case BoundNodeKind::ConditionalGotoStatement:
+			return "ConditionalGotoStatement";
+		case BoundNodeKind::ExpressionStatement:
+			return "ExpressionStatement";
+
+		case BoundNodeKind::LiteralExpression:
+			return "LiteralExpression";
+		case BoundNodeKind::VariableExpression:
+			return "VariableExpression";
+		case BoundNodeKind::AssignmentExpression:
+			return "AssignmentExpression";
+		case BoundNodeKind::UnaryExpression:
+			return "UnaryExpression";
+		case BoundNodeKind::BinaryExpression:
+			return "BinaryExpression";
+
+		case BoundNodeKind::VoidExpression:
+			return "VoidExpression";
+		default:
+			return string();
+	}
+}
+
+string GetEnumText(const BoundUnaryOperatorKind & kind)
+{
+	switch (kind)
+	{
+		case BoundUnaryOperatorKind::Identity:
+			return "Identity";
+		case BoundUnaryOperatorKind::Negation:
+			return "Negation";
+		case BoundUnaryOperatorKind::LogicalNegation:
+			return "LogicalNegation";
+		case BoundUnaryOperatorKind::OnesComplement:
+			return "OnesComplement";
+
+		default:
+			return string();
+	}
+}
+
+string GetEnumText(const BoundBinaryOperatorKind & kind)
+{
+	switch (kind)
+	{
+		case BoundBinaryOperatorKind::Addition:
+			return "Addition";
+		case BoundBinaryOperatorKind::Subtraction:
+			return "Subtraction";
+		case BoundBinaryOperatorKind::Multiplication:
+			return "Multiplication";
+		case BoundBinaryOperatorKind::Division:
+			return "Division";
+		case BoundBinaryOperatorKind::LogicalAnd:
+			return "LogicalAnd";
+		case BoundBinaryOperatorKind::LogicalOr:
+			return "LogicalOr";
+		case BoundBinaryOperatorKind::BitwiseAnd:
+			return "BitwiseAnd";
+		case BoundBinaryOperatorKind::BitwiseOr:
+			return "BitwiseOr";
+		case BoundBinaryOperatorKind::BitwiseXor:
+			return "BitwiseXor";
+		case BoundBinaryOperatorKind::Equals:
+			return "Equals";
+		case BoundBinaryOperatorKind::NotEquals:
+			return "NotEquals";
+		case BoundBinaryOperatorKind::Less:
+			return "Less";
+		case BoundBinaryOperatorKind::LessOrEquals:
+			return "LessOrEquals";
+		case BoundBinaryOperatorKind::Greater:
+			return "Greater";
+		case BoundBinaryOperatorKind::GreaterOrEquals:
+			return "GreaterOrEquals";
+
+		default:
+			return string();
+	}
+}
+
+string BoundNode::GetText(const BoundNode * node)
+{
+	auto b = dynamic_cast<const BoundBinaryExpression*>(node);
+	auto u = dynamic_cast<const BoundUnaryExpression*>(node);
+	if (b != nullptr)
+		return GetEnumText(b->Op()->Kind()) + "Expression";
+	else if (u != nullptr)
+		return GetEnumText(u->Op()->Kind()) + "Expression";
+	else return GetEnumText(node->Kind());
+}
+
+void BoundNode::PrettyPrint(std::ostream & out, const BoundNode * node, string indent, bool isLast)
+{
+	string marker = isLast ? "+--" : "---";//"©¸©¤©¤" : "©À©¤©¤";
+	out << indent << marker << GetText(node);
+	out << std::endl;
+	indent += isLast ? "   " : "|  ";
+	auto children = node->GetChildren();
+	if (children.size() > 0)
+	{
+		auto lastChild = children.back();
+		for (const auto& child : children)
+			PrettyPrint(out, child, indent, lastChild == child);
+	}
+
+}
+
+string BoundNode::ToString() const
+{
+	std::stringstream ss;
+	WriteTo(ss);
+	return ss.str();
+}
+
 #pragma region Expression
+
+const vector<const BoundNode*> BoundExpression::GetChildren() const
+{
+	return vector<const BoundNode*>();
+}
 
 BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
 									   const type_index& operandType, const type_index& resultType)
@@ -50,6 +189,13 @@ BoundUnaryExpression::BoundUnaryExpression(const BoundUnaryOperator & op, const 
 	:_op(std::make_unique<BoundUnaryOperator>(op)),
 	_operand(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(operand)))
 {
+}
+
+const vector<const BoundNode*> BoundUnaryExpression::GetChildren() const
+{
+	return vector<const BoundNode*>{
+		_operand.get()
+	};
 }
 
 BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
@@ -118,10 +264,25 @@ BoundBinaryExpression::BoundBinaryExpression(const unique_ptr<BoundExpression>& 
 {
 }
 
+const vector<const BoundNode*> BoundBinaryExpression::GetChildren() const
+{
+	return vector<const BoundNode*>{
+		_left.get(),
+			_right.get()
+	};
+}
+
 BoundAssignmentExpression::BoundAssignmentExpression(const VariableSymbol & variable, const unique_ptr<BoundExpression>& expression)
 	:_variable(variable),
 	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
 {
+}
+
+const vector<const BoundNode*> BoundAssignmentExpression::GetChildren() const
+{
+	return vector<const BoundNode*>{
+		_expression.get()
+	};
 }
 
 BoundLiteralExpression::BoundLiteralExpression(const ValueType & value)
@@ -138,9 +299,22 @@ BoundVariableExpression::BoundVariableExpression(const VariableSymbol & variable
 
 #pragma region Statement
 
+const vector<const BoundNode*> BoundStatement::GetChildren() const
+{
+	return vector<const BoundNode*>();
+}
+
 BoundBlockStatement::BoundBlockStatement(const vector<unique_ptr<BoundStatement>>& statements)
 	: _statements(std::move(std::remove_const_t<vector<unique_ptr<BoundStatement>>&>(statements)))
 {
+}
+
+const vector<const BoundNode*> BoundBlockStatement::GetChildren() const
+{
+	auto result = vector<const BoundNode*>();
+	for (const auto& it : _statements)
+		result.emplace_back(it.get());
+	return result;
 }
 
 const vector<BoundStatement*> BoundBlockStatement::Statements() const
@@ -158,6 +332,13 @@ BoundVariableDeclaration::BoundVariableDeclaration(const VariableSymbol & variab
 {
 }
 
+const vector<const BoundNode*> BoundVariableDeclaration::GetChildren() const
+{
+	return vector<const BoundNode*>{
+		_initializer.get()
+	};
+}
+
 BoundIfStatement::BoundIfStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& thenStatement,
 								   const unique_ptr<BoundStatement>& elseStatement)
 	: _condition(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition))),
@@ -166,10 +347,27 @@ BoundIfStatement::BoundIfStatement(const unique_ptr<BoundExpression>& condition,
 {
 }
 
+const vector<const BoundNode*> BoundIfStatement::GetChildren() const
+{
+	return vector<const BoundNode*>{
+		_condition.get(),
+			_thenStatement.get(),
+			_elseStatement.get()
+	};
+}
+
 BoundWhileStatement::BoundWhileStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& body)
 	:_condition(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition))),
 	_body(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(body)))
 {
+}
+
+const vector<const BoundNode*> BoundWhileStatement::GetChildren() const
+{
+	return vector<const BoundNode*>{
+		_condition.get(),
+			_body.get()
+	};
 }
 
 BoundForStatement::BoundForStatement(const VariableSymbol & variable, const unique_ptr<BoundExpression>& lowerBound,
@@ -181,9 +379,25 @@ BoundForStatement::BoundForStatement(const VariableSymbol & variable, const uniq
 {
 }
 
+const vector<const BoundNode*> BoundForStatement::GetChildren() const
+{
+	return vector<const BoundNode*>{
+		_lowerBound.get(),
+			_upperBound.get(),
+			_body.get()
+	};
+}
+
 BoundExpressionStatement::BoundExpressionStatement(const unique_ptr<BoundExpression>& expression)
 	: _expression((std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression))))
 {
+}
+
+const vector<const BoundNode*> BoundExpressionStatement::GetChildren() const
+{
+	return vector<const BoundNode*>{
+		_expression.get()
+	};
 }
 
 #pragma endregion
@@ -486,7 +700,6 @@ unique_ptr<BoundScope>  Binder::CreateParentScope(const BoundGlobalScope* previo
 	}
 	return parent;
 }
-
 
 unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* previous, const CompilationUnitSyntax* syntax)
 {

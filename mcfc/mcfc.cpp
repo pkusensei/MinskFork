@@ -49,7 +49,8 @@ int main()
 		{
 			auto value = result.Value();
 			value.WriteTo(std::cout);
-			tree->Root()->WriteTo(std::cout);
+			//tree->Root()->WriteTo(std::cout);
+			compilation->EmitTree(std::cout);
 			previous = std::move(compilation);
 		} else
 		{

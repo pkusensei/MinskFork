@@ -34,6 +34,8 @@ enum class BoundNodeKind
 	VoidExpression //HACK
 };
 
+string GetEnumText(const BoundNodeKind& kind);
+
 enum class BoundUnaryOperatorKind
 {
 	Identity,
@@ -41,6 +43,8 @@ enum class BoundUnaryOperatorKind
 	LogicalNegation,
 	OnesComplement
 };
+
+string GetEnumText(const BoundUnaryOperatorKind& kind);
 
 enum class BoundBinaryOperatorKind
 {
@@ -61,11 +65,20 @@ enum class BoundBinaryOperatorKind
 	GreaterOrEquals
 };
 
+string GetEnumText(const BoundBinaryOperatorKind& kind);
+
 class BoundNode
 {
+private:
+	static string GetText(const BoundNode* node);
+	static void PrettyPrint(std::ostream& out, const BoundNode* node, string indent = "", bool isLast = true);
 public:
 	virtual ~BoundNode() = default;
 	virtual BoundNodeKind Kind() const = 0;
+	virtual const vector<const BoundNode*> GetChildren() const = 0;
+
+	void WriteTo(std::ostream& out)const { PrettyPrint(out, this); }
+	string ToString() const;
 };
 
 #pragma region Expression
@@ -76,8 +89,10 @@ class BoundExpression :public BoundNode
 public:
 	// Inherited via BoundNode
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
+	const vector<const BoundNode*> GetChildren() const override;
 
 	virtual type_index Type() const { return typeid(std::monostate); }
+
 };
 
 class BoundUnaryOperator final
@@ -118,6 +133,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::UnaryExpression; }
+	const vector<const BoundNode*> GetChildren() const override;
 	type_index Type() const override { return _op->Type(); }
 
 	const BoundUnaryOperator* Op()const noexcept { return _op.get(); }
@@ -167,6 +183,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BinaryExpression; }
+	const vector<const BoundNode*> GetChildren() const override;
 	type_index Type() const override { return _op->Type(); }
 
 	const BoundExpression* Left()const noexcept { return _left.get(); }
@@ -186,6 +203,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::AssignmentExpression; }
+	const vector<const BoundNode*> GetChildren() const override;
 	type_index Type() const override { return _expression->Type(); }
 
 	VariableSymbol Variable()const { return _variable; }
@@ -234,6 +252,7 @@ class BoundStatement :public BoundNode
 public:
 	// Inherited via BoundNode
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
+	const vector<const BoundNode*> GetChildren() const override;
 };
 
 class BoundBlockStatement final : public BoundStatement
@@ -247,6 +266,7 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BlockStatement; }
+	const vector<const BoundNode*> GetChildren() const override;
 
 	const vector<BoundStatement*> Statements()const;
 };
@@ -263,6 +283,7 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableDeclaration; }
+	const vector<const BoundNode*> GetChildren() const override;
 
 	VariableSymbol Variable()const { return _variable; }
 	const BoundExpression* Initializer()const noexcept { return _initializer.get(); }
@@ -282,6 +303,7 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::IfStatement; }
+	const vector<const BoundNode*> GetChildren() const override;
 
 	const BoundExpression* Condition()const noexcept { return _condition.get(); }
 	const BoundStatement* ThenStatement()const noexcept { return _thenStatement.get(); }
@@ -300,6 +322,7 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::WhileStatement; }
+	const vector<const BoundNode*> GetChildren() const override;
 
 	const BoundExpression* Condition()const noexcept { return _condition.get(); }
 	const BoundStatement* Body()const noexcept { return _body.get(); }
@@ -320,6 +343,7 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ForStatement; }
+	const vector<const BoundNode*> GetChildren() const override;
 
 	VariableSymbol Variable()const { return _variable; }
 	const BoundExpression* LowerBound()const noexcept { return _lowerBound.get(); }
@@ -339,6 +363,7 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ExpressionStatement; }
+	const vector<const BoundNode*> GetChildren() const override;
 
 	const BoundExpression* Expression()const noexcept { return _expression.get(); }
 };
