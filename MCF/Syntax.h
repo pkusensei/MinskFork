@@ -4,11 +4,17 @@
 
 namespace MCF {
 
+SyntaxKind GetKeywordKind(const string& text) noexcept;
+MCF_API string GetText(const SyntaxKind& kind);
+MCF_API int GetUnaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
+MCF_API int GetBinaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
+MCF_API vector<SyntaxKind> GetUnaryOperatorKinds();
+MCF_API vector<SyntaxKind> GetBinaryOperatorKinds();
+
 class DiagnosticBag;
 class TextSpan;
 class SourceText;
 class SyntaxTree;
-
 
 class MCF_API SyntaxNode
 {
@@ -62,7 +68,7 @@ private:
 	char Peek(int offset) const;
 	char Current() const { return Peek(0); }
 	char Lookahead() const { return Peek(1); }
-	constexpr void Next() noexcept { _position++; }
+	constexpr void Next(size_t step = 1) noexcept { _position += step; }
 
 	void ReadWhiteSpace();
 	void ReadNumberToken();

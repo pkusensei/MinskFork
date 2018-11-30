@@ -80,15 +80,15 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "BangToken";
 		case SyntaxKind::EqualsToken:
 			return "EqualsToken";
-		case SyntaxKind::TildeToken: 
+		case SyntaxKind::TildeToken:
 			return "TildeToken";
-		case SyntaxKind::HatToken: 
+		case SyntaxKind::HatToken:
 			return "HatToken";
-		case SyntaxKind::AmpersandToken: 
+		case SyntaxKind::AmpersandToken:
 			return "AmpersandToken";
-		case SyntaxKind::AmpersandAmpersandToken: 
+		case SyntaxKind::AmpersandAmpersandToken:
 			return "AmpersandAmpersandToken";
-		case SyntaxKind::PipeToken: 
+		case SyntaxKind::PipeToken:
 			return "PipeToken";
 		case SyntaxKind::PipePipeToken:
 			return "PipePipeToken";
@@ -168,131 +168,6 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 		default:
 			throw std::invalid_argument("Invalid syntax; no such syntax kind.");
 	}
-}
-
-SyntaxKind GetKeywordKind(const string & text) noexcept
-{
-	if (text == "else")
-		return SyntaxKind::ElseKeyword;
-	else if (text == "false")
-		return SyntaxKind::FalseKeyword;
-	else if (text == "for")
-		return SyntaxKind::ForKeyword;
-	else if (text == "if")
-		return SyntaxKind::IfKeyword;
-	else if (text == "let")
-		return SyntaxKind::LetKeyword;
-	else if (text == "to")
-		return SyntaxKind::ToKeyword;
-	else if (text == "true")
-		return SyntaxKind::TrueKeyword;
-	else if (text == "var")
-		return SyntaxKind::VarKeyword;
-	else if (text == "while")
-		return SyntaxKind::WhileKeyword;
-	else return SyntaxKind::IdentifierToken;
-}
-
-string GetText(const SyntaxKind& kind)
-{
-	switch (kind)
-	{
-		case SyntaxKind::PlusToken: return "+";
-		case SyntaxKind::MinusToken: return "-";
-		case SyntaxKind::StarToken: return "*";
-		case SyntaxKind::SlashToken: return "/";
-		case SyntaxKind::BangToken: return "!";
-		case SyntaxKind::EqualsToken: return "=";
-		case SyntaxKind::TildeToken: return "~";
-		case SyntaxKind::HatToken: return "^";
-		case SyntaxKind::AmpersandToken: return "&";
-		case SyntaxKind::AmpersandAmpersandToken: return "&&";
-		case SyntaxKind::PipeToken: return "|";
-		case SyntaxKind::PipePipeToken: return "||";
-		case SyntaxKind::EqualsEqualsToken: return "==";
-		case SyntaxKind::BangEqualsToken: return "!=";
-		case SyntaxKind::LessToken: return "<";
-		case SyntaxKind::LessOrEqualsToken: return "<=";
-		case SyntaxKind::GreaterToken: return ">";
-		case SyntaxKind::GreaterOrEqualsToken: return ">=";
-		case SyntaxKind::OpenParenthesisToken: return "(";
-		case SyntaxKind::CloseParenthesisToken: return ")";
-		case SyntaxKind::OpenBraceToken: return "{";
-		case SyntaxKind::CloseBraceToken: return "}";
-		case SyntaxKind::ElseKeyword: return "else";
-		case SyntaxKind::FalseKeyword: return "false";
-		case SyntaxKind::ForKeyword: return "for";
-		case SyntaxKind::IfKeyword: return "if";
-		case SyntaxKind::LetKeyword: return "let";
-		case SyntaxKind::ToKeyword: return "to";
-		case SyntaxKind::TrueKeyword: return "true";
-		case SyntaxKind::VarKeyword: return "var";
-		case SyntaxKind::WhileKeyword: return "while";
-		default: return string();
-	}
-}
-
-int GetUnaryOperatorPrecedence(const SyntaxKind& kind) noexcept
-{
-	switch (kind)
-	{
-		case SyntaxKind::PlusToken:
-		case SyntaxKind::MinusToken:
-		case SyntaxKind::BangToken:
-		case SyntaxKind::TildeToken:
-			return 6;
-		default:
-			return 0;
-	}
-}
-
-int GetBinaryOperatorPrecedence(const SyntaxKind& kind) noexcept
-{
-	switch (kind)
-	{
-		case SyntaxKind::StarToken:
-		case SyntaxKind::SlashToken:
-			return 5;
-		case SyntaxKind::PlusToken:
-		case SyntaxKind::MinusToken:
-			return 4;
-		case SyntaxKind::EqualsEqualsToken:
-		case SyntaxKind::BangEqualsToken:
-		case SyntaxKind::LessToken:
-		case SyntaxKind::LessOrEqualsToken:
-		case SyntaxKind::GreaterToken:
-		case SyntaxKind::GreaterOrEqualsToken:
-			return 3;
-		case SyntaxKind::AmpersandToken:
-		case SyntaxKind::AmpersandAmpersandToken:
-			return 2;
-		case SyntaxKind::PipeToken:
-		case SyntaxKind::PipePipeToken:
-		case SyntaxKind::HatToken:
-			return 1;
-		default:
-			return 0;
-	}
-}
-
-vector<SyntaxKind> GetUnaryOperatorKinds()
-{
-	auto kinds = GetAllSyntaxKinds();
-	auto result = vector<SyntaxKind>();
-	for (const auto& it : kinds)
-		if (GetUnaryOperatorPrecedence(it) > 0)
-			result.emplace_back(it);
-	return result;
-}
-
-vector<SyntaxKind> GetBinaryOperatorKinds()
-{
-	auto kinds = GetAllSyntaxKinds();
-	auto result = vector<SyntaxKind>();
-	for (const auto& it : kinds)
-		if (GetBinaryOperatorPrecedence(it) > 0)
-			result.emplace_back(it);
-	return result;
 }
 
 type_index ValueType::Type() const

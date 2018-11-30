@@ -76,6 +76,8 @@ public:
 	virtual ~BoundNode() = default;
 	virtual BoundNodeKind Kind() const = 0;
 	virtual const vector<const BoundNode*> GetChildren() const = 0;
+	// HACK will be ugly and dirty
+	virtual const vector<std::pair<string, ValueType>> GetProperties() const = 0;
 
 	void WriteTo(std::ostream& out)const { PrettyPrint(out, this); }
 	string ToString() const;
@@ -90,6 +92,7 @@ public:
 	// Inherited via BoundNode
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
 	const vector<const BoundNode*> GetChildren() const override;
+	const vector<std::pair<string, ValueType>> GetProperties() const override;
 
 	virtual type_index Type() const { return typeid(std::monostate); }
 
@@ -252,6 +255,7 @@ class BoundStatement :public BoundNode
 public:
 	// Inherited via BoundNode
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
+	const vector<std::pair<string, ValueType>> GetProperties() const override;
 	const vector<const BoundNode*> GetChildren() const override;
 };
 

@@ -94,15 +94,6 @@ SyntaxKind& operator++(SyntaxKind& kind, int c);
 MCF_API const vector<SyntaxKind> GetAllSyntaxKinds();
 MCF_API string GetSyntaxKindName(const SyntaxKind& kind);
 
-
-/// namespace-scope functions
-SyntaxKind GetKeywordKind(const string& text) noexcept;
-MCF_API string GetText(const SyntaxKind& kind);
-MCF_API int GetUnaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
-MCF_API int GetBinaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
-MCF_API vector<SyntaxKind> GetUnaryOperatorKinds();
-MCF_API vector<SyntaxKind> GetBinaryOperatorKinds();
-
 class MCF_API ValueType final
 {
 private:
@@ -133,6 +124,8 @@ public:
 	static int GetValueTypeId(const type_index & inType);
 	static string GetTypeName(const type_index& inType);
 };
+
+const auto NullValue =ValueType(); // Note global constant
 
 class MCF_API VariableSymbol final
 {

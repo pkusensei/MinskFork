@@ -136,19 +136,19 @@ ValueType Evaluator::EvaluateExpression(const BoundExpression * node)const
 ValueType Evaluator::EvaluateLiteralExpression(const BoundExpression * node)const
 {
 	auto p = dynamic_cast<const BoundLiteralExpression*>(node);
-	return p != nullptr ? p->Value() : ValueType();
+	return p != nullptr ? p->Value() : NullValue;
 }
 
 ValueType Evaluator::EvaluateVariableExpression(const BoundExpression * node)const
 {
 	auto p = dynamic_cast<const BoundVariableExpression*>(node);
-	return p != nullptr ? (*_variables)[p->Variable()] : ValueType();
+	return p != nullptr ? (*_variables)[p->Variable()] : NullValue;
 }
 
 ValueType Evaluator::EvaluateAssignmentExpression(const BoundExpression * node)const
 {
 	auto p = dynamic_cast<const BoundAssignmentExpression*>(node);
-	if (p == nullptr) return ValueType();
+	if (p == nullptr) return NullValue;
 	auto value = EvaluateExpression(p->Expression());
 	_variables->insert_or_assign(p->Variable(), value);
 	return value;
@@ -157,7 +157,7 @@ ValueType Evaluator::EvaluateAssignmentExpression(const BoundExpression * node)c
 ValueType Evaluator::EvaluateUnaryExpression(const BoundExpression * node)const
 {
 	auto p = dynamic_cast<const BoundUnaryExpression*>(node);
-	if (p == nullptr) return ValueType();
+	if (p == nullptr) return NullValue;
 	auto operand = EvaluateExpression(p->Operand());
 	switch (p->Op()->Kind())
 	{
@@ -177,7 +177,7 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundExpression * node)const
 ValueType Evaluator::EvaluateBinaryExpression(const BoundExpression * node)const
 {
 	auto p = dynamic_cast<const BoundBinaryExpression*>(node);
-	if (p == nullptr) return ValueType();
+	if (p == nullptr) return NullValue;
 
 	auto left = EvaluateExpression(p->Left());
 	auto right = EvaluateExpression(p->Right());
@@ -290,7 +290,7 @@ EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueT
 	auto diagnostics = _syntaxTree->Diagnostics();
 
 	if (diagnostics->size() > 0)
-		return EvaluationResult(diagnostics, ValueType());
+		return EvaluationResult(diagnostics, NullValue);
 
 	Evaluator evaluator(GlobalScope()->Statement(), variables);
 	auto value = evaluator.Evaluate();
