@@ -144,10 +144,10 @@ void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node, string
 	{
 		out << " " << token->Value().GetValue<IntegerType>();
 	}
-	out << std::endl;
+	out << "\n";
 	indent += isLast ? "   " : "|  ";
 	auto children = node->GetChildren();
-	if (children.size() > 0)
+	if (!children.empty())
 	{
 		auto lastChild = children.back();
 		for (const auto& child : children)

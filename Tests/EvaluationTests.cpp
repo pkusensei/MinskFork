@@ -321,7 +321,7 @@ private:
 		std::unordered_map<MCF::VariableSymbol, MCF::ValueType, MCF::VariableHash> variables;
 		auto result = compilation.Evaluate(variables);
 
-		Assert::IsTrue(result.Diagnostics()->size() == 0);
+		Assert::IsTrue(result.Diagnostics()->empty());
 		Assert::IsTrue(value == result.Value());
 	}
 

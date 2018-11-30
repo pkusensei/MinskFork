@@ -124,10 +124,26 @@ void BoundNode::PrettyPrint(std::ostream & out, const BoundNode * node, string i
 {
 	string marker = isLast ? "+--" : "---";//"©¸©¤©¤" : "©À©¤©¤";
 	out << indent << marker << GetText(node);
-	out << std::endl;
+
+	auto isFirstProperty = true;
+	//auto properties = node->GetProperties();
+	//if (!properties.empty())
+	//{
+	//	for (const auto p : properties)
+	//	{
+	//		if (isFirstProperty)
+	//			isFirstProperty = false;
+	//		else
+	//		{
+	//			out << ",";
+	//		}
+	//		out << ' ' << p.first << " = " << p.second;
+	//	}
+	//}
+	out << "\n";
 	indent += isLast ? "   " : "|  ";
 	auto children = node->GetChildren();
-	if (children.size() > 0)
+	if (!children.empty())
 	{
 		auto lastChild = children.back();
 		for (const auto& child : children)
@@ -147,11 +163,6 @@ string BoundNode::ToString() const
 const vector<const BoundNode*> BoundExpression::GetChildren() const
 {
 	return vector<const BoundNode*>();
-}
-
-const vector<std::pair<string, ValueType>> BoundExpression::GetProperties() const
-{
-	return vector<std::pair<string, ValueType>>();
 }
 
 BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
@@ -302,11 +313,6 @@ BoundVariableExpression::BoundVariableExpression(const VariableSymbol & variable
 #pragma endregion
 
 #pragma region Statement
-
-const vector<std::pair<string, ValueType>> BoundStatement::GetProperties() const
-{
-	return vector<std::pair<string, ValueType>>();
-}
 
 const vector<const BoundNode*> BoundStatement::GetChildren() const
 {

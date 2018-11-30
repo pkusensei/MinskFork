@@ -20,7 +20,7 @@ using std::vector;
 
 using IntegerType = long; // HACK use long as interger type
 
-/// helpers
+/// string helpers
 MCF_API bool StringEndsWith(const string& sample, const string& ending);
 MCF_API string TrimString(const string& text);
 MCF_API string TrimStringStart(const string& text);
@@ -110,8 +110,6 @@ public:
 	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
 	type_index Type()const;
 
-	void WriteTo(std::ostream& out) const;
-
 	constexpr bool operator==(const ValueType& other)const { return _inner == other._inner; }
 	constexpr bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }
 
@@ -125,7 +123,8 @@ public:
 	static string GetTypeName(const type_index& inType);
 };
 
-const auto NullValue =ValueType(); // Note global constant
+const auto NullValue = ValueType(); // Note global constant
+MCF_API std::ostream& operator<<(std::ostream& out, const ValueType& value);
 
 class MCF_API VariableSymbol final
 {

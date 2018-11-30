@@ -289,7 +289,7 @@ EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueT
 	_syntaxTree->Diagnostics()->AddRange(*(GlobalScope()->Diagnostics()));
 	auto diagnostics = _syntaxTree->Diagnostics();
 
-	if (diagnostics->size() > 0)
+	if (!diagnostics->empty())
 		return EvaluationResult(diagnostics, NullValue);
 
 	Evaluator evaluator(GlobalScope()->Statement(), variables);

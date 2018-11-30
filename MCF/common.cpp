@@ -170,6 +170,24 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 	}
 }
 
+std::ostream & operator<<(std::ostream & out, const ValueType & value)
+{
+	auto id = ValueType::GetValueTypeId(value.Type());
+	switch (id)
+	{
+		case 1:
+			out << value.GetValue<IntegerType>() << "\n\n";
+			break;
+		case 2:
+			out << value.GetValue<bool>() << "\n\n";
+			break;
+		default:
+			out << "Not valid value or type.\n";
+			break;
+	}
+	return out;
+}
+
 type_index ValueType::Type() const
 {
 	switch (_inner.index())
@@ -184,29 +202,13 @@ type_index ValueType::Type() const
 	}
 }
 
-void ValueType::WriteTo(std::ostream & out) const
-{
-	auto id = GetValueTypeId(Type());
-	out << "\n" << "Result value is ";
-	switch (id)
-	{
-		case 1:
-			out << GetTypeName(Type()) << " " << GetValue<IntegerType>() << std::endl;
-			break;
-		case 2:
-			out << GetTypeName(Type()) << " " << static_cast<bool>(GetValue<bool>()) << std::endl;
-			break;
-		default:
-			out << "Not valid value or type.\n";
-			break;
-	}
-	out << "\n";
-}
-
 int ValueType::GetValueTypeId(const type_index & inType)
 {
-	static std::unordered_map<type_index, int> types = {{typeid(std::monostate), 0},
-		{typeid(IntegerType), 1},{typeid(bool), 2}};
+	static std::unordered_map<type_index, int> types = {
+		{typeid(std::monostate), 0},
+		{typeid(IntegerType), 1},
+		{typeid(bool), 2},
+	};
 
 	return types[inType];
 }

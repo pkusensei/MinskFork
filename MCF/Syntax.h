@@ -51,7 +51,7 @@ public:
 
 	constexpr size_t Position() const noexcept { return _position; }
 	string Text() const { return _text; }
-	constexpr ValueType Value() const noexcept { return _value; }
+	ValueType Value() const noexcept { return _value; }
 };
 
 class Lexer final
@@ -186,7 +186,7 @@ public:
 	const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken LiteralToken()const { return _literalToken; }
-	constexpr ValueType Value()const { return _value; }
+	ValueType Value()const { return _value; }
 };
 
 class NameExpressionSyntax final :public ExpressionSyntax
