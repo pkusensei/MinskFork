@@ -112,6 +112,7 @@ public:
 
 	constexpr bool operator==(const ValueType& other)const { return _inner == other._inner; }
 	constexpr bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }
+	string ToString()const;
 
 	template<typename T>
 	constexpr decltype(auto) GetValue() const
@@ -144,6 +145,7 @@ public:
 	string Name()const { return _name; }
 	constexpr bool IsReadOnly()const noexcept { return _isReadOnly; }
 	type_index Type()const { return _type; }
+	string ToString()const { return Name(); }
 
 	bool operator==(const VariableSymbol& other) const noexcept;
 	bool operator!=(const VariableSymbol& other) const noexcept;

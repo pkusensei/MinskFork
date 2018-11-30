@@ -126,20 +126,20 @@ void BoundNode::PrettyPrint(std::ostream & out, const BoundNode * node, string i
 	out << indent << marker << GetText(node);
 
 	auto isFirstProperty = true;
-	//auto properties = node->GetProperties();
-	//if (!properties.empty())
-	//{
-	//	for (const auto p : properties)
-	//	{
-	//		if (isFirstProperty)
-	//			isFirstProperty = false;
-	//		else
-	//		{
-	//			out << ",";
-	//		}
-	//		out << ' ' << p.first << " = " << p.second;
-	//	}
-	//}
+	auto properties = node->GetProperties();
+	if (!properties.empty())
+	{
+		for (const auto p : properties)
+		{
+			if (isFirstProperty)
+				isFirstProperty = false;
+			else
+			{
+				out << ",";
+			}
+			out << ' ' << p.first << " = " << p.second;
+		}
+	}
 	out << "\n";
 	indent += isLast ? "   " : "|  ";
 	auto children = node->GetChildren();
@@ -163,6 +163,11 @@ string BoundNode::ToString() const
 const vector<const BoundNode*> BoundExpression::GetChildren() const
 {
 	return vector<const BoundNode*>();
+}
+
+const vector<std::pair<string, string>> BoundExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>();
 }
 
 BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
@@ -210,6 +215,13 @@ const vector<const BoundNode*> BoundUnaryExpression::GetChildren() const
 {
 	return vector<const BoundNode*>{
 		_operand.get()
+	};
+}
+
+const vector<std::pair<string, string>> BoundUnaryExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Type", ValueType::GetTypeName(Type()))
 	};
 }
 
@@ -287,6 +299,13 @@ const vector<const BoundNode*> BoundBinaryExpression::GetChildren() const
 	};
 }
 
+const vector<std::pair<string, string>> BoundBinaryExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Type", ValueType::GetTypeName(Type()))
+	};
+}
+
 BoundAssignmentExpression::BoundAssignmentExpression(const VariableSymbol & variable, const unique_ptr<BoundExpression>& expression)
 	:_variable(variable),
 	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
@@ -300,9 +319,25 @@ const vector<const BoundNode*> BoundAssignmentExpression::GetChildren() const
 	};
 }
 
+const vector<std::pair<string, string>> BoundAssignmentExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Variable", Variable().ToString()),
+			std::pair<string, string>("Type", ValueType::GetTypeName(Type()))
+	};
+}
+
 BoundLiteralExpression::BoundLiteralExpression(const ValueType & value)
 	: _value(value)
 {
+}
+
+const vector<std::pair<string, string>> BoundLiteralExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Value", Value().ToString()),
+			std::pair<string, string>("Type", ValueType::GetTypeName(Type()))
+	};
 }
 
 BoundVariableExpression::BoundVariableExpression(const VariableSymbol & variable)
@@ -310,9 +345,22 @@ BoundVariableExpression::BoundVariableExpression(const VariableSymbol & variable
 {
 }
 
+const vector<std::pair<string, string>> BoundVariableExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Variable", Variable().ToString()),
+			std::pair<string, string>("Type", ValueType::GetTypeName(Type()))
+	};
+}
+
 #pragma endregion
 
 #pragma region Statement
+
+const vector<std::pair<string, string>> BoundStatement::GetProperties() const
+{
+	return vector<std::pair<string, string>>();
+}
 
 const vector<const BoundNode*> BoundStatement::GetChildren() const
 {
@@ -345,6 +393,13 @@ BoundVariableDeclaration::BoundVariableDeclaration(const VariableSymbol & variab
 	:_variable(variable),
 	_initializer(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(initializer)))
 {
+}
+
+const vector<std::pair<string, string>> BoundVariableDeclaration::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Variable", Variable().ToString())
+	};
 }
 
 const vector<const BoundNode*> BoundVariableDeclaration::GetChildren() const
@@ -392,6 +447,13 @@ BoundForStatement::BoundForStatement(const VariableSymbol & variable, const uniq
 	_upperBound(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(upperBound))),
 	_body(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(body)))
 {
+}
+
+const vector<std::pair<string, string>> BoundForStatement::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Variable", Variable().ToString())
+	};
 }
 
 const vector<const BoundNode*> BoundForStatement::GetChildren() const

@@ -77,7 +77,7 @@ public:
 	virtual BoundNodeKind Kind() const = 0;
 	virtual const vector<const BoundNode*> GetChildren() const = 0;
 	// HACK will be ugly and dirty
-	//virtual const vector<std::pair<string, string>> GetProperties() const = 0;
+	virtual const vector<std::pair<string, string>> GetProperties() const = 0;
 
 	void WriteTo(std::ostream& out)const { PrettyPrint(out, this); }
 	string ToString() const;
@@ -92,6 +92,9 @@ public:
 	// Inherited via BoundNode
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
 	const vector<const BoundNode*> GetChildren() const override;
+	// HACK dirty and ugly
+	// pair: name of property + its value
+	const vector<std::pair<string, string>> GetProperties() const override;
 
 	virtual type_index Type() const { return typeid(std::monostate); }
 
@@ -136,6 +139,7 @@ public:
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::UnaryExpression; }
 	const vector<const BoundNode*> GetChildren() const override;
+	const vector<std::pair<string, string>> GetProperties() const override;
 	type_index Type() const override { return _op->Type(); }
 
 	const BoundUnaryOperator* Op()const noexcept { return _op.get(); }
@@ -186,6 +190,7 @@ public:
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BinaryExpression; }
 	const vector<const BoundNode*> GetChildren() const override;
+	const vector<std::pair<string, string>> GetProperties() const override;
 	type_index Type() const override { return _op->Type(); }
 
 	const BoundExpression* Left()const noexcept { return _left.get(); }
@@ -206,6 +211,7 @@ public:
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::AssignmentExpression; }
 	const vector<const BoundNode*> GetChildren() const override;
+	const vector<std::pair<string, string>> GetProperties() const override;
 	type_index Type() const override { return _expression->Type(); }
 
 	VariableSymbol Variable()const { return _variable; }
@@ -223,6 +229,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LiteralExpression; }
+	const vector<std::pair<string, string>> GetProperties() const override;
 	type_index Type() const override { return _value.Type(); }
 
 	ValueType Value()const { return _value; }
@@ -240,6 +247,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableExpression; }
+	const vector<std::pair<string, string>> GetProperties() const override;
 	type_index Type() const override { return _variable.Type(); }
 
 	VariableSymbol Variable()const { return _variable; }
@@ -254,6 +262,7 @@ class BoundStatement :public BoundNode
 public:
 	// Inherited via BoundNode
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
+	const vector<std::pair<string, string>> GetProperties() const override;
 	const vector<const BoundNode*> GetChildren() const override;
 };
 
@@ -285,6 +294,7 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableDeclaration; }
+	const vector<std::pair<string, string>> GetProperties() const override;
 	const vector<const BoundNode*> GetChildren() const override;
 
 	VariableSymbol Variable()const { return _variable; }
@@ -345,6 +355,7 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ForStatement; }
+	const vector<std::pair<string, string>> GetProperties() const override;
 	const vector<const BoundNode*> GetChildren() const override;
 
 	VariableSymbol Variable()const { return _variable; }

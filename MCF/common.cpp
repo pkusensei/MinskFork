@@ -172,19 +172,10 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 
 std::ostream & operator<<(std::ostream & out, const ValueType & value)
 {
-	auto id = ValueType::GetValueTypeId(value.Type());
-	switch (id)
-	{
-		case 1:
-			out << value.GetValue<IntegerType>() << "\n\n";
-			break;
-		case 2:
-			out << value.GetValue<bool>() << "\n\n";
-			break;
-		default:
-			out << "Not valid value or type.\n";
-			break;
-	}
+	if (value.HasValue())
+		out << value.ToString();
+	else
+		out << "Not valid value or type.\n";
 	return out;
 }
 
@@ -200,6 +191,25 @@ type_index ValueType::Type() const
 		default:
 			return typeid(std::monostate);
 	}
+}
+
+string ValueType::ToString() const
+{
+	auto id = ValueType::GetValueTypeId(Type());
+	auto result = string();
+	switch (id)
+	{
+		case 1:
+			result = std::to_string(GetValue<IntegerType>());
+			break;
+		case 2:
+			result = std::to_string(GetValue<bool>());
+			break;
+		default:
+			break;
+	}
+
+	return result;
 }
 
 int ValueType::GetValueTypeId(const type_index & inType)

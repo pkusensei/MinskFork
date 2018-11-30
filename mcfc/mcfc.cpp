@@ -41,14 +41,14 @@ int main()
 		if (!isBlank && !tree->Diagnostics()->empty())
 			continue;
 
-		auto compilation = previous == nullptr ? std::make_unique<MCF::Compilation>(tree) 
-			:MCF::Compilation::ContinueWith(previous,tree);
+		auto compilation = previous == nullptr ? std::make_unique<MCF::Compilation>(tree)
+			: MCF::Compilation::ContinueWith(previous, tree);
 		auto result = compilation->Evaluate(variables);
 		auto diagnostics = result.Diagnostics();
 		if (diagnostics->empty())
 		{
 			auto value = result.Value();
-			std::cout << value;
+			std::cout << value << "\n";
 			//tree->Root()->WriteTo(std::cout);
 			compilation->EmitTree(std::cout);
 			previous = std::move(compilation);
