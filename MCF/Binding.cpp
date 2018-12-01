@@ -837,7 +837,7 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* pre
 	return std::make_unique<BoundGlobalScope>(previous, binder._diagnostics, variables, expression);
 }
 
-unique_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(const BoundStatement * node) const
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(const BoundStatement * node) 
 {
 	switch (node->Kind())
 	{
@@ -864,7 +864,7 @@ unique_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(const BoundStatem
 	}
 }
 
-unique_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(const BoundStatement * node) const
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(const BoundStatement * node) 
 {
 	auto p = dynamic_cast<const BoundBlockStatement*>(node);
 	if (p == nullptr)return nullptr;
@@ -876,7 +876,7 @@ unique_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(const BoundS
 	return std::make_unique<BoundBlockStatement>(result);
 }
 
-unique_ptr<BoundStatement> BoundTreeRewriter::RewriteVariableDeclaration(const BoundStatement * node) const
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteVariableDeclaration(const BoundStatement * node) 
 {
 	auto p = dynamic_cast<const BoundVariableDeclaration*>(node);
 	if (p == nullptr)return nullptr;
@@ -885,7 +885,7 @@ unique_ptr<BoundStatement> BoundTreeRewriter::RewriteVariableDeclaration(const B
 	return std::make_unique<BoundVariableDeclaration>(p->Variable(), initializer);
 }
 
-unique_ptr<BoundStatement> BoundTreeRewriter::RewriteIfStatement(const BoundStatement * node) const
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteIfStatement(const BoundStatement * node) 
 {
 	auto p = dynamic_cast<const BoundIfStatement*>(node);
 	if (p == nullptr)return nullptr;
@@ -896,7 +896,7 @@ unique_ptr<BoundStatement> BoundTreeRewriter::RewriteIfStatement(const BoundStat
 	return std::make_unique<BoundIfStatement>(condition, thenStatement, elseStatement);
 }
 
-unique_ptr<BoundStatement> BoundTreeRewriter::RewriteWhileStatement(const BoundStatement * node) const
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteWhileStatement(const BoundStatement * node) 
 {
 	auto p = dynamic_cast<const BoundWhileStatement*>(node);
 	if (p == nullptr)return nullptr;
@@ -906,7 +906,7 @@ unique_ptr<BoundStatement> BoundTreeRewriter::RewriteWhileStatement(const BoundS
 	return std::make_unique<BoundWhileStatement>(condition, body);
 }
 
-unique_ptr<BoundStatement> BoundTreeRewriter::RewriteForStatement(const BoundStatement * node) const
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteForStatement(const BoundStatement * node) 
 {
 	auto p = dynamic_cast<const BoundForStatement*>(node);
 	if (p == nullptr)return nullptr;
@@ -917,7 +917,7 @@ unique_ptr<BoundStatement> BoundTreeRewriter::RewriteForStatement(const BoundSta
 	return std::make_unique<BoundForStatement>(p->Variable(), lowerBound, upperBound, body);
 }
 
-unique_ptr<BoundStatement> BoundTreeRewriter::RewriteLabelStatement(const BoundStatement * node) const
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteLabelStatement(const BoundStatement * node) 
 {
 	auto p = dynamic_cast<const BoundLabelStatement*>(node);
 	if (p == nullptr)return nullptr;
@@ -925,7 +925,7 @@ unique_ptr<BoundStatement> BoundTreeRewriter::RewriteLabelStatement(const BoundS
 	return std::make_unique<BoundLabelStatement>(p->Label());
 }
 
-unique_ptr<BoundStatement> BoundTreeRewriter::RewriteGotoStatement(const BoundStatement * node) const
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteGotoStatement(const BoundStatement * node) 
 {
 	auto p = dynamic_cast<const BoundGotoStatement*>(node);
 	if (p == nullptr)return nullptr;
@@ -933,7 +933,7 @@ unique_ptr<BoundStatement> BoundTreeRewriter::RewriteGotoStatement(const BoundSt
 	return std::make_unique<BoundGotoStatement>(p->Label());
 }
 
-unique_ptr<BoundStatement> BoundTreeRewriter::RewriteConditionalGotoStatement(const BoundStatement * node) const
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteConditionalGotoStatement(const BoundStatement * node) 
 {
 	auto p = dynamic_cast<const BoundConditionalGotoStatement*>(node);
 	if (p == nullptr)return nullptr;
@@ -942,7 +942,7 @@ unique_ptr<BoundStatement> BoundTreeRewriter::RewriteConditionalGotoStatement(co
 	return std::make_unique<BoundConditionalGotoStatement>(p->Label(), condition, p->JumpIfFalse());
 }
 
-unique_ptr<BoundStatement> BoundTreeRewriter::RewriteExpressionStatement(const BoundStatement * node) const
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteExpressionStatement(const BoundStatement * node) 
 {
 	auto p = dynamic_cast<const BoundExpressionStatement*>(node);
 	if (p == nullptr)return nullptr;
@@ -951,7 +951,7 @@ unique_ptr<BoundStatement> BoundTreeRewriter::RewriteExpressionStatement(const B
 	return std::make_unique<BoundExpressionStatement>(expression);
 }
 
-unique_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(const BoundExpression * node) const
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(const BoundExpression * node) 
 {
 	switch (node->Kind())
 	{
@@ -970,7 +970,7 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(const BoundExpr
 	}
 }
 
-unique_ptr<BoundExpression> BoundTreeRewriter::RewriteLiteralExpression(const BoundExpression * node) const
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteLiteralExpression(const BoundExpression * node) 
 {
 	auto p = dynamic_cast<const BoundLiteralExpression*>(node);
 	if (p == nullptr)return nullptr;
@@ -978,7 +978,7 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteLiteralExpression(const Bo
 	return std::make_unique<BoundLiteralExpression>(p->Value());
 }
 
-unique_ptr<BoundExpression> BoundTreeRewriter::RewriteVariableExpression(const BoundExpression * node) const
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteVariableExpression(const BoundExpression * node) 
 {
 	auto p = dynamic_cast<const BoundVariableExpression*>(node);
 	if (p == nullptr)return nullptr;
@@ -986,7 +986,7 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteVariableExpression(const B
 	return std::make_unique<BoundVariableExpression>(p->Variable());
 }
 
-unique_ptr<BoundExpression> BoundTreeRewriter::RewriteAssignmentExpression(const BoundExpression * node) const
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteAssignmentExpression(const BoundExpression * node) 
 {
 	auto p = dynamic_cast<const BoundAssignmentExpression*>(node);
 	if (p == nullptr)return nullptr;
@@ -995,7 +995,7 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteAssignmentExpression(const
 	return std::make_unique<BoundAssignmentExpression>(p->Variable(), expression);
 }
 
-unique_ptr<BoundExpression> BoundTreeRewriter::RewriteUnaryExpression(const BoundExpression * node) const
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteUnaryExpression(const BoundExpression * node) 
 {
 	auto p = dynamic_cast<const BoundUnaryExpression*>(node);
 	if (p == nullptr)return nullptr;
@@ -1004,7 +1004,7 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteUnaryExpression(const Boun
 	return std::make_unique<BoundUnaryExpression>(*(p->Op()), operand);
 }
 
-unique_ptr<BoundExpression> BoundTreeRewriter::RewriteBinaryExpression(const BoundExpression * node) const
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteBinaryExpression(const BoundExpression * node) 
 {
 	auto p = dynamic_cast<const BoundBinaryExpression*>(node);
 	if (p == nullptr)return nullptr;
@@ -1012,6 +1012,13 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteBinaryExpression(const Bou
 	auto left = RewriteExpression(p->Left());
 	auto right = RewriteExpression(p->Right());
 	return std::make_unique<BoundBinaryExpression>(left, *(p->Op()), right);
+}
+
+LabelSymbol Lowerer::GenerateLabel()
+{
+	++_labelCount;
+	string name("Label" + std::to_string(_labelCount));
+	return LabelSymbol(name);
 }
 
 }//MCF

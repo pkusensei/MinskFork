@@ -502,26 +502,43 @@ public:
 
 class BoundTreeRewriter
 {
+	/*
+	* HACK The BoundTreeRewriter class takes the existing bound tree and analyzes 
+	* its structure. Its return value is a completely newly constructed bound tree.
+	* The original C# version tries its best to reduce memory allocation. This one
+	* does not.
+	*/
 protected:
-	virtual unique_ptr<BoundStatement> RewriteBlockStatement(const BoundStatement* node)const;
-	virtual unique_ptr<BoundStatement> RewriteVariableDeclaration(const BoundStatement* node)const;
-	virtual unique_ptr<BoundStatement> RewriteIfStatement(const BoundStatement* node)const;
-	virtual unique_ptr<BoundStatement> RewriteWhileStatement(const BoundStatement* node)const;
-	virtual unique_ptr<BoundStatement> RewriteForStatement(const BoundStatement* node)const;
-	virtual unique_ptr<BoundStatement> RewriteLabelStatement(const BoundStatement* node)const;
-	virtual unique_ptr<BoundStatement> RewriteGotoStatement(const BoundStatement* node)const;
-	virtual unique_ptr<BoundStatement> RewriteConditionalGotoStatement(const BoundStatement* node)const;
-	virtual unique_ptr<BoundStatement> RewriteExpressionStatement(const BoundStatement* node)const;
+	virtual unique_ptr<BoundStatement> RewriteBlockStatement(const BoundStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteVariableDeclaration(const BoundStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteIfStatement(const BoundStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteWhileStatement(const BoundStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteForStatement(const BoundStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteLabelStatement(const BoundStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteGotoStatement(const BoundStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteConditionalGotoStatement(const BoundStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteExpressionStatement(const BoundStatement* node);
 
-	virtual unique_ptr<BoundExpression> RewriteLiteralExpression(const BoundExpression* node)const;
-	virtual unique_ptr<BoundExpression> RewriteVariableExpression(const BoundExpression* node)const;
-	virtual unique_ptr<BoundExpression> RewriteAssignmentExpression(const BoundExpression* node)const;
-	virtual unique_ptr<BoundExpression> RewriteUnaryExpression(const BoundExpression* node)const;
-	virtual unique_ptr<BoundExpression> RewriteBinaryExpression(const BoundExpression* node)const;
+	virtual unique_ptr<BoundExpression> RewriteLiteralExpression(const BoundExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteVariableExpression(const BoundExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteAssignmentExpression(const BoundExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteUnaryExpression(const BoundExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteBinaryExpression(const BoundExpression* node);
 
 public:
-	virtual unique_ptr<BoundStatement> RewriteStatement(const BoundStatement* node)const;
-	virtual unique_ptr<BoundExpression> RewriteExpression(const BoundExpression* node)const;
+	virtual ~BoundTreeRewriter() = default;
+
+	virtual unique_ptr<BoundStatement> RewriteStatement(const BoundStatement* node);
+	virtual unique_ptr<BoundExpression> RewriteExpression(const BoundExpression* node);
+};
+
+class Lowerer :public BoundTreeRewriter
+{
+private:
+	size_t _labelCount{0};
+
+	Lowerer() = default;
+	LabelSymbol GenerateLabel();
 };
 
 }//MCF
