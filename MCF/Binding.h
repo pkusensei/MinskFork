@@ -7,8 +7,23 @@
 namespace MCF {
 
 class DiagnosticBag;
+
 class ExpressionSyntax;
+class ParenthesizedExpressionSyntax;
+class LiteralExpressionSyntax;
+class NameExpressionSyntax;
+class AssignmentExpressionSyntax;
+class UnaryExpressionSyntax;
+class BinaryExpressionSyntax;
+
 class StatementSyntax;
+class BlockStatementSyntax;
+class VariableDeclarationSyntax;
+class IfStatementSyntax;
+class WhileStatementSyntax;
+class ForStatementSyntax;
+class ExpressionStatementSyntax;
+
 class CompilationUnitSyntax;
 
 enum class BoundNodeKind
@@ -475,21 +490,21 @@ private:
 	unique_ptr<BoundScope> _scope;
 
 	unique_ptr<BoundStatement> BindStatement(const StatementSyntax* syntax);
-	unique_ptr<BoundStatement> BindBlockStatement(const StatementSyntax* syntax);
-	unique_ptr<BoundStatement> BindVariableDeclaration(const StatementSyntax* syntax);
-	unique_ptr<BoundStatement> BindIfStatement(const StatementSyntax* syntax);
-	unique_ptr<BoundStatement> BindWhileStatement(const StatementSyntax* syntax);
-	unique_ptr<BoundStatement> BindForStatement(const StatementSyntax* syntax);
-	unique_ptr<BoundStatement> BindExpressionStatement(const StatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindBlockStatement(const BlockStatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindVariableDeclaration(const VariableDeclarationSyntax* syntax);
+	unique_ptr<BoundStatement> BindIfStatement(const IfStatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindWhileStatement(const WhileStatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindForStatement(const ForStatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax* syntax);
 
 	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax, const type_index& targetType);
 	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindParenthesizedExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindLiteralExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindNameExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindAssignmentExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindUnaryExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindBinaryExpression(const ExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindParenthesizedExpression(const ParenthesizedExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindLiteralExpression(const LiteralExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindNameExpression(const NameExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindAssignmentExpression(const AssignmentExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindUnaryExpression(const UnaryExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindBinaryExpression(const BinaryExpressionSyntax* syntax);
 
 	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
 public:
@@ -503,27 +518,27 @@ public:
 class BoundTreeRewriter
 {
 	/*
-	* HACK The BoundTreeRewriter class takes the existing bound tree and analyzes 
+	* HACK The BoundTreeRewriter class takes the existing bound tree and analyzes
 	* its structure. Its return value is a completely newly constructed bound tree.
 	* The original C# version tries its best to reduce memory allocation. This one
 	* does not.
 	*/
 protected:
-	virtual unique_ptr<BoundStatement> RewriteBlockStatement(const BoundStatement* node);
-	virtual unique_ptr<BoundStatement> RewriteVariableDeclaration(const BoundStatement* node);
-	virtual unique_ptr<BoundStatement> RewriteIfStatement(const BoundStatement* node);
-	virtual unique_ptr<BoundStatement> RewriteWhileStatement(const BoundStatement* node);
-	virtual unique_ptr<BoundStatement> RewriteForStatement(const BoundStatement* node);
-	virtual unique_ptr<BoundStatement> RewriteLabelStatement(const BoundStatement* node);
-	virtual unique_ptr<BoundStatement> RewriteGotoStatement(const BoundStatement* node);
-	virtual unique_ptr<BoundStatement> RewriteConditionalGotoStatement(const BoundStatement* node);
-	virtual unique_ptr<BoundStatement> RewriteExpressionStatement(const BoundStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteBlockStatement(const BoundBlockStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteVariableDeclaration(const BoundVariableDeclaration* node);
+	virtual unique_ptr<BoundStatement> RewriteIfStatement(const BoundIfStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteWhileStatement(const BoundWhileStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteForStatement(const BoundForStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteLabelStatement(const BoundLabelStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteGotoStatement(const BoundGotoStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteConditionalGotoStatement(const BoundConditionalGotoStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteExpressionStatement(const BoundExpressionStatement* node);
 
-	virtual unique_ptr<BoundExpression> RewriteLiteralExpression(const BoundExpression* node);
-	virtual unique_ptr<BoundExpression> RewriteVariableExpression(const BoundExpression* node);
-	virtual unique_ptr<BoundExpression> RewriteAssignmentExpression(const BoundExpression* node);
-	virtual unique_ptr<BoundExpression> RewriteUnaryExpression(const BoundExpression* node);
-	virtual unique_ptr<BoundExpression> RewriteBinaryExpression(const BoundExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteLiteralExpression(const BoundLiteralExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteVariableExpression(const BoundVariableExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteAssignmentExpression(const BoundAssignmentExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteUnaryExpression(const BoundUnaryExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteBinaryExpression(const BoundBinaryExpression* node);
 
 public:
 	virtual ~BoundTreeRewriter() = default;
@@ -539,6 +554,11 @@ private:
 
 	Lowerer() = default;
 	LabelSymbol GenerateLabel();
+
+protected:
+	unique_ptr<BoundStatement> RewriteIfStatement(const BoundIfStatement* node)override;
+	unique_ptr<BoundStatement> RewriteWhileStatement(const BoundWhileStatement* node)override;
+	unique_ptr<BoundStatement> RewriteForStatement(const BoundForStatement* node)override;
 };
 
 }//MCF
