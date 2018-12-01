@@ -547,18 +547,21 @@ public:
 	virtual unique_ptr<BoundExpression> RewriteExpression(const BoundExpression* node);
 };
 
-class Lowerer :public BoundTreeRewriter
+class Lowerer final :public BoundTreeRewriter
 {
 private:
 	size_t _labelCount{0};
 
 	Lowerer() = default;
 	LabelSymbol GenerateLabel();
-
+	unique_ptr<BoundBlockStatement> Flatten(unique_ptr<BoundStatement>& statement);
 protected:
 	unique_ptr<BoundStatement> RewriteIfStatement(const BoundIfStatement* node)override;
 	unique_ptr<BoundStatement> RewriteWhileStatement(const BoundWhileStatement* node)override;
 	unique_ptr<BoundStatement> RewriteForStatement(const BoundForStatement* node)override;
+
+public:
+	static unique_ptr<BoundBlockStatement> Lower(const BoundStatement* statement);
 };
 
 }//MCF

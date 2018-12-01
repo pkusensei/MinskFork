@@ -297,9 +297,15 @@ EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueT
 	return EvaluationResult(diagnostics, value);
 }
 
+unique_ptr<BoundBlockStatement> Compilation::GetStatement()
+{
+	auto result = GlobalScope()->Statement();
+	return Lowerer::Lower(result);
+}
+
 void Compilation::EmitTree(std::ostream & out)
 {
-	auto statement = GlobalScope()->Statement();
+	auto statement = GetStatement();
 	statement->WriteTo(out);
 }
 

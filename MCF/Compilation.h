@@ -10,6 +10,7 @@ namespace MCF {
 class DiagnosticBag;
 class BoundExpression;
 class BoundStatement;
+class BoundBlockStatement;
 class BoundGlobalScope;
 class SyntaxTree;
 
@@ -63,6 +64,8 @@ private:
 	unique_ptr<BoundGlobalScope> _globalScope;
 
 	std::mutex _mtx;
+
+	unique_ptr<BoundBlockStatement> GetStatement();
 
 public:
 	Compilation(const unique_ptr<Compilation>& previous, const SyntaxTree& tree);

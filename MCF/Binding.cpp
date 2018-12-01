@@ -1003,7 +1003,7 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(const BoundExpr
 			auto p = dynamic_cast<const BoundAssignmentExpression*>(node);
 			if (p) return RewriteAssignmentExpression(p);
 			else break;
-		}		
+		}
 		case BoundNodeKind::UnaryExpression:
 		{
 			auto p = dynamic_cast<const BoundUnaryExpression*>(node);
@@ -1056,6 +1056,37 @@ LabelSymbol Lowerer::GenerateLabel()
 	++_labelCount;
 	string name("Label" + std::to_string(_labelCount));
 	return LabelSymbol(name);
+}
+
+unique_ptr<BoundBlockStatement> Lowerer::Lower(const BoundStatement * statement)
+{
+	Lowerer lowerer;
+	auto result = lowerer.RewriteStatement(statement);
+	return lowerer.Flatten(result);
+}
+
+unique_ptr<BoundBlockStatement> Lowerer::Flatten(unique_ptr<BoundStatement>& statement)
+{
+	auto result = vector<unique_ptr<BoundStatement>>();
+	auto stack = std::stack<unique_ptr<BoundStatement>>();
+	stack.emplace(std::move(statement));
+
+	while (!stack.empty())
+	{
+		auto current = std::move(stack.top());
+		stack.pop();
+
+		if (auto p = dynamic_cast<BoundBlockStatement*>(current.get()))
+		{
+			auto statements = p->Statements();
+			for (auto it = statements.cbegin(); it != statements.cend(); ++it)
+				stack.emplace(RewriteStatement(*it));
+		} else
+		{
+			result.emplace_back(std::move(current));
+		}
+	}
+	return std::make_unique<BoundBlockStatement>(result);
 }
 
 unique_ptr<BoundStatement> Lowerer::RewriteIfStatement(const BoundIfStatement * node)
@@ -1130,7 +1161,42 @@ unique_ptr<BoundStatement> Lowerer::RewriteWhileStatement(const BoundWhileStatem
 
 unique_ptr<BoundStatement> Lowerer::RewriteForStatement(const BoundForStatement * node)
 {
-	return unique_ptr<BoundStatement>();
+	auto lowerBound = RewriteExpression(node->LowerBound());
+	auto upperBound = RewriteExpression(node->UpperBound());
+	auto body = RewriteStatement(node->Body());
+
+	auto variableDeclaration = std::make_unique<BoundVariableDeclaration>(node->Variable(), lowerBound);
+	auto variableExpression = std::make_unique<BoundVariableExpression>(node->Variable());
+	auto condition = std::make_unique<BoundBinaryExpression>(
+		RewriteExpression(variableExpression.get()),
+		BoundBinaryOperator::Bind(SyntaxKind::LessOrEqualsToken, typeid(IntegerType), typeid(IntegerType)),
+		upperBound
+		);
+
+	auto increment = std::make_unique<BoundExpressionStatement>(
+		std::make_unique<BoundAssignmentExpression>(
+			node->Variable(),
+			std::make_unique<BoundBinaryExpression>(
+				RewriteExpression(variableExpression.get()),
+				BoundBinaryOperator::Bind(SyntaxKind::PlusToken, typeid(IntegerType), typeid(IntegerType)),
+				std::make_unique<BoundLiteralExpression>(1)
+				)
+			)
+		);
+
+	auto statements = vector<unique_ptr<BoundStatement>>();
+	statements.emplace_back(std::move(body));
+	statements.emplace_back(std::move(increment));
+	auto whileStatement = std::make_unique<BoundWhileStatement>(
+		RewriteExpression(condition.get()),
+		std::make_unique<BoundBlockStatement>(statements) // whileBody
+		);
+
+	statements.clear();
+	statements.emplace_back(std::move(variableDeclaration));
+	statements.emplace_back(std::move(whileStatement));
+	auto result = std::make_unique<BoundBlockStatement>(statements);
+	return RewriteStatement(result.get());
 }
 
 }//MCF
