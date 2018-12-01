@@ -286,4 +286,9 @@ size_t VariableHash::operator()(const VariableSymbol & variable) const noexcept
 	return h1 ^ (h2 << 1);
 }
 
+size_t LabelHash::operator()(const LabelSymbol & label) const noexcept
+{
+	return std::hash<string>{}(label.Name());
+}
+
 }//MCF

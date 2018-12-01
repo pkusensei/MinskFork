@@ -156,4 +156,23 @@ struct MCF_API VariableHash
 	size_t operator()(const VariableSymbol& variable) const noexcept;
 };
 
+class LabelSymbol final
+{
+private:
+	string _name;
+public:
+	explicit LabelSymbol(const string& name) :_name(name) {}
+
+	bool operator==(const LabelSymbol& other) const noexcept { return _name == other._name; }
+	bool operator!=(const LabelSymbol& other) const noexcept { return !(*this == other); }
+
+	string Name()const { return _name; }
+	string ToString()const { return _name; }
+};
+
+struct LabelHash
+{
+	size_t operator()(const LabelSymbol& label) const noexcept;
+};
+
 }//MCF

@@ -223,7 +223,7 @@ class BoundLiteralExpression final : public BoundExpression
 private:
 	ValueType _value;
 public:
-	BoundLiteralExpression(const ValueType& value);
+	explicit BoundLiteralExpression(const ValueType& value);
 	BoundLiteralExpression(BoundLiteralExpression&&) = default;
 	BoundLiteralExpression& operator=(BoundLiteralExpression&&) = default;
 
@@ -271,7 +271,7 @@ class BoundBlockStatement final : public BoundStatement
 private:
 	vector<unique_ptr<BoundStatement>> _statements;
 public:
-	BoundBlockStatement(const vector<unique_ptr<BoundStatement>>& statements);
+	explicit BoundBlockStatement(const vector<unique_ptr<BoundStatement>>& statements);
 	BoundBlockStatement(BoundBlockStatement&&) = default;
 	BoundBlockStatement& operator=(BoundBlockStatement&&) = default;
 
@@ -364,6 +364,59 @@ public:
 	const BoundStatement* Body()const noexcept { return _body.get(); }
 };
 
+class BoundLabelStatement final :public BoundStatement
+{
+private:
+	LabelSymbol _label;
+public:
+	explicit BoundLabelStatement(const LabelSymbol& label);
+	BoundLabelStatement(BoundLabelStatement&&) = default;
+	BoundLabelStatement& operator=(BoundLabelStatement&&) = default;
+
+	// Inherited via BoundStatement
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LabelStatement; }
+	const vector<std::pair<string, string>> GetProperties() const override;
+
+	LabelSymbol Label()const { return _label; }
+};
+
+class BoundGotoStatement final :public BoundStatement
+{
+private:
+	LabelSymbol _label;
+public:
+	explicit BoundGotoStatement(const LabelSymbol& label);
+	BoundGotoStatement(BoundGotoStatement&&) = default;
+	BoundGotoStatement& operator=(BoundGotoStatement&&) = default;
+
+	// Inherited via BoundStatement
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::GotoStatement; }
+	const vector<std::pair<string, string>> GetProperties() const override;
+
+	LabelSymbol Label()const { return _label; }
+};
+
+class BoundConditionalGotoStatement final :public BoundStatement
+{
+private:
+	LabelSymbol _label;
+	unique_ptr<BoundExpression> _condition;
+	bool _jumpIfFalse;
+public:
+	BoundConditionalGotoStatement(const LabelSymbol& label, const unique_ptr<BoundExpression>& condition, bool jumpIfFalse);
+	BoundConditionalGotoStatement(BoundConditionalGotoStatement&&) = default;
+	BoundConditionalGotoStatement& operator=(BoundConditionalGotoStatement&&) = default;
+
+	// Inherited via BoundStatement
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ConditionalGotoStatement; }
+	const vector<std::pair<string, string>> GetProperties() const override;
+	const vector<const BoundNode*> GetChildren() const override;
+
+	LabelSymbol Label()const { return _label; }
+	const BoundExpression* Condition()const { return _condition.get(); }
+	bool JumpIfFalse()const noexcept { return _jumpIfFalse; }
+};
+
 class BoundExpressionStatement final : public BoundStatement
 {
 private:
@@ -445,6 +498,30 @@ public:
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
 
 	static unique_ptr<BoundGlobalScope> BindGlobalScope(const BoundGlobalScope* previous, const CompilationUnitSyntax* syntax);
+};
+
+class BoundTreeRewriter
+{
+protected:
+	virtual unique_ptr<BoundStatement> RewriteBlockStatement(const BoundStatement* node)const;
+	virtual unique_ptr<BoundStatement> RewriteVariableDeclaration(const BoundStatement* node)const;
+	virtual unique_ptr<BoundStatement> RewriteIfStatement(const BoundStatement* node)const;
+	virtual unique_ptr<BoundStatement> RewriteWhileStatement(const BoundStatement* node)const;
+	virtual unique_ptr<BoundStatement> RewriteForStatement(const BoundStatement* node)const;
+	virtual unique_ptr<BoundStatement> RewriteLabelStatement(const BoundStatement* node)const;
+	virtual unique_ptr<BoundStatement> RewriteGotoStatement(const BoundStatement* node)const;
+	virtual unique_ptr<BoundStatement> RewriteConditionalGotoStatement(const BoundStatement* node)const;
+	virtual unique_ptr<BoundStatement> RewriteExpressionStatement(const BoundStatement* node)const;
+
+	virtual unique_ptr<BoundExpression> RewriteLiteralExpression(const BoundExpression* node)const;
+	virtual unique_ptr<BoundExpression> RewriteVariableExpression(const BoundExpression* node)const;
+	virtual unique_ptr<BoundExpression> RewriteAssignmentExpression(const BoundExpression* node)const;
+	virtual unique_ptr<BoundExpression> RewriteUnaryExpression(const BoundExpression* node)const;
+	virtual unique_ptr<BoundExpression> RewriteBinaryExpression(const BoundExpression* node)const;
+
+public:
+	virtual unique_ptr<BoundStatement> RewriteStatement(const BoundStatement* node)const;
+	virtual unique_ptr<BoundExpression> RewriteExpression(const BoundExpression* node)const;
 };
 
 }//MCF

@@ -47,7 +47,7 @@ void Evaluator::EvaluateStatement(const BoundStatement * node)
 			EvaluateExpressionStatement(node);
 			break;
 		default:
-			throw std::invalid_argument("unexpected node.");
+			throw std::invalid_argument("unexpected node " + GetEnumText(node->Kind()));
 	}
 
 }
@@ -129,7 +129,7 @@ ValueType Evaluator::EvaluateExpression(const BoundExpression * node)const
 		case BoundNodeKind::BinaryExpression:
 			return EvaluateBinaryExpression(node);
 		default:
-			throw std::invalid_argument("Invalid expression; evaluation failed.");
+			throw std::invalid_argument("Invalid expression " + GetEnumText(node->Kind()));
 	}
 }
 
@@ -170,7 +170,7 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundExpression * node)const
 		case BoundUnaryOperatorKind::OnesComplement:
 			return ~operand.GetValue<IntegerType>();
 		default:
-			throw std::invalid_argument("Invalid unary operator.");
+			throw std::invalid_argument("Invalid unary operator " + GetEnumText(p->Op()->Kind()));
 	}
 }
 
@@ -221,7 +221,7 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundExpression * node)const
 			return left.GetValue<IntegerType>() >= right.GetValue<IntegerType>();
 
 		default:
-			throw std::invalid_argument("Invalid binary operator");
+			throw std::invalid_argument("Invalid binary operator " + GetEnumText(p->Op()->Kind()));
 	}
 }
 
