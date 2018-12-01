@@ -37,7 +37,7 @@ int main()
 
 		if (!std::cin.eof() && !std::cin.fail())
 			text += input + '\r'; // HACK Windows does "\r\n" together
-		auto tree = std::make_unique<MCF::SyntaxTree>(MCF::SyntaxTree::Parse(text));
+		auto tree = MCF::SyntaxTree::Parse(text);
 		if (!isBlank && !tree->Diagnostics()->empty())
 			continue;
 

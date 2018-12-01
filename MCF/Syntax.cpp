@@ -907,15 +907,15 @@ SyntaxTree::SyntaxTree(SyntaxTree && other) = default;
 SyntaxTree & SyntaxTree::operator=(SyntaxTree && other) = default;
 SyntaxTree::~SyntaxTree() = default;
 
-SyntaxTree SyntaxTree::Parse(const string & text)
+unique_ptr<SyntaxTree> SyntaxTree::Parse(const string & text)
 {
 	auto sourceText = SourceText::From(text);
 	return Parse(sourceText);
 }
 
-SyntaxTree SyntaxTree::Parse(const SourceText & text)
+unique_ptr<SyntaxTree> SyntaxTree::Parse(const SourceText & text)
 {
-	return SyntaxTree(text);
+	return std::make_unique<SyntaxTree>(text);
 }
 
 vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const string & text)

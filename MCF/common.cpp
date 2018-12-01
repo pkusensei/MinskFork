@@ -203,7 +203,7 @@ string ValueType::ToString() const
 			result = std::to_string(GetValue<IntegerType>());
 			break;
 		case 2:
-			result = std::to_string(GetValue<bool>());
+			result = GetValue<bool>() ? "True" : "False";
 			break;
 		default:
 			break;

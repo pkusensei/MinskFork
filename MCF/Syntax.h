@@ -437,9 +437,9 @@ private:
 	unique_ptr<DiagnosticBag> _diagnostics;
 	unique_ptr<CompilationUnitSyntax> _root;
 
+public:
 	explicit SyntaxTree(const SourceText& text);
 
-public:
 	SyntaxTree(SyntaxTree&& other);
 	SyntaxTree& operator=(SyntaxTree&& other);
 	~SyntaxTree();
@@ -448,8 +448,8 @@ public:
 	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
 	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics.get(); }
 
-	static SyntaxTree Parse(const string& text);
-	static SyntaxTree Parse(const SourceText& text);
+	static unique_ptr<SyntaxTree> Parse(const string& text);
+	static unique_ptr<SyntaxTree> Parse(const SourceText& text);
 	static vector<unique_ptr<SyntaxToken>> ParseTokens(const string& text);
 	static vector<unique_ptr<SyntaxToken>> ParseTokens(const SourceText& text);
 };
