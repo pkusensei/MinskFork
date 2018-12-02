@@ -75,7 +75,7 @@ int main()
 			std::cout << "\n";
 		}
 		std::cout << "\n";
-		text = "";
+		text.clear();
 	}
 	return 0;
 }

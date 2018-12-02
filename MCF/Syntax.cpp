@@ -42,6 +42,8 @@ string GetText(const SyntaxKind& kind)
 		case SyntaxKind::StarToken: return "*";
 		case SyntaxKind::SlashToken: return "/";
 		case SyntaxKind::BangToken: return "!";
+		case SyntaxKind::PlusPlusToken: return "++";
+		case SyntaxKind::MinusMinusToken: return "--";
 		case SyntaxKind::EqualsToken: return "=";
 		case SyntaxKind::TildeToken: return "~";
 		case SyntaxKind::HatToken: return "^";

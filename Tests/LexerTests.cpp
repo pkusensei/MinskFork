@@ -115,7 +115,7 @@ private:
 		for (const auto& kind : kinds)
 		{
 			auto text = MCF::GetText(kind);
-			if (text.length() > 0)
+			if (!text.empty())
 				result.emplace_back(kind, text);
 		}
 
