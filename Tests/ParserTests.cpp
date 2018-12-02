@@ -169,7 +169,7 @@ public:
 private:
 	const MCF::ExpressionSyntax* ParseExpression(const std::string& text)
 	{
-		_tree = std::make_unique<MCF::SyntaxTree>(MCF::SyntaxTree::Parse(text));
+		_tree = MCF::SyntaxTree::Parse(text);
 		auto root = _tree->Root();
 		auto statement = root->Statement();
 		Assert::IsTrue(typeid(MCF::ExpressionStatementSyntax) == typeid(*statement));

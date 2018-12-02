@@ -213,6 +213,16 @@ private:
 		if (t1kind == MCF::SyntaxKind::GreaterToken && t2kind == MCF::SyntaxKind::EqualsEqualsToken)
 			return true;
 
+		if (t1kind == MCF::SyntaxKind::AmpersandToken && t2kind == MCF::SyntaxKind::AmpersandToken)
+			return true;
+		if (t1kind == MCF::SyntaxKind::AmpersandToken && t2kind == MCF::SyntaxKind::AmpersandAmpersandToken)
+			return true;
+		if (t1kind == MCF::SyntaxKind::PipeToken && t2kind == MCF::SyntaxKind::PipeToken)
+			return true;
+		if (t1kind == MCF::SyntaxKind::PipeToken && t2kind == MCF::SyntaxKind::PipePipeToken)
+			return true;
+
+
 		return false;
 	}
 };
