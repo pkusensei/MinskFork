@@ -129,7 +129,7 @@ private:
 	BoundUnaryOperator(const SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
 					   const type_index& operandType);
 	BoundUnaryOperator();
-	static BoundUnaryOperator _operators[4];
+	static const vector<BoundUnaryOperator> _operators;
 public:
 
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
@@ -178,7 +178,7 @@ private:
 	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, const type_index& type);
 	BoundBinaryOperator();
 
-	static BoundBinaryOperator _operators[20];
+	static const vector<BoundBinaryOperator> _operators;
 public:
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
 	constexpr BoundBinaryOperatorKind Kind()const noexcept { return _kind; }

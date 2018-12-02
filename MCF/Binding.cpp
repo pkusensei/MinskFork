@@ -188,7 +188,7 @@ BoundUnaryOperator::BoundUnaryOperator()
 	_isUseful = false;
 }
 
-BoundUnaryOperator BoundUnaryOperator::_operators[] = {
+const vector<BoundUnaryOperator> BoundUnaryOperator::_operators = {
 	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation, typeid(bool)),
 	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity, typeid(IntegerType)),
 	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation, typeid(IntegerType)),
@@ -248,7 +248,7 @@ BoundBinaryOperator::BoundBinaryOperator()
 	_isUseful = false;
 }
 
-BoundBinaryOperator BoundBinaryOperator::_operators[] = {
+const vector<BoundBinaryOperator> BoundBinaryOperator::_operators = {
 	BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, typeid(IntegerType)),
 	BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction, typeid(IntegerType)),
 	BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication, typeid(IntegerType)),
