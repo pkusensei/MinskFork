@@ -10,6 +10,131 @@
 
 namespace MCF {
 
+SyntaxKind GetKeywordKind(const string & text) noexcept
+{
+	if (text == "else")
+		return SyntaxKind::ElseKeyword;
+	else if (text == "false")
+		return SyntaxKind::FalseKeyword;
+	else if (text == "for")
+		return SyntaxKind::ForKeyword;
+	else if (text == "if")
+		return SyntaxKind::IfKeyword;
+	else if (text == "let")
+		return SyntaxKind::LetKeyword;
+	else if (text == "to")
+		return SyntaxKind::ToKeyword;
+	else if (text == "true")
+		return SyntaxKind::TrueKeyword;
+	else if (text == "var")
+		return SyntaxKind::VarKeyword;
+	else if (text == "while")
+		return SyntaxKind::WhileKeyword;
+	else return SyntaxKind::IdentifierToken;
+}
+
+string GetText(const SyntaxKind& kind)
+{
+	switch (kind)
+	{
+		case SyntaxKind::PlusToken: return "+";
+		case SyntaxKind::MinusToken: return "-";
+		case SyntaxKind::StarToken: return "*";
+		case SyntaxKind::SlashToken: return "/";
+		case SyntaxKind::BangToken: return "!";
+		case SyntaxKind::EqualsToken: return "=";
+		case SyntaxKind::TildeToken: return "~";
+		case SyntaxKind::HatToken: return "^";
+		case SyntaxKind::AmpersandToken: return "&";
+		case SyntaxKind::AmpersandAmpersandToken: return "&&";
+		case SyntaxKind::PipeToken: return "|";
+		case SyntaxKind::PipePipeToken: return "||";
+		case SyntaxKind::EqualsEqualsToken: return "==";
+		case SyntaxKind::BangEqualsToken: return "!=";
+		case SyntaxKind::LessToken: return "<";
+		case SyntaxKind::LessOrEqualsToken: return "<=";
+		case SyntaxKind::GreaterToken: return ">";
+		case SyntaxKind::GreaterOrEqualsToken: return ">=";
+		case SyntaxKind::OpenParenthesisToken: return "(";
+		case SyntaxKind::CloseParenthesisToken: return ")";
+		case SyntaxKind::OpenBraceToken: return "{";
+		case SyntaxKind::CloseBraceToken: return "}";
+		case SyntaxKind::ElseKeyword: return "else";
+		case SyntaxKind::FalseKeyword: return "false";
+		case SyntaxKind::ForKeyword: return "for";
+		case SyntaxKind::IfKeyword: return "if";
+		case SyntaxKind::LetKeyword: return "let";
+		case SyntaxKind::ToKeyword: return "to";
+		case SyntaxKind::TrueKeyword: return "true";
+		case SyntaxKind::VarKeyword: return "var";
+		case SyntaxKind::WhileKeyword: return "while";
+		default: return string();
+	}
+}
+
+int GetUnaryOperatorPrecedence(const SyntaxKind& kind) noexcept
+{
+	switch (kind)
+	{
+		case SyntaxKind::PlusToken:
+		case SyntaxKind::MinusToken:
+		case SyntaxKind::BangToken:
+		case SyntaxKind::TildeToken:
+			return 6;
+		default:
+			return 0;
+	}
+}
+
+int GetBinaryOperatorPrecedence(const SyntaxKind& kind) noexcept
+{
+	switch (kind)
+	{
+		case SyntaxKind::StarToken:
+		case SyntaxKind::SlashToken:
+			return 5;
+		case SyntaxKind::PlusToken:
+		case SyntaxKind::MinusToken:
+			return 4;
+		case SyntaxKind::EqualsEqualsToken:
+		case SyntaxKind::BangEqualsToken:
+		case SyntaxKind::LessToken:
+		case SyntaxKind::LessOrEqualsToken:
+		case SyntaxKind::GreaterToken:
+		case SyntaxKind::GreaterOrEqualsToken:
+			return 3;
+		case SyntaxKind::AmpersandToken:
+		case SyntaxKind::AmpersandAmpersandToken:
+			return 2;
+		case SyntaxKind::PipeToken:
+		case SyntaxKind::PipePipeToken:
+		case SyntaxKind::HatToken:
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+vector<SyntaxKind> GetUnaryOperatorKinds()
+{
+	auto kinds = GetAllSyntaxKinds();
+	auto result = vector<SyntaxKind>();
+	for (const auto& it : kinds)
+		if (GetUnaryOperatorPrecedence(it) > 0)
+			result.emplace_back(it);
+	return result;
+}
+
+vector<SyntaxKind> GetBinaryOperatorKinds()
+{
+	auto kinds = GetAllSyntaxKinds();
+	auto result = vector<SyntaxKind>();
+	for (const auto& it : kinds)
+		if (GetBinaryOperatorPrecedence(it) > 0)
+			result.emplace_back(it);
+	return result;
+}
+
 void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node, string indent, bool isLast)
 {
 	string marker = isLast ? "+--" : "---";//"©¸©¤©¤" : "©À©¤©¤";
@@ -19,10 +144,10 @@ void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node, string
 	{
 		out << " " << token->Value().GetValue<IntegerType>();
 	}
-	out << std::endl;
+	out << "\n";
 	indent += isLast ? "   " : "|  ";
 	auto children = node->GetChildren();
-	if (children.size() > 0)
+	if (!children.empty())
 	{
 		auto lastChild = children.back();
 		for (const auto& child : children)
@@ -77,7 +202,7 @@ TextSpan SyntaxToken::Span() const
 #pragma region Lexer
 Lexer::Lexer(const SourceText& text)
 	:_text(&text), _diagnostics(std::make_unique<DiagnosticBag>()),
-	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(ValueType())
+	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(NullValue)
 {
 }
 
@@ -93,7 +218,7 @@ SyntaxToken Lexer::Lex()
 {
 	_start = _position;
 	_kind = SyntaxKind::BadToken;
-	_value = ValueType();
+	_value = NullValue;
 	auto character = Current();
 
 	switch (character)
@@ -148,24 +273,40 @@ SyntaxToken Lexer::Lex()
 			Next();
 			_kind = SyntaxKind::CloseBraceToken;
 			break;
+		case '~':
+			Next();
+			_kind = SyntaxKind::TildeToken;
+			break;
+		case '^':
+			Next();
+			_kind = SyntaxKind::HatToken;
+			break;
 		case '&':
 			if (Lookahead() == '&')
 			{
-				_position += 2;
+				Next(2);
 				_kind = SyntaxKind::AmpersandAmpersandToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::AmpersandToken;
 			}
 			break;
 		case '|':
 			if (Lookahead() == '|')
 			{
-				_position += 2;
+				Next(2);
 				_kind = SyntaxKind::PipePipeToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::PipeToken;
 			}
 			break;
 		case '=':
 			if (Lookahead() == '=')
 			{
-				_position += 2;
+				Next(2);
 				_kind = SyntaxKind::EqualsEqualsToken;
 			} else
 			{
@@ -176,7 +317,7 @@ SyntaxToken Lexer::Lex()
 		case '!':
 			if (Lookahead() == '=')
 			{
-				_position += 2;
+				Next(2);
 				_kind = SyntaxKind::BangEqualsToken;
 			} else
 			{
@@ -187,7 +328,7 @@ SyntaxToken Lexer::Lex()
 		case '<':
 			if (Lookahead() == '=')
 			{
-				_position += 2;
+				Next(2);
 				_kind = SyntaxKind::LessOrEqualsToken;
 			} else
 			{
@@ -198,7 +339,7 @@ SyntaxToken Lexer::Lex()
 		case '>':
 			if (Lookahead() == '=')
 			{
-				_position += 2;
+				Next(2);
 				_kind = SyntaxKind::GreaterOrEqualsToken;
 			} else
 			{
@@ -571,7 +712,7 @@ SyntaxToken Parser::MatchToken(const SyntaxKind& kind)
 	if (current->Kind() == kind)
 		return NextToken();
 	_diagnostics->ReportUnexpectedToken(current->Span(), current->Kind(), kind);
-	return SyntaxToken(kind, current->Position(), string(), ValueType());
+	return SyntaxToken(kind, current->Position(), string(), NullValue);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseStatement()
@@ -782,24 +923,19 @@ SyntaxTree::SyntaxTree(const SourceText& text)
 	_diagnostics->AddRange(*parser.Diagnostics());
 }
 
-SyntaxTree::SyntaxTree(SyntaxTree && other)noexcept
-{
-	_text.swap(other._text);
-	_diagnostics.swap(other._diagnostics);
-	_root.swap(other._root);
-}
-
+SyntaxTree::SyntaxTree(SyntaxTree && other) = default;
+SyntaxTree & SyntaxTree::operator=(SyntaxTree && other) = default;
 SyntaxTree::~SyntaxTree() = default;
 
-SyntaxTree SyntaxTree::Parse(const string & text)
+unique_ptr<SyntaxTree> SyntaxTree::Parse(const string & text)
 {
 	auto sourceText = SourceText::From(text);
 	return Parse(sourceText);
 }
 
-SyntaxTree SyntaxTree::Parse(const SourceText & text)
+unique_ptr<SyntaxTree> SyntaxTree::Parse(const SourceText & text)
 {
-	return SyntaxTree(text);
+	return std::make_unique<SyntaxTree>(text);
 }
 
 vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const string & text)

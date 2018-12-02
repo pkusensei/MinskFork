@@ -37,6 +37,7 @@ public:
 	DiagnosticBag& operator=(DiagnosticBag&&) = default;
 
 	size_t size() const noexcept { return _diagnostics.size(); }
+	bool empty()const noexcept { return size() == 0; }
 
 	class iterator;
 	const Diagnostic& operator[](size_t idx) const;

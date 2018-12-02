@@ -20,6 +20,12 @@ using std::vector;
 
 using IntegerType = long; // HACK use long as interger type
 
+/// string helpers
+MCF_API bool StringEndsWith(const string& sample, const string& ending);
+MCF_API string TrimString(const string& text);
+MCF_API string TrimStringStart(const string& text);
+MCF_API string TrimStringEnd(const string& text);
+
 enum class SyntaxKind
 {
 	// Tokens
@@ -35,7 +41,11 @@ enum class SyntaxKind
 	PlusPlusToken,
 	MinusMinusToken,
 	EqualsToken,
+	TildeToken,
+	HatToken,
+	AmpersandToken,
 	AmpersandAmpersandToken,
+	PipeToken,
 	PipePipeToken,
 	EqualsEqualsToken,
 	BangEqualsToken,
@@ -86,20 +96,6 @@ SyntaxKind& operator++(SyntaxKind& kind, int c);
 MCF_API const vector<SyntaxKind> GetAllSyntaxKinds();
 MCF_API string GetSyntaxKindName(const SyntaxKind& kind);
 
-/// helpers
-MCF_API bool StringEndsWith(const string& sample, const string& ending);
-MCF_API string TrimString(const string& text);
-MCF_API string TrimStringStart(const string& text);
-MCF_API string TrimStringEnd(const string& text);
-
-/// namespace-scope functions
-SyntaxKind GetKeywordKind(const string& text) noexcept;
-MCF_API string GetText(const SyntaxKind& kind);
-MCF_API int GetUnaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
-MCF_API int GetBinaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
-MCF_API vector<SyntaxKind> GetUnaryOperatorKinds();
-MCF_API vector<SyntaxKind> GetBinaryOperatorKinds();
-
 class MCF_API ValueType final
 {
 private:
@@ -116,10 +112,9 @@ public:
 	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
 	type_index Type()const;
 
-	void WriteTo(std::ostream& out) const;
-
 	constexpr bool operator==(const ValueType& other)const { return _inner == other._inner; }
 	constexpr bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }
+	string ToString()const;
 
 	template<typename T>
 	constexpr decltype(auto) GetValue() const
@@ -130,6 +125,9 @@ public:
 	static int GetValueTypeId(const type_index & inType);
 	static string GetTypeName(const type_index& inType);
 };
+
+const auto NullValue = ValueType(); // Note global constant
+MCF_API std::ostream& operator<<(std::ostream& out, const ValueType& value);
 
 class MCF_API VariableSymbol final
 {
@@ -149,6 +147,7 @@ public:
 	string Name()const { return _name; }
 	constexpr bool IsReadOnly()const noexcept { return _isReadOnly; }
 	type_index Type()const { return _type; }
+	string ToString()const { return Name(); }
 
 	bool operator==(const VariableSymbol& other) const noexcept;
 	bool operator!=(const VariableSymbol& other) const noexcept;
@@ -157,6 +156,25 @@ public:
 struct MCF_API VariableHash
 {
 	size_t operator()(const VariableSymbol& variable) const noexcept;
+};
+
+class LabelSymbol final
+{
+private:
+	string _name;
+public:
+	explicit LabelSymbol(const string& name) :_name(name) {}
+
+	bool operator==(const LabelSymbol& other) const noexcept { return _name == other._name; }
+	bool operator!=(const LabelSymbol& other) const noexcept { return !(*this == other); }
+
+	string Name()const { return _name; }
+	string ToString()const { return Name(); }
+};
+
+struct LabelHash
+{
+	size_t operator()(const LabelSymbol& label) const noexcept;
 };
 
 }//MCF

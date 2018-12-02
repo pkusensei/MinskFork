@@ -4,11 +4,17 @@
 
 namespace MCF {
 
+SyntaxKind GetKeywordKind(const string& text) noexcept;
+MCF_API string GetText(const SyntaxKind& kind);
+MCF_API int GetUnaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
+MCF_API int GetBinaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
+MCF_API vector<SyntaxKind> GetUnaryOperatorKinds();
+MCF_API vector<SyntaxKind> GetBinaryOperatorKinds();
+
 class DiagnosticBag;
 class TextSpan;
 class SourceText;
 class SyntaxTree;
-
 
 class MCF_API SyntaxNode
 {
@@ -45,7 +51,7 @@ public:
 
 	constexpr size_t Position() const noexcept { return _position; }
 	string Text() const { return _text; }
-	constexpr ValueType Value() const noexcept { return _value; }
+	ValueType Value() const noexcept { return _value; }
 };
 
 class Lexer final
@@ -62,7 +68,7 @@ private:
 	char Peek(int offset) const;
 	char Current() const { return Peek(0); }
 	char Lookahead() const { return Peek(1); }
-	constexpr void Next() noexcept { _position++; }
+	constexpr void Next(size_t step = 1) noexcept { _position += step; }
 
 	void ReadWhiteSpace();
 	void ReadNumberToken();
@@ -180,7 +186,7 @@ public:
 	const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken LiteralToken()const { return _literalToken; }
-	constexpr ValueType Value()const { return _value; }
+	ValueType Value()const { return _value; }
 };
 
 class NameExpressionSyntax final :public ExpressionSyntax
@@ -431,18 +437,19 @@ private:
 	unique_ptr<DiagnosticBag> _diagnostics;
 	unique_ptr<CompilationUnitSyntax> _root;
 
+public:
 	explicit SyntaxTree(const SourceText& text);
 
-public:
-	SyntaxTree(SyntaxTree&& other)noexcept;
+	SyntaxTree(SyntaxTree&& other);
+	SyntaxTree& operator=(SyntaxTree&& other);
 	~SyntaxTree();
 
 	const SourceText& Text() const { return *_text; }
 	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
 	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics.get(); }
 
-	static SyntaxTree Parse(const string& text);
-	static SyntaxTree Parse(const SourceText& text);
+	static unique_ptr<SyntaxTree> Parse(const string& text);
+	static unique_ptr<SyntaxTree> Parse(const SourceText& text);
 	static vector<unique_ptr<SyntaxToken>> ParseTokens(const string& text);
 	static vector<unique_ptr<SyntaxToken>> ParseTokens(const SourceText& text);
 };

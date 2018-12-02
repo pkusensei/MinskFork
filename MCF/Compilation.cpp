@@ -12,7 +12,7 @@ EvaluationResult::EvaluationResult(const DiagnosticBag* diagnostics, const Value
 {
 }
 
-Evaluator::Evaluator(const BoundStatement* root, const std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
+Evaluator::Evaluator(const BoundBlockStatement* root, const std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
 	: _root(root),
 	_variables(std::remove_const_t<std::unordered_map<VariableSymbol, ValueType, VariableHash>*>(&variables))
 {
@@ -20,98 +20,83 @@ Evaluator::Evaluator(const BoundStatement* root, const std::unordered_map<Variab
 
 ValueType Evaluator::Evaluate()
 {
-	EvaluateStatement(_root);
+	auto labelToIndex = std::unordered_map<LabelSymbol, size_t, LabelHash>();
+	auto statements = _root->Statements();
+	for (size_t i = 0; i < statements.size(); ++i)
+	{
+		auto p = dynamic_cast<BoundLabelStatement*>(statements[i]);
+		if (p)
+			labelToIndex.emplace(p->Label(), i + 1);
+	}
+
+	size_t index = 0;
+	while (index < statements.size())
+	{
+		auto s = statements[index];
+		switch (s->Kind())
+		{
+			case BoundNodeKind::VariableDeclaration:
+			{
+				auto p = dynamic_cast<BoundVariableDeclaration*>(s);
+				if (p)
+				{
+					EvaluateVariableDeclaration(p);
+					++index;
+					break;
+				}
+			}
+			case BoundNodeKind::ExpressionStatement:
+			{
+				auto p = dynamic_cast<BoundExpressionStatement*>(s);
+				if (p)
+				{
+					EvaluateExpressionStatement(p);
+					++index;
+					break;
+				}
+			}
+			case BoundNodeKind::GotoStatement:
+			{
+				auto gs = dynamic_cast<BoundGotoStatement*>(s);
+				if (gs)
+				{
+					index = labelToIndex[gs->Label()];
+					break;
+				}
+			}
+			case BoundNodeKind::ConditionalGotoStatement:
+			{
+				auto cgs = dynamic_cast<BoundConditionalGotoStatement*>(s);
+				if (cgs)
+				{
+					auto condition = EvaluateExpression(cgs->Condition()).GetValue<bool>();
+					if ((condition && !cgs->JumpIfFalse()) ||
+						(!condition && cgs->JumpIfFalse()))
+						index = labelToIndex[cgs->Label()];
+					else ++index;
+					break;
+				}
+			}
+			case BoundNodeKind::LabelStatement:
+				++index;
+				break;
+			default:
+				throw std::invalid_argument("Unexpected statement " + GetEnumText(s->Kind()));
+		}
+	}
 	return _lastValue;
 }
 
-void Evaluator::EvaluateStatement(const BoundStatement * node)
+void Evaluator::EvaluateVariableDeclaration(const BoundVariableDeclaration * node)
 {
-	switch (node->Kind())
-	{
-		case BoundNodeKind::BlockStatement:
-			EvaluateBlockStatement(node);
-			break;
-		case BoundNodeKind::VariableDeclaration:
-			EvaluateVariableDeclaration(node);
-			break;
-		case BoundNodeKind::IfStatement:
-			EvaluateIfStatement(node);
-			break;
-		case BoundNodeKind::WhileStatement:
-			EvaluateWhileStatement(node);
-			break;
-		case BoundNodeKind::ForStatement:
-			EvaluateForStatement(node);
-			break;
-		case BoundNodeKind::ExpressionStatement:
-			EvaluateExpressionStatement(node);
-			break;
-		default:
-			throw std::invalid_argument("unexpected node.");
-	}
-
-}
-
-void Evaluator::EvaluateBlockStatement(const BoundStatement * node)
-{
-	auto p = dynamic_cast<const BoundBlockStatement*>(node);
-	if (p == nullptr) return;
-
-	for (const auto& it : p->Statements())
-		EvaluateStatement(it);
-}
-
-void Evaluator::EvaluateVariableDeclaration(const BoundStatement * node)
-{
-	auto p = dynamic_cast<const BoundVariableDeclaration*>(node);
-	if (p == nullptr) return;
-
-	auto value = EvaluateExpression(p->Initializer());
-	(*_variables)[p->Variable()] = value;
+	auto value = EvaluateExpression(node->Initializer());
+	(*_variables)[node->Variable()] = value;
 	_lastValue = value;
 }
 
-void Evaluator::EvaluateIfStatement(const BoundStatement * node)
+void Evaluator::EvaluateExpressionStatement(const BoundExpressionStatement * node)
 {
-	auto p = dynamic_cast<const BoundIfStatement*>(node);
-	if (p == nullptr) return;
-
-	auto condition = EvaluateExpression(p->Condition()).GetValue<bool>();
-	if (condition)
-		EvaluateStatement(p->ThenStatement());
-	else if (p->ElseStatement() != nullptr)
-		EvaluateStatement(p->ElseStatement());
-}
-
-void Evaluator::EvaluateWhileStatement(const BoundStatement * node)
-{
-	auto p = dynamic_cast<const BoundWhileStatement*>(node);
-	if (p == nullptr) return;
-
-	while (EvaluateExpression(p->Condition()).GetValue<bool>())
-		EvaluateStatement(p->Body());
-}
-
-void Evaluator::EvaluateForStatement(const BoundStatement * node)
-{
-	auto p = dynamic_cast<const BoundForStatement*>(node);
-	if (p == nullptr) return;
-
-	auto lowerBound = EvaluateExpression(p->LowerBound()).GetValue<IntegerType>();
-	auto upperBound = EvaluateExpression(p->UpperBound()).GetValue<IntegerType>();
-
-	for (auto i = lowerBound; i <= upperBound; ++i) // NOTE inclusive for loop
-	{
-		(*_variables)[p->Variable()] = i;
-		EvaluateStatement(p->Body());
-	}
-}
-
-void Evaluator::EvaluateExpressionStatement(const BoundStatement * node)
-{
-	auto p = dynamic_cast<const BoundExpressionStatement*>(node);
-	if (p == nullptr) return;
-	_lastValue = EvaluateExpression(p->Expression());
+	_lastValue = EvaluateExpression(node->Expression());
 }
 
 ValueType Evaluator::EvaluateExpression(const BoundExpression * node)const
@@ -119,47 +104,62 @@ ValueType Evaluator::EvaluateExpression(const BoundExpression * node)const
 	switch (node->Kind())
 	{
 		case BoundNodeKind::LiteralExpression:
-			return EvaluateLiteralExpression(node);
+		{
+			auto p = dynamic_cast<const BoundLiteralExpression*>(node);
+			if (p) return EvaluateLiteralExpression(p);
+			else break;
+		}
 		case BoundNodeKind::VariableExpression:
-			return EvaluateVariableExpression(node);
+		{
+			auto p = dynamic_cast<const BoundVariableExpression*>(node);
+			if (p) return EvaluateVariableExpression(p);
+			else break;
+		}
 		case BoundNodeKind::AssignmentExpression:
-			return EvaluateAssignmentExpression(node);
+		{
+			auto p = dynamic_cast<const BoundAssignmentExpression*>(node);
+			if (p) return EvaluateAssignmentExpression(p);
+			else break;
+		}
 		case BoundNodeKind::UnaryExpression:
-			return EvaluateUnaryExpression(node);
+		{
+			auto p = dynamic_cast<const BoundUnaryExpression*>(node);
+			if (p) return EvaluateUnaryExpression(p);
+			else break;
+		}
 		case BoundNodeKind::BinaryExpression:
-			return EvaluateBinaryExpression(node);
+		{
+			auto p = dynamic_cast<const BoundBinaryExpression*>(node);
+			if (p) return EvaluateBinaryExpression(p);
+			else break;
+		}
 		default:
-			throw std::invalid_argument("Invalid expression; evaluation failed.");
+			break;
 	}
+	throw std::invalid_argument("Invalid expression " + GetEnumText(node->Kind()));
 }
 
-ValueType Evaluator::EvaluateLiteralExpression(const BoundExpression * node)const
+ValueType Evaluator::EvaluateLiteralExpression(const BoundLiteralExpression * node)const
 {
-	auto p = dynamic_cast<const BoundLiteralExpression*>(node);
-	return p != nullptr ? p->Value() : ValueType();
+	return node->Value();
 }
 
-ValueType Evaluator::EvaluateVariableExpression(const BoundExpression * node)const
+ValueType Evaluator::EvaluateVariableExpression(const BoundVariableExpression * node)const
 {
-	auto p = dynamic_cast<const BoundVariableExpression*>(node);
-	return p != nullptr ? (*_variables)[p->Variable()] : ValueType();
+	return (*_variables)[node->Variable()];
 }
 
-ValueType Evaluator::EvaluateAssignmentExpression(const BoundExpression * node)const
+ValueType Evaluator::EvaluateAssignmentExpression(const BoundAssignmentExpression * node)const
 {
-	auto p = dynamic_cast<const BoundAssignmentExpression*>(node);
-	if (p == nullptr) return ValueType();
-	auto value = EvaluateExpression(p->Expression());
-	_variables->insert_or_assign(p->Variable(), value);
+	auto value = EvaluateExpression(node->Expression());
+	_variables->insert_or_assign(node->Variable(), value);
 	return value;
 }
 
-ValueType Evaluator::EvaluateUnaryExpression(const BoundExpression * node)const
+ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression * node)const
 {
-	auto p = dynamic_cast<const BoundUnaryExpression*>(node);
-	if (p == nullptr) return ValueType();
-	auto operand = EvaluateExpression(p->Operand());
-	switch (p->Op()->Kind())
+	auto operand = EvaluateExpression(node->Operand());
+	switch (node->Op()->Kind())
 	{
 		case BoundUnaryOperatorKind::Identity:
 			return operand.GetValue<IntegerType>();
@@ -171,20 +171,18 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundExpression * node)const
 			return operand.GetValue<IntegerType>() + 1;
 		case BoundUnaryOperatorKind::Decrement:
 			return operand.GetValue<IntegerType>() - 1;
-
+		case BoundUnaryOperatorKind::OnesComplement:
+			return ~operand.GetValue<IntegerType>();
 		default:
-			throw std::invalid_argument("Invalid unary operator.");
+			throw std::invalid_argument("Invalid unary operator " + GetEnumText(node->Op()->Kind()));
 	}
 }
 
-ValueType Evaluator::EvaluateBinaryExpression(const BoundExpression * node)const
+ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node)const
 {
-	auto p = dynamic_cast<const BoundBinaryExpression*>(node);
-	if (p == nullptr) return ValueType();
-
-	auto left = EvaluateExpression(p->Left());
-	auto right = EvaluateExpression(p->Right());
-	switch (p->Op()->Kind())
+	auto left = EvaluateExpression(node->Left());
+	auto right = EvaluateExpression(node->Right());
+	switch (node->Op()->Kind())
 	{
 		case BoundBinaryOperatorKind::Addition:
 			return left.GetValue<IntegerType>() + right.GetValue<IntegerType>();
@@ -194,6 +192,18 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundExpression * node)const
 			return left.GetValue<IntegerType>() * right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::Division:
 			return left.GetValue<IntegerType>() / right.GetValue<IntegerType>();
+		case BoundBinaryOperatorKind::BitwiseAnd:
+			if (node->Type() == type_index(typeid(IntegerType)))
+				return left.GetValue<IntegerType>() & right.GetValue<IntegerType>();
+			else return left.GetValue<bool>() & right.GetValue<bool>();
+		case BoundBinaryOperatorKind::BitwiseOr:
+			if (node->Type() == type_index(typeid(IntegerType)))
+				return left.GetValue<IntegerType>() | right.GetValue<IntegerType>();
+			else return left.GetValue<bool>() | right.GetValue<bool>();
+		case BoundBinaryOperatorKind::BitwiseXor:
+			if (node->Type() == type_index(typeid(IntegerType)))
+				return left.GetValue<IntegerType>() ^ right.GetValue<IntegerType>();
+			else return left.GetValue<bool>() ^ right.GetValue<bool>();
 		case BoundBinaryOperatorKind::LogicalAnd:
 			return left.GetValue<bool>() && right.GetValue<bool>();
 		case BoundBinaryOperatorKind::LogicalOr:
@@ -212,7 +222,7 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundExpression * node)const
 			return left.GetValue<IntegerType>() >= right.GetValue<IntegerType>();
 
 		default:
-			throw std::invalid_argument("Invalid binary operator");
+			throw std::invalid_argument("Invalid binary operator " + GetEnumText(node->Op()->Kind()));
 	}
 }
 
@@ -280,12 +290,25 @@ EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueT
 	_syntaxTree->Diagnostics()->AddRange(*(GlobalScope()->Diagnostics()));
 	auto diagnostics = _syntaxTree->Diagnostics();
 
-	if (diagnostics->size() > 0)
-		return EvaluationResult(diagnostics, ValueType());
+	if (!diagnostics->empty())
+		return EvaluationResult(diagnostics, NullValue);
 
-	Evaluator evaluator(GlobalScope()->Statement(), variables);
+	auto statement = GetStatement();
+	Evaluator evaluator(statement.get(), variables);
 	auto value = evaluator.Evaluate();
 	return EvaluationResult(diagnostics, value);
+}
+
+unique_ptr<BoundBlockStatement> Compilation::GetStatement()
+{
+	auto result = GlobalScope()->Statement();
+	return Lowerer::Lower(result);
+}
+
+void Compilation::EmitTree(std::ostream & out)
+{
+	auto statement = GetStatement();
+	statement->WriteTo(out);
 }
 
 }//MCF

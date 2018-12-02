@@ -8,8 +8,21 @@
 namespace MCF {
 
 class DiagnosticBag;
+
 class BoundExpression;
+class BoundLiteralExpression;
+class BoundVariableExpression;
+class BoundAssignmentExpression;
+class BoundUnaryExpression;
+class BoundBinaryExpression;
+
 class BoundStatement;
+class BoundBlockStatement;
+class BoundVariableDeclaration;
+class BoundExpressionStatement;
+class BoundGotoStatement;
+class BoundConditionalGotoStatement;
+
 class BoundGlobalScope;
 class SyntaxTree;
 
@@ -30,27 +43,22 @@ public:
 class Evaluator final
 {
 private:
-	const BoundStatement* _root;
+	const BoundBlockStatement* _root;
 	std::unordered_map<VariableSymbol, ValueType, VariableHash>* _variables;
 	ValueType _lastValue;
 
-	void EvaluateStatement(const BoundStatement* node);
-	void EvaluateBlockStatement(const BoundStatement* node);
-	void EvaluateVariableDeclaration(const BoundStatement* node);
-	void EvaluateIfStatement(const BoundStatement* node);
-	void EvaluateWhileStatement(const BoundStatement* node);
-	void EvaluateForStatement(const BoundStatement* node);
-	void EvaluateExpressionStatement(const BoundStatement* node);
+	void EvaluateVariableDeclaration(const BoundVariableDeclaration* node);
+	void EvaluateExpressionStatement(const BoundExpressionStatement* node);
 
 	ValueType EvaluateExpression(const BoundExpression* node)const;
-	ValueType EvaluateLiteralExpression(const BoundExpression* node)const;
-	ValueType EvaluateVariableExpression(const BoundExpression* node)const;
-	ValueType EvaluateAssignmentExpression(const BoundExpression* node)const;
-	ValueType EvaluateUnaryExpression(const BoundExpression* node)const;
-	ValueType EvaluateBinaryExpression(const BoundExpression* node)const;
+	ValueType EvaluateLiteralExpression(const BoundLiteralExpression* node)const;
+	ValueType EvaluateVariableExpression(const BoundVariableExpression* node)const;
+	ValueType EvaluateAssignmentExpression(const BoundAssignmentExpression* node)const;
+	ValueType EvaluateUnaryExpression(const BoundUnaryExpression* node)const;
+	ValueType EvaluateBinaryExpression(const BoundBinaryExpression* node)const;
 
 public:
-	Evaluator(const BoundStatement* root, const std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables);
+	Evaluator(const BoundBlockStatement* root, const std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables);
 
 	ValueType Evaluate();
 };
@@ -63,6 +71,8 @@ private:
 	unique_ptr<BoundGlobalScope> _globalScope;
 
 	std::mutex _mtx;
+
+	unique_ptr<BoundBlockStatement> GetStatement();
 
 public:
 	Compilation(const unique_ptr<Compilation>& previous, const SyntaxTree& tree);
@@ -82,6 +92,8 @@ public:
 	static unique_ptr<Compilation> ContinueWith(const unique_ptr<Compilation>& previous, const unique_ptr<SyntaxTree>& tree);
 
 	EvaluationResult Evaluate(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables);
+
+	void EmitTree(std::ostream& out);
 };
 
 }//MCF

@@ -37,19 +37,20 @@ int main()
 
 		if (!std::cin.eof() && !std::cin.fail())
 			text += input + '\r'; // HACK Windows does "\r\n" together
-		auto tree = std::make_unique<MCF::SyntaxTree>(MCF::SyntaxTree::Parse(text));
-		if (!isBlank && tree->Diagnostics()->size() > 0)
+		auto tree = MCF::SyntaxTree::Parse(text);
+		if (!isBlank && !tree->Diagnostics()->empty())
 			continue;
 
-		auto compilation = previous == nullptr ? std::make_unique<MCF::Compilation>(tree) 
-			:MCF::Compilation::ContinueWith(previous,tree);
+		auto compilation = previous == nullptr ? std::make_unique<MCF::Compilation>(tree)
+			: MCF::Compilation::ContinueWith(previous, tree);
 		auto result = compilation->Evaluate(variables);
 		auto diagnostics = result.Diagnostics();
-		if (diagnostics->size() == 0)
+		if (diagnostics->empty())
 		{
 			auto value = result.Value();
-			value.WriteTo(std::cout);
-			tree->Root()->WriteTo(std::cout);
+			std::cout << value << "\n";
+			//tree->Root()->WriteTo(std::cout);
+			compilation->EmitTree(std::cout);
 			previous = std::move(compilation);
 		} else
 		{
@@ -71,7 +72,7 @@ int main()
 				auto suffix = tree->Text().ToString(suffixSpan);
 				std::cout << "    " << prefix << error << suffix << "\n";
 			}
-			std::cout << std::endl;
+			std::cout << "\n";
 		}
 		std::cout << "\n";
 		text = "";

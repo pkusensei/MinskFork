@@ -7,6 +7,33 @@
 
 namespace MCF {
 
+bool StringEndsWith(const string & sample, const string & ending)
+{
+	if (sample.length() < ending.length()) return false;
+	return std::equal(ending.rbegin(), ending.rend(), sample.rbegin());
+}
+
+string TrimString(const string & text)
+{
+	return TrimStringStart(TrimStringEnd(text));
+}
+
+string TrimStringStart(const string & text)
+{
+	auto result = text;
+	result.erase(result.begin(), std::find_if(result.begin(), result.end(),
+											  [](char ch) {return !std::isspace(ch); }));
+	return result;
+}
+
+string TrimStringEnd(const string & text)
+{
+	auto result = text;
+	result.erase(std::find_if(result.rbegin(), result.rend(),
+							  [](char ch) {return !std::isspace(ch); }).base(), result.end());
+	return result;
+}
+
 SyntaxKind& operator++(SyntaxKind& kind)
 {
 	auto tmp = std::underlying_type<SyntaxKind>::type(kind);
@@ -57,8 +84,16 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "MinusMinusToken";
 		case SyntaxKind::EqualsToken:
 			return "EqualsToken";
+		case SyntaxKind::TildeToken:
+			return "TildeToken";
+		case SyntaxKind::HatToken:
+			return "HatToken";
+		case SyntaxKind::AmpersandToken:
+			return "AmpersandToken";
 		case SyntaxKind::AmpersandAmpersandToken:
 			return "AmpersandAmpersandToken";
+		case SyntaxKind::PipeToken:
+			return "PipeToken";
 		case SyntaxKind::PipePipeToken:
 			return "PipePipeToken";
 		case SyntaxKind::EqualsEqualsToken:
@@ -139,152 +174,13 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 	}
 }
 
-bool StringEndsWith(const string & sample, const string & ending)
+std::ostream & operator<<(std::ostream & out, const ValueType & value)
 {
-	if (sample.length() < ending.length()) return false;
-	return std::equal(ending.rbegin(), ending.rend(), sample.rbegin());
-}
-
-string TrimString(const string & text)
-{
-	return TrimStringStart(TrimStringEnd(text));
-}
-
-string TrimStringStart(const string & text)
-{
-	auto result = text;
-	result.erase(result.begin(), std::find_if(result.begin(), result.end(),
-											  [](char ch) {return !std::isspace(ch); }));
-	return result;
-}
-
-string TrimStringEnd(const string & text)
-{
-	auto result = text;
-	result.erase(std::find_if(result.rbegin(), result.rend(),
-							  [](char ch) {return !std::isspace(ch); }).base(), result.end());
-	return result;
-}
-
-SyntaxKind GetKeywordKind(const string & text) noexcept
-{
-	if (text == "else")
-		return SyntaxKind::ElseKeyword;
-	else if (text == "false")
-		return SyntaxKind::FalseKeyword;
-	else if (text == "for")
-		return SyntaxKind::ForKeyword;
-	else if (text == "if")
-		return SyntaxKind::IfKeyword;
-	else if (text == "let")
-		return SyntaxKind::LetKeyword;
-	else if (text == "to")
-		return SyntaxKind::ToKeyword;
-	else if (text == "true")
-		return SyntaxKind::TrueKeyword;
-	else if (text == "var")
-		return SyntaxKind::VarKeyword;
-	else if (text == "while")
-		return SyntaxKind::WhileKeyword;
-	else return SyntaxKind::IdentifierToken;
-}
-
-string GetText(const SyntaxKind& kind)
-{
-	switch (kind)
-	{
-		case SyntaxKind::PlusToken: return "+";
-		case SyntaxKind::MinusToken: return "-";
-		case SyntaxKind::StarToken: return "*";
-		case SyntaxKind::SlashToken: return "/";
-		case SyntaxKind::BangToken: return "!";
-		case SyntaxKind::PlusPlusToken: return "++";
-		case SyntaxKind::MinusMinusToken: return "--";
-		case SyntaxKind::EqualsToken: return "=";
-		case SyntaxKind::AmpersandAmpersandToken: return "&&";
-		case SyntaxKind::PipePipeToken: return "||";
-		case SyntaxKind::EqualsEqualsToken: return "==";
-		case SyntaxKind::BangEqualsToken: return "!=";
-		case SyntaxKind::LessToken: return "<";
-		case SyntaxKind::LessOrEqualsToken: return "<=";
-		case SyntaxKind::GreaterToken: return ">";
-		case SyntaxKind::GreaterOrEqualsToken: return ">=";
-		case SyntaxKind::OpenParenthesisToken: return "(";
-		case SyntaxKind::CloseParenthesisToken: return ")";
-		case SyntaxKind::OpenBraceToken: return "{";
-		case SyntaxKind::CloseBraceToken: return "}";
-		case SyntaxKind::ElseKeyword: return "else";
-		case SyntaxKind::FalseKeyword: return "false";
-		case SyntaxKind::ForKeyword: return "for";
-		case SyntaxKind::IfKeyword: return "if";
-		case SyntaxKind::LetKeyword: return "let";
-		case SyntaxKind::ToKeyword: return "to";
-		case SyntaxKind::TrueKeyword: return "true";
-		case SyntaxKind::VarKeyword: return "var";
-		case SyntaxKind::WhileKeyword: return "while";
-		default: return string();
-	}
-}
-
-int GetUnaryOperatorPrecedence(const SyntaxKind& kind) noexcept
-{
-	switch (kind)
-	{
-		case SyntaxKind::PlusToken:
-		case SyntaxKind::MinusToken:
-		case SyntaxKind::BangToken:
-		case SyntaxKind::PlusPlusToken:
-		case SyntaxKind::MinusMinusToken:
-			return 6;
-		default:
-			return 0;
-	}
-}
-
-int GetBinaryOperatorPrecedence(const SyntaxKind& kind) noexcept
-{
-	switch (kind)
-	{
-		case SyntaxKind::StarToken:
-		case SyntaxKind::SlashToken:
-			return 5;
-		case SyntaxKind::PlusToken:
-		case SyntaxKind::MinusToken:
-			return 4;
-		case SyntaxKind::EqualsEqualsToken:
-		case SyntaxKind::BangEqualsToken:
-		case SyntaxKind::LessToken:
-		case SyntaxKind::LessOrEqualsToken:
-		case SyntaxKind::GreaterToken:
-		case SyntaxKind::GreaterOrEqualsToken:
-			return 3;
-		case SyntaxKind::AmpersandAmpersandToken:
-			return 2;
-		case SyntaxKind::PipePipeToken:
-			return 1;
-		default:
-			return 0;
-	}
-}
-
-vector<SyntaxKind> GetUnaryOperatorKinds()
-{
-	auto kinds = GetAllSyntaxKinds();
-	auto result = vector<SyntaxKind>();
-	for (const auto& it : kinds)
-		if (GetUnaryOperatorPrecedence(it) > 0)
-			result.emplace_back(it);
-	return result;
-}
-
-vector<SyntaxKind> GetBinaryOperatorKinds()
-{
-	auto kinds = GetAllSyntaxKinds();
-	auto result = vector<SyntaxKind>();
-	for (const auto& it : kinds)
-		if (GetBinaryOperatorPrecedence(it) > 0)
-			result.emplace_back(it);
-	return result;
+	if (value.HasValue())
+		out << value.ToString();
+	else
+		out << "Not valid value or type.\n";
+	return out;
 }
 
 type_index ValueType::Type() const
@@ -301,29 +197,32 @@ type_index ValueType::Type() const
 	}
 }
 
-void ValueType::WriteTo(std::ostream & out) const
+string ValueType::ToString() const
 {
-	auto id = GetValueTypeId(Type());
-	out << "\n" << "Result value is ";
+	auto id = ValueType::GetValueTypeId(Type());
+	auto result = string();
 	switch (id)
 	{
 		case 1:
-			out << GetTypeName(Type()) << " " << GetValue<IntegerType>() << std::endl;
+			result = std::to_string(GetValue<IntegerType>());
 			break;
 		case 2:
-			out << GetTypeName(Type()) << " " << static_cast<bool>(GetValue<bool>()) << std::endl;
+			result = GetValue<bool>() ? "True" : "False";
 			break;
 		default:
-			out << "Not valid value or type.\n";
 			break;
 	}
-	out << "\n";
+
+	return result;
 }
 
 int ValueType::GetValueTypeId(const type_index & inType)
 {
-	static std::unordered_map<type_index, int> types = {{typeid(std::monostate), 0},
-		{typeid(IntegerType), 1},{typeid(bool), 2}};
+	static std::unordered_map<type_index, int> types = {
+		{typeid(std::monostate), 0},
+		{typeid(IntegerType), 1},
+		{typeid(bool), 2},
+	};
 
 	return types[inType];
 }
@@ -389,6 +288,11 @@ size_t VariableHash::operator()(const VariableSymbol & variable) const noexcept
 	auto h1 = std::hash<string>{}(variable.Name());
 	auto h2 = variable.Type().hash_code();
 	return h1 ^ (h2 << 1);
+}
+
+size_t LabelHash::operator()(const LabelSymbol & label) const noexcept
+{
+	return std::hash<string>{}(label.Name());
 }
 
 }//MCF

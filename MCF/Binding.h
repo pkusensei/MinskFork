@@ -7,8 +7,23 @@
 namespace MCF {
 
 class DiagnosticBag;
+
 class ExpressionSyntax;
+class ParenthesizedExpressionSyntax;
+class LiteralExpressionSyntax;
+class NameExpressionSyntax;
+class AssignmentExpressionSyntax;
+class UnaryExpressionSyntax;
+class BinaryExpressionSyntax;
+
 class StatementSyntax;
+class BlockStatementSyntax;
+class VariableDeclarationSyntax;
+class IfStatementSyntax;
+class WhileStatementSyntax;
+class ForStatementSyntax;
+class ExpressionStatementSyntax;
+
 class CompilationUnitSyntax;
 
 enum class BoundNodeKind
@@ -19,6 +34,9 @@ enum class BoundNodeKind
 	IfStatement,
 	WhileStatement,
 	ForStatement,
+	LabelStatement,
+	GotoStatement,
+	ConditionalGotoStatement,
 	ExpressionStatement,
 
 	// Expressions
@@ -31,14 +49,19 @@ enum class BoundNodeKind
 	VoidExpression //HACK
 };
 
+string GetEnumText(const BoundNodeKind& kind);
+
 enum class BoundUnaryOperatorKind
 {
 	Identity,
 	Negation,
 	LogicalNegation,
 	Increment,
-	Decrement
+	Decrement,
+	OnesComplement
 };
+
+string GetEnumText(const BoundUnaryOperatorKind& kind);
 
 enum class BoundBinaryOperatorKind
 {
@@ -48,6 +71,9 @@ enum class BoundBinaryOperatorKind
 	Division,
 	LogicalAnd,
 	LogicalOr,
+	BitwiseAnd,
+	BitwiseOr,
+	BitwiseXor,
 	Equals,
 	NotEquals,
 	Less,
@@ -56,11 +82,22 @@ enum class BoundBinaryOperatorKind
 	GreaterOrEquals
 };
 
+string GetEnumText(const BoundBinaryOperatorKind& kind);
+
 class BoundNode
 {
+private:
+	static string GetText(const BoundNode* node);
+	static void PrettyPrint(std::ostream& out, const BoundNode* node, string indent = "", bool isLast = true);
 public:
 	virtual ~BoundNode() = default;
 	virtual BoundNodeKind Kind() const = 0;
+	virtual const vector<const BoundNode*> GetChildren() const = 0;
+	// HACK will be ugly and dirty
+	virtual const vector<std::pair<string, string>> GetProperties() const = 0;
+
+	void WriteTo(std::ostream& out)const { PrettyPrint(out, this); }
+	string ToString() const;
 };
 
 #pragma region Expression
@@ -71,8 +108,13 @@ class BoundExpression :public BoundNode
 public:
 	// Inherited via BoundNode
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
+	const vector<const BoundNode*> GetChildren() const override;
+	// HACK dirty and ugly
+	// pair: name of property + its value
+	const vector<std::pair<string, string>> GetProperties() const override;
 
 	virtual type_index Type() const { return typeid(std::monostate); }
+
 };
 
 class BoundUnaryOperator final
@@ -89,7 +131,7 @@ private:
 	BoundUnaryOperator(const SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
 					   const type_index& operandType);
 	BoundUnaryOperator();
-	static BoundUnaryOperator _operators[5];
+	static const vector<BoundUnaryOperator> _operators;
 public:
 
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
@@ -113,6 +155,8 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::UnaryExpression; }
+	const vector<const BoundNode*> GetChildren() const override;
+	const vector<std::pair<string, string>> GetProperties() const override;
 	type_index Type() const override { return _op->Type(); }
 
 	const BoundUnaryOperator* Op()const noexcept { return _op.get(); }
@@ -136,7 +180,7 @@ private:
 	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, const type_index& type);
 	BoundBinaryOperator();
 
-	static BoundBinaryOperator _operators[14];
+	static const vector<BoundBinaryOperator> _operators;
 public:
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
 	constexpr BoundBinaryOperatorKind Kind()const noexcept { return _kind; }
@@ -162,6 +206,8 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BinaryExpression; }
+	const vector<const BoundNode*> GetChildren() const override;
+	const vector<std::pair<string, string>> GetProperties() const override;
 	type_index Type() const override { return _op->Type(); }
 
 	const BoundExpression* Left()const noexcept { return _left.get(); }
@@ -181,6 +227,8 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::AssignmentExpression; }
+	const vector<const BoundNode*> GetChildren() const override;
+	const vector<std::pair<string, string>> GetProperties() const override;
 	type_index Type() const override { return _expression->Type(); }
 
 	VariableSymbol Variable()const { return _variable; }
@@ -192,12 +240,13 @@ class BoundLiteralExpression final : public BoundExpression
 private:
 	ValueType _value;
 public:
-	BoundLiteralExpression(const ValueType& value);
+	explicit BoundLiteralExpression(const ValueType& value);
 	BoundLiteralExpression(BoundLiteralExpression&&) = default;
 	BoundLiteralExpression& operator=(BoundLiteralExpression&&) = default;
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LiteralExpression; }
+	const vector<std::pair<string, string>> GetProperties() const override;
 	type_index Type() const override { return _value.Type(); }
 
 	ValueType Value()const { return _value; }
@@ -215,6 +264,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableExpression; }
+	const vector<std::pair<string, string>> GetProperties() const override;
 	type_index Type() const override { return _variable.Type(); }
 
 	VariableSymbol Variable()const { return _variable; }
@@ -229,6 +279,8 @@ class BoundStatement :public BoundNode
 public:
 	// Inherited via BoundNode
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
+	const vector<std::pair<string, string>> GetProperties() const override;
+	const vector<const BoundNode*> GetChildren() const override;
 };
 
 class BoundBlockStatement final : public BoundStatement
@@ -236,12 +288,13 @@ class BoundBlockStatement final : public BoundStatement
 private:
 	vector<unique_ptr<BoundStatement>> _statements;
 public:
-	BoundBlockStatement(const vector<unique_ptr<BoundStatement>>& statements);
+	explicit BoundBlockStatement(const vector<unique_ptr<BoundStatement>>& statements);
 	BoundBlockStatement(BoundBlockStatement&&) = default;
 	BoundBlockStatement& operator=(BoundBlockStatement&&) = default;
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BlockStatement; }
+	const vector<const BoundNode*> GetChildren() const override;
 
 	const vector<BoundStatement*> Statements()const;
 };
@@ -258,6 +311,8 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableDeclaration; }
+	const vector<std::pair<string, string>> GetProperties() const override;
+	const vector<const BoundNode*> GetChildren() const override;
 
 	VariableSymbol Variable()const { return _variable; }
 	const BoundExpression* Initializer()const noexcept { return _initializer.get(); }
@@ -277,6 +332,7 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::IfStatement; }
+	const vector<const BoundNode*> GetChildren() const override;
 
 	const BoundExpression* Condition()const noexcept { return _condition.get(); }
 	const BoundStatement* ThenStatement()const noexcept { return _thenStatement.get(); }
@@ -295,6 +351,7 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::WhileStatement; }
+	const vector<const BoundNode*> GetChildren() const override;
 
 	const BoundExpression* Condition()const noexcept { return _condition.get(); }
 	const BoundStatement* Body()const noexcept { return _body.get(); }
@@ -315,11 +372,66 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ForStatement; }
+	const vector<std::pair<string, string>> GetProperties() const override;
+	const vector<const BoundNode*> GetChildren() const override;
 
 	VariableSymbol Variable()const { return _variable; }
 	const BoundExpression* LowerBound()const noexcept { return _lowerBound.get(); }
 	const BoundExpression* UpperBound()const noexcept { return _upperBound.get(); }
 	const BoundStatement* Body()const noexcept { return _body.get(); }
+};
+
+class BoundLabelStatement final :public BoundStatement
+{
+private:
+	LabelSymbol _label;
+public:
+	explicit BoundLabelStatement(const LabelSymbol& label);
+	BoundLabelStatement(BoundLabelStatement&&) = default;
+	BoundLabelStatement& operator=(BoundLabelStatement&&) = default;
+
+	// Inherited via BoundStatement
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LabelStatement; }
+	const vector<std::pair<string, string>> GetProperties() const override;
+
+	LabelSymbol Label()const { return _label; }
+};
+
+class BoundGotoStatement final :public BoundStatement
+{
+private:
+	LabelSymbol _label;
+public:
+	explicit BoundGotoStatement(const LabelSymbol& label);
+	BoundGotoStatement(BoundGotoStatement&&) = default;
+	BoundGotoStatement& operator=(BoundGotoStatement&&) = default;
+
+	// Inherited via BoundStatement
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::GotoStatement; }
+	const vector<std::pair<string, string>> GetProperties() const override;
+
+	LabelSymbol Label()const { return _label; }
+};
+
+class BoundConditionalGotoStatement final :public BoundStatement
+{
+private:
+	LabelSymbol _label;
+	unique_ptr<BoundExpression> _condition;
+	bool _jumpIfFalse;
+public:
+	BoundConditionalGotoStatement(const LabelSymbol& label, const unique_ptr<BoundExpression>& condition, bool jumpIfFalse);
+	BoundConditionalGotoStatement(BoundConditionalGotoStatement&&) = default;
+	BoundConditionalGotoStatement& operator=(BoundConditionalGotoStatement&&) = default;
+
+	// Inherited via BoundStatement
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ConditionalGotoStatement; }
+	const vector<std::pair<string, string>> GetProperties() const override;
+	const vector<const BoundNode*> GetChildren() const override;
+
+	LabelSymbol Label()const { return _label; }
+	const BoundExpression* Condition()const { return _condition.get(); }
+	bool JumpIfFalse()const noexcept { return _jumpIfFalse; }
 };
 
 class BoundExpressionStatement final : public BoundStatement
@@ -334,6 +446,7 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ExpressionStatement; }
+	const vector<const BoundNode*> GetChildren() const override;
 
 	const BoundExpression* Expression()const noexcept { return _expression.get(); }
 };
@@ -379,21 +492,21 @@ private:
 	unique_ptr<BoundScope> _scope;
 
 	unique_ptr<BoundStatement> BindStatement(const StatementSyntax* syntax);
-	unique_ptr<BoundStatement> BindBlockStatement(const StatementSyntax* syntax);
-	unique_ptr<BoundStatement> BindVariableDeclaration(const StatementSyntax* syntax);
-	unique_ptr<BoundStatement> BindIfStatement(const StatementSyntax* syntax);
-	unique_ptr<BoundStatement> BindWhileStatement(const StatementSyntax* syntax);
-	unique_ptr<BoundStatement> BindForStatement(const StatementSyntax* syntax);
-	unique_ptr<BoundStatement> BindExpressionStatement(const StatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindBlockStatement(const BlockStatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindVariableDeclaration(const VariableDeclarationSyntax* syntax);
+	unique_ptr<BoundStatement> BindIfStatement(const IfStatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindWhileStatement(const WhileStatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindForStatement(const ForStatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax* syntax);
 
 	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax, const type_index& targetType);
 	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindParenthesizedExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindLiteralExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindNameExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindAssignmentExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindUnaryExpression(const ExpressionSyntax* syntax);
-	unique_ptr<BoundExpression> BindBinaryExpression(const ExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindParenthesizedExpression(const ParenthesizedExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindLiteralExpression(const LiteralExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindNameExpression(const NameExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindAssignmentExpression(const AssignmentExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindUnaryExpression(const UnaryExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindBinaryExpression(const BinaryExpressionSyntax* syntax);
 
 	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
 public:
@@ -402,6 +515,55 @@ public:
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
 
 	static unique_ptr<BoundGlobalScope> BindGlobalScope(const BoundGlobalScope* previous, const CompilationUnitSyntax* syntax);
+};
+
+class BoundTreeRewriter
+{
+	/*
+	* HACK The BoundTreeRewriter class takes the existing bound tree and analyzes
+	* its structure. Its return value is a completely newly constructed bound tree.
+	* The original C# version tries its best to reduce memory allocation. This one
+	* does not.
+	*/
+protected:
+	virtual unique_ptr<BoundStatement> RewriteBlockStatement(const BoundBlockStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteVariableDeclaration(const BoundVariableDeclaration* node);
+	virtual unique_ptr<BoundStatement> RewriteIfStatement(const BoundIfStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteWhileStatement(const BoundWhileStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteForStatement(const BoundForStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteLabelStatement(const BoundLabelStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteGotoStatement(const BoundGotoStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteConditionalGotoStatement(const BoundConditionalGotoStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteExpressionStatement(const BoundExpressionStatement* node);
+
+	virtual unique_ptr<BoundExpression> RewriteLiteralExpression(const BoundLiteralExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteVariableExpression(const BoundVariableExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteAssignmentExpression(const BoundAssignmentExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteUnaryExpression(const BoundUnaryExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteBinaryExpression(const BoundBinaryExpression* node);
+
+public:
+	virtual ~BoundTreeRewriter() = default;
+
+	virtual unique_ptr<BoundStatement> RewriteStatement(const BoundStatement* node);
+	virtual unique_ptr<BoundExpression> RewriteExpression(const BoundExpression* node);
+};
+
+class Lowerer final :public BoundTreeRewriter
+{
+private:
+	size_t _labelCount{0};
+
+	Lowerer() = default;
+	LabelSymbol GenerateLabel();
+	unique_ptr<BoundBlockStatement> Flatten(unique_ptr<BoundStatement>& statement);
+protected:
+	unique_ptr<BoundStatement> RewriteIfStatement(const BoundIfStatement* node)override;
+	unique_ptr<BoundStatement> RewriteWhileStatement(const BoundWhileStatement* node)override;
+	unique_ptr<BoundStatement> RewriteForStatement(const BoundForStatement* node)override;
+
+public:
+	static unique_ptr<BoundBlockStatement> Lower(const BoundStatement* statement);
 };
 
 }//MCF
