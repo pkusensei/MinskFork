@@ -1079,7 +1079,7 @@ unique_ptr<BoundBlockStatement> Lowerer::Flatten(unique_ptr<BoundStatement>& sta
 		if (auto p = dynamic_cast<BoundBlockStatement*>(current.get()))
 		{
 			auto statements = p->Statements();
-			for (auto it = statements.cbegin(); it != statements.cend(); ++it)
+			for (auto it = statements.rbegin(); it != statements.rend(); ++it)
 				stack.emplace(RewriteStatement(*it));
 		} else
 		{

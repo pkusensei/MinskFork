@@ -167,7 +167,7 @@ public:
 	bool operator!=(const LabelSymbol& other) const noexcept { return !(*this == other); }
 
 	string Name()const { return _name; }
-	string ToString()const { return _name; }
+	string ToString()const { return Name(); }
 };
 
 struct LabelHash
