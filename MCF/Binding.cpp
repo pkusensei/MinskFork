@@ -61,6 +61,10 @@ string GetEnumText(const BoundUnaryOperatorKind & kind)
 			return "Negation";
 		case BoundUnaryOperatorKind::LogicalNegation:
 			return "LogicalNegation";
+		case BoundUnaryOperatorKind::Increment:
+			return "Increment";
+		case BoundUnaryOperatorKind::Decrement:
+			return "Decrement";
 		case BoundUnaryOperatorKind::OnesComplement:
 			return "OnesComplement";
 
