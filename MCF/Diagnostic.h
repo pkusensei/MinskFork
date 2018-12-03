@@ -55,6 +55,8 @@ public:
 	void ReportUndefinedBinaryOperator(const TextSpan& span, const string& operatorText, const type_index& leftType, const type_index& rightType);
 	void ReportVariableAlreadyDeclared(const TextSpan& span, const string& name);
 	void ReportCannotAssign(const TextSpan& span, const string& name);
+
+	void ReportExpressionNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const SyntaxKind& kind);
 };
 
 class MCF_API DiagnosticBag::iterator

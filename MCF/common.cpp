@@ -166,6 +166,8 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "BinaryExpression";
 		case SyntaxKind::ParenthesizedExpression:
 			return "ParenthesizedExpression";
+		case SyntaxKind::PostfixExpression:
+			return "PostfixExpression";
 		case SyntaxKind::AssignmentExpression:
 			return "AssignmentExpression";
 

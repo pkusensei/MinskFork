@@ -15,6 +15,7 @@ class NameExpressionSyntax;
 class AssignmentExpressionSyntax;
 class UnaryExpressionSyntax;
 class BinaryExpressionSyntax;
+class PostfixExpressionSyntax;
 
 class StatementSyntax;
 class BlockStatementSyntax;
@@ -45,6 +46,7 @@ enum class BoundNodeKind
 	AssignmentExpression,
 	UnaryExpression,
 	BinaryExpression,
+	PostfixExpression,
 
 	VoidExpression //HACK
 };
@@ -56,8 +58,6 @@ enum class BoundUnaryOperatorKind
 	Identity,
 	Negation,
 	LogicalNegation,
-	Increment,
-	Decrement,
 	OnesComplement
 };
 
@@ -83,6 +83,14 @@ enum class BoundBinaryOperatorKind
 };
 
 string GetEnumText(const BoundBinaryOperatorKind& kind);
+
+enum class BoundPostfixOperatorKind
+{
+	Increment,
+	Decrement,
+};
+
+string GetEnumText(const BoundPostfixOperatorKind& kind);
 
 class BoundNode
 {
@@ -250,7 +258,6 @@ public:
 	type_index Type() const override { return _value.Type(); }
 
 	ValueType Value()const { return _value; }
-
 };
 
 class BoundVariableExpression final : public BoundExpression
@@ -268,6 +275,28 @@ public:
 	type_index Type() const override { return _variable.Type(); }
 
 	VariableSymbol Variable()const { return _variable; }
+};
+
+class BoundPostfixExpression final :public BoundExpression
+{
+private:
+	VariableSymbol _variable;
+	BoundPostfixOperatorKind _kind;
+	unique_ptr<BoundExpression> _expression;
+public:
+	BoundPostfixExpression(const VariableSymbol& variable, const BoundPostfixOperatorKind& kind, const unique_ptr<BoundExpression>& expression);
+	BoundPostfixExpression(BoundPostfixExpression&&) = default;
+	BoundPostfixExpression& operator=(BoundPostfixExpression&&) = default;
+
+	// Inherited via BoundExpression
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::PostfixExpression; }
+	const vector<const BoundNode*> GetChildren() const override;
+	const vector<std::pair<string, string>> GetProperties() const override;
+	type_index Type() const override { return _variable.Type(); }
+
+	VariableSymbol Variable()const { return _variable; }
+	BoundPostfixOperatorKind OperatorKind()const { return _kind; }
+	const BoundExpression* Expression()const noexcept { return _expression.get(); }
 };
 
 #pragma endregion
@@ -507,6 +536,7 @@ private:
 	unique_ptr<BoundExpression> BindAssignmentExpression(const AssignmentExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindUnaryExpression(const UnaryExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindBinaryExpression(const BinaryExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax* syntax);
 
 	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
 public:
@@ -541,6 +571,7 @@ protected:
 	virtual unique_ptr<BoundExpression> RewriteAssignmentExpression(const BoundAssignmentExpression* node);
 	virtual unique_ptr<BoundExpression> RewriteUnaryExpression(const BoundUnaryExpression* node);
 	virtual unique_ptr<BoundExpression> RewriteBinaryExpression(const BoundBinaryExpression* node);
+	virtual unique_ptr<BoundExpression> RewritePostfixExpression(const BoundPostfixExpression* node);
 
 public:
 	virtual ~BoundTreeRewriter() = default;

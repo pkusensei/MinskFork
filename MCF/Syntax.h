@@ -205,6 +205,26 @@ public:
 	SyntaxToken IdentifierToken()const { return _identifierToken; }
 };
 
+class PostfixExpressionSyntax final :public ExpressionSyntax
+{
+private:
+	SyntaxToken _identifier;
+	SyntaxToken _op;
+	unique_ptr<ExpressionSyntax> _expression;
+public:
+	PostfixExpressionSyntax(const SyntaxToken& identifier, const SyntaxToken& op, const unique_ptr<ExpressionSyntax>& expression);
+	PostfixExpressionSyntax(PostfixExpressionSyntax&&) = default;
+	PostfixExpressionSyntax& operator=(PostfixExpressionSyntax&&) = default;
+
+	// Inherited via ExpressionSyntax
+	SyntaxKind Kind() const noexcept override { return SyntaxKind::PostfixExpression; }
+	const vector<const SyntaxNode*> GetChildren() const override;
+
+	SyntaxToken IdentifierToken()const { return _identifier; }
+	SyntaxToken Op()const { return _op; }
+	const ExpressionSyntax* Expression()const noexcept { return _expression.get(); }
+};
+
 #pragma endregion
 
 #pragma region Statement
@@ -416,8 +436,9 @@ private:
 	unique_ptr<ExpressionSyntax> ParseExpression();
 	unique_ptr<ExpressionSyntax> ParseAssignmentExpression();
 	unique_ptr<ExpressionSyntax> ParseBinaryExpression(int parentPrecedence = 0);
-	unique_ptr<ExpressionSyntax> ParsePrimaryExpression();
+	unique_ptr<ExpressionSyntax> ParsePostfixExpression(const unique_ptr<ExpressionSyntax>& expression);
 
+	unique_ptr<ExpressionSyntax> ParsePrimaryExpression();
 	unique_ptr<ExpressionSyntax> ParseParenthesizedExpression();
 	unique_ptr<ExpressionSyntax> ParseBooleanLiteral();
 	unique_ptr<ExpressionSyntax> ParseNumberLiteral();

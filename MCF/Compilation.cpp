@@ -133,6 +133,12 @@ ValueType Evaluator::EvaluateExpression(const BoundExpression * node)const
 			if (p) return EvaluateBinaryExpression(p);
 			else break;
 		}
+		case BoundNodeKind::PostfixExpression:
+		{
+			auto p = dynamic_cast<const BoundPostfixExpression*>(node);
+			if (p) return EvaluatePostfixExpression(p);
+			else break;
+		}
 		default:
 			break;
 	}
@@ -167,10 +173,6 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression * node)c
 			return -operand.GetValue<IntegerType>();
 		case BoundUnaryOperatorKind::LogicalNegation:
 			return !operand.GetValue<bool>();
-		case BoundUnaryOperatorKind::Increment:
-			return operand.GetValue<IntegerType>() + 1;
-		case BoundUnaryOperatorKind::Decrement:
-			return operand.GetValue<IntegerType>() - 1;
 		case BoundUnaryOperatorKind::OnesComplement:
 			return ~operand.GetValue<IntegerType>();
 		default:
@@ -223,6 +225,23 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 
 		default:
 			throw std::invalid_argument("Invalid binary operator " + GetEnumText(node->Op()->Kind()));
+	}
+}
+
+ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression * node) const
+{
+	auto value = EvaluateExpression(node->Expression());
+	auto result = value.GetValue<IntegerType>();
+	switch (node->OperatorKind())
+	{
+		case BoundPostfixOperatorKind::Increment:
+			_variables->insert_or_assign(node->Variable(), ++result);
+			return result;
+		case BoundPostfixOperatorKind::Decrement:
+			_variables->insert_or_assign(node->Variable(), --result);
+			return result;
+		default:
+			throw std::invalid_argument("Unexpected postfix operator " + GetEnumText(node->OperatorKind()));
 	}
 }
 

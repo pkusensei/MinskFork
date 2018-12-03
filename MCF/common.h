@@ -88,6 +88,7 @@ enum class SyntaxKind
 	UnaryExpression,
 	BinaryExpression,
 	ParenthesizedExpression,
+	PostfixExpression,
 	AssignmentExpression,
 };
 

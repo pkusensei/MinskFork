@@ -9,7 +9,7 @@ Although this fork stays as close to the original as possible, there are some de
 
 - A dirty hack of a unified value system.
 
-    `std::variant` comes in handy here to mimic `object` in C#, and `std::monostate` acts as a placeholder for `null`. The caveat is consumers/users of this hack has to know the underlying type stored in `std::variant` if they want to read the value. Then again C++ is a statically typed language.
+    `std::variant` comes in handy here to mimic `object` in C#, and `std::monostate` acts as a placeholder for `null`. The caveat is consumers/users of this hack have to know the underlying type stored in `std::variant` if they want to read the value. Then again C++ is a statically typed language.
 
 - Redundancy in `GetChildren` and `GetProperties` virtual member functions. 
 
@@ -17,7 +17,11 @@ Although this fork stays as close to the original as possible, there are some de
 
 - The lowering process, i.e. `BoundTreeReriter` & `Lowerer`, analyzes the existing bound tree and generates a new one. 
 
-    This is mainly because `BoundNode`s exposing `std::unique_ptr`s directly would break encapsulation. `std::shared_ptr`s would cause another slew of problems. The lowering process tries its best to reduce memory allocation. As a result, `Lowerer::Flatten` has to be a non-static member function.
+    This is mainly because `BoundNode`s exposing `std::unique_ptr`s directly would break encapsulation. `std::shared_ptr`s would cause another slew of problems. The original lowering process tries its best to reduce memory allocation while this one does not. As a result, `Lowerer::Flatten` has to be a non-static member function.
+
+- Postfix operations, i.e. `i++` & `i--`
+
+    They are intentionally left out in the original project. Here they are added in as a fun side tweak. Currently supports operations on identifier only, meaning `(i = 5)--` is invalid syntax. `(i--) = 5` is also invalid.
 
 - Language differences.
 

@@ -43,6 +43,8 @@ string GetEnumText(const BoundNodeKind & kind)
 			return "UnaryExpression";
 		case BoundNodeKind::BinaryExpression:
 			return "BinaryExpression";
+		case BoundNodeKind::PostfixExpression:
+			return "PostfixExpression";
 
 		case BoundNodeKind::VoidExpression:
 			return "VoidExpression";
@@ -61,10 +63,6 @@ string GetEnumText(const BoundUnaryOperatorKind & kind)
 			return "Negation";
 		case BoundUnaryOperatorKind::LogicalNegation:
 			return "LogicalNegation";
-		case BoundUnaryOperatorKind::Increment:
-			return "Increment";
-		case BoundUnaryOperatorKind::Decrement:
-			return "Decrement";
 		case BoundUnaryOperatorKind::OnesComplement:
 			return "OnesComplement";
 
@@ -108,6 +106,19 @@ string GetEnumText(const BoundBinaryOperatorKind & kind)
 		case BoundBinaryOperatorKind::GreaterOrEquals:
 			return "GreaterOrEquals";
 
+		default:
+			return string();
+	}
+}
+
+string GetEnumText(const BoundPostfixOperatorKind & kind)
+{
+	switch (kind)
+	{
+		case BoundPostfixOperatorKind::Increment:
+			return "Increment";
+		case BoundPostfixOperatorKind::Decrement:
+			return "Decrement";
 		default:
 			return string();
 	}
@@ -196,8 +207,6 @@ const vector<BoundUnaryOperator> BoundUnaryOperator::_operators = {
 	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation, typeid(bool)),
 	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity, typeid(IntegerType)),
 	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation, typeid(IntegerType)),
-	BoundUnaryOperator(SyntaxKind::PlusPlusToken, BoundUnaryOperatorKind::Increment, typeid(IntegerType)),
-	BoundUnaryOperator(SyntaxKind::MinusMinusToken, BoundUnaryOperatorKind::Decrement, typeid(IntegerType)),
 	BoundUnaryOperator(SyntaxKind::TildeToken, BoundUnaryOperatorKind::OnesComplement, typeid(IntegerType))
 };
 
@@ -356,6 +365,26 @@ const vector<std::pair<string, string>> BoundVariableExpression::GetProperties()
 	return vector<std::pair<string, string>>{
 		std::pair<string, string>("Variable", Variable().ToString()),
 			std::pair<string, string>("Type", ValueType::GetTypeName(Type()))
+	};
+}
+
+BoundPostfixExpression::BoundPostfixExpression(const VariableSymbol & variable, const BoundPostfixOperatorKind& kind, const unique_ptr<BoundExpression>& expression)
+	:_variable(variable), _kind(kind),
+	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
+{
+}
+
+const vector<const BoundNode*> BoundPostfixExpression::GetChildren() const
+{
+	return vector<const BoundNode*>{_expression.get()};
+}
+
+const vector<std::pair<string, string>> BoundPostfixExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Variable", Variable().ToString()),
+			std::pair<string, string>("Type", ValueType::GetTypeName(Type())),
+			std::pair<string, string>("OperatorKind", GetEnumText(OperatorKind()))
 	};
 }
 
@@ -747,6 +776,12 @@ unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * synt
 			if (p) return BindBinaryExpression(p);
 			else break;
 		}
+		case SyntaxKind::PostfixExpression:
+		{
+			auto p = dynamic_cast<const PostfixExpressionSyntax*>(syntax);
+			if (p) return BindPostfixExpression(p);
+			else break;
+		}
 		default:
 			break;
 	}
@@ -828,6 +863,36 @@ unique_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 		_diagnostics->ReportUndefinedBinaryOperator(syntax->OperatorToken().Span(), syntax->OperatorToken().Text(),
 													boundLeft->Type(), boundRight->Type());
 		return boundLeft;
+	}
+}
+
+unique_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressionSyntax * syntax)
+{
+	auto name = syntax->IdentifierToken().Text();
+	auto boundExpression = BindExpression(syntax->Expression());
+
+	VariableSymbol variable;
+
+	if (!_scope->TryLookup(name, variable))
+	{
+		_diagnostics->ReportUndefinedName(syntax->IdentifierToken().Span(), name);
+		return boundExpression;
+	}
+	if (variable.IsReadOnly())
+		_diagnostics->ReportCannotAssign(syntax->Op().Span(), name);
+	if (boundExpression->Type() != variable.Type())
+	{
+		_diagnostics->ReportCannotConvert(syntax->Expression()->Span(), boundExpression->Type(), variable.Type());
+		return boundExpression;
+	}
+	switch (syntax->Op().Kind())
+	{
+		case SyntaxKind::PlusPlusToken:
+			return std::make_unique<BoundPostfixExpression>(variable,BoundPostfixOperatorKind::Increment, boundExpression);
+		case SyntaxKind::MinusMinusToken:
+			return std::make_unique<BoundPostfixExpression>(variable, BoundPostfixOperatorKind::Decrement, boundExpression);
+		default:
+			throw std::invalid_argument("Unexpected operator token "+GetSyntaxKindName(syntax->Op().Kind()));
 	}
 }
 
@@ -1022,6 +1087,12 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(const BoundExpr
 			if (p) return RewriteBinaryExpression(p);
 			else break;
 		}
+		case BoundNodeKind::PostfixExpression:
+		{
+			auto p = dynamic_cast<const BoundPostfixExpression*>(node);
+			if (p) return RewritePostfixExpression(p);
+			else break;
+		}
 		default:
 			break;
 	}
@@ -1055,6 +1126,12 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteBinaryExpression(const Bou
 	auto left = RewriteExpression(node->Left());
 	auto right = RewriteExpression(node->Right());
 	return std::make_unique<BoundBinaryExpression>(left, *(node->Op()), right);
+}
+
+unique_ptr<BoundExpression> BoundTreeRewriter::RewritePostfixExpression(const BoundPostfixExpression * node)
+{
+	auto expression = RewriteExpression(node->Expression());
+	return std::make_unique<BoundPostfixExpression>(node->Variable(), node->OperatorKind(), expression);
 }
 
 LabelSymbol Lowerer::GenerateLabel()
@@ -1204,5 +1281,6 @@ unique_ptr<BoundStatement> Lowerer::RewriteForStatement(const BoundForStatement 
 	auto result = std::make_unique<BoundBlockStatement>(statements);
 	return RewriteStatement(result.get());
 }
+
 
 }//MCF

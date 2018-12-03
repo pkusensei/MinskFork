@@ -15,6 +15,7 @@ class BoundVariableExpression;
 class BoundAssignmentExpression;
 class BoundUnaryExpression;
 class BoundBinaryExpression;
+class BoundPostfixExpression;
 
 class BoundStatement;
 class BoundBlockStatement;
@@ -56,6 +57,7 @@ private:
 	ValueType EvaluateAssignmentExpression(const BoundAssignmentExpression* node)const;
 	ValueType EvaluateUnaryExpression(const BoundUnaryExpression* node)const;
 	ValueType EvaluateBinaryExpression(const BoundBinaryExpression* node)const;
+	ValueType EvaluatePostfixExpression(const BoundPostfixExpression* node)const;
 
 public:
 	Evaluator(const BoundBlockStatement* root, const std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables);

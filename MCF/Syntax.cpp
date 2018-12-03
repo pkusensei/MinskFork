@@ -231,7 +231,7 @@ SyntaxToken Lexer::Lex()
 			_kind = SyntaxKind::EndOfFileToken;
 			break;
 		case '+':
-			if (Lookahead() == '+' )
+			if (Lookahead() == '+')
 			{
 				_position += 2;
 				_kind = SyntaxKind::PlusPlusToken;
@@ -515,6 +515,20 @@ const vector<const SyntaxNode*> NameExpressionSyntax::GetChildren() const
 	auto result = vector<const SyntaxNode*>{&_identifierToken};
 	return result;
 }
+
+PostfixExpressionSyntax::PostfixExpressionSyntax(const SyntaxToken & identifier, const SyntaxToken& op, const unique_ptr<ExpressionSyntax>& expression)
+	:_identifier(identifier), _op(op),
+	_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
+{
+}
+
+const vector<const SyntaxNode*> PostfixExpressionSyntax::GetChildren() const
+{
+	return vector<const SyntaxNode*>{
+		&_identifier, &_op, _expression.get()
+	};
+}
+
 #pragma endregion
 
 #pragma region Statement
@@ -844,15 +858,24 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 		unaryOperatorPrecedence >= parentPrecedence)
 	{
 		auto operatorToken = NextToken();
+		if (operatorToken.Kind() == SyntaxKind::PlusPlusToken || operatorToken.Kind() == SyntaxKind::MinusMinusToken)
+		{
+			_diagnostics->ReportUnexpectedToken(operatorToken.Span(), operatorToken.Kind(), SyntaxKind::IdentifierToken);
+		}
 		auto operand = ParseBinaryExpression(unaryOperatorPrecedence);
 		left = std::make_unique<UnaryExpressionSyntax>(operatorToken, operand);
 	} else
 	{
 		left = ParsePrimaryExpression();
-		if (Current()->Kind() == SyntaxKind::PlusPlusToken || Current()->Kind() == SyntaxKind::MinusMinusToken)
+		while (Current()->Kind() == SyntaxKind::PlusPlusToken || Current()->Kind() == SyntaxKind::MinusMinusToken)
 		{
-			auto operatorToken = NextToken();
-			left = std::make_unique<UnaryExpressionSyntax>(operatorToken, left);
+			if (left->Kind() != SyntaxKind::PostfixExpression&&
+				left->Kind() != SyntaxKind::NameExpression)
+			{
+				_diagnostics->ReportExpressionNotSupportPostfixOperator(Current()->Span(), Current()->Text(), left->Kind());
+				break;
+			}
+			left = ParsePostfixExpression(left);
 		}
 	}
 
@@ -866,6 +889,19 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 		left = std::make_unique<BinaryExpressionSyntax>(left, operatorToken, right);
 	}
 	return left;
+}
+
+unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(const unique_ptr<ExpressionSyntax>& expression)
+{
+	auto operatorToken = NextToken();
+	auto pe = dynamic_cast<PostfixExpressionSyntax*>(expression.get());
+	auto ne = dynamic_cast<NameExpressionSyntax*>(expression.get());
+	if (pe)
+		return std::make_unique<PostfixExpressionSyntax>(pe->IdentifierToken(), operatorToken, expression);
+	else if (ne)
+		return std::make_unique<PostfixExpressionSyntax>(ne->IdentifierToken(), operatorToken, expression);
+	else
+		throw std::invalid_argument("Unexpected expression " + GetSyntaxKindName(expression->Kind()));
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParsePrimaryExpression()
@@ -961,5 +997,6 @@ vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const SourceText & text)
 	}
 	return result;
 }
+
 
 }//MCF

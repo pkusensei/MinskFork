@@ -124,6 +124,13 @@ void DiagnosticBag::ReportCannotAssign(const TextSpan & span, const string & nam
 	Report(span, message);
 }
 
+void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const SyntaxKind & kind)
+{
+	string message{"Operator '"};
+	message += operatorText + "' is not defined for expression '" + GetSyntaxKindName(kind) + "'.";
+	Report(span, message);
+}
+
 DiagnosticBag::iterator::iterator(size_t pos, const DiagnosticBag & bag)
 	:_position(pos), _bag(&bag)
 {
