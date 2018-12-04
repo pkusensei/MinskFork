@@ -885,6 +885,11 @@ unique_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 		_diagnostics->ReportCannotConvert(syntax->Expression()->Span(), boundExpression->Type(), variable.Type());
 		return boundExpression;
 	}
+	if (variable.Type() != typeid(IntegerType))
+	{
+		_diagnostics->ReportVariableNotSupportPostfixOperator(syntax->Expression()->Span(), syntax->Op().Text(), variable.Type());
+		return boundExpression;
+	}
 	switch (syntax->Op().Kind())
 	{
 		case SyntaxKind::PlusPlusToken:

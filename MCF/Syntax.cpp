@@ -233,7 +233,7 @@ SyntaxToken Lexer::Lex()
 		case '+':
 			if (Lookahead() == '+')
 			{
-				_position += 2;
+				Next(2);
 				_kind = SyntaxKind::PlusPlusToken;
 			} else
 			{
@@ -244,7 +244,7 @@ SyntaxToken Lexer::Lex()
 		case '-':
 			if (Lookahead() == '-')
 			{
-				_position += 2;
+				Next(2);
 				_kind = SyntaxKind::MinusMinusToken;
 			} else
 			{
@@ -869,7 +869,8 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 		left = ParsePrimaryExpression();
 		while (Current()->Kind() == SyntaxKind::PlusPlusToken || Current()->Kind() == SyntaxKind::MinusMinusToken)
 		{
-			if (left->Kind() != SyntaxKind::PostfixExpression&&
+			if (left->Kind() != SyntaxKind::ParenthesizedExpression&&
+				left->Kind() != SyntaxKind::PostfixExpression&&
 				left->Kind() != SyntaxKind::NameExpression)
 			{
 				_diagnostics->ReportExpressionNotSupportPostfixOperator(Current()->Span(), Current()->Text(), left->Kind());
@@ -894,10 +895,15 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(const unique_ptr<ExpressionSyntax>& expression)
 {
 	auto operatorToken = NextToken();
-	auto pe = dynamic_cast<PostfixExpressionSyntax*>(expression.get());
+	auto pre = dynamic_cast<ParenthesizedExpressionSyntax*>(expression.get());
+	auto pfe = dynamic_cast<PostfixExpressionSyntax*>(expression.get());
 	auto ne = dynamic_cast<NameExpressionSyntax*>(expression.get());
-	if (pe)
-		return std::make_unique<PostfixExpressionSyntax>(pe->IdentifierToken(), operatorToken, expression);
+	if (pre)
+	{
+		auto ae = dynamic_cast<const AssignmentExpressionSyntax*>(pre->Expression());
+		return std::make_unique<PostfixExpressionSyntax>(ae->IdentifierToken(), operatorToken, expression);
+	} else if (pfe)
+		return std::make_unique<PostfixExpressionSyntax>(pfe->IdentifierToken(), operatorToken, expression);
 	else if (ne)
 		return std::make_unique<PostfixExpressionSyntax>(ne->IdentifierToken(), operatorToken, expression);
 	else
@@ -997,6 +1003,5 @@ vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const SourceText & text)
 	}
 	return result;
 }
-
 
 }//MCF

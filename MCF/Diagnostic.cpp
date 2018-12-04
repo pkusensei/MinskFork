@@ -131,6 +131,13 @@ void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(const TextSpan & s
 	Report(span, message);
 }
 
+void DiagnosticBag::ReportVariableNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const type_index & variableType)
+{
+	string message{"Operator '"};
+	message += operatorText + "' is not defined for type '" + ValueType::GetTypeName(variableType) + "'.";
+	Report(span, message);
+}
+
 DiagnosticBag::iterator::iterator(size_t pos, const DiagnosticBag & bag)
 	:_position(pos), _bag(&bag)
 {

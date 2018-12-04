@@ -195,15 +195,15 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 		case BoundBinaryOperatorKind::Division:
 			return left.GetValue<IntegerType>() / right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::BitwiseAnd:
-			if (node->Type() == type_index(typeid(IntegerType)))
+			if (node->Type() == typeid(IntegerType))
 				return left.GetValue<IntegerType>() & right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() & right.GetValue<bool>();
 		case BoundBinaryOperatorKind::BitwiseOr:
-			if (node->Type() == type_index(typeid(IntegerType)))
+			if (node->Type() == typeid(IntegerType))
 				return left.GetValue<IntegerType>() | right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() | right.GetValue<bool>();
 		case BoundBinaryOperatorKind::BitwiseXor:
-			if (node->Type() == type_index(typeid(IntegerType)))
+			if (node->Type() == typeid(IntegerType))
 				return left.GetValue<IntegerType>() ^ right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() ^ right.GetValue<bool>();
 		case BoundBinaryOperatorKind::LogicalAnd:

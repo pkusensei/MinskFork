@@ -21,7 +21,7 @@ Although this fork stays as close to the original as possible, there are some de
 
 - Postfix operations, i.e. `i++` & `i--`
 
-    They are intentionally left out in the original project. Here they are added in as a fun side tweak. Currently supports operations on identifier only, meaning `(i = 5)--` is invalid syntax. `(i--) = 5` is also invalid.
+    They are intentionally left out in the original project. Here they are added in as a fun side tweak. It stays close to C++ implementation of postfix operations, meaning `(i = 5)--` is valid syntax, but `(i--) = 5` is not. Prefix operations are not supported yet. 
 
 - Language differences.
 

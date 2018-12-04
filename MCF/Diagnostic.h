@@ -57,6 +57,7 @@ public:
 	void ReportCannotAssign(const TextSpan& span, const string& name);
 
 	void ReportExpressionNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const SyntaxKind& kind);
+	void ReportVariableNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const type_index& variableType);
 };
 
 class MCF_API DiagnosticBag::iterator
