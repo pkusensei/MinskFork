@@ -81,8 +81,8 @@ int GetUnaryOperatorPrecedence(const SyntaxKind& kind) noexcept
 		case SyntaxKind::PlusToken:
 		case SyntaxKind::MinusToken:
 		case SyntaxKind::BangToken:
-		case SyntaxKind::PlusPlusToken:
-		case SyntaxKind::MinusMinusToken:
+		//case SyntaxKind::PlusPlusToken:
+		//case SyntaxKind::MinusMinusToken:
 		case SyntaxKind::TildeToken:
 			return 6;
 		default:
@@ -858,10 +858,10 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 		unaryOperatorPrecedence >= parentPrecedence)
 	{
 		auto operatorToken = NextToken();
-		if (operatorToken.Kind() == SyntaxKind::PlusPlusToken || operatorToken.Kind() == SyntaxKind::MinusMinusToken)
-		{
-			_diagnostics->ReportUnexpectedToken(operatorToken.Span(), operatorToken.Kind(), SyntaxKind::IdentifierToken);
-		}
+		//if (operatorToken.Kind() == SyntaxKind::PlusPlusToken || operatorToken.Kind() == SyntaxKind::MinusMinusToken)
+		//{
+		//	_diagnostics->ReportUnexpectedToken(operatorToken.Span(), operatorToken.Kind(), SyntaxKind::IdentifierToken);
+		//}
 		auto operand = ParseBinaryExpression(unaryOperatorPrecedence);
 		left = std::make_unique<UnaryExpressionSyntax>(operatorToken, operand);
 	} else
