@@ -70,8 +70,7 @@ ValueType Evaluator::Evaluate()
 				if (cgs)
 				{
 					auto condition = EvaluateExpression(cgs->Condition()).GetValue<bool>();
-					if ((condition && !cgs->JumpIfFalse()) ||
-						(!condition && cgs->JumpIfFalse()))
+					if (condition == cgs->JumpIfTrue())
 						index = labelToIndex[cgs->Label()];
 					else ++index;
 					break;

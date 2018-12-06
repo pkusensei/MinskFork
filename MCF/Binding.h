@@ -447,9 +447,9 @@ class BoundConditionalGotoStatement final :public BoundStatement
 private:
 	LabelSymbol _label;
 	unique_ptr<BoundExpression> _condition;
-	bool _jumpIfFalse;
+	bool _jumpIfTrue;
 public:
-	BoundConditionalGotoStatement(const LabelSymbol& label, const unique_ptr<BoundExpression>& condition, bool jumpIfFalse);
+	BoundConditionalGotoStatement(const LabelSymbol& label, const unique_ptr<BoundExpression>& condition, bool jumpIfTrue = true);
 	BoundConditionalGotoStatement(BoundConditionalGotoStatement&&) = default;
 	BoundConditionalGotoStatement& operator=(BoundConditionalGotoStatement&&) = default;
 
@@ -460,7 +460,7 @@ public:
 
 	LabelSymbol Label()const { return _label; }
 	const BoundExpression* Condition()const { return _condition.get(); }
-	bool JumpIfFalse()const noexcept { return _jumpIfFalse; }
+	bool JumpIfTrue()const noexcept { return _jumpIfTrue; }
 };
 
 class BoundExpressionStatement final : public BoundStatement

@@ -176,6 +176,7 @@ public:
 					std::pair<std::string, MCF::ValueType>("{var a = 0 if a == 4 a = 10 else a = 5 a }", 5),
 					std::pair<std::string, MCF::ValueType>("{ var i = 10 var result = 0 while i > 0 { result = result + i i = i - 1} result }", 55),
 					std::pair<std::string, MCF::ValueType>("{ var result = 0 for i = 1 to 10 { result = result + i } result }", 55),
+					std::pair<std::string, MCF::ValueType>("{ var a = 10 for i = 1 to (a = a - 1) { } a }", 9),
 		};
 
 		for (const auto& it : data)
