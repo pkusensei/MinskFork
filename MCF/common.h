@@ -21,6 +21,7 @@ using std::vector;
 using IntegerType = long; // HACK use long as interger type
 
 /// string helpers
+MCF_API bool StringStartsWith(const string& sample, const string& beginning);
 MCF_API bool StringEndsWith(const string& sample, const string& ending);
 MCF_API string TrimString(const string& text);
 MCF_API string TrimStringStart(const string& text);
@@ -127,7 +128,7 @@ public:
 	static string GetTypeName(const type_index& inType);
 };
 
-const auto NullValue = ValueType(); // Note global constant
+constexpr auto NullValue = ValueType(); // Note global constant
 MCF_API std::ostream& operator<<(std::ostream& out, const ValueType& value);
 
 class MCF_API VariableSymbol final
