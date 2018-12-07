@@ -7,6 +7,80 @@
 
 namespace MCF {
 
+void SetConsoleColor(const ConsoleColor& color)
+{
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	//CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+	//GetConsoleScreenBufferInfo(hStdout, &csbiInfo);
+	//WORD wOldColorAttrs = csbiInfo.wAttributes;
+	switch (color)
+	{
+		case ConsoleColor::Red:
+			SetConsoleTextAttribute(hStdout, FOREGROUND_RED | FOREGROUND_INTENSITY);
+			break;
+		case ConsoleColor::DarkRed:
+			SetConsoleTextAttribute(hStdout, FOREGROUND_RED);
+			break;
+		case ConsoleColor::Blue:
+			SetConsoleTextAttribute(hStdout, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+			break;
+		case ConsoleColor::DarkBlue:
+			SetConsoleTextAttribute(hStdout, FOREGROUND_BLUE);
+			break;
+		case ConsoleColor::Green:
+			SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+			break;
+		case ConsoleColor::DarkGreen:
+			SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN);
+			break;
+		case ConsoleColor::Cyan:
+			SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+			break;
+		case ConsoleColor::Yellow:
+			SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY);
+			break;
+		case ConsoleColor::DarkYellow:
+			SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN | FOREGROUND_RED);
+			break;
+		case ConsoleColor::Magenta:
+			SetConsoleTextAttribute(hStdout, FOREGROUND_RED | FOREGROUND_BLUE);
+			break;
+		case ConsoleColor::White:
+			SetConsoleTextAttribute(hStdout, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+			break;
+		case ConsoleColor::Grey:
+		default:
+			SetConsoleTextAttribute(hStdout, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
+			break;
+	}
+}
+
+void ResetConsoleColor()
+{
+	SetConsoleColor();
+}
+
+void ClearConsole(char fill)
+{
+	COORD t1 = {0, 0};
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+	GetConsoleScreenBufferInfo(hStdout, &csbiInfo);
+	DWORD written;
+	DWORD cells = csbiInfo.dwSize.X*csbiInfo.dwSize.Y;
+	FillConsoleOutputCharacter(hStdout, fill, cells, t1, &written);
+	FillConsoleOutputAttribute(hStdout, csbiInfo.wAttributes, cells, t1, &written);
+	SetConsoleCursorPosition(hStdout, t1);
+}
+
+bool IsStringBlank(const std::string& s)
+{
+	for (const auto& c : s)
+		if (!std::isspace(c))
+			return false;
+	return true;
+}
+
 bool StringStartsWith(const string & sample, const string & beginning)
 {
 	if (sample.length() < beginning.length())return false;
@@ -83,7 +157,7 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 		case SyntaxKind::SlashToken:
 			return "SlashToken";
 		case SyntaxKind::BangToken:
-			return "BangToken";		
+			return "BangToken";
 		case SyntaxKind::PlusPlusToken:
 			return "PlusPlusToken";
 		case SyntaxKind::MinusMinusToken:
@@ -296,11 +370,6 @@ size_t VariableHash::operator()(const VariableSymbol & variable) const noexcept
 	auto h1 = std::hash<string>{}(variable.Name());
 	auto h2 = variable.Type().hash_code();
 	return h1 ^ (h2 << 1);
-}
-
-size_t LabelHash::operator()(const LabelSymbol & label) const noexcept
-{
-	return std::hash<string>{}(label.Name());
 }
 
 }//MCF

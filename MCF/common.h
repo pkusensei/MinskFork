@@ -20,7 +20,28 @@ using std::vector;
 
 using IntegerType = long; // HACK use long as interger type
 
+enum class ConsoleColor
+{
+	Red,
+	DarkRed,
+	Blue,
+	DarkBlue,
+	Green,
+	DarkGreen,
+	Cyan,
+	Yellow,
+	DarkYellow,
+	Magenta,
+	White,
+	Grey,
+};
+
+MCF_API void SetConsoleColor(const ConsoleColor& color = ConsoleColor::Grey);
+MCF_API void ResetConsoleColor();
+MCF_API void ClearConsole(char fill = ' ');
+
 /// string helpers
+MCF_API bool IsStringBlank(const std::string& s);
 MCF_API bool StringStartsWith(const string& sample, const string& beginning);
 MCF_API bool StringEndsWith(const string& sample, const string& ending);
 MCF_API string TrimString(const string& text);
@@ -158,25 +179,6 @@ public:
 struct MCF_API VariableHash
 {
 	size_t operator()(const VariableSymbol& variable) const noexcept;
-};
-
-class LabelSymbol final
-{
-private:
-	string _name;
-public:
-	explicit LabelSymbol(const string& name) :_name(name) {}
-
-	bool operator==(const LabelSymbol& other) const noexcept { return _name == other._name; }
-	bool operator!=(const LabelSymbol& other) const noexcept { return !(*this == other); }
-
-	string Name()const { return _name; }
-	string ToString()const { return Name(); }
-};
-
-struct LabelHash
-{
-	size_t operator()(const LabelSymbol& label) const noexcept;
 };
 
 }//MCF

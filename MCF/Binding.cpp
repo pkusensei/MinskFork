@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Binding.h"
 
+#include <iostream>
 #include <sstream>
 #include <stack>
 
@@ -9,6 +10,11 @@
 #include "SourceText.h"
 
 namespace MCF {
+
+size_t LabelHash::operator()(const LabelSymbol & label) const noexcept
+{
+	return std::hash<string>{}(label.Name());
+}
 
 string GetEnumText(const BoundNodeKind & kind)
 {
@@ -124,6 +130,17 @@ string GetEnumText(const BoundPostfixOperatorKind & kind)
 	}
 }
 
+ConsoleColor BoundNode::GetColor(const BoundNode * node)
+{
+	auto e = dynamic_cast<const BoundExpression*>(node);
+	auto s = dynamic_cast<const BoundStatement*>(node);
+	if (e != nullptr)
+		return ConsoleColor::Blue;
+	else if (s != nullptr)
+		return ConsoleColor::Cyan;
+	else return ConsoleColor::Yellow;
+}
+
 string BoundNode::GetText(const BoundNode * node)
 {
 	auto b = dynamic_cast<const BoundBinaryExpression*>(node);
@@ -137,8 +154,16 @@ string BoundNode::GetText(const BoundNode * node)
 
 void BoundNode::PrettyPrint(std::ostream & out, const BoundNode * node, string indent, bool isLast)
 {
-	string marker = isLast ? "+--" : "---";//"������" : "������";
-	out << indent << marker << GetText(node);
+	auto isToConsole = out.rdbuf() == std::cout.rdbuf();
+	string marker = isLast ? "+--" : "---";//"└──" : "├──";
+
+	if (isToConsole)
+		SetConsoleColor(ConsoleColor::Grey);
+	out << indent << marker;
+	
+	if (isToConsole)
+		SetConsoleColor(GetColor(node));
+	out << GetText(node);
 
 	auto isFirstProperty = true;
 	auto properties = node->GetProperties();
@@ -150,11 +175,29 @@ void BoundNode::PrettyPrint(std::ostream & out, const BoundNode * node, string i
 				isFirstProperty = false;
 			else
 			{
+				if (isToConsole)
+					SetConsoleColor(ConsoleColor::Grey);
 				out << ",";
 			}
-			out << ' ' << p.first << " = " << p.second;
+			out << ' ';
+
+			if (isToConsole)
+				SetConsoleColor(ConsoleColor::Yellow);
+			out << p.first;
+
+			if (isToConsole)
+				SetConsoleColor(ConsoleColor::Grey);
+			out << " = ";
+			
+			if (isToConsole)
+				SetConsoleColor(ConsoleColor::DarkYellow);
+			out << p.second;
 		}
 	}
+
+	if (isToConsole)
+		ResetConsoleColor();
+
 	out << "\n";
 	indent += isLast ? "   " : "|  ";
 	auto children = node->GetChildren();

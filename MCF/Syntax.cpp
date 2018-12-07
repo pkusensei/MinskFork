@@ -2,6 +2,7 @@
 #include "Syntax.h"
 
 #include <cctype>
+#include <iostream>
 #include <sstream>
 #include <typeinfo>
 
@@ -81,8 +82,8 @@ int GetUnaryOperatorPrecedence(const SyntaxKind& kind) noexcept
 		case SyntaxKind::PlusToken:
 		case SyntaxKind::MinusToken:
 		case SyntaxKind::BangToken:
-		//case SyntaxKind::PlusPlusToken:
-		//case SyntaxKind::MinusMinusToken:
+			//case SyntaxKind::PlusPlusToken:
+			//case SyntaxKind::MinusMinusToken:
 		case SyntaxKind::TildeToken:
 			return 6;
 		default:
@@ -141,13 +142,27 @@ vector<SyntaxKind> GetBinaryOperatorKinds()
 
 void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node, string indent, bool isLast)
 {
+	auto isToConsole = out.rdbuf() == std::cout.rdbuf();
 	string marker = isLast ? "+--" : "---";//"©¸©¤©¤" : "©À©¤©¤";
-	out << indent << marker << GetSyntaxKindName(node->Kind());
+	out << indent;
+
+	if (isToConsole)
+		SetConsoleColor(ConsoleColor::Grey);
+	out << marker;
+
+	if (isToConsole)
+		SetConsoleColor(dynamic_cast<const SyntaxToken*>(node) ? ConsoleColor::Blue : ConsoleColor::Cyan);
+	out << GetSyntaxKindName(node->Kind());
+
 	auto token = dynamic_cast<const SyntaxToken*>(node);
 	if (token != nullptr && token->Value().HasValue())
 	{
-		out << " " << token->Value().GetValue<IntegerType>();
+		out << " " << token->Value();
 	}
+
+	if (isToConsole)
+		ResetConsoleColor();
+
 	out << "\n";
 	indent += isLast ? "   " : "|  ";
 	auto children = node->GetChildren();

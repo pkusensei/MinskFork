@@ -27,6 +27,25 @@ class ExpressionStatementSyntax;
 
 class CompilationUnitSyntax;
 
+class LabelSymbol final
+{
+private:
+	string _name;
+public:
+	explicit LabelSymbol(const string& name) :_name(name) {}
+
+	bool operator==(const LabelSymbol& other) const noexcept { return _name == other._name; }
+	bool operator!=(const LabelSymbol& other) const noexcept { return !(*this == other); }
+
+	string Name()const { return _name; }
+	string ToString()const { return Name(); }
+};
+
+struct LabelHash
+{
+	size_t operator()(const LabelSymbol& label) const noexcept;
+};
+
 enum class BoundNodeKind
 {
 	// Statements
@@ -95,6 +114,7 @@ string GetEnumText(const BoundPostfixOperatorKind& kind);
 class BoundNode
 {
 private:
+	static ConsoleColor GetColor(const BoundNode* node);
 	static string GetText(const BoundNode* node);
 	static void PrettyPrint(std::ostream& out, const BoundNode* node, string indent = "", bool isLast = true);
 public:
