@@ -1,78 +1,75 @@
 #include "pch.h"
 #include "Repl.h"
 
-#include <cctype>
-#include <Windows.h>
+#include <iostream>
+#define WIN32_LEAN_AND_MEAN             
+#include <windows.h>
 
 #include "Compilation.h"
 #include "Diagnostic.h"
 #include "SourceText.h"
 #include "Syntax.h"
 
-void SetConsoleColor(const ConsoleColor& color = ConsoleColor::Grey)
+
+int Repl::SubmissionView::GetCursorTop()
 {
-	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-	//CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-	//GetConsoleScreenBufferInfo(hStdout, &csbiInfo);
-	//WORD wOldColorAttrs = csbiInfo.wAttributes;
-	switch (color)
+	POINT p;
+	GetCursorPos(&p);
+	return static_cast<int>(p.y);
+}
+
+void Repl::SubmissionView::SubmissionDocumentChanged()
+{
+	Render();
+}
+
+void Repl::SubmissionView::Render()
+{
+	// TODO
+}
+
+void Repl::SubmissionView::UpdateCursorPosition()
+{
+	SetCursorPos(2 + _currentCharacter, _cursorTop + _currentLine);
+}
+
+Repl::SubmissionView::SubmissionView(const std::function<void(std::string)>& lineRenderer, const ObservableCollection<std::string>& document)
+	:_lineRenderer(lineRenderer), _submissionDocument(&document), _cursorTop(GetCursorTop())
+{
+	auto& d = std::remove_const_t<ObservableCollection<std::string>&>(document);
+	d.SetAction(std::bind(&SubmissionView::SubmissionDocumentChanged, this));
+}
+
+void Repl::SubmissionView::CurrentLine(const int & value)
+{
+	if (_currentLine != value)
 	{
-		case ConsoleColor::Red:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_RED | FOREGROUND_INTENSITY);
-			break;
-		case ConsoleColor::Blue:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-			break;
-		case ConsoleColor::Green:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-			break;
-		case ConsoleColor::Magenta:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_RED | FOREGROUND_BLUE);
-			break;
-		case ConsoleColor::DarkRed:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_RED);
-			break;
-		case ConsoleColor::White:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-			break;
-		case ConsoleColor::Grey:
-		default:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
-			break;
+		_currentLine = value;
+		_currentCharacter = (*_submissionDocument)[_currentLine].length() < _currentCharacter ?
+			(*_submissionDocument)[_currentLine].length() : _currentCharacter;
+		UpdateCursorPosition();
 	}
 }
 
-void ResetConsoleColor()
+void Repl::SubmissionView::CurrentCharacter(const int & value)
 {
-	SetConsoleColor();
+	if (_currentCharacter != value)
+	{
+		_currentCharacter = value;
+		UpdateCursorPosition();
+	}
 }
 
-void ClearConsole(char fill = ' ')
+void Repl::RenderLine(const std::string & line) const
 {
-	COORD t1 = {0, 0};
-	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-	GetConsoleScreenBufferInfo(hStdout, &csbiInfo);
-	DWORD written;
-	DWORD cells = csbiInfo.dwSize.X*csbiInfo.dwSize.Y;
-	FillConsoleOutputCharacter(hStdout, fill, cells, t1, &written);
-	FillConsoleOutputAttribute(hStdout, csbiInfo.wAttributes, cells, t1, &written);
-	SetConsoleCursorPosition(hStdout, t1);
-}
-
-bool IsStringBlank(const std::string& s)
-{
-	for (const auto& c : s)
-		if (!std::isspace(c))
-			return false;
-	return true;
+	std::cout << line;
 }
 
 void Repl::EvaluateMetaCommand(const std::string & input)
 {
-	SetConsoleColor(ConsoleColor::Red);
-	std::cout << "Invalid command " << input;
-	ResetConsoleColor();
+	MCF::SetConsoleColor(MCF::ConsoleColor::Red);
+	std::cout << "Invalid command " << input << '\n';
+	MCF::ResetConsoleColor();
 }
 
 void Repl::Run()
@@ -81,14 +78,14 @@ void Repl::Run()
 
 	while (true)
 	{
-		SetConsoleColor(ConsoleColor::Green);
+		MCF::SetConsoleColor(MCF::ConsoleColor::Green);
 		if (text.empty())
 			std::cout << "> ";
 		else std::cout << "| ";
-		ResetConsoleColor();
+		MCF::ResetConsoleColor();
 
 		std::getline(std::cin, input);
-		auto isBlank = IsStringBlank(input);
+		auto isBlank = MCF::IsStringBlank(input);
 		if (text.empty())
 		{
 			if (isBlank)
@@ -109,22 +106,28 @@ void Repl::Run()
 	}
 }
 
+McfRepl::McfRepl()
+	:_variables({})
+{
+}
+
+McfRepl::~McfRepl() = default;
+
 void McfRepl::RenderLine(const std::string & line) const
 {
-	using namespace MCF;
-	auto tokens = SyntaxTree::ParseTokens(line);
+	auto tokens = MCF::SyntaxTree::ParseTokens(line);
 	for (const auto& it : tokens)
 	{
-		auto isKeyword = StringEndsWith(GetSyntaxKindName(it->Kind()), "Keyword");
-		auto isNumber = it->Kind() == SyntaxKind::NumberToken;
+		auto isKeyword = MCF::StringEndsWith(MCF::GetSyntaxKindName(it->Kind()), "Keyword");
+		auto isNumber = it->Kind() == MCF::SyntaxKind::NumberToken;
 
 		if (isKeyword)
-			SetConsoleColor(ConsoleColor::Blue);
+			MCF::SetConsoleColor(MCF::ConsoleColor::Blue);
 		else if (isNumber)
-			SetConsoleColor(ConsoleColor::Grey);
+			MCF::SetConsoleColor(MCF::ConsoleColor::Grey);
 
 		std::cout << it->Text();
-		ResetConsoleColor();
+		MCF::ResetConsoleColor();
 	}
 }
 
@@ -140,11 +143,11 @@ void McfRepl::EvaluateMetaCommand(const std::string & input)
 		std::cout << (_showProgram ? "Showing bound tree." : "Not showing bound tree.") << "\n";
 	} else if (input == "#cls")
 	{
-		ClearConsole();
+		MCF::ClearConsole();
 	} else if (input == "#reset")
 	{
 		_previous = nullptr;
-		ClearConsole();
+		MCF::ClearConsole();
 	} else
 	{
 		Repl::EvaluateMetaCommand(input);
@@ -153,7 +156,7 @@ void McfRepl::EvaluateMetaCommand(const std::string & input)
 
 bool McfRepl::IsCompleteSubmission(const std::string & text) const
 {
-	if (IsStringBlank(text))
+	if (MCF::IsStringBlank(text))
 		return true;
 
 	auto tree = MCF::SyntaxTree::Parse(text);
@@ -164,12 +167,10 @@ bool McfRepl::IsCompleteSubmission(const std::string & text) const
 
 void McfRepl::EvaluateSubmission(const std::string & text)
 {
-	using namespace MCF;
+	auto tree = MCF::SyntaxTree::Parse(text);
 
-	auto tree = SyntaxTree::Parse(text);
-
-	auto compilation = _previous == nullptr ? std::make_unique<Compilation>(tree)
-		: Compilation::ContinueWith(_previous, tree);
+	auto compilation = _previous == nullptr ? std::make_unique<MCF::Compilation>(tree)
+		: MCF::Compilation::ContinueWith(_previous, tree);
 	if (_showTree)
 		tree->Root()->WriteTo(std::cout);
 	if (_showProgram)
@@ -179,10 +180,10 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 	auto diagnostics = result.Diagnostics();
 	if (diagnostics->empty())
 	{
-		SetConsoleColor(ConsoleColor::Magenta);
+		MCF::SetConsoleColor(MCF::ConsoleColor::Magenta);
 		auto value = result.Value();
 		std::cout << value << "\n";
-		ResetConsoleColor();
+		MCF::ResetConsoleColor();
 
 		_previous = std::move(compilation);
 	} else
@@ -195,22 +196,22 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 			auto character = diag.Span().Start() - line.Start() + 1;
 			std::cout << "\n";
 
-			SetConsoleColor(ConsoleColor::DarkRed);
+			MCF::SetConsoleColor(MCF::ConsoleColor::DarkRed);
 			std::cout << "(" << lineNumber << ", " << character << ") ";
 			std::cout << diag.Message() << "\n";
-			ResetConsoleColor();
+			MCF::ResetConsoleColor();
 
-			auto prefixSpan = TextSpan::FromBounds(line.Start(), diag.Span().Start());
-			auto suffixSpan = TextSpan::FromBounds(diag.Span().End(), line.End());
+			auto prefixSpan = MCF::TextSpan::FromBounds(line.Start(), diag.Span().Start());
+			auto suffixSpan = MCF::TextSpan::FromBounds(diag.Span().End(), line.End());
 
 			auto prefix = tree->Text().ToString(prefixSpan);
 			auto error = tree->Text().ToString(diag.Span());
 			auto suffix = tree->Text().ToString(suffixSpan);
 			std::cout << "    " << prefix;
 
-			SetConsoleColor(ConsoleColor::DarkRed);
+			MCF::SetConsoleColor(MCF::ConsoleColor::DarkRed);
 			std::cout << error;
-			ResetConsoleColor();
+			MCF::ResetConsoleColor();
 
 			std::cout << suffix << "\n";
 		}
@@ -219,10 +220,3 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 	std::cout << "\n";
 
 }
-
-McfRepl::McfRepl()
-	:_variables({})
-{
-}
-
-McfRepl::~McfRepl() = default;
