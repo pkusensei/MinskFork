@@ -23,6 +23,10 @@ Although this fork stays as close to the original as possible, there are some de
 
     They are intentionally left out in the original project. Here they are added in as a fun side tweak. It stays close to C++ implementation of prefix operations, meaning `(i = 5)--` is valid syntax, but `(i--) = 5` is not. Prefix operations are not supported yet. 
 
+- Windows only.
+
+    Without .NET Core wrapper around system APIs, this fork relies on native win32 APIs to manipulate console color and cursor display. 
+
 - Language differences.
 
     - `std::vector` stands in place for `IEnumerable` mostly.

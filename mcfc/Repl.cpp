@@ -2,63 +2,11 @@
 #include "Repl.h"
 
 #include <iostream>
-#define WIN32_LEAN_AND_MEAN             
-#include <windows.h>
 
 #include "Compilation.h"
 #include "Diagnostic.h"
 #include "SourceText.h"
 #include "Syntax.h"
-
-
-int Repl::SubmissionView::GetCursorTop()
-{
-	POINT p;
-	GetCursorPos(&p);
-	return static_cast<int>(p.y);
-}
-
-void Repl::SubmissionView::SubmissionDocumentChanged()
-{
-	Render();
-}
-
-void Repl::SubmissionView::Render()
-{
-	// TODO
-}
-
-void Repl::SubmissionView::UpdateCursorPosition()
-{
-	SetCursorPos(2 + _currentCharacter, _cursorTop + _currentLine);
-}
-
-Repl::SubmissionView::SubmissionView(const std::function<void(std::string)>& lineRenderer, const ObservableCollection<std::string>& document)
-	:_lineRenderer(lineRenderer), _submissionDocument(&document), _cursorTop(GetCursorTop())
-{
-	auto& d = std::remove_const_t<ObservableCollection<std::string>&>(document);
-	d.SetAction(std::bind(&SubmissionView::SubmissionDocumentChanged, this));
-}
-
-void Repl::SubmissionView::CurrentLine(const int & value)
-{
-	if (_currentLine != value)
-	{
-		_currentLine = value;
-		_currentCharacter = (*_submissionDocument)[_currentLine].length() < _currentCharacter ?
-			(*_submissionDocument)[_currentLine].length() : _currentCharacter;
-		UpdateCursorPosition();
-	}
-}
-
-void Repl::SubmissionView::CurrentCharacter(const int & value)
-{
-	if (_currentCharacter != value)
-	{
-		_currentCharacter = value;
-		UpdateCursorPosition();
-	}
-}
 
 void Repl::RenderLine(const std::string & line) const
 {
@@ -103,6 +51,77 @@ void Repl::Run()
 			continue;
 		EvaluateSubmission(text);
 		text.clear();
+	}
+}
+
+void Repl::SubmissionView::SubmissionDocumentChanged()
+{
+	Render();
+}
+
+void Repl::SubmissionView::Render()
+{
+	MCF::SetCursorVisibility(false);
+
+	auto lineCount = 0;
+	for (const auto& line : *_submissionDocument)
+	{
+		MCF::SetCursorPosition(0, _cursorTop + lineCount);
+
+		MCF::SetConsoleColor(MCF::ConsoleColor::Green);
+		if (lineCount == 0)
+			std::cout << "> ";
+		else std::cout << "| ";
+		MCF::ResetConsoleColor();
+
+		_lineRenderer(line);
+		std::cout << std::string(MCF::GetConsoleWidth() - line.length(), ' ');
+		++lineCount;
+	}
+	auto numberOfBlankLines = _renderedLineCount - lineCount;
+	if (numberOfBlankLines > 0)
+	{
+		auto blankLine= std::string(MCF::GetConsoleWidth(), ' ');
+		for (size_t i = 0; i < numberOfBlankLines; ++i)
+		{
+			MCF::SetCursorPosition(0, _cursorTop + lineCount);
+			std::cout << blankLine;
+		}
+	}
+	_renderedLineCount = lineCount;
+	MCF::SetCursorVisibility(true);
+	UpdateCursorPosition();
+}
+
+void Repl::SubmissionView::UpdateCursorPosition()
+{
+	MCF::SetCursorPosition(2 + _currentCharacter, _cursorTop + _currentLine);
+}
+
+Repl::SubmissionView::SubmissionView(const std::function<void(std::string)>& lineRenderer, const ObservableCollection<std::string>& document)
+	:_lineRenderer(lineRenderer), _submissionDocument(&document), _cursorTop(MCF::GetCursorTop())
+{
+	auto& d = std::remove_const_t<ObservableCollection<std::string>&>(document);
+	d.SetAction(std::bind(&SubmissionView::SubmissionDocumentChanged, this));
+}
+
+void Repl::SubmissionView::CurrentLine(const int & value)
+{
+	if (_currentLine != value)
+	{
+		_currentLine = value;
+		_currentCharacter = (*_submissionDocument)[_currentLine].length() < _currentCharacter ?
+			(*_submissionDocument)[_currentLine].length() : _currentCharacter;
+		UpdateCursorPosition();
+	}
+}
+
+void Repl::SubmissionView::CurrentCharacter(const int & value)
+{
+	if (_currentCharacter != value)
+	{
+		_currentCharacter = value;
+		UpdateCursorPosition();
 	}
 }
 

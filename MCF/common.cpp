@@ -7,9 +7,11 @@
 
 namespace MCF {
 
+const auto console = ConsoleInfo();
+
 void SetConsoleColor(const ConsoleColor& color)
 {
-	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE hStdout = console.hStdout;
 	//CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 	//GetConsoleScreenBufferInfo(hStdout, &csbiInfo);
 	//WORD wOldColorAttrs = csbiInfo.wAttributes;
@@ -71,6 +73,34 @@ void ClearConsole(char fill)
 	FillConsoleOutputCharacter(hStdout, fill, cells, t1, &written);
 	FillConsoleOutputAttribute(hStdout, csbiInfo.wAttributes, cells, t1, &written);
 	SetConsoleCursorPosition(hStdout, t1);
+}
+
+void SetCursorVisibility(bool visible)
+{
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO info;
+	info.dwSize = 100;
+	info.bVisible = visible ? TRUE : FALSE;
+	SetConsoleCursorInfo(hStdout, &info);
+}
+
+int GetConsoleWidth()
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbiInfo);
+	return static_cast<int>(csbiInfo.dwSize.X);
+}
+
+int GetCursorTop()
+{
+	POINT p;
+	GetCursorPos(&p);
+	return static_cast<int>(p.y);
+}
+
+void SetCursorPosition(int x, int y)
+{
+	SetCursorPos(x, y);
 }
 
 bool IsStringBlank(const std::string& s)

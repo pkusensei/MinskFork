@@ -15,7 +15,11 @@ private:
 	void CollectionChanged() { _action(); }
 public:
 	void SetAction(const std::function<void()>& other) { _action = other; }
-	T operator[](size_t index) const { return _collection[index]; }
+	const T& operator[](size_t index) const { return _collection[index]; }
+
+	const T* begin()const { return &_collection[0]; }
+	const T* end()const { auto size = _collection.size(); return &_collection[size - 1]; }
+	size_t size()const { return _collection.size(); }
 };
 
 class Repl
@@ -25,29 +29,8 @@ private:
 	int _submissionHistoryIndex{0};
 	bool _done{false};
 
-	class SubmissionView final
-	{
-	private:
-		static int GetCursorTop();
-
-		std::function<void(std::string)> _lineRenderer;
-		const ObservableCollection<std::string>* _submissionDocument;
-		const int _cursorTop;
-		int _renderedLineCount{0};
-		int _currentLine{0};
-		int _currentCharacter{0};
-
-		void SubmissionDocumentChanged();
-		void Render();
-		void UpdateCursorPosition();
-	public:
-		SubmissionView(const std::function<void(std::string)>& lineRenderer, const ObservableCollection<std::string>& document);
-
-		int CurrentLine()const { return _currentLine; }
-		void CurrentLine(const int& value);
-		int CurrentCharacter()const { return _currentCharacter; }
-		void CurrentCharacter(const int& value);
-	};
+	class SubmissionView;
+	std::string EditSubmission();
 protected:
 	virtual void RenderLine(const std::string& line)const;
 	virtual void EvaluateMetaCommand(const std::string& input);
@@ -56,8 +39,29 @@ protected:
 
 public:
 	virtual ~Repl() = default;
-
 	void Run();
+};
+
+class Repl::SubmissionView final
+{
+private:
+	std::function<void(std::string)> _lineRenderer;
+	const ObservableCollection<std::string>* _submissionDocument;
+	const int _cursorTop;
+	int _renderedLineCount{0};
+	int _currentLine{0};
+	int _currentCharacter{0};
+
+	void SubmissionDocumentChanged();
+	void Render();
+	void UpdateCursorPosition();
+public:
+	SubmissionView(const std::function<void(std::string)>& lineRenderer, const ObservableCollection<std::string>& document);
+
+	int CurrentLine()const { return _currentLine; }
+	void CurrentLine(const int& value);
+	int CurrentCharacter()const { return _currentCharacter; }
+	void CurrentCharacter(const int& value);
 };
 
 namespace MCF {

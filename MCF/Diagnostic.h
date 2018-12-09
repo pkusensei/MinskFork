@@ -4,7 +4,6 @@
 
 #include "common.h"
 
-
 namespace MCF {
 
 class TextSpan;
