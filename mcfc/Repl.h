@@ -30,7 +30,7 @@ private:
 	bool _done{false};
 
 	class SubmissionView;
-	std::string EditSubmission();
+	//std::string EditSubmission();
 protected:
 	virtual void RenderLine(const std::string& line)const;
 	virtual void EvaluateMetaCommand(const std::string& input);

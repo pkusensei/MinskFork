@@ -7,11 +7,9 @@
 
 namespace MCF {
 
-const auto console = ConsoleInfo();
-
 void SetConsoleColor(const ConsoleColor& color)
 {
-	HANDLE hStdout = console.hStdout;
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 	//CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 	//GetConsoleScreenBufferInfo(hStdout, &csbiInfo);
 	//WORD wOldColorAttrs = csbiInfo.wAttributes;
