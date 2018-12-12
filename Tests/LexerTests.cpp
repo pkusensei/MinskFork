@@ -16,8 +16,7 @@ public:
 	TEST_METHOD(Lexer_Tests_AllTokens)
 	{
 		auto tokenKinds = std::vector<MCF::SyntaxKind>();
-		auto kinds = MCF::GetAllSyntaxKinds();
-		for (const auto& kind : kinds)
+		for (const auto& kind : MCF::AllSyntaxKinds)
 		{
 			auto text = MCF::GetSyntaxKindName(kind);
 			if (MCF::StringEndsWith(text, "Keyword") || MCF::StringEndsWith(text, "Token"))
@@ -89,8 +88,7 @@ public:
 
 	TEST_METHOD(GetText_RoundTrip)
 	{
-		auto kinds = MCF::GetAllSyntaxKinds();
-		for (const auto& kind : kinds)
+		for (const auto& kind : MCF::AllSyntaxKinds)
 		{
 			auto text = MCF::GetText(kind);
 			if (text.length() > 0)
@@ -111,8 +109,7 @@ private:
 		auto result = std::vector<std::pair<MCF::SyntaxKind, std::string>>();
 
 		// fixed tokens
-		auto kinds = MCF::GetAllSyntaxKinds();
-		for (const auto& kind : kinds)
+		for (const auto& kind : MCF::AllSyntaxKinds)
 		{
 			auto text = MCF::GetText(kind);
 			if (!text.empty())

@@ -122,9 +122,8 @@ int GetBinaryOperatorPrecedence(const SyntaxKind& kind) noexcept
 
 vector<SyntaxKind> GetUnaryOperatorKinds()
 {
-	auto kinds = GetAllSyntaxKinds();
 	auto result = vector<SyntaxKind>();
-	for (const auto& it : kinds)
+	for (const auto& it : AllSyntaxKinds)
 		if (GetUnaryOperatorPrecedence(it) > 0)
 			result.emplace_back(it);
 	return result;
@@ -132,9 +131,8 @@ vector<SyntaxKind> GetUnaryOperatorKinds()
 
 vector<SyntaxKind> GetBinaryOperatorKinds()
 {
-	auto kinds = GetAllSyntaxKinds();
 	auto result = vector<SyntaxKind>();
-	for (const auto& it : kinds)
+	for (const auto& it : AllSyntaxKinds)
 		if (GetBinaryOperatorPrecedence(it) > 0)
 			result.emplace_back(it);
 	return result;

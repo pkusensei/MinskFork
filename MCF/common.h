@@ -44,6 +44,30 @@ MCF_API int GetConsoleWidth();
 MCF_API int GetCursorTop();
 MCF_API void SetCursorPosition(int x, int y);
 
+enum class KeyInputKind
+{
+	Control,
+	Enter,
+	Escape,
+	LeftArrow,
+	RightArrow,
+	UpArrow,
+	DownArrow,
+	WaitForArrow,
+	Backspace,
+	Delete,
+	Home,
+	End,
+	Tab,
+	PageUp,
+	PageDown,
+
+	Typing
+};
+
+MCF_API char ReadKeyFromConsole();
+MCF_API KeyInputKind DecideKeyInputKind(const char& input);
+
 /// string helpers
 MCF_API bool IsStringBlank(const std::string& s);
 MCF_API bool StringStartsWith(const string& sample, const string& beginning);
@@ -51,6 +75,7 @@ MCF_API bool StringEndsWith(const string& sample, const string& ending);
 MCF_API string TrimString(const string& text);
 MCF_API string TrimStringStart(const string& text);
 MCF_API string TrimStringEnd(const string& text);
+MCF_API string StringJoin(const vector<string>& strs, char seperator = ' ');
 
 enum class SyntaxKind
 {
@@ -120,8 +145,9 @@ enum class SyntaxKind
 
 SyntaxKind& operator++(SyntaxKind& kind);
 SyntaxKind& operator++(SyntaxKind& kind, int c);
-MCF_API const vector<SyntaxKind> GetAllSyntaxKinds();
+const vector<SyntaxKind> GetAllSyntaxKinds();
 MCF_API string GetSyntaxKindName(const SyntaxKind& kind);
+extern "C" MCF_API const vector<SyntaxKind> AllSyntaxKinds; // NOTE global constant
 
 class MCF_API ValueType final
 {

@@ -8,22 +8,21 @@
 #include "SourceText.h"
 #include "Syntax.h"
 
-void Repl::RenderLine(const std::string & line) const
-{
-	std::cout << line;
-}
-
-void Repl::EvaluateMetaCommand(const std::string & input)
-{
-	MCF::SetConsoleColor(MCF::ConsoleColor::Red);
-	std::cout << "Invalid command " << input << '\n';
-	MCF::ResetConsoleColor();
-}
-
 void Repl::Run()
 {
-	std::string text, input;
+	//while (true)
+	//{
+	//	auto text = EditSubmission();
+	//	if (text.empty())
+	//		return;
+	//	if (text.find('\r') == text.npos && MCF::StringStartsWith(text, "#"))
+	//		EvaluateMetaCommand(text);
+	//	else EvaluateSubmission(text);
 
+	//	_submissionHistory.emplace_back(text);
+	//	_submissionHistoryIndex = 0;
+	//}
+	std::string text, input;
 	while (true)
 	{
 		MCF::SetConsoleColor(MCF::ConsoleColor::Green);
@@ -54,6 +53,92 @@ void Repl::Run()
 	}
 }
 
+std::string Repl::EditSubmission()
+{
+	_done = false;
+	auto document = ObservableCollection<std::string>{""};
+	auto view = SubmissionView(std::bind(&Repl::RenderLine, this, std::placeholders::_1), document);
+
+	while (!_done)
+	{
+		auto key = MCF::ReadKeyFromConsole();
+		HandleKey(key, &document, &view);
+	}
+	view.CurrentLine(document.size() - 1);
+	view.CurrentCharacter(document[view.CurrentLine()].length());
+	std::cout << "\n";
+	return MCF::StringJoin(document.Contents(), '\r');
+}
+
+void Repl::HandleKey(const char & key, ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	auto kind = MCF::DecideKeyInputKind(key);
+	if (kind != MCF::KeyInputKind::Control)
+	{
+		switch (kind)
+		{
+			case MCF::KeyInputKind::Escape:
+				HandleEscape(document, view);
+				break;
+			case MCF::KeyInputKind::Enter:
+				HandleEnter(document, view);
+				break;
+			default:
+				HandleTyping(document, view, std::string(1, key));
+				break;
+		}
+	}
+}
+
+void Repl::HandleEscape(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	document->SetAt(view->CurrentLine(), std::string());
+	view->CurrentCharacter(0);
+}
+
+void Repl::HandleEnter(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	auto text = MCF::StringJoin(document->Contents(), '\r');
+	if (MCF::StringStartsWith(text, "#") || IsCompleteSubmission(text))
+	{
+		_done = true;
+		return;
+	}
+	InsertLine(document, view);
+}
+
+void Repl::InsertLine(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	auto remainder = (*document)[view->CurrentLine()].substr(view->CurrentCharacter());
+	document->SetAt(view->CurrentLine(), (*document)[view->CurrentLine()].substr(0, view->CurrentCharacter()));
+
+	auto lineIndex = view->CurrentLine() + 1;
+	document->Insert(lineIndex, std::string());
+	view->CurrentCharacter(0);
+	view->CurrentLine(lineIndex);
+}
+
+void Repl::HandleTyping(ObservableCollection<std::string>* document, SubmissionView * view, const std::string& text)
+{
+	auto lineIndex = view->CurrentLine();
+	auto start = view->CurrentCharacter();
+	auto line = (*document)[lineIndex];
+	document->SetAt(lineIndex, line.insert(start, text));
+	view->CurrentCharacter(view->CurrentCharacter() + text.length());
+}
+
+void Repl::RenderLine(const std::string & line) const
+{
+	std::cout << line;
+}
+
+void Repl::EvaluateMetaCommand(const std::string & input)
+{
+	MCF::SetConsoleColor(MCF::ConsoleColor::Red);
+	std::cout << "Invalid command " << input << '\n';
+	MCF::ResetConsoleColor();
+}
+
 void Repl::SubmissionView::SubmissionDocumentChanged()
 {
 	Render();
@@ -75,17 +160,17 @@ void Repl::SubmissionView::Render()
 		MCF::ResetConsoleColor();
 
 		_lineRenderer(line);
-		std::cout << std::string(MCF::GetConsoleWidth() - line.length(), ' ');
+		std::cout << std::string(MCF::GetConsoleWidth() - line.length(), ' ') << '\n';
 		++lineCount;
 	}
 	auto numberOfBlankLines = _renderedLineCount - lineCount;
 	if (numberOfBlankLines > 0)
 	{
-		auto blankLine= std::string(MCF::GetConsoleWidth(), ' ');
+		auto blankLine = std::string(MCF::GetConsoleWidth(), ' ');
 		for (size_t i = 0; i < numberOfBlankLines; ++i)
 		{
-			MCF::SetCursorPosition(0, _cursorTop + lineCount);
-			std::cout << blankLine;
+			MCF::SetCursorPosition(0, _cursorTop + lineCount + i);
+			std::cout << blankLine << '\n';
 		}
 	}
 	_renderedLineCount = lineCount;

@@ -3,7 +3,10 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iostream>
 #include <unordered_map>
+
+#include <conio.h>
 
 namespace MCF {
 
@@ -101,6 +104,38 @@ void SetCursorPosition(int x, int y)
 	SetCursorPos(x, y);
 }
 
+char ReadKeyFromConsole()
+{
+	auto result = _getch();
+	return result;
+}
+
+KeyInputKind DecideKeyInputKind(const char & input)
+{
+	switch (input)
+	{
+		case VK_CONTROL: case VK_LCONTROL: case VK_RCONTROL:
+			return KeyInputKind::Control;
+		case VK_RETURN:return KeyInputKind::Enter;
+		case VK_ESCAPE:return KeyInputKind::Escape;
+		case VK_LEFT:return KeyInputKind::LeftArrow;
+		case VK_RIGHT:return KeyInputKind::RightArrow;
+		case VK_UP:return KeyInputKind::UpArrow;
+		case VK_DOWN:return KeyInputKind::DownArrow;
+		case 0: case 0xE0:
+			return DecideKeyInputKind(ReadKeyFromConsole());
+		case VK_BACK:return KeyInputKind::Backspace;
+		case VK_DELETE:return KeyInputKind::Delete;
+		case VK_HOME:return KeyInputKind::Home;
+		case VK_END:return KeyInputKind::End;
+		case VK_TAB:return KeyInputKind::Tab;
+		case VK_PRIOR:return KeyInputKind::PageUp;
+		case VK_NEXT:return KeyInputKind::PageDown;
+		default:
+			return KeyInputKind::Typing;
+	}
+}
+
 bool IsStringBlank(const std::string& s)
 {
 	for (const auto& c : s)
@@ -142,6 +177,18 @@ string TrimStringEnd(const string & text)
 	return result;
 }
 
+string StringJoin(const vector<string>& strs, char seperator)
+{
+	auto result = string();
+	for (const auto& it : strs)
+	{
+		result += it + seperator;
+	}
+	if (!result.empty())
+		result.erase(result.length() - 1);
+	return result;
+}
+
 SyntaxKind& operator++(SyntaxKind& kind)
 {
 	auto tmp = std::underlying_type<SyntaxKind>::type(kind);
@@ -163,6 +210,8 @@ const vector<SyntaxKind> GetAllSyntaxKinds()
 	result.shrink_to_fit();
 	return result;
 }
+
+const auto AllSyntaxKinds = GetAllSyntaxKinds();
 
 string GetSyntaxKindName(const SyntaxKind& kind)
 {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <initializer_list>
 #include <string>
 #include <unordered_map>
 
@@ -14,8 +15,21 @@ private:
 	std::function<void()> _action;
 	void CollectionChanged() { _action(); }
 public:
-	void SetAction(const std::function<void()>& other) { _action = other; }
-	const T& operator[](size_t index) const { return _collection[index]; }
+	ObservableCollection(std::initializer_list<T> init) :_collection(init) {}
+	void SetAction(const std::function<void()>& action) { _action = action; }
+
+	const T& operator[](size_t index)const { return _collection[index]; }
+	std::vector<T> Contents()const { return _collection; }
+	void SetAt(size_t index, const T& content)
+	{
+		_collection[index] = content; 
+		CollectionChanged();
+	}
+	void Insert(size_t index, const T& content)
+	{
+		_collection.insert(_collection.begin() + index, content);
+		CollectionChanged();
+	}
 
 	const T* begin()const { return &_collection[0]; }
 	const T* end()const { auto size = _collection.size(); return &_collection[size - 1]; }
@@ -30,7 +44,13 @@ private:
 	bool _done{false};
 
 	class SubmissionView;
-	//std::string EditSubmission();
+	std::string EditSubmission();
+	void HandleKey(const char& key, ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleEscape(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleEnter(ObservableCollection<std::string>* document, SubmissionView* view);
+	static void InsertLine(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleTyping(ObservableCollection<std::string>* document, SubmissionView* view, const std::string& text);
+
 protected:
 	virtual void RenderLine(const std::string& line)const;
 	virtual void EvaluateMetaCommand(const std::string& input);
