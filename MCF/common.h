@@ -20,63 +20,6 @@ using std::vector;
 
 using IntegerType = long; // HACK use long as interger type
 
-enum class ConsoleColor
-{
-	Red,
-	DarkRed,
-	Blue,
-	DarkBlue,
-	Green,
-	DarkGreen,
-	Cyan,
-	Yellow,
-	DarkYellow,
-	Magenta,
-	White,
-	Grey,
-};
-
-MCF_API void SetConsoleColor(const ConsoleColor& color = ConsoleColor::Grey);
-MCF_API void ResetConsoleColor();
-MCF_API void ClearConsole(char fill = ' ');
-MCF_API void SetCursorVisibility(bool visible = true);
-MCF_API int GetConsoleWidth();
-MCF_API int GetCursorTop();
-MCF_API void SetCursorPosition(int x, int y);
-
-enum class KeyInputKind
-{
-	Control,
-	Enter,
-	Escape,
-	LeftArrow,
-	RightArrow,
-	UpArrow,
-	DownArrow,
-	WaitForArrow,
-	Backspace,
-	Delete,
-	Home,
-	End,
-	Tab,
-	PageUp,
-	PageDown,
-
-	Typing
-};
-
-MCF_API char ReadKeyFromConsole();
-MCF_API KeyInputKind DecideKeyInputKind(const char& input);
-
-/// string helpers
-MCF_API bool IsStringBlank(const std::string& s);
-MCF_API bool StringStartsWith(const string& sample, const string& beginning);
-MCF_API bool StringEndsWith(const string& sample, const string& ending);
-MCF_API string TrimString(const string& text);
-MCF_API string TrimStringStart(const string& text);
-MCF_API string TrimStringEnd(const string& text);
-MCF_API string StringJoin(const vector<string>& strs, char seperator = ' ');
-
 enum class SyntaxKind
 {
 	// Tokens
@@ -143,9 +86,6 @@ enum class SyntaxKind
 	AssignmentExpression,
 };
 
-SyntaxKind& operator++(SyntaxKind& kind);
-SyntaxKind& operator++(SyntaxKind& kind, int c);
-const vector<SyntaxKind> GetAllSyntaxKinds();
 MCF_API string GetSyntaxKindName(const SyntaxKind& kind);
 extern "C" MCF_API const vector<SyntaxKind> AllSyntaxKinds; // NOTE global constant
 
@@ -206,7 +146,7 @@ public:
 	bool operator!=(const VariableSymbol& other) const noexcept;
 };
 
-struct MCF_API VariableHash
+struct MCF_API VariableHash final
 {
 	size_t operator()(const VariableSymbol& variable) const noexcept;
 };

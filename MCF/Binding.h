@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 #include "common.h"
+#include "helpers.h"
 
 namespace MCF {
 
@@ -41,7 +42,7 @@ public:
 	string ToString()const { return Name(); }
 };
 
-struct LabelHash
+struct LabelHash final
 {
 	size_t operator()(const LabelSymbol& label) const noexcept;
 };

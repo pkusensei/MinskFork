@@ -3,6 +3,7 @@
 
 #include <set>
 
+#include "..\MCF\helpers.h"
 #include "..\MCF\Syntax.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

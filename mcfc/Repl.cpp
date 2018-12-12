@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+#include "helpers.h"
 #include "Compilation.h"
 #include "Diagnostic.h"
 #include "SourceText.h"

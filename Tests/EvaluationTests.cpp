@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <stack>
 
+#include "..\MCF\helpers.h"
 #include "..\MCF\Compilation.h"
 #include "..\MCF\Diagnostic.h"
 #include "..\MCF\SourceText.h"

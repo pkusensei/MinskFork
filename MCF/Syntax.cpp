@@ -6,6 +6,7 @@
 #include <sstream>
 #include <typeinfo>
 
+#include "helpers.h"
 #include "Diagnostic.h"
 #include "SourceText.h"
 
