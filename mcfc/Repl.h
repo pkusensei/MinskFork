@@ -31,8 +31,6 @@ public:
 		CollectionChanged();
 	}
 
-	const T* begin()const { return &_collection[0]; }
-	const T* end()const { auto size = _collection.size(); return &_collection[size - 1]; }
 	size_t size()const { return _collection.size(); }
 };
 

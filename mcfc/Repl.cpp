@@ -150,7 +150,7 @@ void Repl::SubmissionView::Render()
 	MCF::SetCursorVisibility(false);
 
 	auto lineCount = 0;
-	for (const auto& line : *_submissionDocument)
+	for (const auto& line : _submissionDocument->Contents())
 	{
 		MCF::SetCursorPosition(0, _cursorTop + lineCount);
 
@@ -189,6 +189,7 @@ Repl::SubmissionView::SubmissionView(const std::function<void(std::string)>& lin
 {
 	auto& d = std::remove_const_t<ObservableCollection<std::string>&>(document);
 	d.SetAction(std::bind(&SubmissionView::SubmissionDocumentChanged, this));
+	Render();
 }
 
 void Repl::SubmissionView::CurrentLine(const int & value)
