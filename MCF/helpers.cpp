@@ -92,14 +92,19 @@ int GetConsoleWidth()
 
 int GetCursorTop()
 {
-	POINT p;
-	GetCursorPos(&p);
-	return static_cast<int>(p.y);
+	auto hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+	GetConsoleScreenBufferInfo(hStdout, &csbiInfo);
+	return static_cast<int>(csbiInfo.dwCursorPosition.Y);
 }
 
 void SetCursorPosition(int x, int y)
 {
-	SetCursorPos(x, y);
+	auto hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD c;
+	c.X = x;
+	c.Y = y;
+	SetConsoleCursorPosition(hStdout, c);
 }
 
 char ReadKeyFromConsole()

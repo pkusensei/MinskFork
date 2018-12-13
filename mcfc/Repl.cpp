@@ -11,47 +11,47 @@
 
 void Repl::Run()
 {
-	//while (true)
-	//{
-	//	auto text = EditSubmission();
-	//	if (text.empty())
-	//		return;
-	//	if (text.find('\r') == text.npos && MCF::StringStartsWith(text, "#"))
-	//		EvaluateMetaCommand(text);
-	//	else EvaluateSubmission(text);
-
-	//	_submissionHistory.emplace_back(text);
-	//	_submissionHistoryIndex = 0;
-	//}
-	std::string text, input;
 	while (true)
 	{
-		MCF::SetConsoleColor(MCF::ConsoleColor::Green);
+		auto text = EditSubmission();
 		if (text.empty())
-			std::cout << "> ";
-		else std::cout << "| ";
-		MCF::ResetConsoleColor();
+			return;
+		if (text.find('\r') == text.npos && MCF::StringStartsWith(text, "#"))
+			EvaluateMetaCommand(text);
+		else EvaluateSubmission(text);
 
-		std::getline(std::cin, input);
-		auto isBlank = MCF::IsStringBlank(input);
-		if (text.empty())
-		{
-			if (isBlank)
-				break;
-			else if (MCF::StringStartsWith(input, "#"))
-			{
-				EvaluateMetaCommand(input);
-				continue;
-			}
-		}
-		if (!std::cin.eof() && !std::cin.fail())
-			text += input + '\r'; // HACK Windows does "\r\n" together
-
-		if (!IsCompleteSubmission(text))
-			continue;
-		EvaluateSubmission(text);
-		text.clear();
+		_submissionHistory.emplace_back(text);
+		_submissionHistoryIndex = 0;
 	}
+	//std::string text, input;
+	//while (true)
+	//{
+	//	MCF::SetConsoleColor(MCF::ConsoleColor::Green);
+	//	if (text.empty())
+	//		std::cout << "> ";
+	//	else std::cout << "| ";
+	//	MCF::ResetConsoleColor();
+
+	//	std::getline(std::cin, input);
+	//	auto isBlank = MCF::IsStringBlank(input);
+	//	if (text.empty())
+	//	{
+	//		if (isBlank)
+	//			break;
+	//		else if (MCF::StringStartsWith(input, "#"))
+	//		{
+	//			EvaluateMetaCommand(input);
+	//			continue;
+	//		}
+	//	}
+	//	if (!std::cin.eof() && !std::cin.fail())
+	//		text += input + '\r'; // HACK Windows does "\r\n" together
+
+	//	if (!IsCompleteSubmission(text))
+	//		continue;
+	//	EvaluateSubmission(text);
+	//	text.clear();
+	//}
 }
 
 std::string Repl::EditSubmission()
@@ -230,7 +230,7 @@ void McfRepl::RenderLine(const std::string & line) const
 		if (isKeyword)
 			MCF::SetConsoleColor(MCF::ConsoleColor::Blue);
 		else if (isNumber)
-			MCF::SetConsoleColor(MCF::ConsoleColor::Grey);
+			MCF::SetConsoleColor(MCF::ConsoleColor::DarkYellow);
 
 		std::cout << it->Text();
 		MCF::ResetConsoleColor();

@@ -4,7 +4,6 @@
 #include <cctype>
 #include <iostream>
 #include <sstream>
-#include <typeinfo>
 
 #include "helpers.h"
 #include "Diagnostic.h"

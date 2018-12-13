@@ -5,6 +5,7 @@
 #include <sstream>
 #include <stack>
 
+#include "helpers.h"
 #include "Diagnostic.h"
 #include "Syntax.h"
 #include "SourceText.h"
@@ -1332,6 +1333,5 @@ unique_ptr<BoundStatement> Lowerer::RewriteForStatement(const BoundForStatement 
 	auto result = std::make_unique<BoundBlockStatement>(statements);
 	return RewriteStatement(result.get());
 }
-
 
 }//MCF

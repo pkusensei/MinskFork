@@ -3,10 +3,10 @@
 #include <unordered_map>
 
 #include "common.h"
-#include "helpers.h"
 
 namespace MCF {
 
+enum class ConsoleColor;
 class DiagnosticBag;
 
 class ExpressionSyntax;
@@ -619,4 +619,3 @@ public:
 };
 
 }//MCF
-
