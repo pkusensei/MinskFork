@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <sstream>
 
 #include <conio.h>
 
@@ -107,13 +108,32 @@ void SetCursorPosition(int x, int y)
 	SetConsoleCursorPosition(hStdout, c);
 }
 
-char ReadKeyFromConsole()
+int ReadKeyFromConsole()
 {
 	auto result = _getch();
+	if (result == 0 || result == 0xE0)
+	{
+		auto k = _getch();
+		// HACK for function and arrow keys
+		// This switch remaps the return value from the second call to _getch() to VK codes.
+		switch (k)
+		{
+			case 71: return VK_HOME;
+			case 79: return VK_END;
+			case 83: return VK_DELETE;
+			case 73: return VK_PRIOR;
+			case 81: return VK_NEXT;
+
+			case 72: return VK_UP;
+			case 80: return VK_DOWN;
+			case 75: return VK_LEFT;
+			case 77: return VK_RIGHT;
+		}
+	}
 	return result;
 }
 
-KeyInputKind DecideKeyInputKind(const char & input)
+KeyInputKind DecideKeyInputKind(const int input)
 {
 	switch (input)
 	{
@@ -125,8 +145,6 @@ KeyInputKind DecideKeyInputKind(const char & input)
 		case VK_RIGHT:return KeyInputKind::RightArrow;
 		case VK_UP:return KeyInputKind::UpArrow;
 		case VK_DOWN:return KeyInputKind::DownArrow;
-		case 0: case 0xE0:
-			return DecideKeyInputKind(ReadKeyFromConsole());
 		case VK_BACK:return KeyInputKind::Backspace;
 		case VK_DELETE:return KeyInputKind::Delete;
 		case VK_HOME:return KeyInputKind::Home;
@@ -135,7 +153,7 @@ KeyInputKind DecideKeyInputKind(const char & input)
 		case VK_PRIOR:return KeyInputKind::PageUp;
 		case VK_NEXT:return KeyInputKind::PageDown;
 		default:
-			return KeyInputKind::Typing;
+			return KeyInputKind::General;
 	}
 }
 
@@ -180,7 +198,7 @@ string TrimStringEnd(const string & text)
 	return result;
 }
 
-string StringJoin(const vector<string>& strs, char seperator)
+string StringJoin(const vector<string>& strs, const char seperator)
 {
 	auto result = string();
 	for (const auto& it : strs)
@@ -189,6 +207,18 @@ string StringJoin(const vector<string>& strs, char seperator)
 	}
 	if (!result.empty())
 		result.erase(result.length() - 1);
+	return result;
+}
+
+vector<string> StringSplit(const string & s, const char delimiter)
+{
+	auto result = vector<string>();
+	auto token = string();
+	auto isstream = std::istringstream(s);
+	while (std::getline(isstream, token, delimiter))
+	{
+		result.emplace_back(token);
+	}
 	return result;
 }
 

@@ -9,6 +9,8 @@
 #include "SourceText.h"
 #include "Syntax.h"
 
+constexpr auto NewLine = '\r';
+
 void Repl::Run()
 {
 	while (true)
@@ -16,42 +18,13 @@ void Repl::Run()
 		auto text = EditSubmission();
 		if (text.empty())
 			return;
-		if (text.find('\r') == text.npos && MCF::StringStartsWith(text, "#"))
+		if (text.find(NewLine) == text.npos && MCF::StringStartsWith(text, "#"))
 			EvaluateMetaCommand(text);
 		else EvaluateSubmission(text);
 
 		_submissionHistory.emplace_back(text);
 		_submissionHistoryIndex = 0;
 	}
-	//std::string text, input;
-	//while (true)
-	//{
-	//	MCF::SetConsoleColor(MCF::ConsoleColor::Green);
-	//	if (text.empty())
-	//		std::cout << "> ";
-	//	else std::cout << "| ";
-	//	MCF::ResetConsoleColor();
-
-	//	std::getline(std::cin, input);
-	//	auto isBlank = MCF::IsStringBlank(input);
-	//	if (text.empty())
-	//	{
-	//		if (isBlank)
-	//			break;
-	//		else if (MCF::StringStartsWith(input, "#"))
-	//		{
-	//			EvaluateMetaCommand(input);
-	//			continue;
-	//		}
-	//	}
-	//	if (!std::cin.eof() && !std::cin.fail())
-	//		text += input + '\r'; // HACK Windows does "\r\n" together
-
-	//	if (!IsCompleteSubmission(text))
-	//		continue;
-	//	EvaluateSubmission(text);
-	//	text.clear();
-	//}
 }
 
 std::string Repl::EditSubmission()
@@ -68,10 +41,10 @@ std::string Repl::EditSubmission()
 	view.CurrentLine(document.size() - 1);
 	view.CurrentCharacter(document[view.CurrentLine()].length());
 	std::cout << "\n";
-	return MCF::StringJoin(document.Contents(), '\r');
+	return MCF::StringJoin(document.Contents(), NewLine);
 }
 
-void Repl::HandleKey(const char & key, ObservableCollection<std::string>* document, SubmissionView * view)
+void Repl::HandleKey(const char key, ObservableCollection<std::string>* document, SubmissionView * view)
 {
 	auto kind = MCF::DecideKeyInputKind(key);
 	if (kind != MCF::KeyInputKind::Control)
@@ -84,11 +57,53 @@ void Repl::HandleKey(const char & key, ObservableCollection<std::string>* docume
 			case MCF::KeyInputKind::Enter:
 				HandleEnter(document, view);
 				break;
+			case MCF::KeyInputKind::LeftArrow:
+				HandleLeftArrow(document, view);
+				break;
+			case MCF::KeyInputKind::RightArrow:
+				HandleRightArrow(document, view);
+				break;
+			case MCF::KeyInputKind::UpArrow:
+				HandleUpArrow(document, view);
+				break;
+			case MCF::KeyInputKind::DownArrow:
+				HandleDownArrow(document, view);
+				break;
+			case MCF::KeyInputKind::Backspace:
+				HandleBackspace(document, view);
+				break;
+			case MCF::KeyInputKind::Delete:
+				HandleDelete(document, view);
+				break;
+			case MCF::KeyInputKind::Home:
+				HandleHome(document, view);
+				break;
+			case MCF::KeyInputKind::End:
+				HandleEnd(document, view);
+				break;
+			case MCF::KeyInputKind::Tab:
+				HandleTab(document, view);
+				break;
+			case MCF::KeyInputKind::PageUp:
+				HandlePageUp(document, view);
+				break;
+			case MCF::KeyInputKind::PageDown:
+				HandlePageDown(document, view);
+				break;
 			default:
-				HandleTyping(document, view, std::string(1, key));
+				auto c = static_cast<char>(key);
+				if (c >= ' ')
+					HandleTyping(document, view, std::string(1, key));
 				break;
 		}
 	}
+	// TODO Handle ctrl+enter
+	//if (kind == MCF::KeyInputKind::Control)
+	//{
+	//	auto nextKey = MCF::ReadKeyFromConsole();
+	//	if (MCF::DecideKeyInputKind(nextKey) == MCF::KeyInputKind::Enter)
+	//		HandleControlEnter(document, view);
+	//} 
 }
 
 void Repl::HandleEscape(ObservableCollection<std::string>* document, SubmissionView * view)
@@ -99,12 +114,17 @@ void Repl::HandleEscape(ObservableCollection<std::string>* document, SubmissionV
 
 void Repl::HandleEnter(ObservableCollection<std::string>* document, SubmissionView * view)
 {
-	auto text = MCF::StringJoin(document->Contents(), '\r');
+	auto text = MCF::StringJoin(document->Contents(), NewLine);
 	if (MCF::StringStartsWith(text, "#") || IsCompleteSubmission(text))
 	{
 		_done = true;
 		return;
 	}
+	InsertLine(document, view);
+}
+
+void Repl::HandleControlEnter(ObservableCollection<std::string>* document, SubmissionView * view)
+{
 	InsertLine(document, view);
 }
 
@@ -117,6 +137,116 @@ void Repl::InsertLine(ObservableCollection<std::string>* document, SubmissionVie
 	document->Insert(lineIndex, std::string());
 	view->CurrentCharacter(0);
 	view->CurrentLine(lineIndex);
+}
+
+void Repl::HandleLeftArrow(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	if (view->CurrentCharacter() > 0)
+		view->CurrentCharacter(view->CurrentCharacter() - 1);
+}
+
+void Repl::HandleRightArrow(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	auto line = (*document)[view->CurrentLine()];
+	if (view->CurrentCharacter() <= line.length() - 1)
+		view->CurrentCharacter(view->CurrentCharacter() + 1);
+}
+
+void Repl::HandleUpArrow(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	if (view->CurrentLine() > 0)
+		view->CurrentLine(view->CurrentLine() - 1);
+}
+
+void Repl::HandleDownArrow(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	if (view->CurrentLine() < document->size() - 1)
+		view->CurrentLine(view->CurrentLine() + 1);
+}
+
+void Repl::HandleBackspace(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	auto start = view->CurrentCharacter();
+	if (start == 0)
+	{
+		if (view->CurrentLine() == 0)
+			return;
+		auto currentLine = (*document)[view->CurrentLine()];
+		auto previousLine = (*document)[view->CurrentLine() - 1];
+		document->RemoveAt(view->CurrentLine());
+		view->CurrentLine(view->CurrentLine() - 1);
+		document->SetAt(view->CurrentLine(), previousLine + currentLine);
+		view->CurrentCharacter(previousLine.length());
+	} else
+	{
+		auto lineIndex = view->CurrentLine();
+		auto line = (*document)[lineIndex];
+		auto before = line.substr(0, start - 1);
+		auto after = line.substr(start);
+		document->SetAt(lineIndex, before + after);
+		view->CurrentCharacter(view->CurrentCharacter() - 1);
+	}
+}
+
+void Repl::HandleDelete(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	auto lineIndex = view->CurrentLine();
+	auto line = (*document)[lineIndex];
+	auto start = view->CurrentCharacter();
+	if (start >= line.length())
+		return;
+	auto before = line.substr(0, start);
+	auto after = line.substr(start + 1);
+	document->SetAt(lineIndex, before + after);
+}
+
+void Repl::HandleHome(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	view->CurrentCharacter(0);
+}
+
+void Repl::HandleEnd(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	view->CurrentCharacter((*document)[view->CurrentLine()].length());
+}
+
+void Repl::HandleTab(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	constexpr auto tabWidth = 4;
+	auto start = view->CurrentCharacter();
+	auto remainingSpaces = tabWidth - start % tabWidth;
+	auto line = (*document)[view->CurrentLine()];
+	document->SetAt(view->CurrentLine(), line.insert(start, std::string(remainingSpaces, ' ')));
+	view->CurrentCharacter(view->CurrentCharacter() + remainingSpaces);
+}
+
+void Repl::HandlePageUp(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	--_submissionHistoryIndex;
+	if (_submissionHistoryIndex < 0)
+		_submissionHistoryIndex = _submissionHistory.size() - 1;
+	UpdateDocumentFromHistory(document, view);
+}
+
+void Repl::HandlePageDown(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	++_submissionHistoryIndex;
+	if (_submissionHistoryIndex > _submissionHistory.size() - 1)
+		_submissionHistoryIndex = 0;
+	UpdateDocumentFromHistory(document, view);
+}
+
+void Repl::UpdateDocumentFromHistory(ObservableCollection<std::string>* document, SubmissionView * view)
+{
+	document->Clear();
+	auto historyItem = _submissionHistory[_submissionHistoryIndex];
+	auto lines = MCF::StringSplit(historyItem, NewLine);
+	for (const auto& it : lines)
+	{
+		document->Add(it);
+	}
+	view->CurrentLine(document->size() - 1);
+	view->CurrentCharacter((*document)[view->CurrentLine()].length());
 }
 
 void Repl::HandleTyping(ObservableCollection<std::string>* document, SubmissionView * view, const std::string& text)
@@ -324,5 +454,4 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 		std::cout << "\n";
 	}
 	std::cout << "\n";
-
 }

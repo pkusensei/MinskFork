@@ -46,11 +46,11 @@ enum class KeyInputKind
 	PageUp,
 	PageDown,
 
-	Typing
+	General,
 };
 
-MCF_API char ReadKeyFromConsole();
-MCF_API KeyInputKind DecideKeyInputKind(const char& input);
+MCF_API int ReadKeyFromConsole();
+MCF_API KeyInputKind DecideKeyInputKind(const int input);
 
 /// string helpers
 MCF_API bool IsStringBlank(const std::string& s);
@@ -59,6 +59,7 @@ MCF_API bool StringEndsWith(const string& sample, const string& ending);
 MCF_API string TrimString(const string& text);
 MCF_API string TrimStringStart(const string& text);
 MCF_API string TrimStringEnd(const string& text);
-MCF_API string StringJoin(const vector<string>& strs, char seperator = ' ');
+MCF_API string StringJoin(const vector<string>& strs, const char seperator = ' ');
+MCF_API vector<string> StringSplit(const string& s, const char delimiter = ' ');
 
 }//MCF

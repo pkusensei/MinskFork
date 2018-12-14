@@ -18,20 +18,42 @@ public:
 	ObservableCollection(std::initializer_list<T> init) :_collection(init) {}
 	void SetAction(const std::function<void()>& action) { _action = action; }
 
+	size_t size()const { return _collection.size(); }
 	const T& operator[](size_t index)const { return _collection[index]; }
 	std::vector<T> Contents()const { return _collection; }
-	void SetAt(size_t index, const T& content)
+
+	template<typename U>
+	void Add(U&& content)
 	{
-		_collection[index] = content; 
-		CollectionChanged();
-	}
-	void Insert(size_t index, const T& content)
-	{
-		_collection.insert(_collection.begin() + index, content);
+		_collection.emplace_back(std::forward<U>(content));
 		CollectionChanged();
 	}
 
-	size_t size()const { return _collection.size(); }
+	template<typename U>
+	void SetAt(size_t index, U&& content)
+	{
+		_collection[index] = std::forward<U>(content);
+		CollectionChanged();
+	}
+
+	template<typename U>
+	void Insert(size_t index, U&& content)
+	{
+		_collection.insert(_collection.begin() + index, std::forward<U>(content));
+		CollectionChanged();
+	}
+
+	void RemoveAt(size_t index)
+	{
+		_collection.erase(_collection.begin() + index);
+		CollectionChanged();
+	}
+
+	void Clear()
+	{
+		_collection.clear();
+		CollectionChanged();
+	}
 };
 
 class Repl
@@ -43,10 +65,27 @@ private:
 
 	class SubmissionView;
 	std::string EditSubmission();
-	void HandleKey(const char& key, ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleKey(const char key, ObservableCollection<std::string>* document, SubmissionView* view);
+
 	void HandleEscape(ObservableCollection<std::string>* document, SubmissionView* view);
 	void HandleEnter(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleControlEnter(ObservableCollection<std::string>* document, SubmissionView* view);
 	static void InsertLine(ObservableCollection<std::string>* document, SubmissionView* view);
+
+	void HandleLeftArrow(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleRightArrow(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleUpArrow(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleDownArrow(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleBackspace(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleDelete(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleHome(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleEnd(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleTab(ObservableCollection<std::string>* document, SubmissionView* view);
+
+	void HandlePageUp(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandlePageDown(ObservableCollection<std::string>* document, SubmissionView* view);
+	void UpdateDocumentFromHistory(ObservableCollection<std::string>* document, SubmissionView* view);
+
 	void HandleTyping(ObservableCollection<std::string>* document, SubmissionView* view, const std::string& text);
 
 protected:
@@ -54,7 +93,7 @@ protected:
 	virtual void EvaluateMetaCommand(const std::string& input);
 	virtual bool IsCompleteSubmission(const std::string& text)const = 0;
 	virtual void EvaluateSubmission(const std::string& text) = 0;
-
+	void ClearHistory()noexcept { _submissionHistory.clear(); }
 public:
 	virtual ~Repl() = default;
 	void Run();
