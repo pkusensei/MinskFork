@@ -57,7 +57,7 @@ public:
 		for (const auto& it : data)
 		{
 			auto[t1kind, t1text, t2kind, t2text] = it;
-			auto text = t1text+t2text;
+			auto text = t1text + t2text;
 			auto tokens = MCF::SyntaxTree::ParseTokens(text);
 			Assert::IsTrue(2 == tokens.size());
 
@@ -127,12 +127,13 @@ private:
 
 	static std::vector<std::pair<MCF::SyntaxKind, std::string>> GetSeperators()
 	{
-		auto result = std::vector<std::pair<MCF::SyntaxKind, std::string>>();
-		result.emplace_back(MCF::SyntaxKind::WhitespaceToken, " ");
-		result.emplace_back(MCF::SyntaxKind::WhitespaceToken, "  ");
-		result.emplace_back(MCF::SyntaxKind::WhitespaceToken, "\r");
-		result.emplace_back(MCF::SyntaxKind::WhitespaceToken, "\n");
-		result.emplace_back(MCF::SyntaxKind::WhitespaceToken, "\r\n");
+		auto result = std::vector<std::pair<MCF::SyntaxKind, std::string>>{
+			{MCF::SyntaxKind::WhitespaceToken, " "},
+			{MCF::SyntaxKind::WhitespaceToken, "  "},
+			{MCF::SyntaxKind::WhitespaceToken, "\r"},
+			{MCF::SyntaxKind::WhitespaceToken, "\n"},
+			{MCF::SyntaxKind::WhitespaceToken, "\r\n"},
+		};
 		return result;
 	}
 

@@ -98,7 +98,7 @@ public:
 			auto op2Text = MCF::GetText(it.second);
 			auto text = "a " + op1Text + " b " + op2Text + " c";
 			auto expression = ParseExpression(text);
-			AssertingHelper e(expression);
+			auto e = AssertingHelper(expression);
 
 			if (op1Precedence >= op2Precedence)
 			{
@@ -139,7 +139,7 @@ public:
 			auto binaryText = MCF::GetText(it.second);
 			auto text = unaryText + " a " + binaryText + " b";
 			auto expression = ParseExpression(text);
-			AssertingHelper e(expression);
+			auto e = AssertingHelper(expression);
 
 			if (unaryPrecedence >= binaryPrecedence)
 			{
@@ -164,6 +164,23 @@ public:
 				e.AssertToken(MCF::SyntaxKind::IdentifierToken, "b");
 			}
 		}
+	}
+
+	TEST_METHOD(Parser_PostfixExpression_HonorsPrecedences)
+	{
+		auto text = "a---b";
+		auto expression = ParseExpression(text);
+		auto e = AssertingHelper(expression);
+
+		e.AssertNode(MCF::SyntaxKind::BinaryExpression);
+		e.AssertNode(MCF::SyntaxKind::PostfixExpression);
+		e.AssertToken(MCF::SyntaxKind::IdentifierToken, "a");
+		e.AssertToken(MCF::SyntaxKind::MinusMinusToken, "--");
+		e.AssertNode(MCF::SyntaxKind::NameExpression);
+		e.AssertToken(MCF::SyntaxKind::IdentifierToken, "a");
+		e.AssertToken(MCF::SyntaxKind::MinusToken, "-");
+		e.AssertNode(MCF::SyntaxKind::NameExpression);
+		e.AssertToken(MCF::SyntaxKind::IdentifierToken, "b");
 	}
 
 private:
@@ -205,9 +222,9 @@ public:
 	TEST_METHOD(SourceText_IncludesLastLine)
 	{
 		auto data = std::vector<std::pair<std::string, size_t>>{
-			std::pair<std::string, size_t>(".", 1),
-			std::pair<std::string, size_t>("\r\n", 2),
-			std::pair<std::string, size_t>(".\r\n\r\n", 3),
+			{".", 1},
+			{"\r\n", 2},
+			{".\r\n\r\n", 3},
 		};
 		for (const auto& it : data)
 		{

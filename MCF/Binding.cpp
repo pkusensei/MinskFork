@@ -161,7 +161,7 @@ void BoundNode::PrettyPrint(std::ostream & out, const BoundNode * node, string i
 	if (isToConsole)
 		SetConsoleColor(ConsoleColor::Grey);
 	out << indent << marker;
-	
+
 	if (isToConsole)
 		SetConsoleColor(GetColor(node));
 	out << GetText(node);
@@ -189,7 +189,7 @@ void BoundNode::PrettyPrint(std::ostream & out, const BoundNode * node, string i
 			if (isToConsole)
 				SetConsoleColor(ConsoleColor::Grey);
 			out << " = ";
-			
+
 			if (isToConsole)
 				SetConsoleColor(ConsoleColor::DarkYellow);
 			out << p.second;
@@ -742,7 +742,6 @@ unique_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax * syn
 
 unique_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax * syntax)
 {
-
 	auto condition = BindExpression(syntax->Condition(), typeid(bool));
 	auto body = BindStatement(syntax->Body());
 	return std::make_unique<BoundWhileStatement>(condition, body);
@@ -767,7 +766,6 @@ unique_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax * s
 
 unique_ptr<BoundStatement> Binder::BindExpressionStatement(const ExpressionStatementSyntax * syntax)
 {
-
 	auto expression = BindExpression(syntax->Expression());
 	return std::make_unique<BoundExpressionStatement>(expression);
 }
@@ -1192,7 +1190,7 @@ LabelSymbol Lowerer::GenerateLabel()
 
 unique_ptr<BoundBlockStatement> Lowerer::Lower(const BoundStatement * statement)
 {
-	Lowerer lowerer;
+	auto lowerer = Lowerer();
 	auto result = lowerer.RewriteStatement(statement);
 	return lowerer.Flatten(result);
 }

@@ -701,9 +701,9 @@ Parser::Parser(const SourceText& text)
 	:_text(&text), _position(0), _diagnostics(std::make_unique<DiagnosticBag>())
 {
 	_tokens = vector<unique_ptr<SyntaxToken>>();
-	Lexer lexer(text);
-	unique_ptr<SyntaxToken> pToken;
-	SyntaxKind kind;
+	auto lexer = Lexer(text);
+	unique_ptr<SyntaxToken> pToken{nullptr};
+	auto kind = SyntaxKind::BadToken;
 	do
 	{
 		pToken = std::make_unique<SyntaxToken>(lexer.Lex());
@@ -977,7 +977,7 @@ unique_ptr<CompilationUnitSyntax> Parser::ParseCompilationUnit()
 SyntaxTree::SyntaxTree(const SourceText& text)
 	:_text(std::make_unique<SourceText>(text)), _diagnostics(std::make_unique<DiagnosticBag>())
 {
-	Parser parser(text);
+	auto parser = Parser(text);
 	_root = parser.ParseCompilationUnit();
 	_diagnostics->AddRange(*parser.Diagnostics());
 }
@@ -1005,7 +1005,7 @@ vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const string & text)
 
 vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const SourceText & text)
 {
-	Lexer lexer(text);
+	auto lexer = Lexer(text);
 	auto result = vector<unique_ptr<SyntaxToken>>();
 	while (true)
 	{

@@ -117,67 +117,70 @@ public:
 	TEST_METHOD(Evaluator_Computes_CorrectValues)
 	{
 		auto data = std::vector<std::pair<std::string, MCF::ValueType>>{
-					std::pair<std::string, MCF::ValueType>("1", 1),
-					std::pair<std::string, MCF::ValueType>("+34", 34),
-					std::pair<std::string, MCF::ValueType>("-42", -42),
-					std::pair<std::string, MCF::ValueType>("~1", -2),
-					std::pair<std::string, MCF::ValueType>("3 + 1", 4),
-					std::pair<std::string, MCF::ValueType>("2 * 4", 8),
-					std::pair<std::string, MCF::ValueType>("9 / 3", 3),
-					std::pair<std::string, MCF::ValueType>("(6 + 4)", 10),
-					std::pair<std::string, MCF::ValueType>("12 == 5", false),
-					std::pair<std::string, MCF::ValueType>("5 == 5", true),
-					std::pair<std::string, MCF::ValueType>("12 != 5", true),
-					std::pair<std::string, MCF::ValueType>("5 != 5", false),
-					std::pair<std::string, MCF::ValueType>("3 < 4", true),
-					std::pair<std::string, MCF::ValueType>("5 < 4", false),
-					std::pair<std::string, MCF::ValueType>("4 <= 4", true),
-					std::pair<std::string, MCF::ValueType>("4 <= 5", true),
-					std::pair<std::string, MCF::ValueType>("5 <= 4", false),
-					std::pair<std::string, MCF::ValueType>("3 > 4", false),
-					std::pair<std::string, MCF::ValueType>("5 > 4", true),
-					std::pair<std::string, MCF::ValueType>("4 >= 4", true),
-					std::pair<std::string, MCF::ValueType>("4 >= 5", false),
-					std::pair<std::string, MCF::ValueType>("5 >= 4", true),
-					std::pair<std::string, MCF::ValueType>("1 | 2", 3),
-					std::pair<std::string, MCF::ValueType>("1 | 0", 1),
-					std::pair<std::string, MCF::ValueType>("1 & 3", 1),
-					std::pair<std::string, MCF::ValueType>("1 & 0", 0),
-					std::pair<std::string, MCF::ValueType>("1 ^ 0", 1),
-					std::pair<std::string, MCF::ValueType>("0 ^ 1", 1),
-					std::pair<std::string, MCF::ValueType>("1 ^ 3", 2),
-					std::pair<std::string, MCF::ValueType>("true == false", false),
-					std::pair<std::string, MCF::ValueType>("false == false", true),
-					std::pair<std::string, MCF::ValueType>("true != false", true),
-					std::pair<std::string, MCF::ValueType>("false != false", false),
-					std::pair<std::string, MCF::ValueType>("true && true", true),
-					std::pair<std::string, MCF::ValueType>("false || false", false),
-					std::pair<std::string, MCF::ValueType>("false | false", 0), // false
-					std::pair<std::string, MCF::ValueType>("false | true", 1), // true
-					std::pair<std::string, MCF::ValueType>("true | false", 1),
-					std::pair<std::string, MCF::ValueType>("true | true", 1),
-					std::pair<std::string, MCF::ValueType>("false & false", 0),
-					std::pair<std::string, MCF::ValueType>("false & true", 0),
-					std::pair<std::string, MCF::ValueType>("true & false", 0),
-					std::pair<std::string, MCF::ValueType>("true & true", 1),
-					std::pair<std::string, MCF::ValueType>("false ^ false", 0),
-					std::pair<std::string, MCF::ValueType>("false ^ true", 1),
-					std::pair<std::string, MCF::ValueType>("true ^ false", 1),
-					std::pair<std::string, MCF::ValueType>("true ^ true", 0),
-					std::pair<std::string, MCF::ValueType>("true", true),
-					std::pair<std::string, MCF::ValueType>("!true", false),
-					std::pair<std::string, MCF::ValueType>("false", false),
-					std::pair<std::string, MCF::ValueType>("!false", true),
-					std::pair<std::string, MCF::ValueType>("{var a = 10 a }", 10),
-					std::pair<std::string, MCF::ValueType>("{var a = 10 (a * a) }", 100),
-					std::pair<std::string, MCF::ValueType>("{var a = 0 (a = 10) * a }", 100),
-					std::pair<std::string, MCF::ValueType>("{var a = 0 if a == 0 a = 10 a }", 10),
-					std::pair<std::string, MCF::ValueType>("{var a = 0 if a == 4 a = 10 a }", 0),
-					std::pair<std::string, MCF::ValueType>("{var a = 0 if a == 0 a = 10 else a = 5 a }", 10),
-					std::pair<std::string, MCF::ValueType>("{var a = 0 if a == 4 a = 10 else a = 5 a }", 5),
-					std::pair<std::string, MCF::ValueType>("{ var i = 10 var result = 0 while i > 0 { result = result + i i = i - 1} result }", 55),
-					std::pair<std::string, MCF::ValueType>("{ var result = 0 for i = 1 to 10 { result = result + i } result }", 55),
-					std::pair<std::string, MCF::ValueType>("{ var a = 10 for i = 1 to (a = a - 1) { } a }", 9),
+			{"1", 1},
+			{"+34", 34},
+			{"-42", -42},
+			{"~1", -2},
+			{"3 + 1", 4},
+			{"2 * 4", 8},
+			{"9 / 3", 3},
+			{"(6 + 4)", 10},
+			{"12 == 5", false},
+			{"5 == 5", true},
+			{"12 != 5", true},
+			{"5 != 5", false},
+			{"3 < 4", true},
+			{"5 < 4", false},
+			{"4 <= 4", true},
+			{"4 <= 5", true},
+			{"5 <= 4", false},
+			{"3 > 4", false},
+			{"5 > 4", true},
+			{"4 >= 4", true},
+			{"4 >= 5", false},
+			{"5 >= 4", true},
+			{"1 | 2", 3},
+			{"1 | 0", 1},
+			{"1 & 3", 1},
+			{"1 & 0", 0},
+			{"1 ^ 0", 1},
+			{"0 ^ 1", 1},
+			{"1 ^ 3", 2},
+			{"true == false", false},
+			{"false == false", true},
+			{"true != false", true},
+			{"false != false", false},
+			{"true && true", true},
+			{"false || false", false},
+			{"false | false", 0}, // false
+			{"false | true", 1}, // true
+			{"true | false", 1},
+			{"true | true", 1},
+			{"false & false", 0},
+			{"false & true", 0},
+			{"true & false", 0},
+			{"true & true", 1},
+			{"false ^ false", 0},
+			{"false ^ true", 1},
+			{"true ^ false", 1},
+			{"true ^ true", 0},
+			{"true", true},
+			{"!true", false},
+			{"false", false},
+			{"!false", true},
+			{"{var a = 10 a }", 10},
+			{"{var a = 10 (a * a) }", 100},
+			{"{var a = 0 (a = 10) * a }", 100},
+			{"{var a = 0 if a == 0 a = 10 a }", 10},
+			{"{var a = 0 if a == 4 a = 10 a }", 0},
+			{"{var a = 0 if a == 0 a = 10 else a = 5 a }", 10},
+			{"{var a = 0 if a == 4 a = 10 else a = 5 a }", 5},
+			{"{ var i = 10 var result = 0 while i > 0 { result = result + i i = i - 1} result }", 55},
+			{"{ var result = 0 for i = 1 to 10 { result = result + i } result }", 55},
+			{"{ var a = 10 for i = 1 to (a = a - 1) { } a }", 9},
+
+			{"{var x = 41 x++}", 42},
+			{"{var x = 3 x---5}", -3},
 		};
 
 		for (const auto& it : data)
@@ -226,7 +229,7 @@ public:
 			)";
 		std::string diag = R"(
                 Cannot convert type 'IntegerType' to 'bool'.
-				)"; 
+				)";
 		AssertDiagnostics(text, diag);
 	}
 
@@ -241,7 +244,7 @@ public:
 			)";
 		std::string diag = R"(
                 Cannot convert type 'IntegerType' to 'bool'.
-				)"; 
+				)";
 		AssertDiagnostics(text, diag);
 	}
 

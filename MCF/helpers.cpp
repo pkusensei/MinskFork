@@ -159,10 +159,7 @@ KeyInputKind DecideKeyInputKind(const int input)
 
 bool IsStringBlank(const std::string& s)
 {
-	for (const auto& c : s)
-		if (!std::isspace(c))
-			return false;
-	return true;
+	return std::all_of(s.begin(), s.end(), std::isspace);
 }
 
 bool StringStartsWith(const string & sample, const string & beginning)
