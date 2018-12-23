@@ -49,6 +49,8 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "StarToken";
 		case SyntaxKind::SlashToken:
 			return "SlashToken";
+		case SyntaxKind::PercentToken:
+			return "PercentToken";
 		case SyntaxKind::BangToken:
 			return "BangToken";
 		case SyntaxKind::PlusPlusToken:

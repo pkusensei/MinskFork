@@ -31,6 +31,7 @@ enum class SyntaxKind
 	MinusToken,
 	StarToken,
 	SlashToken,
+	PercentToken,
 	BangToken,
 	PlusPlusToken,
 	MinusMinusToken,

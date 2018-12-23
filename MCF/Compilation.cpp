@@ -193,6 +193,8 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 			return left.GetValue<IntegerType>() * right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::Division:
 			return left.GetValue<IntegerType>() / right.GetValue<IntegerType>();
+		case BoundBinaryOperatorKind::Modulus:
+			return left.GetValue<IntegerType>() % right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::BitwiseAnd:
 			if (node->Type() == typeid(IntegerType))
 				return left.GetValue<IntegerType>() & right.GetValue<IntegerType>();

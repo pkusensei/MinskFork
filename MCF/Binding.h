@@ -89,6 +89,7 @@ enum class BoundBinaryOperatorKind
 	Subtraction,
 	Multiplication,
 	Division,
+	Modulus,
 	LogicalAnd,
 	LogicalOr,
 	BitwiseAnd,

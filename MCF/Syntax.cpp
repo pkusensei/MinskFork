@@ -42,6 +42,7 @@ string GetText(const SyntaxKind& kind)
 		case SyntaxKind::MinusToken: return "-";
 		case SyntaxKind::StarToken: return "*";
 		case SyntaxKind::SlashToken: return "/";
+		case SyntaxKind::PercentToken: return "%";
 		case SyntaxKind::BangToken: return "!";
 		case SyntaxKind::PlusPlusToken: return "++";
 		case SyntaxKind::MinusMinusToken: return "--";
@@ -97,6 +98,7 @@ int GetBinaryOperatorPrecedence(const SyntaxKind& kind) noexcept
 	{
 		case SyntaxKind::StarToken:
 		case SyntaxKind::SlashToken:
+		case SyntaxKind::PercentToken:
 			return 5;
 		case SyntaxKind::PlusToken:
 		case SyntaxKind::MinusToken:
@@ -273,6 +275,10 @@ SyntaxToken Lexer::Lex()
 		case '/':
 			Next();
 			_kind = SyntaxKind::SlashToken;
+			break;
+		case '%':
+			Next();
+			_kind = SyntaxKind::PercentToken;
 			break;
 		case '(':
 			Next();

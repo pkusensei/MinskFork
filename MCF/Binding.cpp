@@ -90,6 +90,8 @@ string GetEnumText(const BoundBinaryOperatorKind & kind)
 			return "Multiplication";
 		case BoundBinaryOperatorKind::Division:
 			return "Division";
+		case BoundBinaryOperatorKind::Modulus:
+			return "Modulus";
 		case BoundBinaryOperatorKind::LogicalAnd:
 			return "LogicalAnd";
 		case BoundBinaryOperatorKind::LogicalOr:
@@ -312,6 +314,7 @@ const vector<BoundBinaryOperator> BoundBinaryOperator::_operators = {
 	BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction, typeid(IntegerType)),
 	BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication, typeid(IntegerType)),
 	BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division, typeid(IntegerType)),
+	BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus, typeid(IntegerType)),
 
 	BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, typeid(IntegerType)),
 	BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, typeid(IntegerType)),
