@@ -2,7 +2,7 @@
 
 #include <unordered_map>
 
-#include "common.h"
+#include "VariableSymbol.h"
 
 namespace MCF {
 

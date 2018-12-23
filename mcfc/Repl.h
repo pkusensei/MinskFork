@@ -5,7 +5,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "common.h"
+#include "VariableSymbol.h"
 
 template<typename T>
 class ObservableCollection final
@@ -15,31 +15,28 @@ private:
 	std::function<void()> _action;
 	void CollectionChanged() { _action(); }
 public:
-	ObservableCollection(std::initializer_list<T> init) :_collection(init) {}
+	ObservableCollection(const std::initializer_list<T>& init) :_collection(init) {}
 	void SetAction(const std::function<void()>& action) { _action = action; }
 
 	size_t size()const { return _collection.size(); }
 	const T& operator[](size_t index)const { return _collection[index]; }
 	std::vector<T> Contents()const { return _collection; }
 
-	template<typename U>
-	void Add(U&& content)
+	void Add(const T& content)
 	{
-		_collection.emplace_back(std::forward<U>(content));
+		_collection.emplace_back(content);
 		CollectionChanged();
 	}
 
-	template<typename U>
-	void SetAt(size_t index, U&& content)
+	void SetAt(size_t index, const T& content)
 	{
-		_collection[index] = std::forward<U>(content);
+		_collection[index] = content;
 		CollectionChanged();
 	}
 
-	template<typename U>
-	void Insert(size_t index, U&& content)
+	void Insert(size_t index, const T& content)
 	{
-		_collection.insert(_collection.begin() + index, std::forward<U>(content));
+		_collection.insert(_collection.begin() + index, content);
 		CollectionChanged();
 	}
 
@@ -129,7 +126,7 @@ class McfRepl final :public Repl
 {
 private:
 	std::unique_ptr<MCF::Compilation> _previous{nullptr};
-	bool _showTree{true};
+	bool _showTree{false};
 	bool _showProgram{true};
 	std::unordered_map<MCF::VariableSymbol, MCF::ValueType, MCF::VariableHash> _variables;
 
