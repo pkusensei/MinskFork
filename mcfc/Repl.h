@@ -7,6 +7,11 @@
 
 #include "VariableSymbol.h"
 
+namespace MCF {
+class Compilation;
+struct KeyInfo;
+}
+
 template<typename T>
 class ObservableCollection final
 {
@@ -62,7 +67,7 @@ private:
 
 	class SubmissionView;
 	std::string EditSubmission();
-	void HandleKey(const char key, ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleKey(const MCF::KeyInfo& key, ObservableCollection<std::string>* document, SubmissionView* view);
 
 	void HandleEscape(ObservableCollection<std::string>* document, SubmissionView* view);
 	void HandleEnter(ObservableCollection<std::string>* document, SubmissionView* view);
@@ -113,14 +118,10 @@ public:
 	SubmissionView(const std::function<void(std::string)>& lineRenderer, const ObservableCollection<std::string>& document);
 
 	int CurrentLine()const { return _currentLine; }
-	void CurrentLine(const int& value);
+	void CurrentLine(const int value);
 	int CurrentCharacter()const { return _currentCharacter; }
-	void CurrentCharacter(const int& value);
+	void CurrentCharacter(const int value);
 };
-
-namespace MCF {
-class Compilation;
-}
 
 class McfRepl final :public Repl
 {

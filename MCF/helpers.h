@@ -49,7 +49,19 @@ enum class KeyInputKind
 	General,
 };
 
-MCF_API int ReadKeyFromConsole();
+struct KeyInfo
+{
+	// NOTE PascalCase as interface
+	const char Key;
+	const bool IsFunctionalKey;
+	const KeyInputKind Kind;
+	KeyInfo(const char k, const bool ifk, const KeyInputKind inputKind)
+		:Key(k), IsFunctionalKey(ifk), Kind(inputKind)
+	{
+	}
+};
+
+MCF_API KeyInfo ReadKeyFromConsole();
 MCF_API KeyInputKind DecideKeyInputKind(const int input);
 
 /// string helpers

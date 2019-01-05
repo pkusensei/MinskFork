@@ -44,66 +44,66 @@ std::string Repl::EditSubmission()
 	return MCF::StringJoin(document.Contents(), NewLine);
 }
 
-void Repl::HandleKey(const char key, ObservableCollection<std::string>* document, SubmissionView * view)
+void Repl::HandleKey(const MCF::KeyInfo& key, ObservableCollection<std::string>* document, SubmissionView * view)
 {
-	auto kind = MCF::DecideKeyInputKind(key);
-	if (kind != MCF::KeyInputKind::Control)
+	if (key.IsFunctionalKey)
 	{
-		switch (kind)
+		if (key.Kind != MCF::KeyInputKind::Control)
 		{
-			case MCF::KeyInputKind::Escape:
-				HandleEscape(document, view);
-				break;
-			case MCF::KeyInputKind::Enter:
-				HandleEnter(document, view);
-				break;
-			case MCF::KeyInputKind::LeftArrow:
-				HandleLeftArrow(document, view);
-				break;
-			case MCF::KeyInputKind::RightArrow:
-				HandleRightArrow(document, view);
-				break;
-			case MCF::KeyInputKind::UpArrow:
-				HandleUpArrow(document, view);
-				break;
-			case MCF::KeyInputKind::DownArrow:
-				HandleDownArrow(document, view);
-				break;
-			case MCF::KeyInputKind::Backspace:
-				HandleBackspace(document, view);
-				break;
-			case MCF::KeyInputKind::Delete:
-				HandleDelete(document, view);
-				break;
-			case MCF::KeyInputKind::Home:
-				HandleHome(document, view);
-				break;
-			case MCF::KeyInputKind::End:
-				HandleEnd(document, view);
-				break;
-			case MCF::KeyInputKind::Tab:
-				HandleTab(document, view);
-				break;
-			case MCF::KeyInputKind::PageUp:
-				HandlePageUp(document, view);
-				break;
-			case MCF::KeyInputKind::PageDown:
-				HandlePageDown(document, view);
-				break;
-			default:
-				auto c = static_cast<char>(key);
-				if (c >= ' ')
-					HandleTyping(document, view, std::string(1, key));
-				break;
+			switch (key.Kind)
+			{
+				case MCF::KeyInputKind::Escape:
+					HandleEscape(document, view);
+					break;
+				case MCF::KeyInputKind::Enter:
+					HandleEnter(document, view);
+					break;
+				case MCF::KeyInputKind::LeftArrow:
+					HandleLeftArrow(document, view);
+					break;
+				case MCF::KeyInputKind::RightArrow:
+					HandleRightArrow(document, view);
+					break;
+				case MCF::KeyInputKind::UpArrow:
+					HandleUpArrow(document, view);
+					break;
+				case MCF::KeyInputKind::DownArrow:
+					HandleDownArrow(document, view);
+					break;
+				case MCF::KeyInputKind::Backspace:
+					HandleBackspace(document, view);
+					break;
+				case MCF::KeyInputKind::Delete:
+					HandleDelete(document, view);
+					break;
+				case MCF::KeyInputKind::Home:
+					HandleHome(document, view);
+					break;
+				case MCF::KeyInputKind::End:
+					HandleEnd(document, view);
+					break;
+				case MCF::KeyInputKind::Tab:
+					HandleTab(document, view);
+					break;
+				case MCF::KeyInputKind::PageUp:
+					HandlePageUp(document, view);
+					break;
+				case MCF::KeyInputKind::PageDown:
+					HandlePageDown(document, view);
+					break;
+				default:
+					auto c = key.Key;
+					if (c >= ' ')
+						HandleTyping(document, view, std::string(1, c));
+					break;
+			}
 		}
+	} else
+	{
+		auto c = key.Key;
+		if (c >= ' ')
+			HandleTyping(document, view, std::string(1, c));
 	}
-	// TODO Handle ctrl+enter
-	//if (kind == MCF::KeyInputKind::Control)
-	//{
-	//	auto nextKey = MCF::ReadKeyFromConsole();
-	//	if (MCF::DecideKeyInputKind(nextKey) == MCF::KeyInputKind::Enter)
-	//		HandleControlEnter(document, view);
-	//} 
 }
 
 void Repl::HandleEscape(ObservableCollection<std::string>* document, SubmissionView * view)
@@ -322,7 +322,7 @@ Repl::SubmissionView::SubmissionView(const std::function<void(std::string)>& lin
 	Render();
 }
 
-void Repl::SubmissionView::CurrentLine(const int & value)
+void Repl::SubmissionView::CurrentLine(const int value)
 {
 	if (_currentLine != value)
 	{
@@ -333,7 +333,7 @@ void Repl::SubmissionView::CurrentLine(const int & value)
 	}
 }
 
-void Repl::SubmissionView::CurrentCharacter(const int & value)
+void Repl::SubmissionView::CurrentCharacter(const int value)
 {
 	if (_currentCharacter != value)
 	{

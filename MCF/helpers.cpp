@@ -108,29 +108,40 @@ void SetCursorPosition(int x, int y)
 	SetConsoleCursorPosition(hStdout, c);
 }
 
-int ReadKeyFromConsole()
+KeyInfo ReadKeyFromConsole()
 {
-	auto result = _getch();
-	if (result == 0 || result == 0xE0)
+	auto k = _getch();
+	auto isFunctionalKey = false;
+	if (k == 0 || k == 0xE0)
 	{
-		auto k = _getch();
-		// HACK for function and arrow keys
-		// This switch remaps the return value from the second call to _getch() to VK codes.
+		k = _getch();
+		isFunctionalKey = true;
+		// HACK remaps the return value from the second call to _getch() to VK codes.
 		switch (k)
 		{
-			case 71: return VK_HOME;
-			case 79: return VK_END;
-			case 83: return VK_DELETE;
-			case 73: return VK_PRIOR;
-			case 81: return VK_NEXT;
-
-			case 72: return VK_UP;
-			case 80: return VK_DOWN;
-			case 75: return VK_LEFT;
-			case 77: return VK_RIGHT;
+			case 71: k = VK_HOME; break;
+			case 79: k = VK_END; break;
+			case 83: k = VK_DELETE; break;
+			case 73: k = VK_PRIOR; break;
+			case 81: k = VK_NEXT; break;
+			case 72: k = VK_UP; break;
+			case 80: k = VK_DOWN; break;
+			case 75: k = VK_LEFT; break;
+			case 77: k = VK_RIGHT; break;
 		}
 	}
-	return result;
+	auto kind = DecideKeyInputKind(k);
+	// HACK 
+	switch (kind)
+	{
+		case KeyInputKind::Control:
+		case KeyInputKind::Enter:
+		case KeyInputKind::Escape:
+		case KeyInputKind::Backspace:
+		case KeyInputKind::Tab:
+			isFunctionalKey = true;
+	}
+	return {static_cast<char>(k), isFunctionalKey, kind};
 }
 
 KeyInputKind DecideKeyInputKind(const int input)
@@ -141,15 +152,17 @@ KeyInputKind DecideKeyInputKind(const int input)
 			return KeyInputKind::Control;
 		case VK_RETURN:return KeyInputKind::Enter;
 		case VK_ESCAPE:return KeyInputKind::Escape;
+		case VK_BACK:return KeyInputKind::Backspace;
+		case VK_TAB:return KeyInputKind::Tab;
+
 		case VK_LEFT:return KeyInputKind::LeftArrow;
 		case VK_RIGHT:return KeyInputKind::RightArrow;
 		case VK_UP:return KeyInputKind::UpArrow;
 		case VK_DOWN:return KeyInputKind::DownArrow;
-		case VK_BACK:return KeyInputKind::Backspace;
-		case VK_DELETE:return KeyInputKind::Delete;
+
 		case VK_HOME:return KeyInputKind::Home;
 		case VK_END:return KeyInputKind::End;
-		case VK_TAB:return KeyInputKind::Tab;
+		case VK_DELETE:return KeyInputKind::Delete;
 		case VK_PRIOR:return KeyInputKind::PageUp;
 		case VK_NEXT:return KeyInputKind::PageDown;
 		default:
