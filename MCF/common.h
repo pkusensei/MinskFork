@@ -100,8 +100,8 @@ public:
 
 	/// stays implicit
 	constexpr ValueType(const IntegerType& value)noexcept :_inner(value) {}
-	constexpr ValueType(const int& value)noexcept :_inner(static_cast<IntegerType>(value)) {}
-	constexpr ValueType(const bool& value)noexcept :_inner(value) {}
+	constexpr ValueType(const int value)noexcept :_inner(static_cast<IntegerType>(value)) {}
+	constexpr ValueType(const bool value)noexcept :_inner(value) {}
 
 	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
 	type_index Type()const;

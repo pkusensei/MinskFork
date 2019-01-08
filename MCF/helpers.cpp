@@ -140,6 +140,8 @@ KeyInfo ReadKeyFromConsole()
 		case KeyInputKind::Backspace:
 		case KeyInputKind::Tab:
 			isFunctionalKey = true;
+		default:
+			break;
 	}
 	return {static_cast<char>(k), isFunctionalKey, kind};
 }
