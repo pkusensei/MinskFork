@@ -53,8 +53,6 @@ string GetEnumText(const BoundNodeKind & kind)
 		case BoundNodeKind::PostfixExpression:
 			return "PostfixExpression";
 
-		case BoundNodeKind::VoidExpression:
-			return "VoidExpression";
 		default:
 			return string();
 	}
@@ -224,11 +222,6 @@ string BoundNode::ToString() const
 const vector<const BoundNode*> BoundExpression::GetChildren() const
 {
 	return vector<const BoundNode*>();
-}
-
-const vector<std::pair<string, string>> BoundExpression::GetProperties() const
-{
-	return vector<std::pair<string, string>>();
 }
 
 BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,

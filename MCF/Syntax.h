@@ -84,10 +84,6 @@ public:
 
 class ExpressionSyntax :public SyntaxNode
 {
-public:
-	// Inherited via SyntaxNode
-	SyntaxKind Kind() const noexcept override { return SyntaxKind::BadToken; } // HACK
-	const vector<const SyntaxNode*> GetChildren() const override;
 };
 
 class AssignmentExpressionSyntax final :public ExpressionSyntax
@@ -231,10 +227,6 @@ public:
 
 class StatementSyntax :public SyntaxNode
 {
-public:
-	// Inherited via SyntaxNode
-	SyntaxKind Kind() const noexcept override { return SyntaxKind::BadToken; } // HACK
-	const vector<const SyntaxNode*> GetChildren() const override;
 };
 
 class BlockStatementSyntax final : public StatementSyntax

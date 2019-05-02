@@ -68,7 +68,6 @@ enum class BoundNodeKind
 	BinaryExpression,
 	PostfixExpression,
 
-	VoidExpression //HACK
 };
 
 string GetEnumText(const BoundNodeKind& kind);
@@ -124,6 +123,7 @@ public:
 	virtual BoundNodeKind Kind() const = 0;
 	virtual const vector<const BoundNode*> GetChildren() const = 0;
 	// HACK will be ugly and dirty
+	// pair: name of property + its value
 	virtual const vector<std::pair<string, string>> GetProperties() const = 0;
 
 	void WriteTo(std::ostream& out)const { PrettyPrint(out, this); }
@@ -134,17 +134,10 @@ public:
 
 class BoundExpression :public BoundNode
 {
-	// NOTE concrete type in unique_ptr
 public:
 	// Inherited via BoundNode
-	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
+	virtual type_index Type() const = 0;
 	const vector<const BoundNode*> GetChildren() const override;
-	// HACK dirty and ugly
-	// pair: name of property + its value
-	const vector<std::pair<string, string>> GetProperties() const override;
-
-	virtual type_index Type() const { return typeid(std::monostate); }
-
 };
 
 class BoundUnaryOperator final
@@ -329,7 +322,6 @@ class BoundStatement :public BoundNode
 {
 public:
 	// Inherited via BoundNode
-	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VoidExpression; }
 	const vector<std::pair<string, string>> GetProperties() const override;
 	const vector<const BoundNode*> GetChildren() const override;
 };

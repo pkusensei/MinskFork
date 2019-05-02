@@ -435,11 +435,6 @@ void Lexer::ReadIdentifierOrKeyword()
 
 #pragma region Expression
 
-const vector<const SyntaxNode*> ExpressionSyntax::GetChildren() const
-{
-	return vector<const SyntaxNode*>(0);
-}
-
 AssignmentExpressionSyntax::AssignmentExpressionSyntax(const SyntaxToken & identifier, const SyntaxToken & equals,
 													   const unique_ptr<ExpressionSyntax>& expression)
 	:_identifierToken(identifier), _equalsToken(equals),
@@ -551,11 +546,6 @@ const vector<const SyntaxNode*> PostfixExpressionSyntax::GetChildren() const
 #pragma endregion
 
 #pragma region Statement
-
-const vector<const SyntaxNode*> StatementSyntax::GetChildren() const
-{
-	return vector<const SyntaxNode*>();
-}
 
 BlockStatementSyntax::BlockStatementSyntax(const SyntaxToken & open, const vector<unique_ptr<StatementSyntax>>& statements,
 										   const SyntaxToken & close)
@@ -871,7 +861,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseAssignmentExpression()
 
 unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 {
-	auto left = std::make_unique<ExpressionSyntax>();
+	unique_ptr<ExpressionSyntax> left = nullptr;
 	auto unaryOperatorPrecedence = GetUnaryOperatorPrecedence(Current()->Kind());
 	if (unaryOperatorPrecedence != 0 &&
 		unaryOperatorPrecedence >= parentPrecedence)

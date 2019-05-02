@@ -27,21 +27,24 @@ public:
 	const T& operator[](size_t index)const { return _collection[index]; }
 	std::vector<T> Contents()const { return _collection; }
 
-	void Add(const T& content)
+	template<typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T>>>
+	void Add(U&& content)
 	{
-		_collection.emplace_back(content);
+		_collection.emplace_back(std::forward<U>(content));
 		CollectionChanged();
 	}
 
-	void SetAt(size_t index, const T& content)
+	template<typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T>>>
+	void SetAt(size_t index, U&& content)
 	{
-		_collection[index] = content;
+		_collection[index] = std::forward<U>(content);
 		CollectionChanged();
 	}
 
-	void Insert(size_t index, const T& content)
+	template<typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T>>>
+	void Insert(size_t index, U&& content)
 	{
-		_collection.insert(_collection.begin() + index, content);
+		_collection.insert(_collection.begin() + index, std::forward<U>(content));
 		CollectionChanged();
 	}
 
