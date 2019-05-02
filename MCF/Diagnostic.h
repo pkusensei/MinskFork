@@ -47,6 +47,7 @@ public:
 	void AddRange(DiagnosticBag& other);
 	void ReportInvalidNumber(const TextSpan& span, const string& text, const type_index& type);
 	void ReportBadCharacter(size_t position, char character);
+	void ReportUnterminatedString(const TextSpan& span);
 	void ReportUnexpectedToken(const TextSpan& span, const SyntaxKind& actualKind, const SyntaxKind& expectedKind);
 	void ReportUndefinedName(const TextSpan& span, const string& name);
 	void ReportCannotConvert(const TextSpan& span, const type_index& fromType, const type_index& toType);

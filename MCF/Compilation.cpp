@@ -297,12 +297,12 @@ const BoundGlobalScope* Compilation::GlobalScope()
 
 unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous, const SyntaxTree & tree)
 {
-	return std::make_unique<Compilation>(previous, tree);
+	return make_unique<Compilation>(previous, tree);
 }
 
 unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous, const unique_ptr<SyntaxTree>& tree)
 {
-	return std::make_unique<Compilation>(previous, tree);
+	return make_unique<Compilation>(previous, tree);
 }
 
 EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)

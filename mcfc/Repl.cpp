@@ -194,7 +194,14 @@ void Repl::HandleDelete(ObservableCollection<std::string>* document, SubmissionV
 	auto line = (*document)[lineIndex];
 	auto start = view->CurrentCharacter();
 	if (start >= line.length())
+	{
+		if (view->CurrentLine() == document->size() - 1) return;
+
+		auto nextLine = (*document)[view->CurrentLine() + 1];
+		document->SetAt(view->CurrentLine(), (*document)[view->CurrentLine()] + nextLine);
+		document->RemoveAt(view->CurrentLine() + 1);
 		return;
+	}
 	auto before = line.substr(0, start);
 	auto after = line.substr(start + 1);
 	document->SetAt(lineIndex, before + after);
@@ -238,6 +245,8 @@ void Repl::HandlePageDown(ObservableCollection<std::string>* document, Submissio
 
 void Repl::UpdateDocumentFromHistory(ObservableCollection<std::string>* document, SubmissionView * view)
 {
+	if (_submissionHistory.empty()) return;
+
 	document->Clear();
 	auto historyItem = _submissionHistory[_submissionHistoryIndex];
 	auto lines = MCF::StringSplit(historyItem, NewLine);
@@ -356,11 +365,15 @@ void McfRepl::RenderLine(const std::string & line) const
 	{
 		auto isKeyword = MCF::StringEndsWith(MCF::GetSyntaxKindName(it->Kind()), "Keyword");
 		auto isNumber = it->Kind() == MCF::SyntaxKind::NumberToken;
+		auto isIdentifier = it->Kind() == MCF::SyntaxKind::IdentifierToken;
 
 		if (isKeyword)
 			MCF::SetConsoleColor(MCF::ConsoleColor::Blue);
-		else if (isNumber)
+		else if (isIdentifier)
 			MCF::SetConsoleColor(MCF::ConsoleColor::DarkYellow);
+		else if (isNumber)
+			MCF::SetConsoleColor(MCF::ConsoleColor::Cyan);
+		else MCF::SetConsoleColor(MCF::ConsoleColor::Grey);
 
 		std::cout << it->Text();
 		MCF::ResetConsoleColor();

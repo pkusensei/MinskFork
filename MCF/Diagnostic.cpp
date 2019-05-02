@@ -5,7 +5,7 @@
 namespace MCF {
 
 Diagnostic::Diagnostic(const TextSpan& span, const string& message)
-	:_span(std::make_unique<TextSpan>(span.Start(), span.Length())), _message(message)
+	:_span(make_unique<TextSpan>(span.Start(), span.Length())), _message(message)
 {
 }
 
@@ -72,6 +72,12 @@ void DiagnosticBag::ReportBadCharacter(size_t position, char character)
 	string message{"Bad character in input: "};
 	message.append(&character);
 	Report(TextSpan(position, 1), message);
+}
+
+void DiagnosticBag::ReportUnterminatedString(const TextSpan & span)
+{
+	string message{"Unterminated string literal."};
+	Report(span, message);
 }
 
 void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span, const SyntaxKind& actualKind, const SyntaxKind& expectedKind)

@@ -15,6 +15,7 @@ class DiagnosticBag;
 class TextSpan;
 class SourceText;
 class SyntaxTree;
+class SyntaxToken;
 
 class MCF_API SyntaxNode
 {
@@ -25,6 +26,8 @@ public:
 	virtual SyntaxKind Kind() const = 0;
 	virtual TextSpan Span()const;
 	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
+
+	SyntaxToken GetLastToken()const;
 
 	void WriteTo(std::ostream& out)const { PrettyPrint(out, this); }
 	string ToString() const;
@@ -52,6 +55,9 @@ public:
 	constexpr size_t Position() const noexcept { return _position; }
 	string Text() const { return _text; }
 	ValueType Value() const noexcept { return _value; }
+	bool IsMissing()const noexcept { return _text.empty(); }
+
+	SyntaxToken Clone()const;
 };
 
 class Lexer final
@@ -70,6 +76,7 @@ private:
 	char Lookahead() const { return Peek(1); }
 	constexpr void Next(size_t step = 1) noexcept { _position += step; }
 
+	void ReadString();
 	void ReadWhiteSpace();
 	void ReadNumberToken();
 	void ReadIdentifierOrKeyword();
@@ -434,6 +441,7 @@ private:
 	unique_ptr<ExpressionSyntax> ParseParenthesizedExpression();
 	unique_ptr<ExpressionSyntax> ParseBooleanLiteral();
 	unique_ptr<ExpressionSyntax> ParseNumberLiteral();
+	unique_ptr<ExpressionSyntax> ParseStringLiteral();
 	unique_ptr<ExpressionSyntax> ParseNameExpression();
 
 public:

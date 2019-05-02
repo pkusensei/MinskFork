@@ -41,6 +41,8 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "WhitespaceToken";
 		case SyntaxKind::NumberToken:
 			return "NumberToken";
+		case SyntaxKind::StringToken:
+			return "StringToken";
 		case SyntaxKind::PlusToken:
 			return "PlusToken";
 		case SyntaxKind::MinusToken:
@@ -159,6 +161,8 @@ type_index ValueType::Type() const
 			return typeid(IntegerType);
 		case 2:
 			return typeid(bool);
+		case 3:
+			return typeid(string);
 		case 0:
 		default:
 			return typeid(std::monostate);
@@ -177,6 +181,8 @@ string ValueType::ToString() const
 		case 2:
 			result = GetValue<bool>() ? "True" : "False";
 			break;
+		case 3:
+			result = GetValue<string>();
 		default:
 			break;
 	}
@@ -190,6 +196,7 @@ int ValueType::GetValueTypeId(const type_index & inType)
 		{typeid(std::monostate), 0},
 		{typeid(IntegerType), 1},
 		{typeid(bool), 2},
+		{typeid(string), 3}
 	};
 
 	return types[inType];
@@ -202,6 +209,7 @@ string ValueType::GetTypeName(const type_index & inType)
 	{
 		case 1: return "IntegerType";
 		case 2: return "bool";
+		case 3: return "string";
 		case 0:
 		default:
 			return "std::monostate";

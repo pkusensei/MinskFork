@@ -16,6 +16,7 @@ namespace MCF {
 using std::string;
 using std::type_index;
 using std::unique_ptr;
+using std::make_unique;
 using std::vector;
 
 using IntegerType = long; // HACK use long as interger type
@@ -27,6 +28,7 @@ enum class SyntaxKind
 	EndOfFileToken,
 	WhitespaceToken,
 	NumberToken,
+	StringToken,
 	PlusToken,
 	MinusToken,
 	StarToken,
@@ -93,7 +95,7 @@ extern "C" MCF_API const vector<SyntaxKind> AllSyntaxKinds; // NOTE global const
 class MCF_API ValueType final
 {
 private:
-	std::variant<std::monostate, IntegerType, bool> _inner;
+	std::variant<std::monostate, bool, IntegerType, string> _inner;
 
 public:
 	constexpr ValueType() noexcept :_inner(std::monostate()) {}
@@ -102,6 +104,7 @@ public:
 	constexpr ValueType(const IntegerType& value)noexcept :_inner(value) {}
 	constexpr ValueType(const int value)noexcept :_inner(static_cast<IntegerType>(value)) {}
 	constexpr ValueType(const bool value)noexcept :_inner(value) {}
+	constexpr ValueType(const string& s) : _inner(s) {}
 
 	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
 	type_index Type()const;
@@ -120,7 +123,7 @@ public:
 	static string GetTypeName(const type_index& inType);
 };
 
-constexpr auto NullValue = ValueType(); // Note global constant
+const auto NullValue = ValueType(); // NOTE global constant
 MCF_API std::ostream& operator<<(std::ostream& out, const ValueType& value);
 
 }//MCF

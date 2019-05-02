@@ -182,6 +182,14 @@ TextSpan SyntaxNode::Span() const
 	return TextSpan::FromBounds(first.Start(), last.End());
 }
 
+SyntaxToken SyntaxNode::GetLastToken() const
+{
+	auto p = dynamic_cast<const SyntaxToken*>(this);
+	if (p != nullptr) return p->Clone();
+
+	return GetChildren().back()->GetLastToken();
+}
+
 string SyntaxNode::ToString() const
 {
 	std::stringstream ss;
@@ -211,6 +219,11 @@ const vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 	return vector<const SyntaxNode*>(0);
 }
 
+SyntaxToken SyntaxToken::Clone() const
+{
+	return SyntaxToken(_kind, _position, _text, _value);
+}
+
 TextSpan SyntaxToken::Span() const
 {
 	return TextSpan(_position, _text.length());
@@ -220,7 +233,7 @@ TextSpan SyntaxToken::Span() const
 
 #pragma region Lexer
 Lexer::Lexer(const SourceText& text)
-	:_text(&text), _diagnostics(std::make_unique<DiagnosticBag>()),
+	:_text(&text), _diagnostics(make_unique<DiagnosticBag>()),
 	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(NullValue)
 {
 }
@@ -370,6 +383,9 @@ SyntaxToken Lexer::Lex()
 				_kind = SyntaxKind::GreaterToken;
 			}
 			break;
+		case '"':
+			ReadString();
+			break;
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
 			ReadNumberToken();
@@ -395,6 +411,49 @@ SyntaxToken Lexer::Lex()
 		text = _text->ToString(_start, length);
 
 	return SyntaxToken(_kind, _start, text, _value);
+}
+
+void Lexer::ReadString()
+{
+	Next();
+	auto s = string();
+	auto done = false;
+	
+	while (!done)
+	{
+		auto c = Current();
+		switch (c)
+		{
+			case '\0': case '\r': case '\n':
+			{
+				auto span = TextSpan(_start, 1);
+				_diagnostics->ReportUnterminatedString(span);
+				done = true;
+				break;
+			}
+			case '"':
+			{
+				if (Lookahead() == '"')
+				{
+					s.push_back(c);
+					Next(2);
+				} else
+				{
+					Next();
+					done = true;
+				}
+				break;
+			}
+			default:
+			{
+				s.push_back(c);
+				Next();
+				break;
+			}
+		}
+	}
+	_kind = SyntaxKind::StringToken;
+	_value = ValueType(s);
 }
 
 void Lexer::ReadWhiteSpace()
@@ -694,7 +753,7 @@ const vector<const SyntaxNode*> CompilationUnitSyntax::GetChildren() const
 }
 
 Parser::Parser(const SourceText& text)
-	:_text(&text), _position(0), _diagnostics(std::make_unique<DiagnosticBag>())
+	:_text(&text), _position(0), _diagnostics(make_unique<DiagnosticBag>())
 {
 	_tokens = vector<unique_ptr<SyntaxToken>>();
 	auto lexer = Lexer(text);
@@ -702,7 +761,7 @@ Parser::Parser(const SourceText& text)
 	auto kind = SyntaxKind::BadToken;
 	do
 	{
-		pToken = std::make_unique<SyntaxToken>(lexer.Lex());
+		pToken = make_unique<SyntaxToken>(lexer.Lex());
 		if (pToken->Kind() != SyntaxKind::WhitespaceToken &&
 			pToken->Kind() != SyntaxKind::BadToken)
 		{
@@ -730,7 +789,7 @@ SyntaxToken Parser::NextToken()
 {
 	auto current = Current();
 	_position++;
-	return *current; // NOTE to clone or not to clone
+	return current->Clone(); // NOTE to clone or not to clone
 }
 
 SyntaxToken Parser::MatchToken(const SyntaxKind& kind)
@@ -781,7 +840,7 @@ unique_ptr<StatementSyntax> Parser::ParseBlockStatement()
 		startToken = Current();
 	}
 	auto closeBraceToken = MatchToken(SyntaxKind::CloseBraceToken);
-	return std::make_unique<BlockStatementSyntax>(openBraceToken, statements, closeBraceToken);
+	return make_unique<BlockStatementSyntax>(openBraceToken, statements, closeBraceToken);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseVariableDeclaration()
@@ -793,7 +852,7 @@ unique_ptr<StatementSyntax> Parser::ParseVariableDeclaration()
 	auto equals = MatchToken(SyntaxKind::EqualsToken);
 	auto initializer = ParseExpression();
 
-	return std::make_unique<VariableDeclarationSyntax>(keyword, identifier, equals, initializer);
+	return make_unique<VariableDeclarationSyntax>(keyword, identifier, equals, initializer);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseIfStatement()
@@ -802,7 +861,7 @@ unique_ptr<StatementSyntax> Parser::ParseIfStatement()
 	auto condition = ParseExpression();
 	auto statement = ParseStatement();
 	auto elseClause = ParseElseClause();
-	return std::make_unique<IfStatementSyntax>(keyword, condition, statement, elseClause);
+	return make_unique<IfStatementSyntax>(keyword, condition, statement, elseClause);
 }
 
 unique_ptr<ElseClauseSyntax> Parser::ParseElseClause()
@@ -811,7 +870,7 @@ unique_ptr<ElseClauseSyntax> Parser::ParseElseClause()
 		return nullptr;
 	auto keyword = MatchToken(SyntaxKind::ElseKeyword);
 	auto statement = ParseStatement();
-	return std::make_unique<ElseClauseSyntax>(keyword, statement);
+	return make_unique<ElseClauseSyntax>(keyword, statement);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseWhileStatement()
@@ -819,7 +878,7 @@ unique_ptr<StatementSyntax> Parser::ParseWhileStatement()
 	auto keyword = MatchToken(SyntaxKind::WhileKeyword);
 	auto condition = ParseExpression();
 	auto body = ParseStatement();
-	return std::make_unique<WhileStatementSyntax>(keyword, condition, body);
+	return make_unique<WhileStatementSyntax>(keyword, condition, body);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseForStatement()
@@ -831,14 +890,14 @@ unique_ptr<StatementSyntax> Parser::ParseForStatement()
 	auto toKeyword = MatchToken(SyntaxKind::ToKeyword);
 	auto upperBound = ParseExpression();
 	auto body = ParseStatement();
-	return std::make_unique<ForStatementSyntax>(keyword, identifier, equalsToken, lowerBound,
+	return make_unique<ForStatementSyntax>(keyword, identifier, equalsToken, lowerBound,
 												toKeyword, upperBound, body);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseExpressionStatement()
 {
 	auto expression = ParseExpression();
-	return std::make_unique<ExpressionStatementSyntax>(expression);
+	return make_unique<ExpressionStatementSyntax>(expression);
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParseExpression()
@@ -854,7 +913,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseAssignmentExpression()
 		auto identifierToken = NextToken();
 		auto operatorToken = NextToken();
 		auto right = ParseAssignmentExpression();
-		return std::make_unique<AssignmentExpressionSyntax>(identifierToken, operatorToken, right);
+		return make_unique<AssignmentExpressionSyntax>(identifierToken, operatorToken, right);
 	}
 	return ParseBinaryExpression();
 }
@@ -872,7 +931,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 		//	_diagnostics->ReportUnexpectedToken(operatorToken.Span(), operatorToken.Kind(), SyntaxKind::IdentifierToken);
 		//}
 		auto operand = ParseBinaryExpression(unaryOperatorPrecedence);
-		left = std::make_unique<UnaryExpressionSyntax>(operatorToken, operand);
+		left = make_unique<UnaryExpressionSyntax>(operatorToken, operand);
 	} else
 	{
 		left = ParsePrimaryExpression();
@@ -896,7 +955,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 			break;
 		auto operatorToken = NextToken();
 		auto right = ParseBinaryExpression(precedence);
-		left = std::make_unique<BinaryExpressionSyntax>(left, operatorToken, right);
+		left = make_unique<BinaryExpressionSyntax>(left, operatorToken, right);
 	}
 	return left;
 }
@@ -910,11 +969,11 @@ unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(const unique_ptr<Exp
 	if (pre)
 	{
 		auto ae = dynamic_cast<const AssignmentExpressionSyntax*>(pre->Expression());
-		return std::make_unique<PostfixExpressionSyntax>(ae->IdentifierToken(), operatorToken, expression);
+		return make_unique<PostfixExpressionSyntax>(ae->IdentifierToken(), operatorToken, expression);
 	} else if (pfe)
-		return std::make_unique<PostfixExpressionSyntax>(pfe->IdentifierToken(), operatorToken, expression);
+		return make_unique<PostfixExpressionSyntax>(pfe->IdentifierToken(), operatorToken, expression);
 	else if (ne)
-		return std::make_unique<PostfixExpressionSyntax>(ne->IdentifierToken(), operatorToken, expression);
+		return make_unique<PostfixExpressionSyntax>(ne->IdentifierToken(), operatorToken, expression);
 	else
 		throw std::invalid_argument("Unexpected expression " + GetSyntaxKindName(expression->Kind()));
 }
@@ -930,6 +989,8 @@ unique_ptr<ExpressionSyntax> Parser::ParsePrimaryExpression()
 			return ParseBooleanLiteral();
 		case SyntaxKind::NumberToken:
 			return ParseNumberLiteral();
+		case SyntaxKind::StringToken:
+			return ParseStringLiteral();
 		case SyntaxKind::IdentifierToken:
 		default:
 			return ParseNameExpression();
@@ -941,37 +1002,43 @@ unique_ptr<ExpressionSyntax> Parser::ParseParenthesizedExpression()
 	auto left = MatchToken(SyntaxKind::OpenParenthesisToken);
 	auto expression = ParseExpression();
 	auto right = MatchToken(SyntaxKind::CloseParenthesisToken);
-	return std::make_unique<ParenthesizedExpressionSyntax>(left, expression, right);
+	return make_unique<ParenthesizedExpressionSyntax>(left, expression, right);
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParseBooleanLiteral()
 {
 	auto isTrue = Current()->Kind() == SyntaxKind::TrueKeyword;
 	auto keywordToken = isTrue ? MatchToken(SyntaxKind::TrueKeyword) : MatchToken(SyntaxKind::FalseKeyword);
-	return std::make_unique<LiteralExpressionSyntax>(keywordToken, isTrue);
+	return make_unique<LiteralExpressionSyntax>(keywordToken, isTrue);
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParseNumberLiteral()
 {
 	auto numberToken = MatchToken(SyntaxKind::NumberToken);
-	return std::make_unique<LiteralExpressionSyntax>(numberToken);
+	return make_unique<LiteralExpressionSyntax>(numberToken);
+}
+
+unique_ptr<ExpressionSyntax> Parser::ParseStringLiteral()
+{
+	auto stringToken = MatchToken(SyntaxKind::StringToken);
+	return make_unique<LiteralExpressionSyntax>(stringToken);
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParseNameExpression()
 {
 	auto identifier = MatchToken(SyntaxKind::IdentifierToken);
-	return std::make_unique<NameExpressionSyntax>(identifier);
+	return make_unique<NameExpressionSyntax>(identifier);
 }
 
 unique_ptr<CompilationUnitSyntax> Parser::ParseCompilationUnit()
 {
 	auto statement = ParseStatement();
 	auto endOfFileToken = MatchToken(SyntaxKind::EndOfFileToken);
-	return std::make_unique<CompilationUnitSyntax>(statement, endOfFileToken);
+	return make_unique<CompilationUnitSyntax>(statement, endOfFileToken);
 }
 
 SyntaxTree::SyntaxTree(const SourceText& text)
-	:_text(std::make_unique<SourceText>(text)), _diagnostics(std::make_unique<DiagnosticBag>())
+	:_text(make_unique<SourceText>(text)), _diagnostics(make_unique<DiagnosticBag>())
 {
 	auto parser = Parser(text);
 	_root = parser.ParseCompilationUnit();
@@ -990,7 +1057,7 @@ unique_ptr<SyntaxTree> SyntaxTree::Parse(const string & text)
 
 unique_ptr<SyntaxTree> SyntaxTree::Parse(const SourceText & text)
 {
-	return std::make_unique<SyntaxTree>(text);
+	return make_unique<SyntaxTree>(text);
 }
 
 vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const string & text)
@@ -1005,7 +1072,7 @@ vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const SourceText & text)
 	auto result = vector<unique_ptr<SyntaxToken>>();
 	while (true)
 	{
-		auto pToken = std::make_unique<SyntaxToken>(lexer.Lex());
+		auto pToken = make_unique<SyntaxToken>(lexer.Lex());
 		if (pToken->Kind() == SyntaxKind::EndOfFileToken)
 			break;
 		result.emplace_back(std::move(pToken));
