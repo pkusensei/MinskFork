@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Repl.h"
 
+#include <algorithm>
+#include <cctype>
 #include <iostream>
 
 #include "helpers.h"
@@ -9,7 +11,7 @@
 #include "SourceText.h"
 #include "Syntax.h"
 
-constexpr auto NewLine = '\r';
+constexpr auto NEW_LINE = '\r';
 
 void Repl::Run()
 {
@@ -18,7 +20,7 @@ void Repl::Run()
 		auto text = EditSubmission();
 		if (text.empty())
 			return;
-		if (text.find(NewLine) == text.npos && MCF::StringStartsWith(text, "#"))
+		if (text.find(NEW_LINE) == text.npos && MCF::StringStartsWith(text, "#"))
 			EvaluateMetaCommand(text);
 		else EvaluateSubmission(text);
 
@@ -41,7 +43,7 @@ std::string Repl::EditSubmission()
 	view.CurrentLine(document.size() - 1);
 	view.CurrentCharacter(document[view.CurrentLine()].length());
 	std::cout << "\n";
-	return MCF::StringJoin(document.Contents(), NewLine);
+	return MCF::StringJoin(document.Contents(), NEW_LINE);
 }
 
 void Repl::HandleKey(const MCF::KeyInfo& key, ObservableCollection<std::string>* document, SubmissionView * view)
@@ -114,7 +116,7 @@ void Repl::HandleEscape(ObservableCollection<std::string>* document, SubmissionV
 
 void Repl::HandleEnter(ObservableCollection<std::string>* document, SubmissionView * view)
 {
-	auto text = MCF::StringJoin(document->Contents(), NewLine);
+	auto text = MCF::StringJoin(document->Contents(), NEW_LINE);
 	if (MCF::StringStartsWith(text, "#") || IsCompleteSubmission(text))
 	{
 		_done = true;
@@ -249,7 +251,7 @@ void Repl::UpdateDocumentFromHistory(ObservableCollection<std::string>* document
 
 	document->Clear();
 	auto historyItem = _submissionHistory[_submissionHistoryIndex];
-	auto lines = MCF::StringSplit(historyItem, NewLine);
+	auto lines = MCF::StringSplit(historyItem, NEW_LINE);
 	for (const auto& it : lines)
 	{
 		document->Add(it);
@@ -363,9 +365,9 @@ void McfRepl::RenderLine(const std::string & line) const
 	auto tokens = MCF::SyntaxTree::ParseTokens(line);
 	for (const auto& it : tokens)
 	{
-		auto isKeyword = MCF::StringEndsWith(MCF::GetSyntaxKindName(it->Kind()), "Keyword");
-		auto isNumber = it->Kind() == MCF::SyntaxKind::NumberToken;
-		auto isIdentifier = it->Kind() == MCF::SyntaxKind::IdentifierToken;
+		auto isKeyword = MCF::StringEndsWith(MCF::GetSyntaxKindName(it.Kind()), "Keyword");
+		auto isNumber = it.Kind() == MCF::SyntaxKind::NumberToken;
+		auto isIdentifier = it.Kind() == MCF::SyntaxKind::IdentifierToken;
 
 		if (isKeyword)
 			MCF::SetConsoleColor(MCF::ConsoleColor::Blue);
@@ -375,7 +377,7 @@ void McfRepl::RenderLine(const std::string & line) const
 			MCF::SetConsoleColor(MCF::ConsoleColor::Cyan);
 		else MCF::SetConsoleColor(MCF::ConsoleColor::Grey);
 
-		std::cout << it->Text();
+		std::cout << it.Text();
 		MCF::ResetConsoleColor();
 	}
 }
@@ -405,11 +407,26 @@ void McfRepl::EvaluateMetaCommand(const std::string & input)
 
 bool McfRepl::IsCompleteSubmission(const std::string & text) const
 {
-	if (MCF::IsStringBlank(text))
+	if (text.empty())
 		return true;
 
+	auto stringIsBlank = [](const std::vector<std::string>::reverse_iterator& i) {
+		return i->empty()
+			|| std::all_of(i->begin(), i->end(), std::isspace);
+	};
+
+	auto lastTwoLinesAreBlank = [&text, &stringIsBlank]() {
+		auto v = MCF::StringSplit(text, NEW_LINE);
+		auto i = v.rbegin();
+		if (v.size() > 1)
+			return stringIsBlank(i) && stringIsBlank(++i);
+		else return false;
+	};
+
+	if (lastTwoLinesAreBlank()) return true;
+
 	auto tree = MCF::SyntaxTree::Parse(text);
-	if (!tree->Diagnostics()->empty())
+	if (tree->Root()->Statement()->GetLastToken().IsMissing())
 		return false;
 	return true;
 }

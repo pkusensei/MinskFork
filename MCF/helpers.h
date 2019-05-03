@@ -61,7 +61,6 @@ MCF_API KeyInfo ReadKeyFromConsole();
 MCF_API KeyInputKind DecideKeyInputKind(const int input);
 
 /// string helpers
-MCF_API bool IsStringBlank(const std::string& s);
 MCF_API bool StringStartsWith(const string& sample, const string& beginning);
 MCF_API bool StringEndsWith(const string& sample, const string& ending);
 MCF_API string TrimString(const string& text);

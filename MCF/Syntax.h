@@ -33,7 +33,7 @@ public:
 	string ToString() const;
 };
 
-class SyntaxToken final :public SyntaxNode
+class MCF_API SyntaxToken final :public SyntaxNode
 {
 private:
 	SyntaxKind _kind;
@@ -414,12 +414,12 @@ class Parser final
 {
 private:
 	const SourceText* _text;
-	vector<unique_ptr<SyntaxToken>> _tokens;
+	vector<SyntaxToken> _tokens;
 	size_t _position;
 	unique_ptr<DiagnosticBag> _diagnostics;
 
-	SyntaxToken* Peek(int offset) const;
-	SyntaxToken* Current() const;
+	const SyntaxToken* Peek(int offset) const;
+	const SyntaxToken* Current() const;
 	SyntaxToken NextToken();
 	SyntaxToken MatchToken(const SyntaxKind& kind);
 
@@ -471,8 +471,11 @@ public:
 
 	static unique_ptr<SyntaxTree> Parse(const string& text);
 	static unique_ptr<SyntaxTree> Parse(const SourceText& text);
-	static vector<unique_ptr<SyntaxToken>> ParseTokens(const string& text);
-	static vector<unique_ptr<SyntaxToken>> ParseTokens(const SourceText& text);
+	static vector<SyntaxToken> ParseTokens(const string& text);
+	static vector<SyntaxToken> ParseTokens(const string& text, DiagnosticBag& diagnostics);
+	static vector<SyntaxToken> ParseTokens(const SourceText& text);
+	static vector<SyntaxToken> ParseTokens(const SourceText& text, DiagnosticBag& diagnostics);
+
 };
 
 }//MCF

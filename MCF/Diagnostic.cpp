@@ -52,7 +52,6 @@ void DiagnosticBag::AddRangeFront(DiagnosticBag & other)
 {
 	_diagnostics.insert(_diagnostics.begin(),
 						make_move_iterator(other._diagnostics.begin()), make_move_iterator(other._diagnostics.end()));
-
 }
 
 void DiagnosticBag::AddRange(DiagnosticBag& other)

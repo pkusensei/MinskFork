@@ -418,7 +418,7 @@ void Lexer::ReadString()
 	Next();
 	auto s = string();
 	auto done = false;
-	
+
 	while (!done)
 	{
 		auto c = Current();
@@ -753,34 +753,32 @@ const vector<const SyntaxNode*> CompilationUnitSyntax::GetChildren() const
 }
 
 Parser::Parser(const SourceText& text)
-	:_text(&text), _position(0), _diagnostics(make_unique<DiagnosticBag>())
+	:_text(&text), _tokens(), _position(0), _diagnostics(make_unique<DiagnosticBag>())
 {
-	_tokens = vector<unique_ptr<SyntaxToken>>();
 	auto lexer = Lexer(text);
-	unique_ptr<SyntaxToken> pToken{nullptr};
 	auto kind = SyntaxKind::BadToken;
 	do
 	{
-		pToken = make_unique<SyntaxToken>(lexer.Lex());
-		if (pToken->Kind() != SyntaxKind::WhitespaceToken &&
-			pToken->Kind() != SyntaxKind::BadToken)
+		auto token = lexer.Lex();
+		if (token.Kind() != SyntaxKind::WhitespaceToken &&
+			token.Kind() != SyntaxKind::BadToken)
 		{
-			kind = pToken->Kind();
-			_tokens.emplace_back(std::move(pToken));
+			kind = token.Kind();
+			_tokens.emplace_back(token);
 		}
 	} while (kind != SyntaxKind::EndOfFileToken);
 	_diagnostics->AddRange(*lexer.Diagnostics());
 }
 
-SyntaxToken* Parser::Peek(int offset) const
+const SyntaxToken* Parser::Peek(int offset) const
 {
 	auto idx = _position + offset;
 	if (idx >= _tokens.size())
-		return _tokens.back().get();
-	return _tokens[idx].get();
+		return &(_tokens.back());
+	return &_tokens[idx];
 }
 
-SyntaxToken* Parser::Current() const
+const SyntaxToken* Parser::Current() const
 {
 	return Peek(0);
 }
@@ -891,7 +889,7 @@ unique_ptr<StatementSyntax> Parser::ParseForStatement()
 	auto upperBound = ParseExpression();
 	auto body = ParseStatement();
 	return make_unique<ForStatementSyntax>(keyword, identifier, equalsToken, lowerBound,
-												toKeyword, upperBound, body);
+										   toKeyword, upperBound, body);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseExpressionStatement()
@@ -1060,23 +1058,42 @@ unique_ptr<SyntaxTree> SyntaxTree::Parse(const SourceText & text)
 	return make_unique<SyntaxTree>(text);
 }
 
-vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const string & text)
+vector<SyntaxToken> SyntaxTree::ParseTokens(const string & text)
 {
 	auto source = SourceText::From(text);
 	return ParseTokens(source);
 }
 
-vector<unique_ptr<SyntaxToken>> SyntaxTree::ParseTokens(const SourceText & text)
+vector<SyntaxToken> SyntaxTree::ParseTokens(const string & text, DiagnosticBag& diagnostics)
 {
+	auto source = SourceText::From(text);
+	return ParseTokens(source, diagnostics);
+}
+
+vector<SyntaxToken> SyntaxTree::ParseTokens(const SourceText & text)
+{
+	auto v = DiagnosticBag();
+	return ParseTokens(text, v);
+}
+
+vector<SyntaxToken> SyntaxTree::ParseTokens(const SourceText & text, DiagnosticBag& diagnostics)
+{
+
+	auto lexTokens = [](Lexer& lexer) {
+		auto result = vector<SyntaxToken>();
+		while (true)
+		{
+			auto token = lexer.Lex();
+			if (token.Kind() == SyntaxKind::EndOfFileToken)
+				break;
+			result.emplace_back(token);
+		}
+		return result;
+	};
+
 	auto lexer = Lexer(text);
-	auto result = vector<unique_ptr<SyntaxToken>>();
-	while (true)
-	{
-		auto pToken = make_unique<SyntaxToken>(lexer.Lex());
-		if (pToken->Kind() == SyntaxKind::EndOfFileToken)
-			break;
-		result.emplace_back(std::move(pToken));
-	}
+	auto result = lexTokens(lexer);
+	diagnostics.AddRange(*lexer.Diagnostics());
 	return result;
 }
 

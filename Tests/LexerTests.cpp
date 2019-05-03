@@ -3,8 +3,10 @@
 
 #include <set>
 
+#include "..\MCF\Diagnostic.h"
 #include "..\MCF\helpers.h"
 #include "..\MCF\Syntax.h"
+#include "..\MCF\SourceText.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -14,7 +16,7 @@ TEST_CLASS(LexerTests)
 {
 public:
 
-	TEST_METHOD(Lexer_Tests_AllTokens)
+	TEST_METHOD(Lexer_Covers_AllTokens)
 	{
 		auto tokenKinds = std::vector<MCF::SyntaxKind>();
 		for (const auto& kind : MCF::AllSyntaxKinds)
@@ -39,6 +41,21 @@ public:
 		Assert::IsTrue(untestedTokenKinds.empty());
 	}
 
+	TEST_METHOD(Lexer_Lexes_UnterminatedString)
+	{
+		auto text = std::string("\"text");
+		auto diagnostics = MCF::DiagnosticBag();
+		auto tokens = MCF::SyntaxTree::ParseTokens(text, diagnostics);
+
+		Assert::IsTrue(tokens.size() == 1);
+		Assert::IsTrue(MCF::SyntaxKind::StringToken == tokens[0].Kind());
+		Assert::AreEqual(text, tokens[0].Text());
+
+		Assert::IsTrue(diagnostics.size() == 1);
+		Assert::IsTrue(MCF::TextSpan(0, 1) == diagnostics[0].Span());
+		Assert::IsTrue("Unterminated string literal." == diagnostics[0].Message());
+	}
+
 	TEST_METHOD(Lexer_Lexes_Token)
 	{
 		auto data = GetTokenData();
@@ -46,8 +63,8 @@ public:
 		{
 			auto tokens = MCF::SyntaxTree::ParseTokens(it.second);
 			Assert::IsTrue(tokens.size() == 1);
-			Assert::IsTrue(it.first == tokens[0]->Kind());
-			Assert::AreEqual(it.second, tokens[0]->Text());
+			Assert::IsTrue(it.first == tokens[0].Kind());
+			Assert::AreEqual(it.second, tokens[0].Text());
 		}
 	}
 
@@ -61,10 +78,10 @@ public:
 			auto tokens = MCF::SyntaxTree::ParseTokens(text);
 			Assert::IsTrue(2 == tokens.size());
 
-			Assert::IsTrue(t1kind == tokens[0]->Kind());
-			Assert::AreEqual(t1text, tokens[0]->Text());
-			Assert::IsTrue(t2kind == tokens[1]->Kind());
-			Assert::AreEqual(t2text, tokens[1]->Text());
+			Assert::IsTrue(t1kind == tokens[0].Kind());
+			Assert::AreEqual(t1text, tokens[0].Text());
+			Assert::IsTrue(t2kind == tokens[1].Kind());
+			Assert::AreEqual(t2text, tokens[1].Text());
 		}
 	}
 
@@ -78,12 +95,12 @@ public:
 			auto tokens = MCF::SyntaxTree::ParseTokens(text);
 			Assert::IsTrue(3 == tokens.size());
 
-			Assert::IsTrue(t1kind == tokens[0]->Kind());
-			Assert::AreEqual(t1text, tokens[0]->Text());
-			Assert::IsTrue(skind == tokens[1]->Kind());
-			Assert::AreEqual(stext, tokens[1]->Text());
-			Assert::IsTrue(t2kind == tokens[2]->Kind());
-			Assert::AreEqual(t2text, tokens[2]->Text());
+			Assert::IsTrue(t1kind == tokens[0].Kind());
+			Assert::AreEqual(t1text, tokens[0].Text());
+			Assert::IsTrue(skind == tokens[1].Kind());
+			Assert::AreEqual(stext, tokens[1].Text());
+			Assert::IsTrue(t2kind == tokens[2].Kind());
+			Assert::AreEqual(t2text, tokens[2].Text());
 		}
 	}
 
@@ -97,8 +114,8 @@ public:
 				auto tokens = MCF::SyntaxTree::ParseTokens(text);
 				Assert::IsTrue(1 == tokens.size());
 
-				Assert::IsTrue(kind == tokens[0]->Kind());
-				Assert::AreEqual(text, tokens[0]->Text());
+				Assert::IsTrue(kind == tokens[0].Kind());
+				Assert::AreEqual(text, tokens[0].Text());
 			}
 		}
 	}
@@ -122,6 +139,8 @@ private:
 		result.emplace_back(MCF::SyntaxKind::NumberToken, "123");
 		result.emplace_back(MCF::SyntaxKind::IdentifierToken, "a");
 		result.emplace_back(MCF::SyntaxKind::IdentifierToken, "abc");
+		result.emplace_back(MCF::SyntaxKind::StringToken, "\"Test\"");
+		result.emplace_back(MCF::SyntaxKind::StringToken, "\"Te\"\"st\"");
 		return result;
 	}
 
@@ -194,6 +213,9 @@ private:
 			return true;
 		if (t1kind == MCF::SyntaxKind::NumberToken && t2kind == MCF::SyntaxKind::NumberToken)
 			return true;
+		if (t1kind == MCF::SyntaxKind::StringToken && t2kind == MCF::SyntaxKind::StringToken)
+			return true;
+
 		if (t1kind == MCF::SyntaxKind::BangToken && t2kind == MCF::SyntaxKind::EqualsToken)
 			return true;
 		if (t1kind == MCF::SyntaxKind::BangToken && t2kind == MCF::SyntaxKind::EqualsEqualsToken)

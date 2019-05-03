@@ -158,9 +158,9 @@ type_index ValueType::Type() const
 	switch (_inner.index())
 	{
 		case 1:
-			return typeid(IntegerType);
-		case 2:
 			return typeid(bool);
+		case 2:
+			return typeid(IntegerType);
 		case 3:
 			return typeid(string);
 		case 0:
@@ -176,10 +176,10 @@ string ValueType::ToString() const
 	switch (id)
 	{
 		case 1:
-			result = std::to_string(GetValue<IntegerType>());
+			result = GetValue<bool>() ? "True" : "False";
 			break;
 		case 2:
-			result = GetValue<bool>() ? "True" : "False";
+			result = std::to_string(GetValue<IntegerType>());
 			break;
 		case 3:
 			result = GetValue<string>();
@@ -194,8 +194,8 @@ int ValueType::GetValueTypeId(const type_index & inType)
 {
 	static std::unordered_map<type_index, int> types = {
 		{typeid(std::monostate), 0},
-		{typeid(IntegerType), 1},
-		{typeid(bool), 2},
+		{typeid(bool), 1},
+		{typeid(IntegerType), 2},
 		{typeid(string), 3}
 	};
 
@@ -207,8 +207,8 @@ string ValueType::GetTypeName(const type_index & inType)
 	auto id = GetValueTypeId(inType);
 	switch (id)
 	{
-		case 1: return "IntegerType";
-		case 2: return "bool";
+		case 1: return "bool";
+		case 2: return "IntegerType";
 		case 3: return "string";
 		case 0:
 		default:
