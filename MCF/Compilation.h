@@ -3,7 +3,7 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "VariableSymbol.h"
+#include "Symbols.h"
 
 namespace MCF {
 

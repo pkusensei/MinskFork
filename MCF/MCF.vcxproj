@@ -86,6 +86,9 @@
     <UseClangCl>true</UseClangCl>
     <UseLldLink>true</UseLldLink>
   </PropertyGroup>
+  <PropertyGroup Label="LLVM" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <UseClangCl>true</UseClangCl>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -163,13 +166,13 @@
     <ClInclude Include="helpers.h" />
     <ClInclude Include="SourceText.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Symbols.h" />
     <ClInclude Include="Syntax.h" />
+    <ClInclude Include="SyntaxKind.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="VariableSymbol.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Binding.cpp" />
-    <ClCompile Include="common.cpp" />
     <ClCompile Include="Compilation.cpp" />
     <ClCompile Include="Diagnostic.cpp" />
     <ClCompile Include="dllmain.cpp" />
@@ -182,8 +185,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Symbols.cpp" />
     <ClCompile Include="Syntax.cpp" />
-    <ClCompile Include="VariableSymbol.cpp" />
+    <ClCompile Include="SyntaxKind.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

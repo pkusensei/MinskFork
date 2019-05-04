@@ -12,7 +12,7 @@
 
 namespace MCF {
 
-size_t LabelHash::operator()(const LabelSymbol & label) const noexcept
+size_t LabelHash::operator()(const BoundLabel & label) const noexcept
 {
 	return std::hash<string>{}(label.Name());
 }
@@ -40,6 +40,8 @@ string GetEnumText(const BoundNodeKind & kind)
 		case BoundNodeKind::ExpressionStatement:
 			return "ExpressionStatement";
 
+		case BoundNodeKind::ErrorExpression:
+			return "ErrorExpression";
 		case BoundNodeKind::LiteralExpression:
 			return "LiteralExpression";
 		case BoundNodeKind::VariableExpression:
@@ -224,34 +226,46 @@ const vector<const BoundNode*> BoundExpression::GetChildren() const
 	return vector<const BoundNode*>();
 }
 
+const vector<std::pair<string, string>> BoundErrorExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Type", Type().Name())
+	};
+}
+
 BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
-									   const type_index& operandType, const type_index& resultType)
+									   const TypeSymbol& operandType, const TypeSymbol& resultType)
 	:_syntaxKind(synKind), _kind(kind), _operandType(operandType), _resultType(resultType)
 {
 }
 
 BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
-									   const type_index& operandType)
+									   const TypeSymbol& operandType)
 	: BoundUnaryOperator(synKind, kind, operandType, operandType)
 {
 }
 
 BoundUnaryOperator::BoundUnaryOperator()
-	: BoundUnaryOperator(SyntaxKind::BadToken, BoundUnaryOperatorKind::Identity, typeid(std::monostate))
+	: BoundUnaryOperator(SyntaxKind::BadToken, BoundUnaryOperatorKind::Identity, TypeSymbol::GetType(TypeKind::Error))
 {
 	_isUseful = false;
 }
 
-const vector<BoundUnaryOperator> BoundUnaryOperator::_operators = {
-	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation, typeid(bool)),
-	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity, typeid(IntegerType)),
-	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation, typeid(IntegerType)),
-	BoundUnaryOperator(SyntaxKind::TildeToken, BoundUnaryOperatorKind::OnesComplement, typeid(IntegerType))
-};
-
-BoundUnaryOperator BoundUnaryOperator::Bind(const enum SyntaxKind& synKind, const type_index& type)
+const vector<BoundUnaryOperator>& BoundUnaryOperator::Operators()
 {
-	for (const auto& op : _operators)
+	static const auto operators = vector<BoundUnaryOperator>{
+	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation, TypeSymbol::GetType(TypeKind::Bool)),
+	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity, TypeSymbol::GetType(TypeKind::Int)),
+	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation, TypeSymbol::GetType(TypeKind::Int)),
+	BoundUnaryOperator(SyntaxKind::TildeToken, BoundUnaryOperatorKind::OnesComplement, TypeSymbol::GetType(TypeKind::Int))
+	};
+
+	return operators;
+}
+
+BoundUnaryOperator BoundUnaryOperator::Bind(const enum SyntaxKind& synKind, const TypeSymbol& type)
+{
+	for (const auto& op : Operators())
 	{
 		if (op.SyntaxKind() == synKind && op.OperandType() == type)
 			return op;
@@ -260,7 +274,7 @@ BoundUnaryOperator BoundUnaryOperator::Bind(const enum SyntaxKind& synKind, cons
 }
 
 BoundUnaryExpression::BoundUnaryExpression(const BoundUnaryOperator & op, const unique_ptr<BoundExpression>& operand)
-	:_op(make_unique<BoundUnaryOperator>(op)),
+	:_op(op),
 	_operand(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(operand)))
 {
 }
@@ -275,63 +289,68 @@ const vector<const BoundNode*> BoundUnaryExpression::GetChildren() const
 const vector<std::pair<string, string>> BoundUnaryExpression::GetProperties() const
 {
 	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Type", ValueType::GetTypeName(Type()))
+		std::pair<string, string>("Type", Type().Name())
 	};
 }
 
 BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
-										 const type_index& left, const type_index& right, const type_index& result)
+										 const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result)
 	: _syntaxKind(synKind), _kind(kind), _leftType(left), _rightType(right), _resultType(result)
 {
 }
 
 BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
-										 const type_index& operandType, const type_index& resultType)
+										 const TypeSymbol& operandType, const TypeSymbol& resultType)
 	: BoundBinaryOperator(synKind, kind, operandType, operandType, resultType)
 {
 }
 
-BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, const type_index& type)
+BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, const TypeSymbol& type)
 	: BoundBinaryOperator(synKind, kind, type, type, type)
 {
 }
 
 BoundBinaryOperator::BoundBinaryOperator()
-	: BoundBinaryOperator(SyntaxKind::BadToken, BoundBinaryOperatorKind::Addition, typeid(std::monostate))
+	: BoundBinaryOperator(SyntaxKind::BadToken, BoundBinaryOperatorKind::Addition, TypeSymbol::GetType(TypeKind::Error))
 {
 	_isUseful = false;
 }
 
-const vector<BoundBinaryOperator> BoundBinaryOperator::_operators = {
-	BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, typeid(IntegerType)),
-	BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction, typeid(IntegerType)),
-	BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication, typeid(IntegerType)),
-	BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division, typeid(IntegerType)),
-	BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus, typeid(IntegerType)),
-
-	BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, typeid(IntegerType)),
-	BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, typeid(IntegerType)),
-	BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, typeid(IntegerType)),
-
-	BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, typeid(IntegerType), typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, typeid(IntegerType), typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less, typeid(IntegerType), typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals, typeid(IntegerType), typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater, typeid(IntegerType), typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals, typeid(IntegerType), typeid(bool)),
-
-	BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd, typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr, typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, typeid(bool)),
-	BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, typeid(bool))
-};
-
-BoundBinaryOperator BoundBinaryOperator::Bind(const enum SyntaxKind& synKind, const type_index& leftType, const type_index& rightType)
+const vector<BoundBinaryOperator>& BoundBinaryOperator::Operators()
 {
-	for (const auto& op : _operators)
+	static const auto operators = vector<BoundBinaryOperator>{
+		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, TypeSymbol::GetType(TypeKind::Int)),
+		BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction, TypeSymbol::GetType(TypeKind::Int)),
+		BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication, TypeSymbol::GetType(TypeKind::Int)),
+		BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division, TypeSymbol::GetType(TypeKind::Int)),
+		BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus, TypeSymbol::GetType(TypeKind::Int)),
+
+		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, TypeSymbol::GetType(TypeKind::Int)),
+		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, TypeSymbol::GetType(TypeKind::Int)),
+		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, TypeSymbol::GetType(TypeKind::Int)),
+
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, TypeSymbol::GetType(TypeKind::Int), TypeSymbol::GetType(TypeKind::Bool)),
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, TypeSymbol::GetType(TypeKind::Int), TypeSymbol::GetType(TypeKind::Bool)),
+		BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less, TypeSymbol::GetType(TypeKind::Int), TypeSymbol::GetType(TypeKind::Bool)),
+		BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals, TypeSymbol::GetType(TypeKind::Int), TypeSymbol::GetType(TypeKind::Bool)),
+		BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater, TypeSymbol::GetType(TypeKind::Int), TypeSymbol::GetType(TypeKind::Bool)),
+		BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals, TypeSymbol::GetType(TypeKind::Int), TypeSymbol::GetType(TypeKind::Bool)),
+
+		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, TypeSymbol::GetType(TypeKind::Bool)),
+		BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd, TypeSymbol::GetType(TypeKind::Bool)),
+		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, TypeSymbol::GetType(TypeKind::Bool)),
+		BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr, TypeSymbol::GetType(TypeKind::Bool)),
+		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, TypeSymbol::GetType(TypeKind::Bool)),
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, TypeSymbol::GetType(TypeKind::Bool)),
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, TypeSymbol::GetType(TypeKind::Bool))
+	};
+
+	return operators;
+}
+
+BoundBinaryOperator BoundBinaryOperator::Bind(const enum SyntaxKind& synKind, const TypeSymbol& leftType, const TypeSymbol& rightType)
+{
+	for (const auto& op : Operators())
 	{
 		if (op.SyntaxKind() == synKind && op.LeftType() == leftType && op.RightType() == rightType)
 			return op;
@@ -342,7 +361,7 @@ BoundBinaryOperator BoundBinaryOperator::Bind(const enum SyntaxKind& synKind, co
 BoundBinaryExpression::BoundBinaryExpression(const unique_ptr<BoundExpression>& left, const BoundBinaryOperator & op, const unique_ptr<BoundExpression>& right)
 	:_left(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(left))),
 	_right(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(right))),
-	_op(make_unique<BoundBinaryOperator>(op))
+	_op(op)
 {
 }
 
@@ -357,7 +376,7 @@ const vector<const BoundNode*> BoundBinaryExpression::GetChildren() const
 const vector<std::pair<string, string>> BoundBinaryExpression::GetProperties() const
 {
 	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Type", ValueType::GetTypeName(Type()))
+		std::pair<string, string>("Type", Type().Name())
 	};
 }
 
@@ -378,7 +397,7 @@ const vector<std::pair<string, string>> BoundAssignmentExpression::GetProperties
 {
 	return vector<std::pair<string, string>>{
 		std::pair<string, string>("Variable", Variable().ToString()),
-			std::pair<string, string>("Type", ValueType::GetTypeName(Type()))
+			std::pair<string, string>("Type", Type().Name())
 	};
 }
 
@@ -391,7 +410,7 @@ const vector<std::pair<string, string>> BoundLiteralExpression::GetProperties() 
 {
 	return vector<std::pair<string, string>>{
 		std::pair<string, string>("Value", Value().ToString()),
-			std::pair<string, string>("Type", ValueType::GetTypeName(Type()))
+			std::pair<string, string>("Type", Type().Name())
 	};
 }
 
@@ -404,7 +423,7 @@ const vector<std::pair<string, string>> BoundVariableExpression::GetProperties()
 {
 	return vector<std::pair<string, string>>{
 		std::pair<string, string>("Variable", Variable().ToString()),
-			std::pair<string, string>("Type", ValueType::GetTypeName(Type()))
+			std::pair<string, string>("Type", Type().Name())
 	};
 }
 
@@ -423,7 +442,7 @@ const vector<std::pair<string, string>> BoundPostfixExpression::GetProperties() 
 {
 	return vector<std::pair<string, string>>{
 		std::pair<string, string>("Variable", Variable().ToString()),
-			std::pair<string, string>("Type", ValueType::GetTypeName(Type())),
+			std::pair<string, string>("Type", Type().Name()),
 			std::pair<string, string>("OperatorKind", GetEnumText(OperatorKind()))
 	};
 }
@@ -540,7 +559,7 @@ const vector<const BoundNode*> BoundForStatement::GetChildren() const
 	};
 }
 
-BoundLabelStatement::BoundLabelStatement(const LabelSymbol & label)
+BoundLabelStatement::BoundLabelStatement(const BoundLabel & label)
 	:_label(label)
 {
 }
@@ -552,7 +571,7 @@ const vector<std::pair<string, string>> BoundLabelStatement::GetProperties() con
 	};
 }
 
-BoundGotoStatement::BoundGotoStatement(const LabelSymbol & label)
+BoundGotoStatement::BoundGotoStatement(const BoundLabel & label)
 	:_label(label)
 {
 }
@@ -564,7 +583,7 @@ const vector<std::pair<string, string>> BoundGotoStatement::GetProperties() cons
 	};
 }
 
-BoundConditionalGotoStatement::BoundConditionalGotoStatement(const LabelSymbol & label, const unique_ptr<BoundExpression>& condition, bool jumpIfTrue)
+BoundConditionalGotoStatement::BoundConditionalGotoStatement(const BoundLabel & label, const unique_ptr<BoundExpression>& condition, bool jumpIfTrue)
 	:_label(label),
 	_condition((std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition)))),
 	_jumpIfTrue(jumpIfTrue)
@@ -716,20 +735,16 @@ unique_ptr<BoundStatement> Binder::BindBlockStatement(const BlockStatementSyntax
 
 unique_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclarationSyntax * syntax)
 {
-	auto name = syntax->Identifier().Text();
 	auto readOnly = syntax->Keyword().Kind() == SyntaxKind::LetKeyword;
 	auto init = BindExpression(syntax->Initializer());
-	auto variable = VariableSymbol(name, readOnly, init->Type());
-
-	if (!_scope->TryDeclare(variable))
-		_diagnostics->ReportVariableAlreadyDeclared(syntax->Identifier().Span(), name);
+	auto variable = BindVariable(syntax->Identifier(), readOnly, init->Type());
 
 	return make_unique<BoundVariableDeclaration>(variable, init);
 }
 
 unique_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax * syntax)
 {
-	auto condition = BindExpression(syntax->Condition(), typeid(bool));
+	auto condition = BindExpression(syntax->Condition(), TypeSymbol::GetType(TypeKind::Bool));
 	auto thenStatement = BindStatement(syntax->ThenStatement());
 	auto elseStatement = syntax->ElseClause() == nullptr ? nullptr
 		: BindStatement(syntax->ElseClause()->ElseStatement());
@@ -738,24 +753,21 @@ unique_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax * syn
 
 unique_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax * syntax)
 {
-	auto condition = BindExpression(syntax->Condition(), typeid(bool));
+	auto condition = BindExpression(syntax->Condition(), TypeSymbol::GetType(TypeKind::Bool));
 	auto body = BindStatement(syntax->Body());
 	return make_unique<BoundWhileStatement>(condition, body);
 }
 
 unique_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax * syntax)
 {
-	auto lowerBound = BindExpression(syntax->LowerBound(), typeid(IntegerType));
-	auto upperBound = BindExpression(syntax->UpperBound(), typeid(IntegerType));
+	auto lowerBound = BindExpression(syntax->LowerBound(), TypeSymbol::GetType(TypeKind::Int));
+	auto upperBound = BindExpression(syntax->UpperBound(), TypeSymbol::GetType(TypeKind::Int));
 
 	_scope = make_unique<BoundScope>(_scope);
 
-	auto name = syntax->Identifier().Text();
-	VariableSymbol variable(name, true, typeid(IntegerType));
-	if (!_scope->TryDeclare(variable))
-		_diagnostics->ReportVariableAlreadyDeclared(syntax->Identifier().Span(), name);
-
+	auto variable = BindVariable(syntax->Identifier(), true, TypeSymbol::GetType(TypeKind::Int));
 	auto body = BindStatement(syntax->Body());
+
 	BoundScope::ResetToParent(_scope);
 	return make_unique<BoundForStatement>(variable, lowerBound, upperBound, body);
 }
@@ -766,10 +778,11 @@ unique_ptr<BoundStatement> Binder::BindExpressionStatement(const ExpressionState
 	return make_unique<BoundExpressionStatement>(expression);
 }
 
-unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * syntax, const type_index & targetType)
+unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * syntax, const TypeSymbol & targetType)
 {
 	auto result = BindExpression(syntax);
-	if (result->Type() != targetType)
+	if (targetType != TypeSymbol::GetType(TypeKind::Error) && result->Type() != TypeSymbol::GetType(TypeKind::Error)
+		&& result->Type() != targetType)
 		_diagnostics->ReportCannotConvert(syntax->Span(), result->Type(), targetType);
 	return result;
 }
@@ -840,14 +853,14 @@ unique_ptr<BoundExpression> Binder::BindLiteralExpression(const LiteralExpressio
 unique_ptr<BoundExpression> Binder::BindNameExpression(const NameExpressionSyntax * syntax)
 {
 	auto name = syntax->IdentifierToken().Text();
-	if (name.empty()) // NOTE this token was injected by Parser::MatchToken
-		return make_unique<BoundLiteralExpression>(0);
+	if (syntax->IdentifierToken().IsMissing()) // NOTE this token was injected by Parser::MatchToken
+		return make_unique<BoundErrorExpression>();
 
 	VariableSymbol variable;
 	if (!_scope->TryLookup(name, variable))
 	{
 		_diagnostics->ReportUndefinedName(syntax->IdentifierToken().Span(), name);
-		return make_unique<BoundLiteralExpression>(0);
+		return make_unique<BoundErrorExpression>();
 	}
 	return make_unique<BoundVariableExpression>(variable);
 }
@@ -877,6 +890,9 @@ unique_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 unique_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyntax * syntax)
 {
 	auto boundOperand = BindExpression(syntax->Operand());
+	if (boundOperand->Type() == TypeSymbol::GetType(TypeKind::Error))
+		return make_unique<BoundErrorExpression>();
+
 	auto boundOperator = BoundUnaryOperator::Bind(syntax->OperatorToken().Kind(), boundOperand->Type());
 	if (boundOperator.IsUseful())
 	{
@@ -884,7 +900,7 @@ unique_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyn
 	} else
 	{
 		_diagnostics->ReportUndefinedUnaryOperator(syntax->OperatorToken().Span(), syntax->OperatorToken().Text(), boundOperand->Type());
-		return boundOperand;
+		return make_unique<BoundErrorExpression>();
 	}
 }
 
@@ -892,6 +908,9 @@ unique_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 {
 	auto boundLeft = BindExpression(syntax->Left());
 	auto boundRight = BindExpression(syntax->Right());
+	if (boundLeft->Type() == TypeSymbol::GetType(TypeKind::Error) || boundRight->Type() == TypeSymbol::GetType(TypeKind::Error))
+		return make_unique<BoundErrorExpression>();
+
 	auto boundOperator = BoundBinaryOperator::Bind(syntax->OperatorToken().Kind(), boundLeft->Type(), boundRight->Type());
 	if (boundOperator.IsUseful())
 	{
@@ -900,7 +919,7 @@ unique_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 	{
 		_diagnostics->ReportUndefinedBinaryOperator(syntax->OperatorToken().Span(), syntax->OperatorToken().Text(),
 													boundLeft->Type(), boundRight->Type());
-		return boundLeft;
+		return make_unique<BoundErrorExpression>();
 	}
 }
 
@@ -914,19 +933,22 @@ unique_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	if (!_scope->TryLookup(name, variable))
 	{
 		_diagnostics->ReportUndefinedName(syntax->IdentifierToken().Span(), name);
-		return boundExpression;
+		return make_unique<BoundErrorExpression>();
 	}
 	if (variable.IsReadOnly())
+	{
 		_diagnostics->ReportCannotAssign(syntax->Op().Span(), name);
+		return make_unique<BoundErrorExpression>();
+	}
 	if (boundExpression->Type() != variable.Type())
 	{
 		_diagnostics->ReportCannotConvert(syntax->Expression()->Span(), boundExpression->Type(), variable.Type());
-		return boundExpression;
+		return make_unique<BoundErrorExpression>();
 	}
-	if (variable.Type() != typeid(IntegerType))
+	if (variable.Type() != TypeSymbol::GetType(TypeKind::Int))
 	{
 		_diagnostics->ReportVariableNotSupportPostfixOperator(syntax->Expression()->Span(), syntax->Op().Text(), variable.Type());
-		return boundExpression;
+		return make_unique<BoundErrorExpression>();
 	}
 	switch (syntax->Op().Kind())
 	{
@@ -937,6 +959,17 @@ unique_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 		default:
 			throw std::invalid_argument("Unexpected operator token " + GetSyntaxKindName(syntax->Op().Kind()));
 	}
+}
+
+VariableSymbol Binder::BindVariable(const SyntaxToken & identifier, bool isReadOnly, const TypeSymbol & type)
+{
+	auto name = identifier.Text().empty() ? "?" : identifier.Text();
+	auto declare = !identifier.IsMissing();
+	auto variable = VariableSymbol(name, isReadOnly, type);
+
+	if (declare && !_scope->TryDeclare(variable))
+		_diagnostics->ReportVariableAlreadyDeclared(identifier.Span(), name);
+	return variable;
 }
 
 unique_ptr<BoundScope> Binder::CreateParentScope(const BoundGlobalScope* previous)
@@ -1100,6 +1133,12 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(const BoundExpr
 {
 	switch (node->Kind())
 	{
+		case BoundNodeKind::ErrorExpression:
+		{
+			auto p = dynamic_cast<const BoundErrorExpression*>(node);
+			if (p) return RewriteErrorExpression(p);
+			else break;
+		}
 		case BoundNodeKind::LiteralExpression:
 		{
 			auto p = dynamic_cast<const BoundLiteralExpression*>(node);
@@ -1142,6 +1181,11 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(const BoundExpr
 	throw std::invalid_argument("Unexpected node: " + GetEnumText(node->Kind()));
 }
 
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteErrorExpression(const BoundErrorExpression * node)
+{
+	return make_unique<BoundErrorExpression>();
+}
+
 unique_ptr<BoundExpression> BoundTreeRewriter::RewriteLiteralExpression(const BoundLiteralExpression * node)
 {
 	return make_unique<BoundLiteralExpression>(node->Value());
@@ -1177,11 +1221,11 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewritePostfixExpression(const Bo
 	return make_unique<BoundPostfixExpression>(node->Variable(), node->OperatorKind(), expression);
 }
 
-LabelSymbol Lowerer::GenerateLabel()
+BoundLabel Lowerer::GenerateLabel()
 {
 	++_labelCount;
 	string name("Label" + std::to_string(_labelCount));
-	return LabelSymbol(name);
+	return BoundLabel(name);
 }
 
 unique_ptr<BoundBlockStatement> Lowerer::Lower(const BoundStatement * statement)
@@ -1293,11 +1337,11 @@ unique_ptr<BoundStatement> Lowerer::RewriteForStatement(const BoundForStatement 
 
 	auto variableDeclaration = make_unique<BoundVariableDeclaration>(node->Variable(), lowerBound);
 	auto variableExpression = make_unique<BoundVariableExpression>(node->Variable());
-	auto upperBoundSymbol = VariableSymbol("upperBound", true, typeid(IntegerType));
+	auto upperBoundSymbol = VariableSymbol("upperBound", true, TypeSymbol::GetType(TypeKind::Int));
 	auto upperBoundDeclaration = make_unique<BoundVariableDeclaration>(upperBoundSymbol, upperBound);
 	auto condition = make_unique<BoundBinaryExpression>(
 		RewriteExpression(variableExpression.get()),
-		BoundBinaryOperator::Bind(SyntaxKind::LessOrEqualsToken, typeid(IntegerType), typeid(IntegerType)),
+		BoundBinaryOperator::Bind(SyntaxKind::LessOrEqualsToken, TypeSymbol::GetType(TypeKind::Int), TypeSymbol::GetType(TypeKind::Int)),
 		make_unique<BoundVariableExpression>(upperBoundSymbol)
 		);
 
@@ -1306,7 +1350,7 @@ unique_ptr<BoundStatement> Lowerer::RewriteForStatement(const BoundForStatement 
 			node->Variable(),
 			make_unique<BoundBinaryExpression>(
 				RewriteExpression(variableExpression.get()),
-				BoundBinaryOperator::Bind(SyntaxKind::PlusToken, typeid(IntegerType), typeid(IntegerType)),
+				BoundBinaryOperator::Bind(SyntaxKind::PlusToken, TypeSymbol::GetType(TypeKind::Int), TypeSymbol::GetType(TypeKind::Int)),
 				make_unique<BoundLiteralExpression>(1)
 				)
 			)

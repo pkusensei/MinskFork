@@ -2,13 +2,15 @@
 
 #include <unordered_map>
 
-#include "VariableSymbol.h"
+#include "Symbols.h"
+#include "SyntaxKind.h"
 
 namespace MCF {
 
 enum class ConsoleColor;
 class DiagnosticBag;
 
+class SyntaxToken;
 class ExpressionSyntax;
 class ParenthesizedExpressionSyntax;
 class LiteralExpressionSyntax;
@@ -28,15 +30,15 @@ class ExpressionStatementSyntax;
 
 class CompilationUnitSyntax;
 
-class LabelSymbol final
+class BoundLabel final
 {
 private:
 	string _name;
 public:
-	explicit LabelSymbol(const string& name) :_name(name) {}
+	explicit BoundLabel(const string& name) :_name(name) {}
 
-	bool operator==(const LabelSymbol& other) const noexcept { return _name == other._name; }
-	bool operator!=(const LabelSymbol& other) const noexcept { return !(*this == other); }
+	bool operator==(const BoundLabel& other) const noexcept { return _name == other._name; }
+	bool operator!=(const BoundLabel& other) const noexcept { return !(*this == other); }
 
 	string Name()const { return _name; }
 	string ToString()const { return Name(); }
@@ -44,7 +46,7 @@ public:
 
 struct LabelHash final
 {
-	size_t operator()(const LabelSymbol& label) const noexcept;
+	size_t operator()(const BoundLabel& label) const noexcept;
 };
 
 enum class BoundNodeKind
@@ -61,6 +63,7 @@ enum class BoundNodeKind
 	ExpressionStatement,
 
 	// Expressions
+	ErrorExpression,
 	LiteralExpression,
 	VariableExpression,
 	AssignmentExpression,
@@ -136,8 +139,17 @@ class BoundExpression :public BoundNode
 {
 public:
 	// Inherited via BoundNode
-	virtual type_index Type() const = 0;
+	virtual TypeSymbol Type() const = 0;
 	const vector<const BoundNode*> GetChildren() const override;
+};
+
+class BoundErrorExpression final :public BoundExpression
+{
+public:
+	// Inherited via BoundExpression
+	TypeSymbol Type()const override { return TypeSymbol::GetType(TypeKind::Error); }
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ErrorExpression; }
+	const vector<std::pair<string, string>> GetProperties() const override;
 };
 
 class BoundUnaryOperator final
@@ -145,31 +157,30 @@ class BoundUnaryOperator final
 private:
 	SyntaxKind _syntaxKind;
 	BoundUnaryOperatorKind _kind;
-	type_index _operandType;
-	type_index _resultType;
+	TypeSymbol _operandType;
+	TypeSymbol _resultType;
 	bool _isUseful = true;
 
 	BoundUnaryOperator(const SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
-					   const type_index& operandType, const type_index& resultType);
+					   const TypeSymbol& operandType, const TypeSymbol& resultType);
 	BoundUnaryOperator(const SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
-					   const type_index& operandType);
+					   const TypeSymbol& operandType);
 	BoundUnaryOperator();
-	static const vector<BoundUnaryOperator> _operators;
+	static const vector<BoundUnaryOperator>& Operators();
 public:
-
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
 	constexpr BoundUnaryOperatorKind Kind()const noexcept { return _kind; }
-	type_index OperandType()const { return _operandType; }
-	type_index Type()const { return _resultType; }
+	TypeSymbol OperandType()const { return _operandType; }
+	TypeSymbol Type()const { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
-	static BoundUnaryOperator Bind(const enum SyntaxKind& synKind, const type_index& type);
+	static BoundUnaryOperator Bind(const enum SyntaxKind& synKind, const TypeSymbol& type);
 };
 
 class BoundUnaryExpression final : public BoundExpression
 {
 private:
-	unique_ptr<BoundUnaryOperator> _op;
+	BoundUnaryOperator _op;
 	unique_ptr<BoundExpression> _operand;
 public:
 	BoundUnaryExpression(const BoundUnaryOperator& op, const unique_ptr<BoundExpression>& operand);
@@ -180,9 +191,9 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::UnaryExpression; }
 	const vector<const BoundNode*> GetChildren() const override;
 	const vector<std::pair<string, string>> GetProperties() const override;
-	type_index Type() const override { return _op->Type(); }
+	TypeSymbol Type() const override { return _op.Type(); }
 
-	const BoundUnaryOperator* Op()const noexcept { return _op.get(); }
+	const BoundUnaryOperator* Op()const noexcept { return &_op; }
 	const BoundExpression* Operand()const noexcept { return _operand.get(); }
 };
 
@@ -191,28 +202,28 @@ class BoundBinaryOperator final
 private:
 	SyntaxKind _syntaxKind;
 	BoundBinaryOperatorKind _kind;
-	type_index _leftType;
-	type_index _rightType;
-	type_index _resultType;
+	TypeSymbol _leftType;
+	TypeSymbol _rightType;
+	TypeSymbol _resultType;
 	bool _isUseful = true;
 
 	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
-						const type_index& left, const type_index& right, const type_index& result);
+						const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result);
 	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
-						const type_index& operandType, const type_index& resultType);
-	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, const type_index& type);
+						const TypeSymbol& operandType, const TypeSymbol& resultType);
+	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, const TypeSymbol& type);
 	BoundBinaryOperator();
 
-	static const vector<BoundBinaryOperator> _operators;
+	static const vector<BoundBinaryOperator>& Operators();
 public:
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
 	constexpr BoundBinaryOperatorKind Kind()const noexcept { return _kind; }
-	type_index LeftType()const { return _leftType; }
-	type_index RightType()const { return _rightType; }
-	type_index Type()const { return _resultType; }
+	TypeSymbol LeftType()const { return _leftType; }
+	TypeSymbol RightType()const { return _rightType; }
+	TypeSymbol Type()const { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
-	static BoundBinaryOperator Bind(const enum SyntaxKind& synKind, const type_index& leftType, const type_index& rightType);
+	static BoundBinaryOperator Bind(const enum SyntaxKind& synKind, const TypeSymbol& leftType, const TypeSymbol& rightType);
 };
 
 class BoundBinaryExpression final : public BoundExpression
@@ -220,7 +231,7 @@ class BoundBinaryExpression final : public BoundExpression
 private:
 	unique_ptr<BoundExpression> _left;
 	unique_ptr<BoundExpression> _right;
-	unique_ptr<BoundBinaryOperator> _op;
+	BoundBinaryOperator _op;
 
 public:
 	BoundBinaryExpression(const unique_ptr<BoundExpression>& left, const BoundBinaryOperator& op, const unique_ptr<BoundExpression>& right);
@@ -231,11 +242,11 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BinaryExpression; }
 	const vector<const BoundNode*> GetChildren() const override;
 	const vector<std::pair<string, string>> GetProperties() const override;
-	type_index Type() const override { return _op->Type(); }
+	TypeSymbol Type() const override { return _op.Type(); }
 
 	const BoundExpression* Left()const noexcept { return _left.get(); }
 	const BoundExpression* Right()const noexcept { return _right.get(); }
-	const BoundBinaryOperator* Op()const noexcept { return _op.get(); }
+	const BoundBinaryOperator* Op()const noexcept { return &_op; }
 };
 
 class BoundAssignmentExpression final : public BoundExpression
@@ -252,7 +263,7 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::AssignmentExpression; }
 	const vector<const BoundNode*> GetChildren() const override;
 	const vector<std::pair<string, string>> GetProperties() const override;
-	type_index Type() const override { return _expression->Type(); }
+	TypeSymbol Type() const override { return _expression->Type(); }
 
 	VariableSymbol Variable()const { return _variable; }
 	const BoundExpression* Expression()const noexcept { return _expression.get(); }
@@ -270,7 +281,7 @@ public:
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LiteralExpression; }
 	const vector<std::pair<string, string>> GetProperties() const override;
-	type_index Type() const override { return _value.Type(); }
+	TypeSymbol Type() const override { return _value.Type(); }
 
 	ValueType Value()const { return _value; }
 };
@@ -287,7 +298,7 @@ public:
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableExpression; }
 	const vector<std::pair<string, string>> GetProperties() const override;
-	type_index Type() const override { return _variable.Type(); }
+	TypeSymbol Type() const override { return _variable.Type(); }
 
 	VariableSymbol Variable()const { return _variable; }
 };
@@ -307,7 +318,7 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::PostfixExpression; }
 	const vector<const BoundNode*> GetChildren() const override;
 	const vector<std::pair<string, string>> GetProperties() const override;
-	type_index Type() const override { return _variable.Type(); }
+	TypeSymbol Type() const override { return _variable.Type(); }
 
 	VariableSymbol Variable()const { return _variable; }
 	BoundPostfixOperatorKind OperatorKind()const { return _kind; }
@@ -427,9 +438,9 @@ public:
 class BoundLabelStatement final :public BoundStatement
 {
 private:
-	LabelSymbol _label;
+	BoundLabel _label;
 public:
-	explicit BoundLabelStatement(const LabelSymbol& label);
+	explicit BoundLabelStatement(const BoundLabel& label);
 	BoundLabelStatement(BoundLabelStatement&&) = default;
 	BoundLabelStatement& operator=(BoundLabelStatement&&) = default;
 
@@ -437,15 +448,15 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LabelStatement; }
 	const vector<std::pair<string, string>> GetProperties() const override;
 
-	LabelSymbol Label()const { return _label; }
+	BoundLabel Label()const { return _label; }
 };
 
 class BoundGotoStatement final :public BoundStatement
 {
 private:
-	LabelSymbol _label;
+	BoundLabel _label;
 public:
-	explicit BoundGotoStatement(const LabelSymbol& label);
+	explicit BoundGotoStatement(const BoundLabel& label);
 	BoundGotoStatement(BoundGotoStatement&&) = default;
 	BoundGotoStatement& operator=(BoundGotoStatement&&) = default;
 
@@ -453,17 +464,17 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::GotoStatement; }
 	const vector<std::pair<string, string>> GetProperties() const override;
 
-	LabelSymbol Label()const { return _label; }
+	BoundLabel Label()const { return _label; }
 };
 
 class BoundConditionalGotoStatement final :public BoundStatement
 {
 private:
-	LabelSymbol _label;
+	BoundLabel _label;
 	unique_ptr<BoundExpression> _condition;
 	bool _jumpIfTrue;
 public:
-	BoundConditionalGotoStatement(const LabelSymbol& label, const unique_ptr<BoundExpression>& condition, bool jumpIfTrue = true);
+	BoundConditionalGotoStatement(const BoundLabel& label, const unique_ptr<BoundExpression>& condition, bool jumpIfTrue = true);
 	BoundConditionalGotoStatement(BoundConditionalGotoStatement&&) = default;
 	BoundConditionalGotoStatement& operator=(BoundConditionalGotoStatement&&) = default;
 
@@ -472,7 +483,7 @@ public:
 	const vector<std::pair<string, string>> GetProperties() const override;
 	const vector<const BoundNode*> GetChildren() const override;
 
-	LabelSymbol Label()const { return _label; }
+	BoundLabel Label()const { return _label; }
 	const BoundExpression* Condition()const { return _condition.get(); }
 	bool JumpIfTrue()const noexcept { return _jumpIfTrue; }
 };
@@ -542,7 +553,7 @@ private:
 	unique_ptr<BoundStatement> BindForStatement(const ForStatementSyntax* syntax);
 	unique_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax* syntax);
 
-	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax, const type_index& targetType);
+	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax, const TypeSymbol& targetType);
 	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindParenthesizedExpression(const ParenthesizedExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindLiteralExpression(const LiteralExpressionSyntax* syntax);
@@ -551,6 +562,8 @@ private:
 	unique_ptr<BoundExpression> BindUnaryExpression(const UnaryExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindBinaryExpression(const BinaryExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax* syntax);
+
+	VariableSymbol BindVariable(const SyntaxToken& identifier, bool isReadOnly, const TypeSymbol& type);
 
 	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
 public:
@@ -580,6 +593,7 @@ protected:
 	virtual unique_ptr<BoundStatement> RewriteConditionalGotoStatement(const BoundConditionalGotoStatement* node);
 	virtual unique_ptr<BoundStatement> RewriteExpressionStatement(const BoundExpressionStatement* node);
 
+	virtual unique_ptr<BoundExpression> RewriteErrorExpression(const BoundErrorExpression* node);
 	virtual unique_ptr<BoundExpression> RewriteLiteralExpression(const BoundLiteralExpression* node);
 	virtual unique_ptr<BoundExpression> RewriteVariableExpression(const BoundVariableExpression* node);
 	virtual unique_ptr<BoundExpression> RewriteAssignmentExpression(const BoundAssignmentExpression* node);
@@ -600,7 +614,7 @@ private:
 	size_t _labelCount{0};
 
 	Lowerer() = default;
-	LabelSymbol GenerateLabel();
+	BoundLabel GenerateLabel();
 	unique_ptr<BoundBlockStatement> Flatten(unique_ptr<BoundStatement>& statement);
 protected:
 	unique_ptr<BoundStatement> RewriteIfStatement(const BoundIfStatement* node)override;

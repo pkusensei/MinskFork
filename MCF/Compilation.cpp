@@ -20,7 +20,7 @@ Evaluator::Evaluator(const BoundBlockStatement* root, const std::unordered_map<V
 
 ValueType Evaluator::Evaluate()
 {
-	auto labelToIndex = std::unordered_map<LabelSymbol, size_t, LabelHash>();
+	auto labelToIndex = std::unordered_map<BoundLabel, size_t, LabelHash>();
 	auto statements = _root->Statements();
 	for (size_t i = 0; i < statements.size(); ++i)
 	{
@@ -196,15 +196,15 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 		case BoundBinaryOperatorKind::Modulus:
 			return left.GetValue<IntegerType>() % right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::BitwiseAnd:
-			if (node->Type() == typeid(IntegerType))
+			if (node->Type() == TypeSymbol::GetType(TypeKind::Int))
 				return left.GetValue<IntegerType>() & right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() & right.GetValue<bool>();
 		case BoundBinaryOperatorKind::BitwiseOr:
-			if (node->Type() == typeid(IntegerType))
+			if (node->Type() == TypeSymbol::GetType(TypeKind::Int))
 				return left.GetValue<IntegerType>() | right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() | right.GetValue<bool>();
 		case BoundBinaryOperatorKind::BitwiseXor:
-			if (node->Type() == typeid(IntegerType))
+			if (node->Type() == TypeSymbol::GetType(TypeKind::Int))
 				return left.GetValue<IntegerType>() ^ right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() ^ right.GetValue<bool>();
 		case BoundBinaryOperatorKind::LogicalAnd:

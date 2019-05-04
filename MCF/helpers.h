@@ -55,6 +55,11 @@ struct KeyInfo
 	const char Key;
 	const bool IsFunctionalKey;
 	const KeyInputKind Kind;
+
+	KeyInfo(char key, bool isFuncKey, KeyInputKind kind)
+		:Key(key), IsFunctionalKey(isFuncKey), Kind(kind)
+	{
+	}
 };
 
 MCF_API KeyInfo ReadKeyFromConsole();

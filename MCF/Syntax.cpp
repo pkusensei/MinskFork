@@ -476,7 +476,7 @@ void Lexer::ReadNumberToken()
 		value = std::stol(text);
 	} catch (...)
 	{
-		_diagnostics->ReportInvalidNumber(TextSpan(_start, length), text, typeid(value));
+		_diagnostics->ReportInvalidNumber(TextSpan(_start, length), text, TypeSymbol::GetType(TypeKind::Int));
 	}
 	_value = ValueType(value);
 	_kind = SyntaxKind::NumberToken;
@@ -1078,7 +1078,6 @@ vector<SyntaxToken> SyntaxTree::ParseTokens(const SourceText & text)
 
 vector<SyntaxToken> SyntaxTree::ParseTokens(const SourceText & text, DiagnosticBag& diagnostics)
 {
-
 	auto lexTokens = [](Lexer& lexer) {
 		auto result = vector<SyntaxToken>();
 		while (true)

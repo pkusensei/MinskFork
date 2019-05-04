@@ -1,7 +1,6 @@
 #include "stdafx.h"
-#include "common.h"
 
-#include <unordered_map>
+#include "SyntaxKind.h"
 
 namespace MCF {
 
@@ -27,7 +26,7 @@ const vector<SyntaxKind> GetAllSyntaxKinds()
 	return result;
 }
 
-const auto AllSyntaxKinds = GetAllSyntaxKinds();
+const vector<SyntaxKind> AllSyntaxKinds = GetAllSyntaxKinds();
 
 string GetSyntaxKindName(const SyntaxKind& kind)
 {
@@ -151,78 +150,6 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 		default:
 			throw std::invalid_argument("Invalid syntax; no such syntax kind.");
 	}
-}
-
-type_index ValueType::Type() const
-{
-	switch (_inner.index())
-	{
-		case 1:
-			return typeid(bool);
-		case 2:
-			return typeid(IntegerType);
-		case 3:
-			return typeid(string);
-		case 0:
-		default:
-			return typeid(std::monostate);
-	}
-}
-
-string ValueType::ToString() const
-{
-	auto id = ValueType::GetValueTypeId(Type());
-	auto result = string();
-	switch (id)
-	{
-		case 1:
-			result = GetValue<bool>() ? "True" : "False";
-			break;
-		case 2:
-			result = std::to_string(GetValue<IntegerType>());
-			break;
-		case 3:
-			result = GetValue<string>();
-		default:
-			break;
-	}
-
-	return result;
-}
-
-int ValueType::GetValueTypeId(const type_index & inType)
-{
-	static std::unordered_map<type_index, int> types = {
-		{typeid(std::monostate), 0},
-		{typeid(bool), 1},
-		{typeid(IntegerType), 2},
-		{typeid(string), 3}
-	};
-
-	return types[inType];
-}
-
-string ValueType::GetTypeName(const type_index & inType)
-{
-	auto id = GetValueTypeId(inType);
-	switch (id)
-	{
-		case 1: return "bool";
-		case 2: return "IntegerType";
-		case 3: return "string";
-		case 0:
-		default:
-			return "std::monostate";
-	}
-}
-
-std::ostream & operator<<(std::ostream & out, const ValueType & value)
-{
-	if (value.HasValue())
-		out << value.ToString();
-	else
-		out << "Not valid value or type.\n";
-	return out;
 }
 
 }//MCF

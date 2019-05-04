@@ -410,16 +410,16 @@ bool McfRepl::IsCompleteSubmission(const std::string & text) const
 	if (text.empty())
 		return true;
 
-	auto stringIsBlank = [](const std::vector<std::string>::reverse_iterator& i) {
-		return i->empty()
-			|| std::all_of(i->begin(), i->end(), std::isspace);
+	auto stringIsBlank = [](const std::string& s) {
+		return s.empty()
+			|| std::all_of(s.begin(), s.end(), std::isspace);
 	};
 
 	auto lastTwoLinesAreBlank = [&text, &stringIsBlank]() {
 		auto v = MCF::StringSplit(text, NEW_LINE);
 		auto i = v.rbegin();
 		if (v.size() > 1)
-			return stringIsBlank(i) && stringIsBlank(++i);
+			return stringIsBlank(*i) && stringIsBlank(*++i);
 		else return false;
 	};
 

@@ -2,10 +2,11 @@
 
 #include <deque>
 
-#include "common.h"
+#include "Symbols.h"
 
 namespace MCF {
 
+enum class SyntaxKind;
 class TextSpan;
 
 class MCF_API Diagnostic final
@@ -45,19 +46,19 @@ public:
 
 	void AddRangeFront(DiagnosticBag& other);
 	void AddRange(DiagnosticBag& other);
-	void ReportInvalidNumber(const TextSpan& span, const string& text, const type_index& type);
+	void ReportInvalidNumber(const TextSpan& span, const string& text, const TypeSymbol& type);
 	void ReportBadCharacter(size_t position, char character);
 	void ReportUnterminatedString(const TextSpan& span);
 	void ReportUnexpectedToken(const TextSpan& span, const SyntaxKind& actualKind, const SyntaxKind& expectedKind);
 	void ReportUndefinedName(const TextSpan& span, const string& name);
-	void ReportCannotConvert(const TextSpan& span, const type_index& fromType, const type_index& toType);
-	void ReportUndefinedUnaryOperator(const TextSpan& span, const string& operatorText, const type_index& operandType);
-	void ReportUndefinedBinaryOperator(const TextSpan& span, const string& operatorText, const type_index& leftType, const type_index& rightType);
+	void ReportCannotConvert(const TextSpan& span, const TypeSymbol& fromType, const TypeSymbol& toType);
+	void ReportUndefinedUnaryOperator(const TextSpan& span, const string& operatorText, const TypeSymbol& operandType);
+	void ReportUndefinedBinaryOperator(const TextSpan& span, const string& operatorText, const TypeSymbol& leftType, const TypeSymbol& rightType);
 	void ReportVariableAlreadyDeclared(const TextSpan& span, const string& name);
 	void ReportCannotAssign(const TextSpan& span, const string& name);
 
 	void ReportExpressionNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const SyntaxKind& kind);
-	void ReportVariableNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const type_index& variableType);
+	void ReportVariableNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const TypeSymbol& variableType);
 };
 
 class MCF_API DiagnosticBag::iterator

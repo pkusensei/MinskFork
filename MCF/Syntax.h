@@ -1,6 +1,7 @@
 #pragma once
 
-#include "common.h"
+#include "Symbols.h"
+#include "SyntaxKind.h"
 
 namespace MCF {
 

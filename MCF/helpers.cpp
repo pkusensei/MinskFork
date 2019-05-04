@@ -143,7 +143,7 @@ KeyInfo ReadKeyFromConsole()
 		default:
 			break;
 	}
-	return {static_cast<char>(k), isFunctionalKey, kind};
+	return KeyInfo(static_cast<char>(k), isFunctionalKey, kind);
 }
 
 KeyInputKind DecideKeyInputKind(const int input)
