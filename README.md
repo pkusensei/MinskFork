@@ -23,6 +23,10 @@ Although this fork stays as close to the original as possible, there are some de
 
     They are intentionally left out in the original project. Here they are added in as a fun side tweak. It stays close to C++ implementation of prefix operations, meaning `(i = 5)--` is valid syntax, but `(i--) = 5` is not. Prefix operations are not supported yet. 
 
+- Static members
+
+    In C++, the initilazation order of static variables across multiple files is undefined, which ends up causing weird initializing issues. As a workaround static member variables are wrapped in static member functions. 
+
 - Windows only.
 
     Without .NET Core wrapper around system APIs, this fork relies on native win32 APIs to manipulate console color and cursor display. 

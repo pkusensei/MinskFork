@@ -98,6 +98,7 @@ protected:
 	virtual void EvaluateMetaCommand(const std::string& input);
 	virtual bool IsCompleteSubmission(const std::string& text)const = 0;
 	virtual void EvaluateSubmission(const std::string& text) = 0;
+
 	void ClearHistory()noexcept { _submissionHistory.clear(); }
 public:
 	virtual ~Repl() = default;
@@ -140,6 +141,7 @@ protected:
 	void EvaluateMetaCommand(const std::string& input) override;
 	bool IsCompleteSubmission(const std::string & text) const override;
 	void EvaluateSubmission(const std::string & text) override;
+
 public:
 	McfRepl();
 	~McfRepl();

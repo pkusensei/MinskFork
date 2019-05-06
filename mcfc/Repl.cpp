@@ -274,6 +274,20 @@ void Repl::RenderLine(const std::string & line) const
 	std::cout << line;
 }
 
+Repl::SubmissionView::SubmissionView(const std::function<void(std::string)>& lineRenderer, const ObservableCollection<std::string>& document)
+	:_lineRenderer(lineRenderer), _submissionDocument(&document), _cursorTop(MCF::GetCursorTop())
+{
+	auto& d = std::remove_const_t<ObservableCollection<std::string>&>(document);
+	d.SetAction(std::bind(&SubmissionView::SubmissionDocumentChanged, this));
+	Render();
+
+	//_lineRenderer -- Repl::RenderLine & McfRepl::RenderLine
+	//             used in SubmissionView::Render & thus SubmissionView::SubmissionDocumentChanged
+	//
+	//SubmissionView::SubmissionDocumentChanged -- ObservableCollection::_action
+	//             the function called when _submissionDocument changed
+}
+
 void Repl::EvaluateMetaCommand(const std::string & input)
 {
 	MCF::SetConsoleColor(MCF::ConsoleColor::Red);
@@ -325,14 +339,6 @@ void Repl::SubmissionView::UpdateCursorPosition()
 	MCF::SetCursorPosition(2 + _currentCharacter, _cursorTop + _currentLine);
 }
 
-Repl::SubmissionView::SubmissionView(const std::function<void(std::string)>& lineRenderer, const ObservableCollection<std::string>& document)
-	:_lineRenderer(lineRenderer), _submissionDocument(&document), _cursorTop(MCF::GetCursorTop())
-{
-	auto& d = std::remove_const_t<ObservableCollection<std::string>&>(document);
-	d.SetAction(std::bind(&SubmissionView::SubmissionDocumentChanged, this));
-	Render();
-}
-
 void Repl::SubmissionView::CurrentLine(const int value)
 {
 	if (_currentLine != value)
@@ -354,7 +360,7 @@ void Repl::SubmissionView::CurrentCharacter(const int value)
 }
 
 McfRepl::McfRepl()
-	:_variables({})
+	:_variables()
 {
 }
 

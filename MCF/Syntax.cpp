@@ -185,7 +185,7 @@ TextSpan SyntaxNode::Span() const
 SyntaxToken SyntaxNode::GetLastToken() const
 {
 	auto p = dynamic_cast<const SyntaxToken*>(this);
-	if (p != nullptr) return p->Clone();
+	if (p) return p->Clone();
 
 	return GetChildren().back()->GetLastToken();
 }
