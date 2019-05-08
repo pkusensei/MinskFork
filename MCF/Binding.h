@@ -69,6 +69,8 @@ enum class BoundNodeKind
 	AssignmentExpression,
 	UnaryExpression,
 	BinaryExpression,
+	CallExpression,
+	ConversionExpression,
 	PostfixExpression,
 
 };

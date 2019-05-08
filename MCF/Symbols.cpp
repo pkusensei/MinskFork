@@ -33,6 +33,7 @@ const TypeSymbol TypeSymbol::GetType(const TypeKind& kind)
 		case TypeKind::Bool: return TypeSymbol("bool");
 		case TypeKind::Int: return TypeSymbol("int");
 		case TypeKind::String: return TypeSymbol("string");
+		case TypeKind::Void: return TypeSymbol("void");
 		default:
 			throw std::invalid_argument("Unexpected TypeKind enum value.");
 	}

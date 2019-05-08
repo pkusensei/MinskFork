@@ -186,7 +186,9 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 	switch (node->Op()->Kind())
 	{
 		case BoundBinaryOperatorKind::Addition:
-			return left.GetValue<IntegerType>() + right.GetValue<IntegerType>();
+			if (node->Type() == TypeSymbol::GetType(TypeKind::Int))
+				return left.GetValue<IntegerType>() + right.GetValue<IntegerType>();
+			else return left.GetValue<string>() + right.GetValue<string>();
 		case BoundBinaryOperatorKind::Subtraction:
 			return left.GetValue<IntegerType>() - right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::Multiplication:

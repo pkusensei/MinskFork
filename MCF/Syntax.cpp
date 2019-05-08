@@ -63,6 +63,7 @@ string GetText(const SyntaxKind& kind)
 		case SyntaxKind::CloseParenthesisToken: return ")";
 		case SyntaxKind::OpenBraceToken: return "{";
 		case SyntaxKind::CloseBraceToken: return "}";
+		case SyntaxKind::CommaToken: return ",";
 		case SyntaxKind::ElseKeyword: return "else";
 		case SyntaxKind::FalseKeyword: return "false";
 		case SyntaxKind::ForKeyword: return "for";

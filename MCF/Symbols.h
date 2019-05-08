@@ -8,8 +8,10 @@ namespace MCF {
 
 enum class SymbolKind
 {
+	Function,
+	Variable,
+	Parameter,
 	Type,
-	Variable
 };
 
 class MCF_API Symbol
@@ -33,7 +35,7 @@ public:
 
 enum class TypeKind
 {
-	Error, Bool, Int, String
+	Error, Bool, Int, String, Void
 };
 
 class TypeSymbol final :public Symbol
@@ -43,7 +45,7 @@ private:
 
 public:
 	SymbolKind Kind() const noexcept override { return SymbolKind::Type; }
-	
+
 	//NOTE C++ static variables are initialized in undefined order
 	static const TypeSymbol GetType(const TypeKind& kind);
 };
@@ -53,7 +55,7 @@ struct TypeHash
 	size_t operator()(const TypeSymbol& ts)const noexcept;
 };
 
-class MCF_API VariableSymbol final : public Symbol
+class MCF_API VariableSymbol : public Symbol
 {
 private:
 	bool _isReadOnly;

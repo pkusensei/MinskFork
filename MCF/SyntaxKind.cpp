@@ -20,7 +20,7 @@ const vector<SyntaxKind> GetAllSyntaxKinds()
 {
 	auto result = vector<SyntaxKind>();
 	for (auto kind = MCF::SyntaxKind::BadToken;
-		 kind != MCF::SyntaxKind::AssignmentExpression; kind++)
+		 kind != MCF::SyntaxKind::PostfixExpression; kind++)
 		result.emplace_back(kind);
 	result.shrink_to_fit();
 	return result;
@@ -92,6 +92,8 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "OpenBraceToken";
 		case SyntaxKind::CloseBraceToken:
 			return "CloseBraceToken";
+		case SyntaxKind::CommaToken:
+			return "CommaToken";
 		case SyntaxKind::IdentifierToken:
 			return "IdentifierToken";
 
@@ -142,10 +144,12 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "BinaryExpression";
 		case SyntaxKind::ParenthesizedExpression:
 			return "ParenthesizedExpression";
-		case SyntaxKind::PostfixExpression:
-			return "PostfixExpression";
+		case SyntaxKind::CallExpression:
+			return "CallExpression";
 		case SyntaxKind::AssignmentExpression:
 			return "AssignmentExpression";
+		case SyntaxKind::PostfixExpression:
+			return "PostfixExpression";
 
 		default:
 			throw std::invalid_argument("Invalid syntax; no such syntax kind.");

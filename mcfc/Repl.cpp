@@ -372,8 +372,9 @@ void McfRepl::RenderLine(const std::string & line) const
 	for (const auto& it : tokens)
 	{
 		auto isKeyword = MCF::StringEndsWith(MCF::GetSyntaxKindName(it.Kind()), "Keyword");
-		auto isNumber = it.Kind() == MCF::SyntaxKind::NumberToken;
 		auto isIdentifier = it.Kind() == MCF::SyntaxKind::IdentifierToken;
+		auto isNumber = it.Kind() == MCF::SyntaxKind::NumberToken;
+		auto isString = it.Kind() == MCF::SyntaxKind::StringToken;
 
 		if (isKeyword)
 			MCF::SetConsoleColor(MCF::ConsoleColor::Blue);
@@ -381,6 +382,8 @@ void McfRepl::RenderLine(const std::string & line) const
 			MCF::SetConsoleColor(MCF::ConsoleColor::DarkYellow);
 		else if (isNumber)
 			MCF::SetConsoleColor(MCF::ConsoleColor::Cyan);
+		else if (isString)
+			MCF::SetConsoleColor(MCF::ConsoleColor::Magenta);
 		else MCF::SetConsoleColor(MCF::ConsoleColor::Grey);
 
 		std::cout << it.Text();
@@ -452,10 +455,13 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 	auto diagnostics = result.Diagnostics();
 	if (diagnostics->empty())
 	{
-		MCF::SetConsoleColor(MCF::ConsoleColor::Magenta);
 		auto value = result.Value();
-		std::cout << value << "\n";
-		MCF::ResetConsoleColor();
+		if (value.HasValue())
+		{
+			MCF::SetConsoleColor(MCF::ConsoleColor::White);
+			std::cout << value << "\n";
+			MCF::ResetConsoleColor();
+		}
 
 		_previous = std::move(compilation);
 	} else

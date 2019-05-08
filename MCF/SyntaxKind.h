@@ -37,6 +37,7 @@ enum class SyntaxKind
 	CloseParenthesisToken,
 	OpenBraceToken,
 	CloseBraceToken,
+	CommaToken,
 	IdentifierToken,
 
 	// Keywords
@@ -68,8 +69,9 @@ enum class SyntaxKind
 	UnaryExpression,
 	BinaryExpression,
 	ParenthesizedExpression,
-	PostfixExpression,
 	AssignmentExpression,
+	CallExpression,
+	PostfixExpression,
 };
 
 MCF_API string GetSyntaxKindName(const SyntaxKind& kind);

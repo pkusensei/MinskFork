@@ -52,6 +52,10 @@ string GetEnumText(const BoundNodeKind & kind)
 			return "UnaryExpression";
 		case BoundNodeKind::BinaryExpression:
 			return "BinaryExpression";
+		case BoundNodeKind::CallExpression:
+			return "CallExpression";
+		case BoundNodeKind::ConversionExpression:
+			return "ConversionExpression";
 		case BoundNodeKind::PostfixExpression:
 			return "PostfixExpression";
 
@@ -342,7 +346,9 @@ const vector<BoundBinaryOperator>& BoundBinaryOperator::Operators()
 		BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr, TypeSymbol::GetType(TypeKind::Bool)),
 		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, TypeSymbol::GetType(TypeKind::Bool)),
 		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, TypeSymbol::GetType(TypeKind::Bool)),
-		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, TypeSymbol::GetType(TypeKind::Bool))
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, TypeSymbol::GetType(TypeKind::Bool)),
+
+		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, TypeSymbol::GetType(TypeKind::String))
 	};
 
 	return operators;
