@@ -105,7 +105,7 @@ int ValueType::GetValueTypeId(const TypeSymbol & inType)
 		{TypeSymbol::GetType(TypeKind::String), 3}
 	};
 
-	return types[inType];
+	return types.at(inType);
 }
 
 std::ostream & operator<<(std::ostream & out, const ValueType & value)

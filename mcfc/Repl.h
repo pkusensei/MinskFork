@@ -24,8 +24,8 @@ public:
 	void SetAction(const std::function<void()>& action) { _action = action; }
 
 	size_t size()const { return _collection.size(); }
-	const T& operator[](size_t index)const { return _collection[index]; }
-	std::vector<T> Contents()const { return _collection; }
+	const T& operator[](size_t index)const { return _collection.at(index); }
+	const std::vector<T>& Contents()const { return _collection; }
 
 	template<typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T>>>
 	void Add(U&& content)
@@ -37,7 +37,10 @@ public:
 	template<typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T>>>
 	void SetAt(size_t index, U&& content)
 	{
-		_collection[index] = std::forward<U>(content);
+		if (index < size())
+			_collection.at(index) = std::forward<U>(content);
+		else _collection.emplace_back(std::forward<U>(content));
+
 		CollectionChanged();
 	}
 

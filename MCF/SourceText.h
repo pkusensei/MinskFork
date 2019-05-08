@@ -63,7 +63,7 @@ private:
 public:
 	const vector<TextLine> Lines()const { return _lines; }
 	size_t Length()const noexcept { return _text.length(); }
-	char operator[](size_t sub) const { return _text[sub]; }
+	char operator[](size_t sub) const { return _text.at(sub); }
 	size_t GetLineIndex(size_t position)const noexcept;
 
 	string ToString()const { return _text; }

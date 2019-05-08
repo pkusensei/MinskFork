@@ -775,7 +775,7 @@ const SyntaxToken* Parser::Peek(int offset) const
 	auto idx = _position + offset;
 	if (idx >= _tokens.size())
 		return &(_tokens.back());
-	return &_tokens[idx];
+	return &_tokens.at(idx);
 }
 
 const SyntaxToken* Parser::Current() const

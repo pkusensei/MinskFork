@@ -33,8 +33,8 @@ void SourceText::AddLine(vector<TextLine>& result, const SourceText & sourceText
 
 size_t SourceText::GetLineBreakWidth(const string & text, size_t position)
 {
-	auto character = text[position];
-	auto last = position + 1 >= text.length() ? '\0' : text[position + 1];
+	auto character = text.at(position);
+	auto last = position + 1 >= text.length() ? '\0' : text.at(position + 1);
 	if (character == '\r' && last == '\n')
 		return 2;
 	else if (character == '\r' || last == '\n')
@@ -73,7 +73,7 @@ size_t SourceText::GetLineIndex(size_t position) const noexcept
 	while (lower <= upper)
 	{
 		auto index = lower + (upper - lower) / 2;
-		auto start = _lines[index].Start();
+		auto start = _lines.at(index).Start();
 		if (position == start)
 			return index;
 		else if (start > position)

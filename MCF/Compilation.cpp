@@ -24,7 +24,7 @@ ValueType Evaluator::Evaluate()
 	auto statements = _root->Statements();
 	for (size_t i = 0; i < statements.size(); ++i)
 	{
-		auto p = dynamic_cast<BoundLabelStatement*>(statements[i]);
+		auto p = dynamic_cast<BoundLabelStatement*>(statements.at(i));
 		if (p)
 			labelToIndex.emplace(p->Label(), i + 1);
 	}
@@ -32,7 +32,7 @@ ValueType Evaluator::Evaluate()
 	size_t index = 0;
 	while (index < statements.size())
 	{
-		auto s = statements[index];
+		auto s = statements.at(index);
 		switch (s->Kind())
 		{
 			case BoundNodeKind::VariableDeclaration:
@@ -60,7 +60,7 @@ ValueType Evaluator::Evaluate()
 				auto gs = dynamic_cast<BoundGotoStatement*>(s);
 				if (gs)
 				{
-					index = labelToIndex[gs->Label()];
+					index = labelToIndex.at(gs->Label());
 					break;
 				}
 			}
@@ -71,7 +71,7 @@ ValueType Evaluator::Evaluate()
 				{
 					auto condition = EvaluateExpression(cgs->Condition()).GetValue<bool>();
 					if (condition == cgs->JumpIfTrue())
-						index = labelToIndex[cgs->Label()];
+						index = labelToIndex.at(cgs->Label());
 					else ++index;
 					break;
 				}
@@ -89,7 +89,7 @@ ValueType Evaluator::Evaluate()
 void Evaluator::EvaluateVariableDeclaration(const BoundVariableDeclaration * node)
 {
 	auto value = EvaluateExpression(node->Initializer());
-	(*_variables)[node->Variable()] = value;
+	_variables->emplace(node->Variable(), value);
 	_lastValue = value;
 }
 
@@ -151,7 +151,7 @@ ValueType Evaluator::EvaluateLiteralExpression(const BoundLiteralExpression * no
 
 ValueType Evaluator::EvaluateVariableExpression(const BoundVariableExpression * node)const
 {
-	return (*_variables)[node->Variable()];
+	return _variables->at(node->Variable());
 }
 
 ValueType Evaluator::EvaluateAssignmentExpression(const BoundAssignmentExpression * node)const

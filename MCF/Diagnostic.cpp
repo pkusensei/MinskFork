@@ -37,7 +37,7 @@ const Diagnostic & DiagnosticBag::operator[](size_t idx) const
 {
 	if (idx >= size())
 		throw std::out_of_range("Index out of range of DiagnosticBag.");
-	return _diagnostics[idx];
+	return _diagnostics.at(idx);
 }
 
 DiagnosticBag::iterator DiagnosticBag::begin()const
