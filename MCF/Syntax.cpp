@@ -310,6 +310,10 @@ SyntaxToken Lexer::Lex()
 			Next();
 			_kind = SyntaxKind::CloseBraceToken;
 			break;
+		case ',':
+			Next();
+			_kind = SyntaxKind::CommaToken;
+			break;
 		case '~':
 			Next();
 			_kind = SyntaxKind::TildeToken;
