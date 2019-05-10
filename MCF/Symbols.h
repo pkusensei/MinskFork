@@ -20,7 +20,10 @@ private:
 	string _name;
 
 protected:
-	explicit Symbol(const string& name);
+	explicit Symbol(const string& name)
+		:_name(name)
+	{
+	}
 
 public:
 	virtual ~Symbol() = default;
@@ -33,7 +36,7 @@ public:
 	bool operator!=(const Symbol& other)const noexcept;
 };
 
-enum class TypeKind
+enum class TypeEnum
 {
 	Error, Bool, Int, String, Void
 };
@@ -41,13 +44,19 @@ enum class TypeKind
 class TypeSymbol final :public Symbol
 {
 private:
-	explicit TypeSymbol(const string& name);
+	explicit TypeSymbol(const string & name)
+		:Symbol(name)
+	{
+	}
 
 public:
+	TypeSymbol(const TypeSymbol& other) = default;
+	TypeSymbol& operator=(const TypeSymbol& other) = default;
+
 	SymbolKind Kind() const noexcept override { return SymbolKind::Type; }
 
 	//NOTE C++ static variables are initialized in undefined order
-	static const TypeSymbol GetType(const TypeKind& kind);
+	static const TypeSymbol GetType(const TypeEnum& kind);
 };
 
 struct TypeHash
@@ -62,8 +71,16 @@ private:
 	TypeSymbol _type;
 
 public:
-	VariableSymbol(const string& name, bool isReadOnly, const TypeSymbol& type);
-	VariableSymbol();
+	VariableSymbol(const string & name, bool isReadOnly, const TypeSymbol & type)
+		:Symbol(name), _isReadOnly(isReadOnly), _type(type)
+	{
+	}
+	VariableSymbol()
+		: VariableSymbol("", true, TypeSymbol::GetType(TypeEnum::Error))
+	{
+	}
+	VariableSymbol(const VariableSymbol& other) = default;
+	VariableSymbol& operator=(const VariableSymbol& other) = default;
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Variable; }
 	bool IsReadOnly()const noexcept { return _isReadOnly; }
@@ -73,6 +90,38 @@ public:
 struct MCF_API VariableHash
 {
 	size_t operator()(const VariableSymbol& vs)const noexcept;
+};
+
+class ParameterSymbol final : public VariableSymbol
+{
+public:
+	ParameterSymbol(const string & name, const TypeSymbol & type)
+		:VariableSymbol(name, true, type)
+	{
+	}
+	ParameterSymbol(const ParameterSymbol& other) = default;
+	ParameterSymbol& operator=(const ParameterSymbol& other) = default;
+
+	SymbolKind Kind() const noexcept override { return SymbolKind::Parameter; }
+};
+
+class FunctionSymbol final :public Symbol
+{
+private:
+	vector<ParameterSymbol> _params;
+	TypeSymbol _type;
+
+public:
+	FunctionSymbol(const string& name, const vector<ParameterSymbol>& params, const TypeSymbol& type)
+		:Symbol(name), _params(params), _type(type)
+	{
+	}
+	FunctionSymbol(const FunctionSymbol& other) = default;
+	FunctionSymbol& operator=(const FunctionSymbol& other) = default;
+
+	SymbolKind Kind() const noexcept override { return SymbolKind::Function; }
+	const vector<ParameterSymbol>& Parameters()const noexcept { return _params; }
+	TypeSymbol Type()const { return _type; }
 };
 
 class MCF_API ValueType final

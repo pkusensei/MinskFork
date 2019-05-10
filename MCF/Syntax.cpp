@@ -11,136 +11,6 @@
 
 namespace MCF {
 
-SyntaxKind GetKeywordKind(const string & text) noexcept
-{
-	if (text == "else")
-		return SyntaxKind::ElseKeyword;
-	else if (text == "false")
-		return SyntaxKind::FalseKeyword;
-	else if (text == "for")
-		return SyntaxKind::ForKeyword;
-	else if (text == "if")
-		return SyntaxKind::IfKeyword;
-	else if (text == "let")
-		return SyntaxKind::LetKeyword;
-	else if (text == "to")
-		return SyntaxKind::ToKeyword;
-	else if (text == "true")
-		return SyntaxKind::TrueKeyword;
-	else if (text == "var")
-		return SyntaxKind::VarKeyword;
-	else if (text == "while")
-		return SyntaxKind::WhileKeyword;
-	else return SyntaxKind::IdentifierToken;
-}
-
-string GetText(const SyntaxKind& kind)
-{
-	switch (kind)
-	{
-		case SyntaxKind::PlusToken: return "+";
-		case SyntaxKind::MinusToken: return "-";
-		case SyntaxKind::StarToken: return "*";
-		case SyntaxKind::SlashToken: return "/";
-		case SyntaxKind::PercentToken: return "%";
-		case SyntaxKind::BangToken: return "!";
-		case SyntaxKind::PlusPlusToken: return "++";
-		case SyntaxKind::MinusMinusToken: return "--";
-		case SyntaxKind::EqualsToken: return "=";
-		case SyntaxKind::TildeToken: return "~";
-		case SyntaxKind::HatToken: return "^";
-		case SyntaxKind::AmpersandToken: return "&";
-		case SyntaxKind::AmpersandAmpersandToken: return "&&";
-		case SyntaxKind::PipeToken: return "|";
-		case SyntaxKind::PipePipeToken: return "||";
-		case SyntaxKind::EqualsEqualsToken: return "==";
-		case SyntaxKind::BangEqualsToken: return "!=";
-		case SyntaxKind::LessToken: return "<";
-		case SyntaxKind::LessOrEqualsToken: return "<=";
-		case SyntaxKind::GreaterToken: return ">";
-		case SyntaxKind::GreaterOrEqualsToken: return ">=";
-		case SyntaxKind::OpenParenthesisToken: return "(";
-		case SyntaxKind::CloseParenthesisToken: return ")";
-		case SyntaxKind::OpenBraceToken: return "{";
-		case SyntaxKind::CloseBraceToken: return "}";
-		case SyntaxKind::CommaToken: return ",";
-		case SyntaxKind::ElseKeyword: return "else";
-		case SyntaxKind::FalseKeyword: return "false";
-		case SyntaxKind::ForKeyword: return "for";
-		case SyntaxKind::IfKeyword: return "if";
-		case SyntaxKind::LetKeyword: return "let";
-		case SyntaxKind::ToKeyword: return "to";
-		case SyntaxKind::TrueKeyword: return "true";
-		case SyntaxKind::VarKeyword: return "var";
-		case SyntaxKind::WhileKeyword: return "while";
-		default: return string();
-	}
-}
-
-int GetUnaryOperatorPrecedence(const SyntaxKind& kind) noexcept
-{
-	switch (kind)
-	{
-		case SyntaxKind::PlusToken:
-		case SyntaxKind::MinusToken:
-		case SyntaxKind::BangToken:
-			//case SyntaxKind::PlusPlusToken:
-			//case SyntaxKind::MinusMinusToken:
-		case SyntaxKind::TildeToken:
-			return 6;
-		default:
-			return 0;
-	}
-}
-
-int GetBinaryOperatorPrecedence(const SyntaxKind& kind) noexcept
-{
-	switch (kind)
-	{
-		case SyntaxKind::StarToken:
-		case SyntaxKind::SlashToken:
-		case SyntaxKind::PercentToken:
-			return 5;
-		case SyntaxKind::PlusToken:
-		case SyntaxKind::MinusToken:
-			return 4;
-		case SyntaxKind::EqualsEqualsToken:
-		case SyntaxKind::BangEqualsToken:
-		case SyntaxKind::LessToken:
-		case SyntaxKind::LessOrEqualsToken:
-		case SyntaxKind::GreaterToken:
-		case SyntaxKind::GreaterOrEqualsToken:
-			return 3;
-		case SyntaxKind::AmpersandToken:
-		case SyntaxKind::AmpersandAmpersandToken:
-			return 2;
-		case SyntaxKind::PipeToken:
-		case SyntaxKind::PipePipeToken:
-		case SyntaxKind::HatToken:
-			return 1;
-		default:
-			return 0;
-	}
-}
-
-vector<SyntaxKind> GetUnaryOperatorKinds()
-{
-	auto result = vector<SyntaxKind>();
-	for (const auto& it : AllSyntaxKinds)
-		if (GetUnaryOperatorPrecedence(it) > 0)
-			result.emplace_back(it);
-	return result;
-}
-
-vector<SyntaxKind> GetBinaryOperatorKinds()
-{
-	auto result = vector<SyntaxKind>();
-	for (const auto& it : AllSyntaxKinds)
-		if (GetBinaryOperatorPrecedence(it) > 0)
-			result.emplace_back(it);
-	return result;
-}
-
 void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node, string indent, bool isLast)
 {
 	auto isToConsole = out.rdbuf() == std::cout.rdbuf();
@@ -478,10 +348,10 @@ void Lexer::ReadNumberToken()
 	IntegerType value;
 	try
 	{
-		value = std::stol(text);
+		value = StringToInteger(text);
 	} catch (...)
 	{
-		_diagnostics->ReportInvalidNumber(TextSpan(_start, length), text, TypeSymbol::GetType(TypeKind::Int));
+		_diagnostics->ReportInvalidNumber(TextSpan(_start, length), text, TypeSymbol::GetType(TypeEnum::Int));
 	}
 	_value = ValueType(value);
 	_kind = SyntaxKind::NumberToken;
@@ -598,6 +468,25 @@ PostfixExpressionSyntax::PostfixExpressionSyntax(const SyntaxToken & identifier,
 	:_identifier(identifier), _op(op),
 	_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
 {
+}
+
+CallExpressionSyntax::CallExpressionSyntax(const SyntaxToken & identifier, const SyntaxToken & open,
+										   const SeparatedSyntaxList<ExpressionSyntax>& arguments, const SyntaxToken & close)
+	: _identifier(identifier), _openParenthesisToken(open),
+	_arguments(std::move(std::remove_const_t<SeparatedSyntaxList<ExpressionSyntax>&>(arguments))),
+	_closeParenthesisToken(close)
+{
+}
+
+const vector<const SyntaxNode*> CallExpressionSyntax::GetChildren() const
+{
+	auto result = vector<const SyntaxNode*>{
+		&_identifier, &_openParenthesisToken
+	};
+	auto nodes = _arguments.GetWithSeparators();
+	result.insert(result.end(), nodes.begin(), nodes.end());
+	result.emplace_back(&_closeParenthesisToken);
+	return result;
 }
 
 const vector<const SyntaxNode*> PostfixExpressionSyntax::GetChildren() const
@@ -996,7 +885,7 @@ unique_ptr<ExpressionSyntax> Parser::ParsePrimaryExpression()
 			return ParseStringLiteral();
 		case SyntaxKind::IdentifierToken:
 		default:
-			return ParseNameExpression();
+			return ParseNameOrCallExpression();
 	}
 }
 
@@ -1025,6 +914,43 @@ unique_ptr<ExpressionSyntax> Parser::ParseStringLiteral()
 {
 	auto stringToken = MatchToken(SyntaxKind::StringToken);
 	return make_unique<LiteralExpressionSyntax>(stringToken);
+}
+
+unique_ptr<ExpressionSyntax> Parser::ParseNameOrCallExpression()
+{
+	if (Peek(0)->Kind() == SyntaxKind::IdentifierToken &&
+		Peek(1)->Kind() == SyntaxKind::OpenParenthesisToken)
+		return ParseCallExpression();
+	return ParseNameExpression();
+}
+
+unique_ptr<ExpressionSyntax> Parser::ParseCallExpression()
+{
+	auto identifier = MatchToken(SyntaxKind::IdentifierToken);
+	auto open = MatchToken(SyntaxKind::OpenParenthesisToken);
+	auto arguments = ParseArguments();
+	auto close = MatchToken(SyntaxKind::CloseParenthesisToken);
+
+	return make_unique<CallExpressionSyntax>(identifier, open, arguments, close);
+}
+
+SeparatedSyntaxList<ExpressionSyntax> Parser::ParseArguments()
+{
+	auto nodesAndSeparators = vector<unique_ptr<SyntaxNode>>();
+	while (Current()->Kind() != SyntaxKind::CloseParenthesisToken&&
+		   Current()->Kind() != SyntaxKind::EndOfFileToken)
+	{
+		auto expression = ParseExpression().release(); //HACK
+		nodesAndSeparators.emplace_back(expression);
+
+		if (Current()->Kind() != SyntaxKind::CloseParenthesisToken)
+		{
+			auto comma = MatchToken(SyntaxKind::CommaToken);
+			nodesAndSeparators.emplace_back(make_unique<SyntaxToken>(comma));
+		}
+	}
+
+	return SeparatedSyntaxList<ExpressionSyntax>(nodesAndSeparators);
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParseNameExpression()

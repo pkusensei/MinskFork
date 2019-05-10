@@ -186,7 +186,7 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 	switch (node->Op()->Kind())
 	{
 		case BoundBinaryOperatorKind::Addition:
-			if (node->Type() == TypeSymbol::GetType(TypeKind::Int))
+			if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
 				return left.GetValue<IntegerType>() + right.GetValue<IntegerType>();
 			else return left.GetValue<string>() + right.GetValue<string>();
 		case BoundBinaryOperatorKind::Subtraction:
@@ -198,15 +198,15 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 		case BoundBinaryOperatorKind::Modulus:
 			return left.GetValue<IntegerType>() % right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::BitwiseAnd:
-			if (node->Type() == TypeSymbol::GetType(TypeKind::Int))
+			if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
 				return left.GetValue<IntegerType>() & right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() & right.GetValue<bool>();
 		case BoundBinaryOperatorKind::BitwiseOr:
-			if (node->Type() == TypeSymbol::GetType(TypeKind::Int))
+			if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
 				return left.GetValue<IntegerType>() | right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() | right.GetValue<bool>();
 		case BoundBinaryOperatorKind::BitwiseXor:
-			if (node->Type() == TypeSymbol::GetType(TypeKind::Int))
+			if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
 				return left.GetValue<IntegerType>() ^ right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() ^ right.GetValue<bool>();
 		case BoundBinaryOperatorKind::LogicalAnd:
@@ -237,10 +237,10 @@ ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression * no
 	auto result = value.GetValue<IntegerType>();
 	switch (node->OperatorKind())
 	{
-		case BoundPostfixOperatorKind::Increment:
+		case BoundPostfixOperatorEnum::Increment:
 			_variables->insert_or_assign(node->Variable(), ++result);
 			return result;
-		case BoundPostfixOperatorKind::Decrement:
+		case BoundPostfixOperatorEnum::Decrement:
 			_variables->insert_or_assign(node->Variable(), --result);
 			return result;
 		default:

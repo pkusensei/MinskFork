@@ -5,14 +5,9 @@
 
 namespace MCF {
 
-Symbol::Symbol(const string & name)
-	:_name(name)
-{
-}
-
 bool Symbol::operator==(const Symbol & other) const noexcept
 {
-	return Name() == other.Name() && Kind() == other.Kind();
+	return Name() == other.Name();
 }
 
 bool Symbol::operator!=(const Symbol & other) const noexcept
@@ -20,37 +15,23 @@ bool Symbol::operator!=(const Symbol & other) const noexcept
 	return !(*this == other);
 }
 
-TypeSymbol::TypeSymbol(const string & name)
-	:Symbol(name)
-{
-}
-
-const TypeSymbol TypeSymbol::GetType(const TypeKind& kind)
+const TypeSymbol TypeSymbol::GetType(const TypeEnum& kind)
 {
 	switch (kind)
 	{
-		case TypeKind::Error: return TypeSymbol("?");
-		case TypeKind::Bool: return TypeSymbol("bool");
-		case TypeKind::Int: return TypeSymbol("int");
-		case TypeKind::String: return TypeSymbol("string");
-		case TypeKind::Void: return TypeSymbol("void");
+		case TypeEnum::Error: return TypeSymbol("?");
+		case TypeEnum::Bool: return TypeSymbol("bool");
+		case TypeEnum::Int: return TypeSymbol("int");
+		case TypeEnum::String: return TypeSymbol("string");
+		case TypeEnum::Void: return TypeSymbol("void");
 		default:
-			throw std::invalid_argument("Unexpected TypeKind enum value.");
+			throw std::invalid_argument("Unexpected TypeEnum enum value.");
 	}
 }
 
 size_t TypeHash::operator()(const TypeSymbol & ts) const noexcept
 {
 	return std::hash<string>{}(ts.Name());
-}
-
-VariableSymbol::VariableSymbol(const string & name, bool isReadOnly, const TypeSymbol & type)
-	:Symbol(name), _isReadOnly(isReadOnly), _type(type)
-{
-}
-
-VariableSymbol::VariableSymbol() : VariableSymbol("", true, TypeSymbol::GetType(TypeKind::Error))
-{
 }
 
 size_t VariableHash::operator()(const VariableSymbol & vs) const noexcept
@@ -65,14 +46,14 @@ TypeSymbol ValueType::Type() const
 	switch (_inner.index())
 	{
 		case 1:
-			return TypeSymbol::GetType(TypeKind::Bool);
+			return TypeSymbol::GetType(TypeEnum::Bool);
 		case 2:
-			return TypeSymbol::GetType(TypeKind::Int);
+			return TypeSymbol::GetType(TypeEnum::Int);
 		case 3:
-			return TypeSymbol::GetType(TypeKind::String);
+			return TypeSymbol::GetType(TypeEnum::String);
 		case 0:
 		default:
-			return TypeSymbol::GetType(TypeKind::Error);
+			return TypeSymbol::GetType(TypeEnum::Error);
 	}
 }
 
@@ -100,10 +81,10 @@ string ValueType::ToString() const
 int ValueType::GetValueTypeId(const TypeSymbol & inType)
 {
 	static std::unordered_map<TypeSymbol, int, TypeHash> types = {
-		{TypeSymbol::GetType(TypeKind::Error), 0},
-		{TypeSymbol::GetType(TypeKind::Bool), 1},
-		{TypeSymbol::GetType(TypeKind::Int), 2},
-		{TypeSymbol::GetType(TypeKind::String), 3}
+		{TypeSymbol::GetType(TypeEnum::Error), 0},
+		{TypeSymbol::GetType(TypeEnum::Bool), 1},
+		{TypeSymbol::GetType(TypeEnum::Int), 2},
+		{TypeSymbol::GetType(TypeEnum::String), 3}
 	};
 
 	return types.at(inType);

@@ -5,13 +5,6 @@
 
 namespace MCF {
 
-SyntaxKind GetKeywordKind(const string& text) noexcept;
-MCF_API string GetText(const SyntaxKind& kind);
-MCF_API int GetUnaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
-MCF_API int GetBinaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
-MCF_API vector<SyntaxKind> GetUnaryOperatorKinds();
-MCF_API vector<SyntaxKind> GetBinaryOperatorKinds();
-
 class DiagnosticBag;
 class TextSpan;
 class SourceText;
@@ -207,6 +200,72 @@ public:
 	const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken IdentifierToken()const { return _identifierToken; }
+};
+
+template<typename T, typename = std::enable_if_t<std::is_base_of_v<SyntaxNode, T>>>
+class SeparatedSyntaxList final
+{
+private:
+	vector<unique_ptr<SyntaxNode>> _nodesAndSeparators;
+
+public:
+	SeparatedSyntaxList(const vector<unique_ptr<SyntaxNode>>& list)
+		:_nodesAndSeparators(std::move(std::remove_const_t<vector<unique_ptr<SyntaxNode>>&>(list)))
+	{
+	}
+	SeparatedSyntaxList(SeparatedSyntaxList&& other) = default;
+	SeparatedSyntaxList& operator=(SeparatedSyntaxList&& other) = default;
+
+	size_t size()const noexcept
+	{
+		return (_nodesAndSeparators.size() + 1) / 2;
+	}
+	
+	const T* operator[](size_t index)const
+	{
+		return _nodesAndSeparators.at(index * 2).get();
+	}
+	
+	const SyntaxToken* GetSeparator(size_t index)const
+	{
+		if (index == size() - 1) return nullptr;
+		return _nodesAndSeparators.at(index * 2 + 1).get();
+	}
+
+	vector<const SyntaxNode*> GetWithSeparators()const
+	{
+		auto result = vector<const SyntaxNode*>();
+		for (const auto& it : _nodesAndSeparators)
+			result.emplace_back(it.get());
+		return result;
+	}
+
+	decltype(auto) begin()const { return _nodesAndSeparators.begin(); }
+	decltype(auto) end()const { return _nodesAndSeparators.end(); }
+};
+
+class CallExpressionSyntax final :public ExpressionSyntax
+{
+private:
+	SyntaxToken _identifier;
+	SyntaxToken _openParenthesisToken;
+	SeparatedSyntaxList<ExpressionSyntax> _arguments;
+	SyntaxToken _closeParenthesisToken;
+
+public:
+	CallExpressionSyntax(const SyntaxToken& identifier, const SyntaxToken& open,
+						 const SeparatedSyntaxList<ExpressionSyntax>& arguments, const SyntaxToken& close);
+	CallExpressionSyntax(CallExpressionSyntax&& other) = default;
+	CallExpressionSyntax& operator=(CallExpressionSyntax&& other) = default;
+
+	// Inherited via ExpressionSyntax
+	SyntaxKind Kind() const noexcept override { return SyntaxKind::CallExpression; }
+	const vector<const SyntaxNode*> GetChildren() const override;
+
+	SyntaxToken Identifier()const { return _identifier; }
+	SyntaxToken OpenParenthesisToken()const { return _openParenthesisToken; }
+	const SeparatedSyntaxList<ExpressionSyntax>* Arguments()const noexcept { return &_arguments; }
+	SyntaxToken CloseParenthesisToken()const { return _closeParenthesisToken; }
 };
 
 class PostfixExpressionSyntax final :public ExpressionSyntax
@@ -443,7 +502,11 @@ private:
 	unique_ptr<ExpressionSyntax> ParseBooleanLiteral();
 	unique_ptr<ExpressionSyntax> ParseNumberLiteral();
 	unique_ptr<ExpressionSyntax> ParseStringLiteral();
+	unique_ptr<ExpressionSyntax> ParseNameOrCallExpression();
+	unique_ptr<ExpressionSyntax> ParseCallExpression();
 	unique_ptr<ExpressionSyntax> ParseNameExpression();
+
+	SeparatedSyntaxList<ExpressionSyntax> ParseArguments();
 
 public:
 	explicit Parser(const SourceText& text);

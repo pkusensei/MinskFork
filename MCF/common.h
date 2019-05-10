@@ -18,4 +18,9 @@ using std::vector;
 
 using IntegerType = long; // HACK use long as interger type
 
+inline IntegerType StringToInteger(const string& s)
+{
+	return std::stol(s);
+}
+
 }//MCF

@@ -109,13 +109,13 @@ enum class BoundBinaryOperatorKind
 
 string GetEnumText(const BoundBinaryOperatorKind& kind);
 
-enum class BoundPostfixOperatorKind
+enum class BoundPostfixOperatorEnum
 {
 	Increment,
 	Decrement,
 };
 
-string GetEnumText(const BoundPostfixOperatorKind& kind);
+string GetEnumText(const BoundPostfixOperatorEnum& kind);
 
 class BoundNode
 {
@@ -149,7 +149,7 @@ class BoundErrorExpression final :public BoundExpression
 {
 public:
 	// Inherited via BoundExpression
-	TypeSymbol Type()const override { return TypeSymbol::GetType(TypeKind::Error); }
+	TypeSymbol Type()const override { return TypeSymbol::GetType(TypeEnum::Error); }
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ErrorExpression; }
 	const vector<std::pair<string, string>> GetProperties() const override;
 };
@@ -309,10 +309,10 @@ class BoundPostfixExpression final :public BoundExpression
 {
 private:
 	VariableSymbol _variable;
-	BoundPostfixOperatorKind _kind;
+	BoundPostfixOperatorEnum _kind;
 	unique_ptr<BoundExpression> _expression;
 public:
-	BoundPostfixExpression(const VariableSymbol& variable, const BoundPostfixOperatorKind& kind, const unique_ptr<BoundExpression>& expression);
+	BoundPostfixExpression(const VariableSymbol& variable, const BoundPostfixOperatorEnum& kind, const unique_ptr<BoundExpression>& expression);
 	BoundPostfixExpression(BoundPostfixExpression&&) = default;
 	BoundPostfixExpression& operator=(BoundPostfixExpression&&) = default;
 
@@ -323,7 +323,7 @@ public:
 	TypeSymbol Type() const override { return _variable.Type(); }
 
 	VariableSymbol Variable()const { return _variable; }
-	BoundPostfixOperatorKind OperatorKind()const { return _kind; }
+	BoundPostfixOperatorEnum OperatorKind()const { return _kind; }
 	const BoundExpression* Expression()const noexcept { return _expression.get(); }
 };
 

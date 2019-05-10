@@ -156,4 +156,134 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 	}
 }
 
+SyntaxKind GetKeywordKind(const string & text) noexcept
+{
+	if (text == "else")
+		return SyntaxKind::ElseKeyword;
+	else if (text == "false")
+		return SyntaxKind::FalseKeyword;
+	else if (text == "for")
+		return SyntaxKind::ForKeyword;
+	else if (text == "if")
+		return SyntaxKind::IfKeyword;
+	else if (text == "let")
+		return SyntaxKind::LetKeyword;
+	else if (text == "to")
+		return SyntaxKind::ToKeyword;
+	else if (text == "true")
+		return SyntaxKind::TrueKeyword;
+	else if (text == "var")
+		return SyntaxKind::VarKeyword;
+	else if (text == "while")
+		return SyntaxKind::WhileKeyword;
+	else return SyntaxKind::IdentifierToken;
+}
+
+string GetText(const SyntaxKind& kind)
+{
+	switch (kind)
+	{
+		case SyntaxKind::PlusToken: return "+";
+		case SyntaxKind::MinusToken: return "-";
+		case SyntaxKind::StarToken: return "*";
+		case SyntaxKind::SlashToken: return "/";
+		case SyntaxKind::PercentToken: return "%";
+		case SyntaxKind::BangToken: return "!";
+		case SyntaxKind::PlusPlusToken: return "++";
+		case SyntaxKind::MinusMinusToken: return "--";
+		case SyntaxKind::EqualsToken: return "=";
+		case SyntaxKind::TildeToken: return "~";
+		case SyntaxKind::HatToken: return "^";
+		case SyntaxKind::AmpersandToken: return "&";
+		case SyntaxKind::AmpersandAmpersandToken: return "&&";
+		case SyntaxKind::PipeToken: return "|";
+		case SyntaxKind::PipePipeToken: return "||";
+		case SyntaxKind::EqualsEqualsToken: return "==";
+		case SyntaxKind::BangEqualsToken: return "!=";
+		case SyntaxKind::LessToken: return "<";
+		case SyntaxKind::LessOrEqualsToken: return "<=";
+		case SyntaxKind::GreaterToken: return ">";
+		case SyntaxKind::GreaterOrEqualsToken: return ">=";
+		case SyntaxKind::OpenParenthesisToken: return "(";
+		case SyntaxKind::CloseParenthesisToken: return ")";
+		case SyntaxKind::OpenBraceToken: return "{";
+		case SyntaxKind::CloseBraceToken: return "}";
+		case SyntaxKind::CommaToken: return ",";
+		case SyntaxKind::ElseKeyword: return "else";
+		case SyntaxKind::FalseKeyword: return "false";
+		case SyntaxKind::ForKeyword: return "for";
+		case SyntaxKind::IfKeyword: return "if";
+		case SyntaxKind::LetKeyword: return "let";
+		case SyntaxKind::ToKeyword: return "to";
+		case SyntaxKind::TrueKeyword: return "true";
+		case SyntaxKind::VarKeyword: return "var";
+		case SyntaxKind::WhileKeyword: return "while";
+		default: return string();
+	}
+}
+
+int GetUnaryOperatorPrecedence(const SyntaxKind& kind) noexcept
+{
+	switch (kind)
+	{
+		case SyntaxKind::PlusToken:
+		case SyntaxKind::MinusToken:
+		case SyntaxKind::BangToken:
+			//case SyntaxKind::PlusPlusToken:
+			//case SyntaxKind::MinusMinusToken:
+		case SyntaxKind::TildeToken:
+			return 6;
+		default:
+			return 0;
+	}
+}
+
+int GetBinaryOperatorPrecedence(const SyntaxKind& kind) noexcept
+{
+	switch (kind)
+	{
+		case SyntaxKind::StarToken:
+		case SyntaxKind::SlashToken:
+		case SyntaxKind::PercentToken:
+			return 5;
+		case SyntaxKind::PlusToken:
+		case SyntaxKind::MinusToken:
+			return 4;
+		case SyntaxKind::EqualsEqualsToken:
+		case SyntaxKind::BangEqualsToken:
+		case SyntaxKind::LessToken:
+		case SyntaxKind::LessOrEqualsToken:
+		case SyntaxKind::GreaterToken:
+		case SyntaxKind::GreaterOrEqualsToken:
+			return 3;
+		case SyntaxKind::AmpersandToken:
+		case SyntaxKind::AmpersandAmpersandToken:
+			return 2;
+		case SyntaxKind::PipeToken:
+		case SyntaxKind::PipePipeToken:
+		case SyntaxKind::HatToken:
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+vector<SyntaxKind> GetUnaryOperatorKinds()
+{
+	auto result = vector<SyntaxKind>();
+	for (const auto& it : AllSyntaxKinds)
+		if (GetUnaryOperatorPrecedence(it) > 0)
+			result.emplace_back(it);
+	return result;
+}
+
+vector<SyntaxKind> GetBinaryOperatorKinds()
+{
+	auto result = vector<SyntaxKind>();
+	for (const auto& it : AllSyntaxKinds)
+		if (GetBinaryOperatorPrecedence(it) > 0)
+			result.emplace_back(it);
+	return result;
+}
+
 }//MCF
