@@ -18,6 +18,7 @@ class NameExpressionSyntax;
 class AssignmentExpressionSyntax;
 class UnaryExpressionSyntax;
 class BinaryExpressionSyntax;
+class CallExpressionSyntax;
 class PostfixExpressionSyntax;
 
 class StatementSyntax;
@@ -305,6 +306,28 @@ public:
 	VariableSymbol Variable()const { return _variable; }
 };
 
+class BoundCallExpression final :public BoundExpression
+{
+private:
+	FunctionSymbol _function;
+	vector<unique_ptr<BoundExpression>> _arguments;
+
+public:
+	BoundCallExpression(const FunctionSymbol& function,
+						const vector<unique_ptr<BoundExpression>>& arguments);
+	BoundCallExpression(BoundCallExpression&&) = default;
+	BoundCallExpression& operator=(BoundCallExpression&&) = default;
+
+	// Inherited via BoundExpression
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::CallExpression; }
+	TypeSymbol Type() const override { return _function.Type(); }
+	const vector<const BoundNode*> GetChildren() const override;
+	const vector<std::pair<string, string>> GetProperties() const override;
+
+	FunctionSymbol Function()const { return _function; }
+	const vector<BoundExpression*> Arguments()const;
+};
+
 class BoundPostfixExpression final :public BoundExpression
 {
 private:
@@ -513,14 +536,22 @@ class BoundScope final
 {
 private:
 	std::unordered_map<string, VariableSymbol> _variables;
+	std::unordered_map<string, FunctionSymbol> _functions;
 	unique_ptr<BoundScope> _parent;
+
 public:
 	explicit BoundScope(const unique_ptr<BoundScope>& parent);
 
 	const BoundScope* Parent()const noexcept { return _parent.get(); }
-	bool TryDeclare(const VariableSymbol& variable);
-	bool TryLookup(const string& name, VariableSymbol& variable)const;
+
+	bool TryDeclareVariable(const VariableSymbol& variable);
+	bool TryLookupVariable(const string& name, VariableSymbol& variable)const;
 	const vector<VariableSymbol> GetDeclaredVariables()const;
+
+	bool TryDeclareFunction(const FunctionSymbol& function);
+	bool TryLookupFunction(const string& name, FunctionSymbol& function)const;
+	const vector<FunctionSymbol> GetDeclaredFunctions()const;
+
 	static void ResetToParent(unique_ptr<BoundScope>& current);
 };
 
@@ -556,18 +587,22 @@ private:
 	unique_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax* syntax);
 
 	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax, const TypeSymbol& targetType);
-	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax, bool canBeVoid = false);
+	unique_ptr<BoundExpression> BindExpressionInternal(const ExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindParenthesizedExpression(const ParenthesizedExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindLiteralExpression(const LiteralExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindNameExpression(const NameExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindAssignmentExpression(const AssignmentExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindUnaryExpression(const UnaryExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindBinaryExpression(const BinaryExpressionSyntax* syntax);
+	unique_ptr<BoundExpression> BindCallExpression(const CallExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax* syntax);
 
 	VariableSymbol BindVariable(const SyntaxToken& identifier, bool isReadOnly, const TypeSymbol& type);
 
 	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
+	static unique_ptr<BoundScope> CreateRootScope();
+
 public:
 	explicit Binder(const unique_ptr<BoundScope>& parent);
 
@@ -601,6 +636,7 @@ protected:
 	virtual unique_ptr<BoundExpression> RewriteAssignmentExpression(const BoundAssignmentExpression* node);
 	virtual unique_ptr<BoundExpression> RewriteUnaryExpression(const BoundUnaryExpression* node);
 	virtual unique_ptr<BoundExpression> RewriteBinaryExpression(const BoundBinaryExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteCallExpression(const BoundCallExpression* node);
 	virtual unique_ptr<BoundExpression> RewritePostfixExpression(const BoundPostfixExpression* node);
 
 public:

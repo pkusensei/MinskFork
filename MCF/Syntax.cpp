@@ -69,7 +69,8 @@ string SyntaxNode::ToString() const
 }
 
 #pragma region SyntaxToken
-SyntaxToken::SyntaxToken(const SyntaxKind& kind, size_t position, const string& text, const ValueType& value)
+SyntaxToken::SyntaxToken(const SyntaxKind& kind, size_t position, 
+						 const string& text, const ValueType& value)
 	:_kind(kind), _position(position), _text(text), _value(value)
 {
 }
@@ -940,8 +941,8 @@ SeparatedSyntaxList<ExpressionSyntax> Parser::ParseArguments()
 	while (Current()->Kind() != SyntaxKind::CloseParenthesisToken&&
 		   Current()->Kind() != SyntaxKind::EndOfFileToken)
 	{
-		auto expression = ParseExpression().release(); //HACK
-		nodesAndSeparators.emplace_back(expression);
+		auto expression = ParseExpression(); //HACK
+		nodesAndSeparators.emplace_back(std::move(expression));
 
 		if (Current()->Kind() != SyntaxKind::CloseParenthesisToken)
 		{

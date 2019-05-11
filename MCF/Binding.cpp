@@ -433,7 +433,39 @@ const vector<std::pair<string, string>> BoundVariableExpression::GetProperties()
 	};
 }
 
-BoundPostfixExpression::BoundPostfixExpression(const VariableSymbol & variable, const BoundPostfixOperatorEnum& kind, const unique_ptr<BoundExpression>& expression)
+BoundCallExpression::BoundCallExpression(const FunctionSymbol & function,
+										 const vector<unique_ptr<BoundExpression>>& arguments)
+	:_function(function),
+	_arguments(std::move(std::remove_const_t<vector<unique_ptr<BoundExpression>>&>(arguments)))
+{
+}
+
+const vector<const BoundNode*> BoundCallExpression::GetChildren() const
+{
+	auto result = vector<const BoundNode*>();
+	for (const auto& it : _arguments)
+		result.emplace_back(it.get());
+	return result;
+}
+
+const vector<std::pair<string, string>> BoundCallExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Type", Type().Name())
+	};
+}
+
+const vector<BoundExpression*> BoundCallExpression::Arguments() const
+{
+	auto result = vector<BoundExpression*>();
+	for (const auto& it : _arguments)
+		result.emplace_back(it.get());
+	return result;
+}
+
+BoundPostfixExpression::BoundPostfixExpression(const VariableSymbol & variable,
+											   const BoundPostfixOperatorEnum& kind,
+											   const unique_ptr<BoundExpression>& expression)
 	:_variable(variable), _kind(kind),
 	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
 {
@@ -526,7 +558,8 @@ const vector<const BoundNode*> BoundIfStatement::GetChildren() const
 	};
 }
 
-BoundWhileStatement::BoundWhileStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& body)
+BoundWhileStatement::BoundWhileStatement(const unique_ptr<BoundExpression>& condition,
+										 const unique_ptr<BoundStatement>& body)
 	:_condition(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition))),
 	_body(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(body)))
 {
@@ -589,7 +622,9 @@ const vector<std::pair<string, string>> BoundGotoStatement::GetProperties() cons
 	};
 }
 
-BoundConditionalGotoStatement::BoundConditionalGotoStatement(const BoundLabel & label, const unique_ptr<BoundExpression>& condition, bool jumpIfTrue)
+BoundConditionalGotoStatement::BoundConditionalGotoStatement(const BoundLabel & label,
+															 const unique_ptr<BoundExpression>& condition,
+															 bool jumpIfTrue)
 	:_label(label),
 	_condition((std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition)))),
 	_jumpIfTrue(jumpIfTrue)
@@ -630,7 +665,7 @@ BoundScope::BoundScope(const unique_ptr<BoundScope>& parent)
 {
 }
 
-bool BoundScope::TryDeclare(const VariableSymbol & variable)
+bool BoundScope::TryDeclareVariable(const VariableSymbol & variable)
 {
 	if (_variables.find(variable.Name()) == _variables.end() && !variable.Name().empty())
 	{
@@ -640,7 +675,7 @@ bool BoundScope::TryDeclare(const VariableSymbol & variable)
 	return false;
 }
 
-bool BoundScope::TryLookup(const string & name, VariableSymbol & variable)const
+bool BoundScope::TryLookupVariable(const string & name, VariableSymbol & variable)const
 {
 	if (_variables.find(name) != _variables.end())
 	{
@@ -649,13 +684,44 @@ bool BoundScope::TryLookup(const string & name, VariableSymbol & variable)const
 	}
 	if (_parent == nullptr || name.empty())
 		return false;
-	return _parent->TryLookup(name, variable);
+	return _parent->TryLookupVariable(name, variable);
 }
 
 const vector<VariableSymbol> BoundScope::GetDeclaredVariables() const
 {
 	auto result = vector<VariableSymbol>();
 	for (const auto& it : _variables)
+		result.emplace_back(it.second);
+	return result;
+}
+
+bool BoundScope::TryDeclareFunction(const FunctionSymbol & function)
+{
+	if (_functions.find(function.Name()) == _functions.end() &&
+		!function.Name().empty())
+	{
+		_functions.emplace(function.Name(), function);
+		return true;
+	}
+	return false;
+}
+
+bool BoundScope::TryLookupFunction(const string & name, FunctionSymbol & function) const
+{
+	if (_functions.find(name) != _functions.end())
+	{
+		function = _functions.at(name);
+		return true;
+	}
+	if (_parent == nullptr || name.empty())
+		return false;
+	return _parent->TryLookupFunction(name, function);
+}
+
+const vector<FunctionSymbol> BoundScope::GetDeclaredFunctions() const
+{
+	auto result = vector<FunctionSymbol>();
+	for (const auto& it : _functions)
 		result.emplace_back(it.second);
 	return result;
 }
@@ -780,20 +846,32 @@ unique_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax * s
 
 unique_ptr<BoundStatement> Binder::BindExpressionStatement(const ExpressionStatementSyntax * syntax)
 {
-	auto expression = BindExpression(syntax->Expression());
+	auto expression = BindExpression(syntax->Expression(), true);
 	return make_unique<BoundExpressionStatement>(expression);
 }
 
 unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * syntax, const TypeSymbol & targetType)
 {
 	auto result = BindExpression(syntax);
-	if (targetType != TypeSymbol::GetType(TypeEnum::Error) && result->Type() != TypeSymbol::GetType(TypeEnum::Error)
+	if (targetType != TypeSymbol::GetType(TypeEnum::Error) &&
+		result->Type() != TypeSymbol::GetType(TypeEnum::Error)
 		&& result->Type() != targetType)
 		_diagnostics->ReportCannotConvert(syntax->Span(), result->Type(), targetType);
 	return result;
 }
 
-unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * syntax)
+unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * syntax, bool canBeVoid)
+{
+	auto result = BindExpressionInternal(syntax);
+	if (!canBeVoid && result->Type() == TypeSymbol::GetType(TypeEnum::Void))
+	{
+		_diagnostics->ReportExpressionMustHaveValue(syntax->Span());
+		return make_unique<BoundErrorExpression>();
+	}
+	return result;
+}
+
+unique_ptr<BoundExpression> Binder::BindExpressionInternal(const ExpressionSyntax * syntax)
 {
 	switch (syntax->Kind())
 	{
@@ -833,6 +911,12 @@ unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * synt
 			if (p) return BindBinaryExpression(p);
 			else break;
 		}
+		case SyntaxKind::CallExpression:
+		{
+			auto p = dynamic_cast<const CallExpressionSyntax*>(syntax);
+			if (p) return BindCallExpression(p);
+			else break;
+		}
 		case SyntaxKind::PostfixExpression:
 		{
 			auto p = dynamic_cast<const PostfixExpressionSyntax*>(syntax);
@@ -863,7 +947,7 @@ unique_ptr<BoundExpression> Binder::BindNameExpression(const NameExpressionSynta
 		return make_unique<BoundErrorExpression>();
 
 	VariableSymbol variable;
-	if (!_scope->TryLookup(name, variable))
+	if (!_scope->TryLookupVariable(name, variable))
 	{
 		_diagnostics->ReportUndefinedName(syntax->IdentifierToken().Span(), name);
 		return make_unique<BoundErrorExpression>();
@@ -878,7 +962,7 @@ unique_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 
 	VariableSymbol variable;
 
-	if (!_scope->TryLookup(name, variable))
+	if (!_scope->TryLookupVariable(name, variable))
 	{
 		_diagnostics->ReportUndefinedName(syntax->IdentifierToken().Span(), name);
 		return boundExpression;
@@ -929,6 +1013,42 @@ unique_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 	}
 }
 
+unique_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSyntax * syntax)
+{
+	auto boundArguments = vector<unique_ptr<BoundExpression>>();
+	for (const auto& arg : *(syntax->Arguments()))
+	{
+		auto boundArgument = BindExpression(dynamic_cast<ExpressionSyntax*>(arg.get()));
+		boundArguments.emplace_back(std::move(boundArgument));
+	}
+
+	FunctionSymbol function;
+	if (!_scope->TryLookupFunction(syntax->Identifier().Text(), function))
+	{
+		_diagnostics->ReportUndefinedFunction(syntax->Identifier().Span(), syntax->Identifier().Text());
+		return make_unique<BoundErrorExpression>();
+	}
+	if (syntax->Arguments()->size() != function.Parameters().size())
+	{
+		_diagnostics->ReportWrongArgumentCount(syntax->Span(), function.Name(), 
+											   function.Parameters().size(), syntax->Arguments()->size());
+		return make_unique<BoundErrorExpression>();
+	}
+
+	for (auto i = 0; i < syntax->Arguments()->size(); ++i)
+	{
+		auto arg = boundArguments[i].get();
+		auto param = function.Parameters()[i];
+		if (arg->Type() != param.Type())
+		{
+			_diagnostics->ReportWrongArgumentType(syntax->Span(), param.Name(),
+												  param.Type(), arg->Type());
+			return make_unique<BoundErrorExpression>();
+		}
+	}
+	return make_unique<BoundCallExpression>(function, boundArguments);
+}
+
 unique_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressionSyntax * syntax)
 {
 	auto name = syntax->IdentifierToken().Text();
@@ -936,7 +1056,7 @@ unique_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 
 	VariableSymbol variable;
 
-	if (!_scope->TryLookup(name, variable))
+	if (!_scope->TryLookupVariable(name, variable))
 	{
 		_diagnostics->ReportUndefinedName(syntax->IdentifierToken().Span(), name);
 		return make_unique<BoundErrorExpression>();
@@ -973,7 +1093,7 @@ VariableSymbol Binder::BindVariable(const SyntaxToken & identifier, bool isReadO
 	auto declare = !identifier.IsMissing();
 	auto variable = VariableSymbol(name, isReadOnly, type);
 
-	if (declare && !_scope->TryDeclare(variable))
+	if (declare && !_scope->TryDeclareVariable(variable))
 		_diagnostics->ReportVariableAlreadyDeclared(identifier.Span(), name);
 	return variable;
 }
@@ -986,17 +1106,25 @@ unique_ptr<BoundScope> Binder::CreateParentScope(const BoundGlobalScope* previou
 		stack.emplace(previous);
 		previous = previous->Previous();
 	}
-	unique_ptr<BoundScope> parent{nullptr};
+	auto parent = CreateRootScope();
 	while (!stack.empty())
 	{
 		auto current = stack.top();
 		auto scope = make_unique<BoundScope>(parent);
 		for (const auto& it : current->Variables())
-			scope->TryDeclare(it);
+			scope->TryDeclareVariable(it);
 		parent.swap(scope);
 		stack.pop();
 	}
 	return parent;
+}
+
+unique_ptr<BoundScope> Binder::CreateRootScope()
+{
+	auto result = make_unique<BoundScope>(nullptr);
+	for (const auto& f : GetAllBuiltinFunctions())
+		result->TryDeclareFunction(f);
+	return result;
 }
 
 unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* previous, const CompilationUnitSyntax* syntax)
@@ -1175,6 +1303,12 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(const BoundExpr
 			if (p) return RewriteBinaryExpression(p);
 			else break;
 		}
+		case BoundNodeKind::CallExpression:
+		{
+			auto p = dynamic_cast<const BoundCallExpression*>(node);
+			if (p) return RewriteCallExpression(p);
+			else break;
+		}
 		case BoundNodeKind::PostfixExpression:
 		{
 			auto p = dynamic_cast<const BoundPostfixExpression*>(node);
@@ -1219,6 +1353,19 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteBinaryExpression(const Bou
 	auto left = RewriteExpression(node->Left());
 	auto right = RewriteExpression(node->Right());
 	return make_unique<BoundBinaryExpression>(left, *(node->Op()), right);
+}
+
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteCallExpression(const BoundCallExpression * node)
+{
+	auto result = vector<unique_ptr<BoundExpression>>();
+	for (auto i = 0; i < node->Arguments().size(); ++i)
+	{
+		auto oldArg = node->Arguments()[i];
+		auto newArg = RewriteExpression(oldArg);
+		result.emplace_back(std::move(newArg));
+	}
+	return make_unique<BoundCallExpression>(node->Function(), result);
+	return nullptr;
 }
 
 unique_ptr<BoundExpression> BoundTreeRewriter::RewritePostfixExpression(const BoundPostfixExpression * node)

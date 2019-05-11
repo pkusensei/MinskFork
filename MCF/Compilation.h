@@ -15,6 +15,7 @@ class BoundVariableExpression;
 class BoundAssignmentExpression;
 class BoundUnaryExpression;
 class BoundBinaryExpression;
+class BoundCallExpression;
 class BoundPostfixExpression;
 
 class BoundStatement;
@@ -57,6 +58,7 @@ private:
 	ValueType EvaluateAssignmentExpression(const BoundAssignmentExpression* node)const;
 	ValueType EvaluateUnaryExpression(const BoundUnaryExpression* node)const;
 	ValueType EvaluateBinaryExpression(const BoundBinaryExpression* node)const;
+	ValueType EvaluateCallExpression(const BoundCallExpression* node)const;
 	ValueType EvaluatePostfixExpression(const BoundPostfixExpression* node)const;
 
 public:

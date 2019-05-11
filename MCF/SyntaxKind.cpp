@@ -1,29 +1,13 @@
 #include "stdafx.h"
-
 #include "SyntaxKind.h"
+
+#include "EnumHelper.h"
 
 namespace MCF {
 
-SyntaxKind& operator++(SyntaxKind& kind)
-{
-	auto tmp = std::underlying_type<SyntaxKind>::type(kind);
-	kind = static_cast<SyntaxKind>(tmp + 1);
-	return kind;
-}
-
-SyntaxKind & operator++(SyntaxKind & kind, int c)
-{
-	return ++kind;
-}
-
 const vector<SyntaxKind> GetAllSyntaxKinds()
 {
-	auto result = vector<SyntaxKind>();
-	for (auto kind = MCF::SyntaxKind::BadToken;
-		 kind != MCF::SyntaxKind::PostfixExpression; kind++)
-		result.emplace_back(kind);
-	result.shrink_to_fit();
-	return result;
+	return GetAllEnumValue<SyntaxKind>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
 }
 
 const vector<SyntaxKind> AllSyntaxKinds = GetAllSyntaxKinds();

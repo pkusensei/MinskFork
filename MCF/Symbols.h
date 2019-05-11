@@ -116,6 +116,10 @@ public:
 		:Symbol(name), _params(params), _type(type)
 	{
 	}
+	FunctionSymbol()
+		:FunctionSymbol("", vector<ParameterSymbol>(), TypeSymbol::GetType(TypeEnum::Error))
+	{
+	}
 	FunctionSymbol(const FunctionSymbol& other) = default;
 	FunctionSymbol& operator=(const FunctionSymbol& other) = default;
 
@@ -123,6 +127,14 @@ public:
 	const vector<ParameterSymbol>& Parameters()const noexcept { return _params; }
 	TypeSymbol Type()const { return _type; }
 };
+
+enum class BuiltinFuncEnum
+{
+	Input, Print, Rnd
+};
+
+const FunctionSymbol GetBuiltinFunction(const BuiltinFuncEnum& kind);
+const vector<FunctionSymbol>& GetAllBuiltinFunctions();
 
 class MCF_API ValueType final
 {

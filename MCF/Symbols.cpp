@@ -3,6 +3,8 @@
 
 #include <unordered_map>
 
+#include "EnumHelper.h"
+
 namespace MCF {
 
 bool Symbol::operator==(const Symbol & other) const noexcept
@@ -39,6 +41,46 @@ size_t VariableHash::operator()(const VariableSymbol & vs) const noexcept
 	auto h1 = std::hash<string>{}(vs.Name());
 	auto h2 = TypeHash{}(vs.Type());
 	return h1 ^ (h2 << 1);
+}
+
+const FunctionSymbol GetBuiltinFunction(const BuiltinFuncEnum & kind)
+{
+	switch (kind)
+	{
+		case BuiltinFuncEnum::Print:
+			return FunctionSymbol("print",
+								  vector<ParameterSymbol>{ParameterSymbol("text", TypeSymbol::GetType(TypeEnum::String))},
+								  TypeSymbol::GetType(TypeEnum::Void));
+		case BuiltinFuncEnum::Input:
+			return FunctionSymbol("input", vector<ParameterSymbol>(),
+								  TypeSymbol::GetType(TypeEnum::String));
+		case BuiltinFuncEnum::Rnd:
+			return FunctionSymbol("rnd",
+								  vector<ParameterSymbol>{ParameterSymbol("max", TypeSymbol::GetType(TypeEnum::Int))},
+								  TypeSymbol::GetType(TypeEnum::Int));
+		default:
+			throw std::invalid_argument("Unexpected BuiltinFuncEnum enum value.");
+	}
+}
+
+namespace {
+
+const vector<FunctionSymbol> GetAllBuiltinFunctionsImpl()
+{
+	auto enums = GetAllEnumValue<BuiltinFuncEnum>(BuiltinFuncEnum::Input, BuiltinFuncEnum::Rnd);
+	auto funcs = vector<FunctionSymbol>();
+	for (const auto& it:enums)
+		funcs.emplace_back(GetBuiltinFunction(it));
+	funcs.shrink_to_fit();
+	return funcs;
+}
+
+}
+
+const vector<FunctionSymbol>& GetAllBuiltinFunctions()
+{
+	static auto funcs = GetAllBuiltinFunctionsImpl();
+	return funcs;
 }
 
 TypeSymbol ValueType::Type() const

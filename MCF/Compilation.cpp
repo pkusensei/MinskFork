@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "Compilation.h"
 
+#include <iostream>
+#include <random>
+
 #include "Diagnostic.h"
 #include "Binding.h"
 #include "Syntax.h"
@@ -132,6 +135,12 @@ ValueType Evaluator::EvaluateExpression(const BoundExpression * node)const
 			if (p) return EvaluateBinaryExpression(p);
 			else break;
 		}
+		case BoundNodeKind::CallExpression:
+		{
+			auto p = dynamic_cast<const BoundCallExpression*>(node);
+			if (p) return EvaluateCallExpression(p);
+			else break;
+		}
 		case BoundNodeKind::PostfixExpression:
 		{
 			auto p = dynamic_cast<const BoundPostfixExpression*>(node);
@@ -228,6 +237,38 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 
 		default:
 			throw std::invalid_argument("Invalid binary operator " + GetEnumText(node->Op()->Kind()));
+	}
+}
+
+ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node) const
+{
+	if (node->Function() == GetBuiltinFunction(BuiltinFuncEnum::Input))
+	{
+		auto f = []() {
+			auto result = string();
+			std::getline(std::cin, result);
+			return result;
+		};
+		return f();
+	} else if (node->Function() == GetBuiltinFunction(BuiltinFuncEnum::Print))
+	{
+		auto message = EvaluateExpression(node->Arguments()[0]);
+		std::cout << message.GetValue<string>();
+		return NullValue;
+	} else if (node->Function() == GetBuiltinFunction(BuiltinFuncEnum::Rnd))
+	{
+		auto max = EvaluateExpression(node->Arguments()[0]).GetValue<IntegerType>();
+		auto f = [max]() {
+			auto rd = std::random_device();
+			auto mt = std::mt19937(rd());
+			auto dist = std::uniform_int_distribution<IntegerType>(0, max);
+
+			return dist(mt);
+		};
+		return f();
+	} else
+	{
+		throw std::invalid_argument("Unexpected function " + node->Function().ToString());
 	}
 }
 

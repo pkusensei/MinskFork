@@ -53,16 +53,19 @@ DiagnosticBag::iterator DiagnosticBag::end()const
 void DiagnosticBag::AddRangeFront(DiagnosticBag & other)
 {
 	_diagnostics.insert(_diagnostics.begin(),
-						make_move_iterator(other._diagnostics.begin()), make_move_iterator(other._diagnostics.end()));
+						make_move_iterator(other._diagnostics.begin()),
+						make_move_iterator(other._diagnostics.end()));
 }
 
 void DiagnosticBag::AddRange(DiagnosticBag& other)
 {
 	_diagnostics.insert(_diagnostics.end(),
-						make_move_iterator(other._diagnostics.begin()), make_move_iterator(other._diagnostics.end()));
+						make_move_iterator(other._diagnostics.begin()),
+						make_move_iterator(other._diagnostics.end()));
 }
 
-void DiagnosticBag::ReportInvalidNumber(const TextSpan& span, const string & text, const TypeSymbol & type)
+void DiagnosticBag::ReportInvalidNumber(const TextSpan& span, const string & text,
+										const TypeSymbol & type)
 {
 	auto message = "The number " + text + " is not valid " + type.ToString();
 	Report(span, message);
@@ -81,7 +84,8 @@ void DiagnosticBag::ReportUnterminatedString(const TextSpan & span)
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span, const SyntaxKind& actualKind, const SyntaxKind& expectedKind)
+void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span, const SyntaxKind& actualKind,
+										  const SyntaxKind& expectedKind)
 {
 	string message{"Unexpected token <"};
 	message += GetSyntaxKindName(actualKind) + ">, expected <" + GetSyntaxKindName(expectedKind) + ">.";
@@ -95,14 +99,16 @@ void DiagnosticBag::ReportUndefinedName(const TextSpan & span, const string & na
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportCannotConvert(const TextSpan & span, const TypeSymbol & fromType, const TypeSymbol & toType)
+void DiagnosticBag::ReportCannotConvert(const TextSpan & span, const TypeSymbol & fromType,
+										const TypeSymbol & toType)
 {
 	string message("Cannot convert type '");
 	message += fromType.ToString() + "' to '" + toType.ToString() + "'.";
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportUndefinedUnaryOperator(const TextSpan & span, const string & operatorText, const TypeSymbol & operandType)
+void DiagnosticBag::ReportUndefinedUnaryOperator(const TextSpan & span, const string & operatorText,
+												 const TypeSymbol & operandType)
 {
 	string message{"Unary operator '"};
 	message += operatorText + "' is not defined for type '" + operandType.ToString() + "'.";
@@ -113,7 +119,8 @@ void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan & span, const s
 												  const TypeSymbol& leftType, const TypeSymbol& rightType)
 {
 	string message{"Binary operator '"};
-	message += operatorText + "' is not defined for types '" + leftType.ToString() + "' and '" + rightType.ToString() + "'.";
+	message += operatorText + "' is not defined for types '" + leftType.ToString() + "' and '"
+		+ rightType.ToString() + "'.";
 	Report(span, message);
 }
 
@@ -131,14 +138,47 @@ void DiagnosticBag::ReportCannotAssign(const TextSpan & span, const string & nam
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const SyntaxKind & kind)
+void DiagnosticBag::ReportUndefinedFunction(const TextSpan & span, const string & name)
+{
+	string message("Function '");
+	message += name + "' doesn't exist.";
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportWrongArgumentCount(const TextSpan & span, const string & name,
+											 size_t expectedCount, size_t actualCount)
+{
+	string message("Function '");
+	message += name + "' requires " + std::to_string(expectedCount)
+		+ " arguments but was given " + std::to_string(actualCount) + ".";
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportWrongArgumentType(const TextSpan & span, const string & name, 
+											const TypeSymbol & expectedType, const TypeSymbol & actualType)
+{
+	string message("Parameter '");
+	message += name + "' requires a value of type '" + expectedType.ToString()
+		+ "' but was given '" + actualType.ToString() + "'.";
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportExpressionMustHaveValue(const TextSpan & span)
+{
+	string message("Expression must have a value.");
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(const TextSpan & span, const string & operatorText,
+															  const SyntaxKind & kind)
 {
 	string message{"Operator '"};
 	message += operatorText + "' is not defined for expression '" + GetSyntaxKindName(kind) + "'.";
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportVariableNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const TypeSymbol & variableType)
+void DiagnosticBag::ReportVariableNotSupportPostfixOperator(const TextSpan & span, const string & operatorText,
+															const TypeSymbol & variableType)
 {
 	string message{"Operator '"};
 	message += operatorText + "' is not defined for type '" + variableType.ToString() + "'.";

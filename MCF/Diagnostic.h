@@ -49,13 +49,24 @@ public:
 	void ReportInvalidNumber(const TextSpan& span, const string& text, const TypeSymbol& type);
 	void ReportBadCharacter(size_t position, char character);
 	void ReportUnterminatedString(const TextSpan& span);
-	void ReportUnexpectedToken(const TextSpan& span, const SyntaxKind& actualKind, const SyntaxKind& expectedKind);
+	void ReportUnexpectedToken(const TextSpan& span, const SyntaxKind& actualKind, 
+							   const SyntaxKind& expectedKind);
 	void ReportUndefinedName(const TextSpan& span, const string& name);
-	void ReportCannotConvert(const TextSpan& span, const TypeSymbol& fromType, const TypeSymbol& toType);
-	void ReportUndefinedUnaryOperator(const TextSpan& span, const string& operatorText, const TypeSymbol& operandType);
-	void ReportUndefinedBinaryOperator(const TextSpan& span, const string& operatorText, const TypeSymbol& leftType, const TypeSymbol& rightType);
+	void ReportCannotConvert(const TextSpan& span, const TypeSymbol& fromType, 
+							 const TypeSymbol& toType);
+	void ReportUndefinedUnaryOperator(const TextSpan& span, const string& operatorText, 
+									  const TypeSymbol& operandType);
+	void ReportUndefinedBinaryOperator(const TextSpan& span, const string& operatorText, 
+									   const TypeSymbol& leftType, const TypeSymbol& rightType);
 	void ReportVariableAlreadyDeclared(const TextSpan& span, const string& name);
 	void ReportCannotAssign(const TextSpan& span, const string& name);
+	
+	void ReportUndefinedFunction(const TextSpan& span, const string& name);
+	void ReportWrongArgumentCount(const TextSpan& span, const string& name, 
+								  size_t expectedCount, size_t actualCount);
+	void ReportWrongArgumentType(const TextSpan& span, const string& name,
+								 const TypeSymbol& expectedType, const TypeSymbol& actualType);
+	void ReportExpressionMustHaveValue(const TextSpan& span);
 
 	void ReportExpressionNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const SyntaxKind& kind);
 	void ReportVariableNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const TypeSymbol& variableType);
