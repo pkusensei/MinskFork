@@ -88,7 +88,7 @@ bool SyntaxToken::operator!=(const SyntaxToken & other) const noexcept
 
 const vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 {
-	return vector<const SyntaxNode*>(0);
+	return vector<const SyntaxNode*>();
 }
 
 SyntaxToken SyntaxToken::Clone() const

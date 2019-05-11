@@ -5,12 +5,8 @@
 
 namespace MCF {
 
-const vector<SyntaxKind> GetAllSyntaxKinds()
-{
-	return GetAllEnumValue<SyntaxKind>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
-}
-
-const vector<SyntaxKind> AllSyntaxKinds = GetAllSyntaxKinds();
+const vector<SyntaxKind> AllSyntaxKinds
+	= GetAllEnumValue<SyntaxKind>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
 
 string GetSyntaxKindName(const SyntaxKind& kind)
 {

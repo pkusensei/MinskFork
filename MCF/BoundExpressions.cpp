@@ -1,0 +1,339 @@
+#include "stdafx.h"
+#include "BoundExpressions.h"
+
+namespace MCF {
+
+string GetEnumText(const BoundUnaryOperatorKind & kind)
+{
+	switch (kind)
+	{
+		case BoundUnaryOperatorKind::Identity:
+			return "Identity";
+		case BoundUnaryOperatorKind::Negation:
+			return "Negation";
+		case BoundUnaryOperatorKind::LogicalNegation:
+			return "LogicalNegation";
+		case BoundUnaryOperatorKind::OnesComplement:
+			return "OnesComplement";
+
+		default:
+			return string();
+	}
+}
+
+string GetEnumText(const BoundBinaryOperatorKind & kind)
+{
+	switch (kind)
+	{
+		case BoundBinaryOperatorKind::Addition:
+			return "Addition";
+		case BoundBinaryOperatorKind::Subtraction:
+			return "Subtraction";
+		case BoundBinaryOperatorKind::Multiplication:
+			return "Multiplication";
+		case BoundBinaryOperatorKind::Division:
+			return "Division";
+		case BoundBinaryOperatorKind::Modulus:
+			return "Modulus";
+		case BoundBinaryOperatorKind::LogicalAnd:
+			return "LogicalAnd";
+		case BoundBinaryOperatorKind::LogicalOr:
+			return "LogicalOr";
+		case BoundBinaryOperatorKind::BitwiseAnd:
+			return "BitwiseAnd";
+		case BoundBinaryOperatorKind::BitwiseOr:
+			return "BitwiseOr";
+		case BoundBinaryOperatorKind::BitwiseXor:
+			return "BitwiseXor";
+		case BoundBinaryOperatorKind::Equals:
+			return "Equals";
+		case BoundBinaryOperatorKind::NotEquals:
+			return "NotEquals";
+		case BoundBinaryOperatorKind::Less:
+			return "Less";
+		case BoundBinaryOperatorKind::LessOrEquals:
+			return "LessOrEquals";
+		case BoundBinaryOperatorKind::Greater:
+			return "Greater";
+		case BoundBinaryOperatorKind::GreaterOrEquals:
+			return "GreaterOrEquals";
+
+		default:
+			return string();
+	}
+}
+
+string GetEnumText(const BoundPostfixOperatorEnum & kind)
+{
+	switch (kind)
+	{
+		case BoundPostfixOperatorEnum::Increment:
+			return "Increment";
+		case BoundPostfixOperatorEnum::Decrement:
+			return "Decrement";
+		default:
+			return string();
+	}
+}
+
+const vector<const BoundNode*> BoundExpression::GetChildren() const
+{
+	return vector<const BoundNode*>();
+}
+
+const vector<std::pair<string, string>> BoundErrorExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Type", Type().Name())
+	};
+}
+
+BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
+									   const TypeSymbol& operandType, const TypeSymbol& resultType)
+	:_syntaxKind(synKind), _kind(kind), _operandType(operandType), _resultType(resultType)
+{
+}
+
+BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
+									   const TypeSymbol& operandType)
+	: BoundUnaryOperator(synKind, kind, operandType, operandType)
+{
+}
+
+BoundUnaryOperator::BoundUnaryOperator()
+	: BoundUnaryOperator(SyntaxKind::BadToken, BoundUnaryOperatorKind::Identity, TypeSymbol::GetType(TypeEnum::Error))
+{
+	_isUseful = false;
+}
+
+const vector<BoundUnaryOperator>& BoundUnaryOperator::Operators()
+{
+	static const auto operators = vector<BoundUnaryOperator>{
+	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation, TypeSymbol::GetType(TypeEnum::Bool)),
+	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity, TypeSymbol::GetType(TypeEnum::Int)),
+	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation, TypeSymbol::GetType(TypeEnum::Int)),
+	BoundUnaryOperator(SyntaxKind::TildeToken, BoundUnaryOperatorKind::OnesComplement, TypeSymbol::GetType(TypeEnum::Int))
+	};
+
+	return operators;
+}
+
+BoundUnaryOperator BoundUnaryOperator::Bind(const enum SyntaxKind& synKind, const TypeSymbol& type)
+{
+	for (const auto& op : Operators())
+	{
+		if (op.SyntaxKind() == synKind && op.OperandType() == type)
+			return op;
+	}
+	return BoundUnaryOperator();
+}
+
+BoundUnaryExpression::BoundUnaryExpression(const BoundUnaryOperator & op, const unique_ptr<BoundExpression>& operand)
+	:_op(op),
+	_operand(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(operand)))
+{
+}
+
+const vector<const BoundNode*> BoundUnaryExpression::GetChildren() const
+{
+	return vector<const BoundNode*>{
+		_operand.get()
+	};
+}
+
+const vector<std::pair<string, string>> BoundUnaryExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Type", Type().Name())
+	};
+}
+
+BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
+										 const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result)
+	: _syntaxKind(synKind), _kind(kind), _leftType(left), _rightType(right), _resultType(result)
+{
+}
+
+BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
+										 const TypeSymbol& operandType, const TypeSymbol& resultType)
+	: BoundBinaryOperator(synKind, kind, operandType, operandType, resultType)
+{
+}
+
+BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, const TypeSymbol& type)
+	: BoundBinaryOperator(synKind, kind, type, type, type)
+{
+}
+
+BoundBinaryOperator::BoundBinaryOperator()
+	: BoundBinaryOperator(SyntaxKind::BadToken, BoundBinaryOperatorKind::Addition, TypeSymbol::GetType(TypeEnum::Error))
+{
+	_isUseful = false;
+}
+
+const vector<BoundBinaryOperator>& BoundBinaryOperator::Operators()
+{
+	static const auto operators = vector<BoundBinaryOperator>{
+		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction, TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication, TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division, TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus, TypeSymbol::GetType(TypeEnum::Int)),
+
+		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, TypeSymbol::GetType(TypeEnum::Int)),
+
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less, TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals, TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater, TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals, TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+
+		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd, TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr, TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, TypeSymbol::GetType(TypeEnum::Bool)),
+
+		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, TypeSymbol::GetType(TypeEnum::String))
+	};
+
+	return operators;
+}
+
+BoundBinaryOperator BoundBinaryOperator::Bind(const enum SyntaxKind& synKind, const TypeSymbol& leftType, const TypeSymbol& rightType)
+{
+	for (const auto& op : Operators())
+	{
+		if (op.SyntaxKind() == synKind && op.LeftType() == leftType && op.RightType() == rightType)
+			return op;
+	}
+	return BoundBinaryOperator();
+}
+
+BoundBinaryExpression::BoundBinaryExpression(const unique_ptr<BoundExpression>& left, const BoundBinaryOperator & op, const unique_ptr<BoundExpression>& right)
+	:_left(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(left))),
+	_right(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(right))),
+	_op(op)
+{
+}
+
+const vector<const BoundNode*> BoundBinaryExpression::GetChildren() const
+{
+	return vector<const BoundNode*>{
+		_left.get(),
+			_right.get()
+	};
+}
+
+const vector<std::pair<string, string>> BoundBinaryExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Type", Type().Name())
+	};
+}
+
+BoundAssignmentExpression::BoundAssignmentExpression(const VariableSymbol & variable, const unique_ptr<BoundExpression>& expression)
+	:_variable(variable),
+	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
+{
+}
+
+const vector<const BoundNode*> BoundAssignmentExpression::GetChildren() const
+{
+	return vector<const BoundNode*>{
+		_expression.get()
+	};
+}
+
+const vector<std::pair<string, string>> BoundAssignmentExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Variable", Variable().ToString()),
+			std::pair<string, string>("Type", Type().Name())
+	};
+}
+
+BoundLiteralExpression::BoundLiteralExpression(const ValueType & value)
+	: _value(value)
+{
+}
+
+const vector<std::pair<string, string>> BoundLiteralExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Value", Value().ToString()),
+			std::pair<string, string>("Type", Type().Name())
+	};
+}
+
+BoundVariableExpression::BoundVariableExpression(const VariableSymbol & variable)
+	: _variable(variable)
+{
+}
+
+const vector<std::pair<string, string>> BoundVariableExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Variable", Variable().ToString()),
+			std::pair<string, string>("Type", Type().Name())
+	};
+}
+
+BoundCallExpression::BoundCallExpression(const FunctionSymbol & function,
+										 const vector<unique_ptr<BoundExpression>>& arguments)
+	:_function(function),
+	_arguments(std::move(std::remove_const_t<vector<unique_ptr<BoundExpression>>&>(arguments)))
+{
+}
+
+const vector<const BoundNode*> BoundCallExpression::GetChildren() const
+{
+	auto result = vector<const BoundNode*>();
+	for (const auto& it : _arguments)
+		result.emplace_back(it.get());
+	return result;
+}
+
+const vector<std::pair<string, string>> BoundCallExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Type", Type().Name())
+	};
+}
+
+const vector<BoundExpression*> BoundCallExpression::Arguments() const
+{
+	auto result = vector<BoundExpression*>();
+	for (const auto& it : _arguments)
+		result.emplace_back(it.get());
+	return result;
+}
+
+BoundPostfixExpression::BoundPostfixExpression(const VariableSymbol & variable,
+											   const BoundPostfixOperatorEnum& kind,
+											   const unique_ptr<BoundExpression>& expression)
+	:_variable(variable), _kind(kind),
+	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
+{
+}
+
+const vector<const BoundNode*> BoundPostfixExpression::GetChildren() const
+{
+	return vector<const BoundNode*>{_expression.get()};
+}
+
+const vector<std::pair<string, string>> BoundPostfixExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Variable", Variable().ToString()),
+			std::pair<string, string>("Type", Type().Name()),
+			std::pair<string, string>("OperatorKind", GetEnumText(OperatorKind()))
+	};
+}
+
+}//MCF

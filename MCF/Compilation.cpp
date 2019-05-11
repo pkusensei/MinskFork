@@ -4,8 +4,11 @@
 #include <iostream>
 #include <random>
 
-#include "Diagnostic.h"
 #include "Binding.h"
+#include "BoundLabel.h"
+#include "BoundExpressions.h"
+#include "BoundStatements.h"
+#include "Diagnostic.h"
 #include "Syntax.h"
 
 namespace MCF {

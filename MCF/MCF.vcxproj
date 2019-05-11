@@ -160,6 +160,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Binding.h" />
+    <ClInclude Include="BoundExpressions.h" />
+    <ClInclude Include="BoundLabel.h" />
+    <ClInclude Include="BoundNode.h" />
+    <ClInclude Include="BoundStatements.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="Compilation.h" />
     <ClInclude Include="Diagnostic.h" />
@@ -174,6 +178,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Binding.cpp" />
+    <ClCompile Include="BoundExpressions.cpp" />
+    <ClCompile Include="BoundNode.cpp" />
+    <ClCompile Include="BoundStatements.cpp" />
     <ClCompile Include="Compilation.cpp" />
     <ClCompile Include="Diagnostic.cpp" />
     <ClCompile Include="dllmain.cpp" />
