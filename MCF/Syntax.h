@@ -221,12 +221,12 @@ public:
 	{
 		return (_nodesAndSeparators.size() + 1) / 2;
 	}
-	
+
 	const T* operator[](size_t index)const
 	{
 		return _nodesAndSeparators.at(index * 2).get();
 	}
-	
+
 	const SyntaxToken* GetSeparator(size_t index)const
 	{
 		if (index == size() - 1) return nullptr;
@@ -475,7 +475,7 @@ public:
 class Parser final
 {
 private:
-	const SourceText* _text;
+	[[maybe_unused]] const SourceText* _text;
 	vector<SyntaxToken> _tokens;
 	size_t _position;
 	unique_ptr<DiagnosticBag> _diagnostics;

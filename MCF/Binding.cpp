@@ -18,7 +18,8 @@ BoundScope::BoundScope(const unique_ptr<BoundScope>& parent)
 
 bool BoundScope::TryDeclareVariable(const VariableSymbol & variable)
 {
-	if (_variables.find(variable.Name()) == _variables.end() && !variable.Name().empty())
+	if (_variables.find(variable.Name()) == _variables.end()
+		&& !variable.Name().empty())
 	{
 		_variables.emplace(variable.Name(), variable);
 		return true;
@@ -28,12 +29,13 @@ bool BoundScope::TryDeclareVariable(const VariableSymbol & variable)
 
 bool BoundScope::TryLookupVariable(const string & name, VariableSymbol & variable)const
 {
-	if (_variables.find(name) != _variables.end())
+	if (_variables.find(name) != _variables.end()
+		&& !name.empty())
 	{
 		variable = _variables.at(name);
 		return true;
 	}
-	if (_parent == nullptr || name.empty())
+	if (_parent == nullptr)
 		return false;
 	return _parent->TryLookupVariable(name, variable);
 }
@@ -59,12 +61,13 @@ bool BoundScope::TryDeclareFunction(const FunctionSymbol & function)
 
 bool BoundScope::TryLookupFunction(const string & name, FunctionSymbol & function) const
 {
-	if (_functions.find(name) != _functions.end())
+	if (_functions.find(name) != _functions.end()
+		&& !name.empty())
 	{
 		function = _functions.at(name);
 		return true;
 	}
-	if (_parent == nullptr || name.empty())
+	if (_parent == nullptr)
 		return false;
 	return _parent->TryLookupFunction(name, function);
 }
@@ -204,10 +207,13 @@ unique_ptr<BoundStatement> Binder::BindExpressionStatement(const ExpressionState
 unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * syntax, const TypeSymbol & targetType)
 {
 	auto result = BindExpression(syntax);
-	if (targetType != TypeSymbol::GetType(TypeEnum::Error) &&
-		result->Type() != TypeSymbol::GetType(TypeEnum::Error)
+	if (targetType != TypeSymbol::GetType(TypeEnum::Error)
+		&& result->Type() != TypeSymbol::GetType(TypeEnum::Error)
 		&& result->Type() != targetType)
+	{
 		_diagnostics->ReportCannotConvert(syntax->Span(), result->Type(), targetType);
+		return make_unique<BoundErrorExpression>();
+	}
 	return result;
 }
 
@@ -340,7 +346,8 @@ unique_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyn
 		return make_unique<BoundUnaryExpression>(boundOperator, boundOperand);
 	} else
 	{
-		_diagnostics->ReportUndefinedUnaryOperator(syntax->OperatorToken().Span(), syntax->OperatorToken().Text(), boundOperand->Type());
+		_diagnostics->ReportUndefinedUnaryOperator(syntax->OperatorToken().Span(), 
+												   syntax->OperatorToken().Text(), boundOperand->Type());
 		return make_unique<BoundErrorExpression>();
 	}
 }
@@ -349,7 +356,8 @@ unique_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 {
 	auto boundLeft = BindExpression(syntax->Left());
 	auto boundRight = BindExpression(syntax->Right());
-	if (boundLeft->Type() == TypeSymbol::GetType(TypeEnum::Error) || boundRight->Type() == TypeSymbol::GetType(TypeEnum::Error))
+	if (boundLeft->Type() == TypeSymbol::GetType(TypeEnum::Error) 
+		|| boundRight->Type() == TypeSymbol::GetType(TypeEnum::Error))
 		return make_unique<BoundErrorExpression>();
 
 	auto boundOperator = BoundBinaryOperator::Bind(syntax->OperatorToken().Kind(), boundLeft->Type(), boundRight->Type());
@@ -381,7 +389,7 @@ unique_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	}
 	if (syntax->Arguments()->size() != function.Parameters().size())
 	{
-		_diagnostics->ReportWrongArgumentCount(syntax->Span(), function.Name(), 
+		_diagnostics->ReportWrongArgumentCount(syntax->Span(), function.Name(),
 											   function.Parameters().size(), syntax->Arguments()->size());
 		return make_unique<BoundErrorExpression>();
 	}
@@ -419,20 +427,24 @@ unique_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	}
 	if (boundExpression->Type() != variable.Type())
 	{
-		_diagnostics->ReportCannotConvert(syntax->Expression()->Span(), boundExpression->Type(), variable.Type());
+		_diagnostics->ReportCannotConvert(syntax->Expression()->Span(), 
+										  boundExpression->Type(), variable.Type());
 		return make_unique<BoundErrorExpression>();
 	}
 	if (variable.Type() != TypeSymbol::GetType(TypeEnum::Int))
 	{
-		_diagnostics->ReportVariableNotSupportPostfixOperator(syntax->Expression()->Span(), syntax->Op().Text(), variable.Type());
+		_diagnostics->ReportVariableNotSupportPostfixOperator(syntax->Expression()->Span(), 
+															  syntax->Op().Text(), variable.Type());
 		return make_unique<BoundErrorExpression>();
 	}
 	switch (syntax->Op().Kind())
 	{
 		case SyntaxKind::PlusPlusToken:
-			return make_unique<BoundPostfixExpression>(variable, BoundPostfixOperatorEnum::Increment, boundExpression);
+			return make_unique<BoundPostfixExpression>(variable, BoundPostfixOperatorEnum::Increment, 
+													   boundExpression);
 		case SyntaxKind::MinusMinusToken:
-			return make_unique<BoundPostfixExpression>(variable, BoundPostfixOperatorEnum::Decrement, boundExpression);
+			return make_unique<BoundPostfixExpression>(variable, BoundPostfixOperatorEnum::Decrement, 
+													   boundExpression);
 		default:
 			throw std::invalid_argument("Unexpected operator token " + GetSyntaxKindName(syntax->Op().Kind()));
 	}
@@ -716,7 +728,6 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteCallExpression(const Bound
 		result.emplace_back(std::move(newArg));
 	}
 	return make_unique<BoundCallExpression>(node->Function(), result);
-	return nullptr;
 }
 
 unique_ptr<BoundExpression> BoundTreeRewriter::RewritePostfixExpression(const BoundPostfixExpression * node)

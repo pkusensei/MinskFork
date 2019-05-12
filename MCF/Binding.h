@@ -174,6 +174,7 @@ private:
 	Lowerer() = default;
 	BoundLabel GenerateLabel();
 	unique_ptr<BoundBlockStatement> Flatten(unique_ptr<BoundStatement>& statement);
+
 protected:
 	unique_ptr<BoundStatement> RewriteIfStatement(const BoundIfStatement* node)override;
 	unique_ptr<BoundStatement> RewriteWhileStatement(const BoundWhileStatement* node)override;

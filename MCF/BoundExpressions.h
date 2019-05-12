@@ -168,6 +168,7 @@ class BoundAssignmentExpression final : public BoundExpression
 private:
 	VariableSymbol _variable;
 	unique_ptr<BoundExpression> _expression;
+
 public:
 	BoundAssignmentExpression(const VariableSymbol& variable, const unique_ptr<BoundExpression>& expression);
 	BoundAssignmentExpression(BoundAssignmentExpression&&) = default;
@@ -187,6 +188,7 @@ class BoundLiteralExpression final : public BoundExpression
 {
 private:
 	ValueType _value;
+
 public:
 	explicit BoundLiteralExpression(const ValueType& value);
 	BoundLiteralExpression(BoundLiteralExpression&&) = default;
@@ -204,6 +206,7 @@ class BoundVariableExpression final : public BoundExpression
 {
 private:
 	VariableSymbol _variable;
+
 public:
 	BoundVariableExpression(const VariableSymbol& variable);
 	BoundVariableExpression(BoundVariableExpression&&) = default;
@@ -245,8 +248,10 @@ private:
 	VariableSymbol _variable;
 	BoundPostfixOperatorEnum _kind;
 	unique_ptr<BoundExpression> _expression;
+
 public:
-	BoundPostfixExpression(const VariableSymbol& variable, const BoundPostfixOperatorEnum& kind, const unique_ptr<BoundExpression>& expression);
+	BoundPostfixExpression(const VariableSymbol& variable, 
+						   const BoundPostfixOperatorEnum& kind, const unique_ptr<BoundExpression>& expression);
 	BoundPostfixExpression(BoundPostfixExpression&&) = default;
 	BoundPostfixExpression& operator=(BoundPostfixExpression&&) = default;
 
