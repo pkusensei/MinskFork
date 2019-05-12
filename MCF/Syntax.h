@@ -74,6 +74,7 @@ private:
 	void ReadWhiteSpace();
 	void ReadNumberToken();
 	void ReadIdentifierOrKeyword();
+
 public:
 	explicit Lexer(const SourceText& text);
 
@@ -232,8 +233,9 @@ public:
 		return _nodesAndSeparators.at(index * 2 + 1).get();
 	}
 
-	vector<const SyntaxNode*> GetWithSeparators()const
+	const vector<const SyntaxNode*> GetWithSeparators()const
 	{
+		//TODO replace with template code
 		auto result = vector<const SyntaxNode*>();
 		for (const auto& it : _nodesAndSeparators)
 			result.emplace_back(it.get());

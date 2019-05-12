@@ -7,6 +7,7 @@
 
 #include "helpers.h"
 #include "Diagnostic.h"
+#include "ReflectionHelper.h"
 #include "SourceText.h"
 
 namespace MCF {
@@ -69,7 +70,7 @@ string SyntaxNode::ToString() const
 }
 
 #pragma region SyntaxToken
-SyntaxToken::SyntaxToken(const SyntaxKind& kind, size_t position, 
+SyntaxToken::SyntaxToken(const SyntaxKind& kind, size_t position,
 						 const string& text, const ValueType& value)
 	:_kind(kind), _position(position), _text(text), _value(value)
 {
@@ -379,12 +380,7 @@ AssignmentExpressionSyntax::AssignmentExpressionSyntax(const SyntaxToken & ident
 
 const vector<const SyntaxNode*> AssignmentExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>{
-		&_identifierToken,
-		&_equalsToken,
-		_expression.get()
-	};
-	return result;
+	return MakeVecOfRaw<const SyntaxNode>(_identifierToken, _equalsToken, _expression);
 }
 
 UnaryExpressionSyntax::UnaryExpressionSyntax(const SyntaxToken & operatorToken,
@@ -396,11 +392,7 @@ UnaryExpressionSyntax::UnaryExpressionSyntax(const SyntaxToken & operatorToken,
 
 const vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>{
-		&_operatorToken,
-		_operand.get()
-	};
-	return result;
+	return MakeVecOfRaw<const SyntaxNode>(_operatorToken, _operand);
 }
 
 BinaryExpressionSyntax::BinaryExpressionSyntax(const unique_ptr<ExpressionSyntax>& left, const SyntaxToken & operatorToken,
@@ -413,12 +405,7 @@ BinaryExpressionSyntax::BinaryExpressionSyntax(const unique_ptr<ExpressionSyntax
 
 const vector<const SyntaxNode*> BinaryExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>{
-		_left.get(),
-		&_operatorToken,
-		_right.get(),
-	};
-	return result;
+	return MakeVecOfRaw<const SyntaxNode>(_left, _operatorToken, _right);
 }
 
 ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(const SyntaxToken & open, const unique_ptr<ExpressionSyntax>& expression,
@@ -430,12 +417,8 @@ ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(const SyntaxToken &
 
 const vector<const SyntaxNode*> ParenthesizedExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>{
-		&_openParenthesisToken,
-		_expression.get(),
-		&_closeParenthesisToken,
-	};
-	return result;
+	return MakeVecOfRaw<const SyntaxNode>(_openParenthesisToken, _expression,
+										  _closeParenthesisToken);
 }
 
 LiteralExpressionSyntax::LiteralExpressionSyntax(const SyntaxToken& literalToken, const ValueType& value)
@@ -450,8 +433,7 @@ LiteralExpressionSyntax::LiteralExpressionSyntax(const SyntaxToken& literalToken
 
 const vector<const SyntaxNode*> LiteralExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>{&_literalToken};
-	return result;
+	return MakeVecOfRaw<const SyntaxNode>(_literalToken);
 }
 
 NameExpressionSyntax::NameExpressionSyntax(const SyntaxToken & identifier)
@@ -461,8 +443,7 @@ NameExpressionSyntax::NameExpressionSyntax(const SyntaxToken & identifier)
 
 const vector<const SyntaxNode*> NameExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>{&_identifierToken};
-	return result;
+	return MakeVecOfRaw<const SyntaxNode>(_identifierToken);
 }
 
 PostfixExpressionSyntax::PostfixExpressionSyntax(const SyntaxToken & identifier, const SyntaxToken& op, const unique_ptr<ExpressionSyntax>& expression)
@@ -481,20 +462,17 @@ CallExpressionSyntax::CallExpressionSyntax(const SyntaxToken & identifier, const
 
 const vector<const SyntaxNode*> CallExpressionSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>{
-		&_identifier, &_openParenthesisToken
-	};
+	auto result = MakeVecOfRaw<const SyntaxNode>(_identifier, _openParenthesisToken);
 	auto nodes = _arguments.GetWithSeparators();
 	result.insert(result.end(), nodes.begin(), nodes.end());
-	result.emplace_back(&_closeParenthesisToken);
+	auto rest = MakeVecOfRaw<const SyntaxNode>(_closeParenthesisToken);
+	result.insert(result.end(), rest.begin(), rest.end());
 	return result;
 }
 
 const vector<const SyntaxNode*> PostfixExpressionSyntax::GetChildren() const
 {
-	return vector<const SyntaxNode*>{
-		&_identifier, &_op, _expression.get()
-	};
+	return MakeVecOfRaw<const SyntaxNode>(_identifier, _op, _expression);
 }
 
 #pragma endregion
@@ -510,11 +488,11 @@ BlockStatementSyntax::BlockStatementSyntax(const SyntaxToken & open, const vecto
 
 const vector<const SyntaxNode*> BlockStatementSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>();
-	result.emplace_back(&_openBraceToken);
-	for (const auto& it : _statements)
-		result.emplace_back(it.get());
-	result.emplace_back(&_closeBraceToken);
+	auto result = MakeVecOfRaw<const SyntaxNode>(_openBraceToken);
+	auto rest = MakeVecOfRaw<const SyntaxNode, const StatementSyntax>(_statements.begin(), _statements.end());
+	result.insert(result.end(), rest.begin(), rest.end());
+	auto close = MakeVecOfRaw<const SyntaxNode>(_closeBraceToken);
+	result.insert(result.end(), close.begin(), close.end());
 	return result;
 }
 
@@ -535,13 +513,8 @@ VariableDeclarationSyntax::VariableDeclarationSyntax(const SyntaxToken & keyword
 
 const vector<const SyntaxNode*> VariableDeclarationSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>{
-		&_keyword,
-		&_identifier,
-		&_equalsToken,
-		_initializer.get(),
-	};
-	return result;
+	return MakeVecOfRaw<const SyntaxNode>(_keyword, _identifier,
+										  _equalsToken, _initializer);
 }
 
 
@@ -553,10 +526,7 @@ ElseClauseSyntax::ElseClauseSyntax(const SyntaxToken & elseKeyword, const unique
 
 const vector<const SyntaxNode*> ElseClauseSyntax::GetChildren() const
 {
-	return vector<const SyntaxNode*>{
-		&_elseKeyword,
-			_elseStatement.get()
-	};
+	return MakeVecOfRaw<const SyntaxNode>(_elseKeyword, _elseStatement);
 }
 
 IfStatementSyntax::IfStatementSyntax(const SyntaxToken & ifKeyword, const unique_ptr<ExpressionSyntax>& condition,
@@ -570,12 +540,8 @@ IfStatementSyntax::IfStatementSyntax(const SyntaxToken & ifKeyword, const unique
 
 const vector<const SyntaxNode*> IfStatementSyntax::GetChildren() const
 {
-	return vector<const SyntaxNode*>{
-		&_ifKeyword,
-			_condition.get(),
-			_thenStatement.get(),
-			_elseClause.get()
-	};
+	return MakeVecOfRaw<const SyntaxNode>(_ifKeyword, _condition,
+										  _thenStatement, _elseClause);
 }
 
 WhileStatementSyntax::WhileStatementSyntax(const SyntaxToken & whileKeyword, const unique_ptr<ExpressionSyntax>& condition,
@@ -588,11 +554,7 @@ WhileStatementSyntax::WhileStatementSyntax(const SyntaxToken & whileKeyword, con
 
 const vector<const SyntaxNode*> WhileStatementSyntax::GetChildren() const
 {
-	return vector<const SyntaxNode*>{
-		&_whileKeyword,
-			_condition.get(),
-			_body.get()
-	};
+	return MakeVecOfRaw<const SyntaxNode>(_whileKeyword, _condition, _body);
 }
 
 ForStatementSyntax::ForStatementSyntax(const SyntaxToken & keyword, const SyntaxToken & identifier, const SyntaxToken & equals,
@@ -608,15 +570,8 @@ ForStatementSyntax::ForStatementSyntax(const SyntaxToken & keyword, const Syntax
 
 const vector<const SyntaxNode*> ForStatementSyntax::GetChildren() const
 {
-	return vector<const SyntaxNode*>{
-		&_keyword,
-			&_identifier,
-			&_equalsToken,
-			_lowerBound.get(),
-			&_toKeyword,
-			_upperBound.get(),
-			_body.get()
-	};
+	return MakeVecOfRaw<const SyntaxNode>(_keyword, _identifier, _equalsToken,
+										  _lowerBound, _toKeyword, _upperBound, _body);
 }
 
 ExpressionStatementSyntax::ExpressionStatementSyntax(const unique_ptr<ExpressionSyntax>& expression)
@@ -626,8 +581,7 @@ ExpressionStatementSyntax::ExpressionStatementSyntax(const unique_ptr<Expression
 
 const vector<const SyntaxNode*> ExpressionStatementSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>{_expression.get()};
-	return result;
+	return MakeVecOfRaw<const SyntaxNode>(_expression);
 }
 
 #pragma endregion
@@ -640,11 +594,7 @@ CompilationUnitSyntax::CompilationUnitSyntax(const unique_ptr<StatementSyntax>& 
 
 const vector<const SyntaxNode*> CompilationUnitSyntax::GetChildren() const
 {
-	auto result = vector<const SyntaxNode*>{
-		_statement.get(),
-		&_endOfFileToken,
-	};
-	return result;
+	return MakeVecOfRaw<const SyntaxNode>(_statement, _endOfFileToken);
 }
 
 Parser::Parser(const SourceText& text)

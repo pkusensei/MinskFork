@@ -30,7 +30,7 @@ ValueType Evaluator::Evaluate()
 	auto statements = _root->Statements();
 	for (size_t i = 0; i < statements.size(); ++i)
 	{
-		auto p = dynamic_cast<BoundLabelStatement*>(statements.at(i));
+		auto p = dynamic_cast<const BoundLabelStatement*>(statements.at(i));
 		if (p)
 			labelToIndex.emplace(p->Label(), i + 1);
 	}
@@ -43,7 +43,7 @@ ValueType Evaluator::Evaluate()
 		{
 			case BoundNodeKind::VariableDeclaration:
 			{
-				auto p = dynamic_cast<BoundVariableDeclaration*>(s);
+				auto p = dynamic_cast<const BoundVariableDeclaration*>(s);
 				if (p)
 				{
 					EvaluateVariableDeclaration(p);
@@ -53,7 +53,7 @@ ValueType Evaluator::Evaluate()
 			}
 			case BoundNodeKind::ExpressionStatement:
 			{
-				auto p = dynamic_cast<BoundExpressionStatement*>(s);
+				auto p = dynamic_cast<const BoundExpressionStatement*>(s);
 				if (p)
 				{
 					EvaluateExpressionStatement(p);
@@ -63,7 +63,7 @@ ValueType Evaluator::Evaluate()
 			}
 			case BoundNodeKind::GotoStatement:
 			{
-				auto gs = dynamic_cast<BoundGotoStatement*>(s);
+				auto gs = dynamic_cast<const BoundGotoStatement*>(s);
 				if (gs)
 				{
 					index = labelToIndex.at(gs->Label());
@@ -72,7 +72,7 @@ ValueType Evaluator::Evaluate()
 			}
 			case BoundNodeKind::ConditionalGotoStatement:
 			{
-				auto cgs = dynamic_cast<BoundConditionalGotoStatement*>(s);
+				auto cgs = dynamic_cast<const BoundConditionalGotoStatement*>(s);
 				if (cgs)
 				{
 					auto condition = EvaluateExpression(cgs->Condition()).GetValue<bool>();

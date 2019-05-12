@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "BoundExpressions.h"
 
+#include "ReflectionHelper.h"
+
 namespace MCF {
 
 string GetEnumText(const BoundUnaryOperatorKind & kind)
@@ -136,9 +138,7 @@ BoundUnaryExpression::BoundUnaryExpression(const BoundUnaryOperator & op, const 
 
 const vector<const BoundNode*> BoundUnaryExpression::GetChildren() const
 {
-	return vector<const BoundNode*>{
-		_operand.get()
-	};
+	return MakeVecOfRaw<const BoundNode>(_operand);
 }
 
 const vector<std::pair<string, string>> BoundUnaryExpression::GetProperties() const
@@ -224,10 +224,7 @@ BoundBinaryExpression::BoundBinaryExpression(const unique_ptr<BoundExpression>& 
 
 const vector<const BoundNode*> BoundBinaryExpression::GetChildren() const
 {
-	return vector<const BoundNode*>{
-		_left.get(),
-			_right.get()
-	};
+	return MakeVecOfRaw<const BoundNode>(_left, _right);
 }
 
 const vector<std::pair<string, string>> BoundBinaryExpression::GetProperties() const
@@ -245,9 +242,7 @@ BoundAssignmentExpression::BoundAssignmentExpression(const VariableSymbol & vari
 
 const vector<const BoundNode*> BoundAssignmentExpression::GetChildren() const
 {
-	return vector<const BoundNode*>{
-		_expression.get()
-	};
+	return MakeVecOfRaw<const BoundNode>(_expression);
 }
 
 const vector<std::pair<string, string>> BoundAssignmentExpression::GetProperties() const
@@ -324,7 +319,7 @@ BoundPostfixExpression::BoundPostfixExpression(const VariableSymbol & variable,
 
 const vector<const BoundNode*> BoundPostfixExpression::GetChildren() const
 {
-	return vector<const BoundNode*>{_expression.get()};
+	return MakeVecOfRaw<const BoundNode>(_expression);
 }
 
 const vector<std::pair<string, string>> BoundPostfixExpression::GetProperties() const

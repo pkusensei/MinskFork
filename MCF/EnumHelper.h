@@ -5,8 +5,9 @@
 namespace MCF {
 
 //HACK 
-//since there's no reflection on enum types
-//these helper functions help to iterate over enums
+//since there's no reflection 
+
+//these help to iterate over enums
 template<typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
 T& operator++(T& value)
 {
@@ -21,6 +22,7 @@ T& operator++(T& value, int c)
 	return ++value;
 }
 
+//collects all enum values into one vector
 template<typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
 decltype(auto) GetAllEnumValue(const T& start, const T& end)
 {
@@ -32,4 +34,4 @@ decltype(auto) GetAllEnumValue(const T& start, const T& end)
 	return result;
 }
 
-}
+}//MCF

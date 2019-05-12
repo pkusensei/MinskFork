@@ -2,6 +2,7 @@
 #include "BoundStatements.h"
 
 #include "BoundExpressions.h"
+#include "ReflectionHelper.h"
 
 namespace MCF {
 
@@ -22,18 +23,12 @@ BoundBlockStatement::BoundBlockStatement(const vector<unique_ptr<BoundStatement>
 
 const vector<const BoundNode*> BoundBlockStatement::GetChildren() const
 {
-	auto result = vector<const BoundNode*>();
-	for (const auto& it : _statements)
-		result.emplace_back(it.get());
-	return result;
+	return MakeVecOfRaw<const BoundNode, const BoundStatement>(_statements.begin(), _statements.end());
 }
 
-const vector<BoundStatement*> BoundBlockStatement::Statements() const
+const vector<const BoundStatement*> BoundBlockStatement::Statements() const
 {
-	auto result = vector<BoundStatement*>();
-	for (const auto& it : _statements)
-		result.emplace_back(it.get());
-	return result;
+	return MakeVecOfRaw<const BoundStatement, const BoundStatement>(_statements.begin(), _statements.end());
 }
 
 
@@ -52,9 +47,7 @@ const vector<std::pair<string, string>> BoundVariableDeclaration::GetProperties(
 
 const vector<const BoundNode*> BoundVariableDeclaration::GetChildren() const
 {
-	return vector<const BoundNode*>{
-		_initializer.get()
-	};
+	return MakeVecOfRaw<const BoundNode>(_initializer);
 }
 
 BoundIfStatement::BoundIfStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& thenStatement,
@@ -67,11 +60,7 @@ BoundIfStatement::BoundIfStatement(const unique_ptr<BoundExpression>& condition,
 
 const vector<const BoundNode*> BoundIfStatement::GetChildren() const
 {
-	return vector<const BoundNode*>{
-		_condition.get(),
-			_thenStatement.get(),
-			_elseStatement.get()
-	};
+	return MakeVecOfRaw<const BoundNode>(_condition, _thenStatement, _elseStatement);
 }
 
 BoundWhileStatement::BoundWhileStatement(const unique_ptr<BoundExpression>& condition,
@@ -83,10 +72,7 @@ BoundWhileStatement::BoundWhileStatement(const unique_ptr<BoundExpression>& cond
 
 const vector<const BoundNode*> BoundWhileStatement::GetChildren() const
 {
-	return vector<const BoundNode*>{
-		_condition.get(),
-			_body.get()
-	};
+	return MakeVecOfRaw<const BoundNode>(_condition, _body);
 }
 
 BoundForStatement::BoundForStatement(const VariableSymbol & variable, const unique_ptr<BoundExpression>& lowerBound,
@@ -107,11 +93,7 @@ const vector<std::pair<string, string>> BoundForStatement::GetProperties() const
 
 const vector<const BoundNode*> BoundForStatement::GetChildren() const
 {
-	return vector<const BoundNode*>{
-		_lowerBound.get(),
-			_upperBound.get(),
-			_body.get()
-	};
+	return MakeVecOfRaw<const BoundNode>(_lowerBound, _upperBound, _body);
 }
 
 BoundLabelStatement::BoundLabelStatement(const BoundLabel & label)
@@ -157,9 +139,7 @@ const vector<std::pair<string, string>> BoundConditionalGotoStatement::GetProper
 
 const vector<const BoundNode*> BoundConditionalGotoStatement::GetChildren() const
 {
-	return vector<const BoundNode*>{
-		_condition.get()
-	};
+	return MakeVecOfRaw<const BoundNode>(_condition);
 }
 
 BoundExpressionStatement::BoundExpressionStatement(const unique_ptr<BoundExpression>& expression)
@@ -169,9 +149,7 @@ BoundExpressionStatement::BoundExpressionStatement(const unique_ptr<BoundExpress
 
 const vector<const BoundNode*> BoundExpressionStatement::GetChildren() const
 {
-	return vector<const BoundNode*>{
-		_expression.get()
-	};
+	return MakeVecOfRaw<const BoundNode>(_expression);
 }
 
 }//MCF

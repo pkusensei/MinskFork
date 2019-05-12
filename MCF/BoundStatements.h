@@ -29,7 +29,7 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BlockStatement; }
 	const vector<const BoundNode*> GetChildren() const override;
 
-	const vector<BoundStatement*> Statements()const;
+	const vector<const BoundStatement*> Statements()const;
 };
 
 class BoundVariableDeclaration final :public BoundStatement
