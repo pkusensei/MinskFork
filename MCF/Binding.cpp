@@ -5,6 +5,7 @@
 
 #include "BoundExpressions.h"
 #include "BoundStatements.h"
+#include "Conversion.h"
 #include "Diagnostic.h"
 #include "Syntax.h"
 #include "SourceText.h"
@@ -374,6 +375,13 @@ unique_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 
 unique_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSyntax * syntax)
 {
+	if (syntax->Arguments()->size() == 1)
+	{
+		auto type = LookupType(syntax->Identifier().Text());
+		if (type != TypeSymbol::GetType(TypeEnum::Error))
+			return BindConversion(type, (*syntax->Arguments())[0]);
+	}
+
 	auto boundArguments = vector<unique_ptr<BoundExpression>>();
 	for (const auto& arg : *(syntax->Arguments()))
 	{
@@ -450,6 +458,18 @@ unique_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	}
 }
 
+unique_ptr<BoundExpression> Binder::BindConversion(const TypeSymbol & type, const ExpressionSyntax * syntax)
+{
+	auto expression = BindExpression(syntax);
+	auto conversion = Conversion::Classify(expression->Type(), type);
+	if (!conversion.Exists())
+	{
+		_diagnostics->ReportCannotConvert(syntax->Span(), expression->Type(), type);
+		return make_unique<BoundErrorExpression>();
+	}
+	return unique_ptr<BoundExpression>();
+}
+
 VariableSymbol Binder::BindVariable(const SyntaxToken & identifier, bool isReadOnly, const TypeSymbol & type)
 {
 	auto name = identifier.Text().empty() ? "?" : identifier.Text();
@@ -459,6 +479,14 @@ VariableSymbol Binder::BindVariable(const SyntaxToken & identifier, bool isReadO
 	if (declare && !_scope->TryDeclareVariable(variable))
 		_diagnostics->ReportVariableAlreadyDeclared(identifier.Span(), name);
 	return variable;
+}
+
+TypeSymbol Binder::LookupType(const string & name) const
+{
+	if (name == "bool") return TypeSymbol::GetType(TypeEnum::Bool);
+	else if (name == "int") return TypeSymbol::GetType(TypeEnum::Int);
+	else if (name == "string") return TypeSymbol::GetType(TypeEnum::String);
+	else return TypeSymbol::GetType(TypeEnum::Error);
 }
 
 unique_ptr<BoundScope> Binder::CreateParentScope(const BoundGlobalScope* previous)
@@ -672,6 +700,12 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(const BoundExpr
 			if (p) return RewriteCallExpression(p);
 			else break;
 		}
+		case BoundNodeKind::ConversionExpression:
+		{
+			auto p = dynamic_cast<const BoundConversionExpression*>(node);
+			if (p) return RewriteConversionExpression(p);
+			else break;
+		}
 		case BoundNodeKind::PostfixExpression:
 		{
 			auto p = dynamic_cast<const BoundPostfixExpression*>(node);
@@ -728,6 +762,12 @@ unique_ptr<BoundExpression> BoundTreeRewriter::RewriteCallExpression(const Bound
 		result.emplace_back(std::move(newArg));
 	}
 	return make_unique<BoundCallExpression>(node->Function(), result);
+}
+
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteConversionExpression(const BoundConversionExpression * node)
+{
+	auto expression = RewriteExpression(node->Expression());
+	return make_unique<BoundConversionExpression>(node->Type(), expression);
 }
 
 unique_ptr<BoundExpression> BoundTreeRewriter::RewritePostfixExpression(const BoundPostfixExpression * node)

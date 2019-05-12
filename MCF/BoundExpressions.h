@@ -2,9 +2,10 @@
 
 #include "BoundNode.h"
 #include "Symbols.h"
-#include "SyntaxKind.h"
 
 namespace MCF {
+
+enum class SyntaxKind;
 
 enum class BoundUnaryOperatorKind
 {
@@ -124,7 +125,8 @@ private:
 						const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result);
 	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
 						const TypeSymbol& operandType, const TypeSymbol& resultType);
-	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, const TypeSymbol& type);
+	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, 
+						const TypeSymbol& type);
 	BoundBinaryOperator();
 
 	static const vector<BoundBinaryOperator>& Operators();
@@ -148,7 +150,8 @@ private:
 	BoundBinaryOperator _op;
 
 public:
-	BoundBinaryExpression(const unique_ptr<BoundExpression>& left, const BoundBinaryOperator& op, const unique_ptr<BoundExpression>& right);
+	BoundBinaryExpression(const unique_ptr<BoundExpression>& left, 
+						  const BoundBinaryOperator& op, const unique_ptr<BoundExpression>& right);
 	BoundBinaryExpression(BoundBinaryExpression&&) = default;
 	BoundBinaryExpression& operator=(BoundBinaryExpression&&) = default;
 
@@ -239,7 +242,28 @@ public:
 	const vector<std::pair<string, string>> GetProperties() const override;
 
 	FunctionSymbol Function()const { return _function; }
-	const vector<BoundExpression*> Arguments()const;
+	const vector<const BoundExpression*> Arguments()const;
+};
+
+class BoundConversionExpression final :public BoundExpression
+{
+private:
+	TypeSymbol _type;
+	unique_ptr<BoundExpression> _expression;
+
+public:
+	BoundConversionExpression(const TypeSymbol& type,
+							  const unique_ptr<BoundExpression>& expression);
+	BoundConversionExpression(BoundConversionExpression&&) = default;
+	BoundConversionExpression& operator=(BoundConversionExpression&&) = default;
+
+	// Inherited via BoundExpression
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ConversionExpression; }
+	TypeSymbol Type() const override { return _type; }
+	const vector<const BoundNode*> GetChildren() const override;
+	const vector<std::pair<string, string>> GetProperties() const override;
+
+	const BoundExpression* Expression()const noexcept { return _expression.get(); }
 };
 
 class BoundPostfixExpression final :public BoundExpression

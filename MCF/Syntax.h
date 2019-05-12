@@ -224,7 +224,7 @@ public:
 
 	const T* operator[](size_t index)const
 	{
-		return _nodesAndSeparators.at(index * 2).get();
+		return dynamic_cast<const T*>(_nodesAndSeparators.at(index * 2).get());
 	}
 
 	const SyntaxToken* GetSeparator(size_t index)const

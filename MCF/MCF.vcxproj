@@ -166,6 +166,7 @@
     <ClInclude Include="BoundStatements.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="Compilation.h" />
+    <ClInclude Include="Conversion.h" />
     <ClInclude Include="Diagnostic.h" />
     <ClInclude Include="EnumHelper.h" />
     <ClInclude Include="ReflectionHelper.h" />
@@ -183,6 +184,7 @@
     <ClCompile Include="BoundNode.cpp" />
     <ClCompile Include="BoundStatements.cpp" />
     <ClCompile Include="Compilation.cpp" />
+    <ClCompile Include="Conversion.cpp" />
     <ClCompile Include="Diagnostic.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="helpers.cpp" />

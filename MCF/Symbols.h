@@ -55,7 +55,6 @@ public:
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Type; }
 
-	//NOTE C++ static variables are initialized in undefined order
 	static const TypeSymbol GetType(const TypeEnum& kind);
 };
 

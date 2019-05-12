@@ -144,6 +144,12 @@ ValueType Evaluator::EvaluateExpression(const BoundExpression * node)const
 			if (p) return EvaluateCallExpression(p);
 			else break;
 		}
+		case BoundNodeKind::ConversionExpression:
+		{
+			auto p = dynamic_cast<const BoundConversionExpression*>(node);
+			if (p) return EvaluateConversionExpression(p);
+			else break;
+		}
 		case BoundNodeKind::PostfixExpression:
 		{
 			auto p = dynamic_cast<const BoundPostfixExpression*>(node);
@@ -262,7 +268,7 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node) co
 	{
 		auto max = EvaluateExpression(node->Arguments()[0]).GetValue<IntegerType>();
 		auto f = [max]() {
-			auto rd = std::random_device();
+			static auto rd = std::random_device();
 			auto mt = std::mt19937(rd());
 			auto dist = std::uniform_int_distribution<IntegerType>(0, max);
 
@@ -273,6 +279,13 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node) co
 	{
 		throw std::invalid_argument("Unexpected function " + node->Function().ToString());
 	}
+}
+
+ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpression * node) const
+{
+	//TODO 
+	auto value = EvaluateExpression(node->Expression());
+	return NullValue;
 }
 
 ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression * node) const

@@ -19,6 +19,7 @@ class AssignmentExpressionSyntax;
 class UnaryExpressionSyntax;
 class BinaryExpressionSyntax;
 class CallExpressionSyntax;
+class BoundConversionExpression;
 class PostfixExpressionSyntax;
 
 class StatementSyntax;
@@ -118,7 +119,9 @@ private:
 	unique_ptr<BoundExpression> BindCallExpression(const CallExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax* syntax);
 
+	unique_ptr<BoundExpression> BindConversion(const TypeSymbol& type, const ExpressionSyntax* syntax);
 	VariableSymbol BindVariable(const SyntaxToken& identifier, bool isReadOnly, const TypeSymbol& type);
+	TypeSymbol LookupType(const string& name)const;
 
 	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
 	static unique_ptr<BoundScope> CreateRootScope();
@@ -157,6 +160,7 @@ protected:
 	virtual unique_ptr<BoundExpression> RewriteUnaryExpression(const BoundUnaryExpression* node);
 	virtual unique_ptr<BoundExpression> RewriteBinaryExpression(const BoundBinaryExpression* node);
 	virtual unique_ptr<BoundExpression> RewriteCallExpression(const BoundCallExpression* node);
+	virtual unique_ptr<BoundExpression> RewriteConversionExpression(const BoundConversionExpression* node);
 	virtual unique_ptr<BoundExpression> RewritePostfixExpression(const BoundPostfixExpression* node);
 
 public:

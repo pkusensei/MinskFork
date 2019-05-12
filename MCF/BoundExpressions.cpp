@@ -2,6 +2,7 @@
 #include "BoundExpressions.h"
 
 #include "ReflectionHelper.h"
+#include "SyntaxKind.h"
 
 namespace MCF {
 
@@ -288,10 +289,8 @@ BoundCallExpression::BoundCallExpression(const FunctionSymbol & function,
 
 const vector<const BoundNode*> BoundCallExpression::GetChildren() const
 {
-	auto result = vector<const BoundNode*>();
-	for (const auto& it : _arguments)
-		result.emplace_back(it.get());
-	return result;
+	return MakeVecOfRaw<const BoundNode, BoundExpression>(_arguments.begin(), 
+														  _arguments.end());
 }
 
 const vector<std::pair<string, string>> BoundCallExpression::GetProperties() const
@@ -301,12 +300,29 @@ const vector<std::pair<string, string>> BoundCallExpression::GetProperties() con
 	};
 }
 
-const vector<BoundExpression*> BoundCallExpression::Arguments() const
+const vector<const BoundExpression*> BoundCallExpression::Arguments() const
 {
-	auto result = vector<BoundExpression*>();
-	for (const auto& it : _arguments)
-		result.emplace_back(it.get());
-	return result;
+	return MakeVecOfRaw<const BoundExpression, BoundExpression>(_arguments.begin(), 
+																_arguments.end());
+}
+
+BoundConversionExpression::BoundConversionExpression(const TypeSymbol& type,
+						  const unique_ptr<BoundExpression>& expression)
+	:_type(type),
+	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
+{
+}
+
+const vector<const BoundNode*> BoundConversionExpression::GetChildren() const
+{
+	return MakeVecOfRaw<const BoundNode>(_expression);
+}
+
+const vector<std::pair<string, string>> BoundConversionExpression::GetProperties() const
+{
+	return vector<std::pair<string, string>>{
+		std::pair<string, string>("Type", Type().ToString())
+	};
 }
 
 BoundPostfixExpression::BoundPostfixExpression(const VariableSymbol & variable,
