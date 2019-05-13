@@ -13,7 +13,7 @@
 namespace MCF {
 
 BoundScope::BoundScope(const unique_ptr<BoundScope>& parent)
-	: _parent(std::move((std::remove_const_t<unique_ptr<BoundScope>&>(parent))))
+	: _parent(std::move(std::remove_const_t<unique_ptr<BoundScope>&>(parent)))
 {
 }
 
@@ -347,7 +347,7 @@ unique_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyn
 		return make_unique<BoundUnaryExpression>(boundOperator, boundOperand);
 	} else
 	{
-		_diagnostics->ReportUndefinedUnaryOperator(syntax->OperatorToken().Span(), 
+		_diagnostics->ReportUndefinedUnaryOperator(syntax->OperatorToken().Span(),
 												   syntax->OperatorToken().Text(), boundOperand->Type());
 		return make_unique<BoundErrorExpression>();
 	}
@@ -357,7 +357,7 @@ unique_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 {
 	auto boundLeft = BindExpression(syntax->Left());
 	auto boundRight = BindExpression(syntax->Right());
-	if (boundLeft->Type() == TypeSymbol::GetType(TypeEnum::Error) 
+	if (boundLeft->Type() == TypeSymbol::GetType(TypeEnum::Error)
 		|| boundRight->Type() == TypeSymbol::GetType(TypeEnum::Error))
 		return make_unique<BoundErrorExpression>();
 
@@ -435,23 +435,23 @@ unique_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	}
 	if (boundExpression->Type() != variable.Type())
 	{
-		_diagnostics->ReportCannotConvert(syntax->Expression()->Span(), 
+		_diagnostics->ReportCannotConvert(syntax->Expression()->Span(),
 										  boundExpression->Type(), variable.Type());
 		return make_unique<BoundErrorExpression>();
 	}
 	if (variable.Type() != TypeSymbol::GetType(TypeEnum::Int))
 	{
-		_diagnostics->ReportVariableNotSupportPostfixOperator(syntax->Expression()->Span(), 
+		_diagnostics->ReportVariableNotSupportPostfixOperator(syntax->Expression()->Span(),
 															  syntax->Op().Text(), variable.Type());
 		return make_unique<BoundErrorExpression>();
 	}
 	switch (syntax->Op().Kind())
 	{
 		case SyntaxKind::PlusPlusToken:
-			return make_unique<BoundPostfixExpression>(variable, BoundPostfixOperatorEnum::Increment, 
+			return make_unique<BoundPostfixExpression>(variable, BoundPostfixOperatorEnum::Increment,
 													   boundExpression);
 		case SyntaxKind::MinusMinusToken:
-			return make_unique<BoundPostfixExpression>(variable, BoundPostfixOperatorEnum::Decrement, 
+			return make_unique<BoundPostfixExpression>(variable, BoundPostfixOperatorEnum::Decrement,
 													   boundExpression);
 		default:
 			throw std::invalid_argument("Unexpected operator token " + GetSyntaxKindName(syntax->Op().Kind()));
@@ -467,7 +467,7 @@ unique_ptr<BoundExpression> Binder::BindConversion(const TypeSymbol & type, cons
 		_diagnostics->ReportCannotConvert(syntax->Span(), expression->Type(), type);
 		return make_unique<BoundErrorExpression>();
 	}
-	return unique_ptr<BoundExpression>();
+	return make_unique<BoundConversionExpression>(type, expression);
 }
 
 VariableSymbol Binder::BindVariable(const SyntaxToken & identifier, bool isReadOnly, const TypeSymbol & type)
@@ -521,7 +521,7 @@ unique_ptr<BoundScope> Binder::CreateRootScope()
 unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* previous, const CompilationUnitSyntax* syntax)
 {
 	auto parentScope = CreateParentScope(previous);
-	Binder binder(parentScope);
+	auto binder = Binder(parentScope);
 	auto expression = binder.BindStatement(syntax->Statement());
 	auto variables = binder._scope->GetDeclaredVariables();
 	auto diagnostics = binder.Diagnostics();

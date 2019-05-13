@@ -283,9 +283,15 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node) co
 
 ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpression * node) const
 {
-	//TODO 
 	auto value = EvaluateExpression(node->Expression());
-	return NullValue;
+	if (node->Type() == TypeSymbol::GetType(TypeEnum::Bool))
+		return value.ToBoolean();
+	else 	if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
+		return value.ToInteger();
+	else if (node->Type() == TypeSymbol::GetType(TypeEnum::String))
+		return value.ToString();
+	else
+		throw std::invalid_argument("Unexpected type " + node->Type().ToString());
 }
 
 ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression * node) const

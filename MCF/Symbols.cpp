@@ -69,7 +69,7 @@ const vector<FunctionSymbol> GetAllBuiltinFunctionsImpl()
 {
 	auto enums = GetAllEnumValue<BuiltinFuncEnum>(BuiltinFuncEnum::Input, BuiltinFuncEnum::Rnd);
 	auto funcs = vector<FunctionSymbol>();
-	for (const auto& it:enums)
+	for (const auto& it : enums)
 		funcs.emplace_back(GetBuiltinFunction(it));
 	funcs.shrink_to_fit();
 	return funcs;
@@ -99,9 +99,43 @@ TypeSymbol ValueType::Type() const
 	}
 }
 
+bool ValueType::ToBoolean() const
+{
+	switch (_inner.index())
+	{
+		case 1:
+			return GetValue<bool>();
+		case 2:
+			return GetValue<IntegerType>() > 0;
+		default:
+			throw std::invalid_argument("Type cannot convert to bool");
+	}
+}
+
+IntegerType ValueType::ToInteger() const
+{
+	switch (_inner.index())
+	{
+		case 1:
+			return GetValue<bool>() ? 1 : 0;
+		case 2:
+			return GetValue<IntegerType>();
+		case 3:
+			try
+			{
+				return StringToInteger(GetValue<string>());
+			} catch (...)
+			{
+				[[fallthrough]];
+			}
+		default:
+			throw std::invalid_argument("Type cannot convert to IntegerType");
+	}
+}
+
 string ValueType::ToString() const
 {
-	auto id = ValueType::GetValueTypeId(Type());
+	auto id = _inner.index();
 	auto result = string();
 	switch (id)
 	{
@@ -120,9 +154,9 @@ string ValueType::ToString() const
 	return result;
 }
 
-int ValueType::GetValueTypeId(const TypeSymbol & inType)
+size_t ValueType::GetValueTypeId(const TypeSymbol & inType)
 {
-	static std::unordered_map<TypeSymbol, int, TypeHash> types = {
+	static std::unordered_map<TypeSymbol, size_t, TypeHash> types = {
 		{TypeSymbol::GetType(TypeEnum::Error), 0},
 		{TypeSymbol::GetType(TypeEnum::Bool), 1},
 		{TypeSymbol::GetType(TypeEnum::Int), 2},
