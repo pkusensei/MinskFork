@@ -230,7 +230,7 @@ public:
 	const SyntaxToken* GetSeparator(size_t index)const
 	{
 		if (index == size() - 1) return nullptr;
-		return _nodesAndSeparators.at(index * 2 + 1).get();
+		return dynamic_cast<const SyntaxToken*>(_nodesAndSeparators.at(index * 2 + 1).get());
 	}
 
 	const vector<const SyntaxNode*> GetWithSeparators()const

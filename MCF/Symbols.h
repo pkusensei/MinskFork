@@ -154,6 +154,8 @@ public:
 
 	constexpr bool operator==(const ValueType& other)const { return _inner == other._inner; }
 	constexpr bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }
+	bool ToBoolean()const;
+	IntegerType ToInteger()const;
 	string ToString()const;
 
 	template<typename T>
@@ -162,7 +164,7 @@ public:
 		return std::get<T>(_inner);
 	}
 
-	static int GetValueTypeId(const TypeSymbol & inType);
+	static size_t GetValueTypeId(const TypeSymbol & inType);
 };
 
 const auto NullValue = ValueType(); // NOTE global constant
