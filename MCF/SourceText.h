@@ -19,7 +19,10 @@ public:
 	size_t Start()const noexcept { return _span.first; }
 	size_t Length()const noexcept { return _span.second; }
 	size_t End()const noexcept { return Start() + Length(); }
-	string ToString() const { return std::to_string(Start()) + ".." + std::to_string(End()); }
+	string ToString() const
+	{
+		return std::to_string(Start()) + ".." + std::to_string(End());
+	}
 
 	MCF_API constexpr bool operator==(const TextSpan& other)const { return _span == other._span; }
 	MCF_API constexpr bool operator!=(const TextSpan& other)const { return _span != other._span; }
@@ -41,7 +44,10 @@ public:
 	constexpr size_t Start()const noexcept { return _start; }
 	constexpr size_t Length()const noexcept { return _length; }
 	constexpr size_t End()const { return _start + _length; }
-	constexpr size_t LengthIncludingLineBreak()const noexcept { return _lengthIncludingLineBreak; }
+	constexpr size_t LengthIncludingLineBreak()const noexcept
+	{
+		return _lengthIncludingLineBreak;
+	}
 	TextSpan Span()const { return TextSpan(_start, _length); }
 	TextSpan SpanIncludingLineBreak()const { return TextSpan(_start, _lengthIncludingLineBreak); }
 	string ToString()const;

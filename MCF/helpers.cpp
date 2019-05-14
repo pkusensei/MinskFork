@@ -3,56 +3,87 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iostream>
 #include <sstream>
 
 #include <conio.h>
 
 namespace MCF {
 
+constexpr auto CSI = "\x1b[";
+constexpr auto BRIGHT = "1;";
+constexpr auto DEFAULT = "0;";
+
+constexpr auto BLACK = "30m";
+constexpr auto RED = "31m";
+constexpr auto GREEN = "32m";
+constexpr auto YELLOW = "33m";
+constexpr auto BLUE = "34m";
+constexpr auto MAGENTA = "35m";
+constexpr auto CYAN = "36m";
+constexpr auto WHITE = "37m";
+
+bool EnableVTMode()
+{
+	// Set output mode to handle virtual terminal sequences
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (hOut == INVALID_HANDLE_VALUE) return false;
+
+
+	DWORD dwMode = 0;
+	if (!GetConsoleMode(hOut, &dwMode)) return false;
+
+
+	dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+	if (!SetConsoleMode(hOut, dwMode)) return false;
+
+	return true;
+}
+
 void SetConsoleColor(const ConsoleColor& color)
 {
-	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-	//CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-	//GetConsoleScreenBufferInfo(hStdout, &csbiInfo);
-	//WORD wOldColorAttrs = csbiInfo.wAttributes;
+	std::cout << CSI;
 	switch (color)
 	{
+		case ConsoleColor::DarkGray:
+			std::cout << BRIGHT << BLACK;
+			break;
 		case ConsoleColor::Red:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_RED | FOREGROUND_INTENSITY);
-			break;
-		case ConsoleColor::DarkRed:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_RED);
-			break;
-		case ConsoleColor::Blue:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-			break;
-		case ConsoleColor::DarkBlue:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_BLUE);
+			std::cout << BRIGHT << RED;
 			break;
 		case ConsoleColor::Green:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-			break;
-		case ConsoleColor::DarkGreen:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN);
-			break;
-		case ConsoleColor::Cyan:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+			std::cout << BRIGHT << GREEN;
 			break;
 		case ConsoleColor::Yellow:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY);
+			std::cout << BRIGHT << YELLOW;
 			break;
-		case ConsoleColor::DarkYellow:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN | FOREGROUND_RED);
+		case ConsoleColor::Blue:
+			std::cout << BRIGHT << BLUE;
 			break;
 		case ConsoleColor::Magenta:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_RED | FOREGROUND_BLUE);
+			std::cout << BRIGHT << MAGENTA;
+			break;
+		case ConsoleColor::Cyan:
+			std::cout << BRIGHT << CYAN;
 			break;
 		case ConsoleColor::White:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+			std::cout << BRIGHT << WHITE;
 			break;
-		case ConsoleColor::Grey:
+		case ConsoleColor::DarkRed:
+			std::cout << DEFAULT << RED;
+			break;
+		case ConsoleColor::DarkGreen:
+			std::cout << DEFAULT << GREEN;
+			break;
+		case ConsoleColor::DarkYellow:
+			std::cout << DEFAULT << YELLOW;
+			break;
+		case ConsoleColor::DarkBlue:
+			std::cout << DEFAULT << BLUE;
+			break;
+		case ConsoleColor::Gray:
 		default:
-			SetConsoleTextAttribute(hStdout, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
+			std::cout << DEFAULT << WHITE;
 			break;
 	}
 }
@@ -64,24 +95,20 @@ void ResetConsoleColor()
 
 void ClearConsole(char fill)
 {
-	COORD t1 = {0, 0};
-	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-	GetConsoleScreenBufferInfo(hStdout, &csbiInfo);
-	DWORD written;
-	DWORD cells = csbiInfo.dwSize.X*csbiInfo.dwSize.Y;
-	FillConsoleOutputCharacter(hStdout, fill, cells, t1, &written);
-	FillConsoleOutputAttribute(hStdout, csbiInfo.wAttributes, cells, t1, &written);
-	SetConsoleCursorPosition(hStdout, t1);
+	std::cout << CSI << "2J";
+	SetCursorPosition(0, 0);
 }
 
 void SetCursorVisibility(bool visible)
 {
-	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_CURSOR_INFO info;
-	info.dwSize = 100;
-	info.bVisible = visible ? TRUE : FALSE;
-	SetConsoleCursorInfo(hStdout, &info);
+	std::cout << CSI;
+	std::cout << (visible ? "?25h" : "?25l");
+
+	//HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	//CONSOLE_CURSOR_INFO info;
+	//info.dwSize = 100;
+	//info.bVisible = visible ? TRUE : FALSE;
+	//SetConsoleCursorInfo(hStdout, &info);
 }
 
 int GetConsoleWidth()
@@ -101,11 +128,8 @@ int GetCursorTop()
 
 void SetCursorPosition(int x, int y)
 {
-	auto hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-	COORD c;
-	c.X = x;
-	c.Y = y;
-	SetConsoleCursorPosition(hStdout, c);
+	//HACK where should this +1 be
+	std::cout << CSI << y << ';' << x + 1 << 'f';
 }
 
 KeyInfo ReadKeyFromConsole()

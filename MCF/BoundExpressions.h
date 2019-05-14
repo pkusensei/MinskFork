@@ -87,7 +87,8 @@ public:
 	TypeSymbol Type()const { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
-	static BoundUnaryOperator Bind(const enum SyntaxKind& synKind, const TypeSymbol& type);
+	static BoundUnaryOperator Bind(const enum SyntaxKind& synKind, 
+								   const TypeSymbol& type);
 };
 
 class BoundUnaryExpression final : public BoundExpression
@@ -97,7 +98,8 @@ private:
 	unique_ptr<BoundExpression> _operand;
 
 public:
-	BoundUnaryExpression(const BoundUnaryOperator& op, const unique_ptr<BoundExpression>& operand);
+	BoundUnaryExpression(const BoundUnaryOperator& op, 
+						 const unique_ptr<BoundExpression>& operand);
 	BoundUnaryExpression(BoundUnaryExpression&&) = default;
 	BoundUnaryExpression& operator=(BoundUnaryExpression&&) = default;
 
@@ -122,7 +124,8 @@ private:
 	bool _isUseful = true;
 
 	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
-						const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result);
+						const TypeSymbol& left, const TypeSymbol& right, 
+						const TypeSymbol& result);
 	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
 						const TypeSymbol& operandType, const TypeSymbol& resultType);
 	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, 
@@ -139,7 +142,8 @@ public:
 	TypeSymbol Type()const { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
-	static BoundBinaryOperator Bind(const enum SyntaxKind& synKind, const TypeSymbol& leftType, const TypeSymbol& rightType);
+	static BoundBinaryOperator Bind(const enum SyntaxKind& synKind, 
+									const TypeSymbol& leftType, const TypeSymbol& rightType);
 };
 
 class BoundBinaryExpression final : public BoundExpression
@@ -151,7 +155,8 @@ private:
 
 public:
 	BoundBinaryExpression(const unique_ptr<BoundExpression>& left, 
-						  const BoundBinaryOperator& op, const unique_ptr<BoundExpression>& right);
+						  const BoundBinaryOperator& op, 
+						  const unique_ptr<BoundExpression>& right);
 	BoundBinaryExpression(BoundBinaryExpression&&) = default;
 	BoundBinaryExpression& operator=(BoundBinaryExpression&&) = default;
 
@@ -173,7 +178,8 @@ private:
 	unique_ptr<BoundExpression> _expression;
 
 public:
-	BoundAssignmentExpression(const VariableSymbol& variable, const unique_ptr<BoundExpression>& expression);
+	BoundAssignmentExpression(const VariableSymbol& variable, 
+							  const unique_ptr<BoundExpression>& expression);
 	BoundAssignmentExpression(BoundAssignmentExpression&&) = default;
 	BoundAssignmentExpression& operator=(BoundAssignmentExpression&&) = default;
 
@@ -275,7 +281,8 @@ private:
 
 public:
 	BoundPostfixExpression(const VariableSymbol& variable, 
-						   const BoundPostfixOperatorEnum& kind, const unique_ptr<BoundExpression>& expression);
+						   const BoundPostfixOperatorEnum& kind, 
+						   const unique_ptr<BoundExpression>& expression);
 	BoundPostfixExpression(BoundPostfixExpression&&) = default;
 	BoundPostfixExpression& operator=(BoundPostfixExpression&&) = default;
 

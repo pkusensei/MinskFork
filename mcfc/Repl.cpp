@@ -15,6 +15,12 @@ constexpr auto NEW_LINE = '\r';
 
 void Repl::Run()
 {
+	if (!MCF::EnableVTMode())
+	{
+		std::cout << "Unable to enter VT processing mode. Quitting.\n";
+		return;
+	}
+
 	while (true)
 	{
 		auto text = EditSubmission();
@@ -384,7 +390,7 @@ void McfRepl::RenderLine(const std::string & line) const
 			MCF::SetConsoleColor(MCF::ConsoleColor::Cyan);
 		else if (isString)
 			MCF::SetConsoleColor(MCF::ConsoleColor::Magenta);
-		else MCF::SetConsoleColor(MCF::ConsoleColor::Grey);
+		else MCF::SetConsoleColor(MCF::ConsoleColor::DarkGray);
 
 		std::cout << it.Text();
 		MCF::ResetConsoleColor();

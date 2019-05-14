@@ -79,13 +79,14 @@ string BoundNode::GetText(const BoundNode * node)
 	else return GetEnumText(node->Kind());
 }
 
-void BoundNode::PrettyPrint(std::ostream & out, const BoundNode * node, string indent, bool isLast)
+void BoundNode::PrettyPrint(std::ostream & out, const BoundNode * node, 
+							string indent, bool isLast)
 {
 	auto isToConsole = out.rdbuf() == std::cout.rdbuf();
 	string marker = isLast ? "+--" : "---";//"©¸©¤©¤" : "©À©¤©¤";
 
 	if (isToConsole)
-		SetConsoleColor(ConsoleColor::Grey);
+		SetConsoleColor(ConsoleColor::DarkGray);
 	out << indent << marker;
 
 	if (isToConsole)
@@ -103,7 +104,7 @@ void BoundNode::PrettyPrint(std::ostream & out, const BoundNode * node, string i
 			else
 			{
 				if (isToConsole)
-					SetConsoleColor(ConsoleColor::Grey);
+					SetConsoleColor(ConsoleColor::DarkGray);
 				out << ",";
 			}
 			out << ' ';
@@ -113,7 +114,7 @@ void BoundNode::PrettyPrint(std::ostream & out, const BoundNode * node, string i
 			out << p.first;
 
 			if (isToConsole)
-				SetConsoleColor(ConsoleColor::Grey);
+				SetConsoleColor(ConsoleColor::DarkGray);
 			out << " = ";
 
 			if (isToConsole)

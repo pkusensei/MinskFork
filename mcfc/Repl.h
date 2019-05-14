@@ -19,6 +19,7 @@ private:
 	std::vector<T> _collection;
 	std::function<void()> _action;
 	void CollectionChanged() { _action(); }
+
 public:
 	ObservableCollection(const std::initializer_list<T>& init) :_collection(init) {}
 	void SetAction(const std::function<void()>& action) { _action = action; }
@@ -103,6 +104,7 @@ protected:
 	virtual void EvaluateSubmission(const std::string& text) = 0;
 
 	void ClearHistory()noexcept { _submissionHistory.clear(); }
+
 public:
 	virtual ~Repl() = default;
 	void Run();
@@ -121,6 +123,7 @@ private:
 	void SubmissionDocumentChanged();
 	void Render();
 	void UpdateCursorPosition();
+
 public:
 	SubmissionView(const std::function<void(std::string)>& lineRenderer, const ObservableCollection<std::string>& document);
 

@@ -14,6 +14,7 @@ class MCF_API Diagnostic final
 private:
 	unique_ptr<TextSpan> _span;
 	string _message;
+
 public:
 	Diagnostic(const TextSpan& span, const string& message);
 	~Diagnostic();
@@ -31,6 +32,7 @@ class MCF_API DiagnosticBag final
 private:
 	std::deque<Diagnostic> _diagnostics;
 	void Report(const TextSpan& span, const string& message);
+
 public:
 	DiagnosticBag();
 	DiagnosticBag(DiagnosticBag&&) = default;

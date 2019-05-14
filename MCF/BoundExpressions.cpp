@@ -91,20 +91,25 @@ const vector<std::pair<string, string>> BoundErrorExpression::GetProperties() co
 	};
 }
 
-BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
-									   const TypeSymbol& operandType, const TypeSymbol& resultType)
-	:_syntaxKind(synKind), _kind(kind), _operandType(operandType), _resultType(resultType)
+BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind,
+									   const BoundUnaryOperatorKind& kind,
+									   const TypeSymbol& operandType,
+									   const TypeSymbol& resultType)
+	:_syntaxKind(synKind), _kind(kind),
+	_operandType(operandType), _resultType(resultType)
 {
 }
 
-BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
+BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind,
+									   const BoundUnaryOperatorKind& kind,
 									   const TypeSymbol& operandType)
 	: BoundUnaryOperator(synKind, kind, operandType, operandType)
 {
 }
 
 BoundUnaryOperator::BoundUnaryOperator()
-	: BoundUnaryOperator(SyntaxKind::BadToken, BoundUnaryOperatorKind::Identity, TypeSymbol::GetType(TypeEnum::Error))
+	: BoundUnaryOperator(SyntaxKind::BadToken, BoundUnaryOperatorKind::Identity,
+						 TypeSymbol::GetType(TypeEnum::Error))
 {
 	_isUseful = false;
 }
@@ -112,10 +117,14 @@ BoundUnaryOperator::BoundUnaryOperator()
 const vector<BoundUnaryOperator>& BoundUnaryOperator::Operators()
 {
 	static const auto operators = vector<BoundUnaryOperator>{
-	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation, TypeSymbol::GetType(TypeEnum::Bool)),
-	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity, TypeSymbol::GetType(TypeEnum::Int)),
-	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation, TypeSymbol::GetType(TypeEnum::Int)),
-	BoundUnaryOperator(SyntaxKind::TildeToken, BoundUnaryOperatorKind::OnesComplement, TypeSymbol::GetType(TypeEnum::Int))
+	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation,
+						TypeSymbol::GetType(TypeEnum::Bool)),
+	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity,
+						TypeSymbol::GetType(TypeEnum::Int)),
+	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation,
+						TypeSymbol::GetType(TypeEnum::Int)),
+	BoundUnaryOperator(SyntaxKind::TildeToken, BoundUnaryOperatorKind::OnesComplement,
+						TypeSymbol::GetType(TypeEnum::Int))
 	};
 
 	return operators;
@@ -131,7 +140,8 @@ BoundUnaryOperator BoundUnaryOperator::Bind(const enum SyntaxKind& synKind, cons
 	return BoundUnaryOperator();
 }
 
-BoundUnaryExpression::BoundUnaryExpression(const BoundUnaryOperator & op, const unique_ptr<BoundExpression>& operand)
+BoundUnaryExpression::BoundUnaryExpression(const BoundUnaryOperator & op,
+										   const unique_ptr<BoundExpression>& operand)
 	:_op(op),
 	_operand(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(operand)))
 {
@@ -149,25 +159,33 @@ const vector<std::pair<string, string>> BoundUnaryExpression::GetProperties() co
 	};
 }
 
-BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
-										 const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result)
-	: _syntaxKind(synKind), _kind(kind), _leftType(left), _rightType(right), _resultType(result)
+BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind,
+										 const BoundBinaryOperatorKind& kind,
+										 const TypeSymbol& left, const TypeSymbol& right,
+										 const TypeSymbol& result)
+	: _syntaxKind(synKind), _kind(kind),
+	_leftType(left), _rightType(right), _resultType(result)
 {
 }
 
-BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
-										 const TypeSymbol& operandType, const TypeSymbol& resultType)
+BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind,
+										 const BoundBinaryOperatorKind& kind,
+										 const TypeSymbol& operandType,
+										 const TypeSymbol& resultType)
 	: BoundBinaryOperator(synKind, kind, operandType, operandType, resultType)
 {
 }
 
-BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, const TypeSymbol& type)
+BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind,
+										 const BoundBinaryOperatorKind& kind,
+										 const TypeSymbol& type)
 	: BoundBinaryOperator(synKind, kind, type, type, type)
 {
 }
 
 BoundBinaryOperator::BoundBinaryOperator()
-	: BoundBinaryOperator(SyntaxKind::BadToken, BoundBinaryOperatorKind::Addition, TypeSymbol::GetType(TypeEnum::Error))
+	: BoundBinaryOperator(SyntaxKind::BadToken, BoundBinaryOperatorKind::Addition,
+						  TypeSymbol::GetType(TypeEnum::Error))
 {
 	_isUseful = false;
 }
@@ -175,48 +193,76 @@ BoundBinaryOperator::BoundBinaryOperator()
 const vector<BoundBinaryOperator>& BoundBinaryOperator::Operators()
 {
 	static const auto operators = vector<BoundBinaryOperator>{
-		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, TypeSymbol::GetType(TypeEnum::Int)),
-		BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction, TypeSymbol::GetType(TypeEnum::Int)),
-		BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication, TypeSymbol::GetType(TypeEnum::Int)),
-		BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division, TypeSymbol::GetType(TypeEnum::Int)),
-		BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus, TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, 
+							TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction, 
+							TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication, 
+							TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division, 
+							TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus, 
+							TypeSymbol::GetType(TypeEnum::Int)),
 
-		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, TypeSymbol::GetType(TypeEnum::Int)),
-		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, TypeSymbol::GetType(TypeEnum::Int)),
-		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, 
+							TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, 
+							TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, 
+							TypeSymbol::GetType(TypeEnum::Int)),
 
-		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less, TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals, TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater, TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals, TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, 
+							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, 
+							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less, 
+							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals, 
+							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater, 
+							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals, 
+							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
 
-		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd, TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr, TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, 
+							TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd, 
+							TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, 
+							TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr, 
+							TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, 
+							TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, 
+							TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, 
+							TypeSymbol::GetType(TypeEnum::Bool)),
 
-		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, TypeSymbol::GetType(TypeEnum::String))
+		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, 
+							TypeSymbol::GetType(TypeEnum::String))
 	};
 
 	return operators;
 }
 
-BoundBinaryOperator BoundBinaryOperator::Bind(const enum SyntaxKind& synKind, const TypeSymbol& leftType, const TypeSymbol& rightType)
+BoundBinaryOperator BoundBinaryOperator::Bind(const enum SyntaxKind& synKind, 
+											  const TypeSymbol& leftType, 
+											  const TypeSymbol& rightType)
 {
 	for (const auto& op : Operators())
 	{
-		if (op.SyntaxKind() == synKind && op.LeftType() == leftType && op.RightType() == rightType)
+		if (op.SyntaxKind() == synKind 
+			&& op.LeftType() == leftType 
+			&& op.RightType() == rightType)
 			return op;
 	}
 	return BoundBinaryOperator();
 }
 
-BoundBinaryExpression::BoundBinaryExpression(const unique_ptr<BoundExpression>& left, const BoundBinaryOperator & op, const unique_ptr<BoundExpression>& right)
+BoundBinaryExpression::BoundBinaryExpression(const unique_ptr<BoundExpression>& left, 
+											 const BoundBinaryOperator & op, 
+											 const unique_ptr<BoundExpression>& right)
 	:_left(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(left))),
 	_right(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(right))),
 	_op(op)
@@ -235,7 +281,8 @@ const vector<std::pair<string, string>> BoundBinaryExpression::GetProperties() c
 	};
 }
 
-BoundAssignmentExpression::BoundAssignmentExpression(const VariableSymbol & variable, const unique_ptr<BoundExpression>& expression)
+BoundAssignmentExpression::BoundAssignmentExpression(const VariableSymbol & variable, 
+													 const unique_ptr<BoundExpression>& expression)
 	:_variable(variable),
 	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
 {
@@ -289,7 +336,7 @@ BoundCallExpression::BoundCallExpression(const FunctionSymbol & function,
 
 const vector<const BoundNode*> BoundCallExpression::GetChildren() const
 {
-	return MakeVecOfRaw<const BoundNode, BoundExpression>(_arguments.begin(), 
+	return MakeVecOfRaw<const BoundNode, BoundExpression>(_arguments.begin(),
 														  _arguments.end());
 }
 
@@ -302,12 +349,12 @@ const vector<std::pair<string, string>> BoundCallExpression::GetProperties() con
 
 const vector<const BoundExpression*> BoundCallExpression::Arguments() const
 {
-	return MakeVecOfRaw<const BoundExpression, BoundExpression>(_arguments.begin(), 
+	return MakeVecOfRaw<const BoundExpression, BoundExpression>(_arguments.begin(),
 																_arguments.end());
 }
 
 BoundConversionExpression::BoundConversionExpression(const TypeSymbol& type,
-						  const unique_ptr<BoundExpression>& expression)
+													 const unique_ptr<BoundExpression>& expression)
 	:_type(type),
 	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
 {

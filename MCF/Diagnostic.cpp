@@ -12,9 +12,7 @@ Diagnostic::Diagnostic(const TextSpan& span, const string& message)
 }
 
 Diagnostic::~Diagnostic() = default;
-
 Diagnostic::Diagnostic(Diagnostic &&) = default;
-
 Diagnostic & Diagnostic::operator=(Diagnostic &&) = default;
 
 TextSpan Diagnostic::Span() const

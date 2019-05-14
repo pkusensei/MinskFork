@@ -23,16 +23,17 @@ BoundBlockStatement::BoundBlockStatement(const vector<unique_ptr<BoundStatement>
 
 const vector<const BoundNode*> BoundBlockStatement::GetChildren() const
 {
-	return MakeVecOfRaw<const BoundNode, const BoundStatement>(_statements.begin(), _statements.end());
+	return MakeVecOfRaw<const BoundNode, BoundStatement>(_statements.begin(), _statements.end());
 }
 
 const vector<const BoundStatement*> BoundBlockStatement::Statements() const
 {
-	return MakeVecOfRaw<const BoundStatement, const BoundStatement>(_statements.begin(), _statements.end());
+	return MakeVecOfRaw<const BoundStatement, BoundStatement>(_statements.begin(), _statements.end());
 }
 
 
-BoundVariableDeclaration::BoundVariableDeclaration(const VariableSymbol & variable, const unique_ptr<BoundExpression>& initializer)
+BoundVariableDeclaration::BoundVariableDeclaration(const VariableSymbol & variable, 
+												   const unique_ptr<BoundExpression>& initializer)
 	:_variable(variable),
 	_initializer(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(initializer)))
 {
@@ -50,7 +51,8 @@ const vector<const BoundNode*> BoundVariableDeclaration::GetChildren() const
 	return MakeVecOfRaw<const BoundNode>(_initializer);
 }
 
-BoundIfStatement::BoundIfStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& thenStatement,
+BoundIfStatement::BoundIfStatement(const unique_ptr<BoundExpression>& condition, 
+								   const unique_ptr<BoundStatement>& thenStatement,
 								   const unique_ptr<BoundStatement>& elseStatement)
 	: _condition(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition))),
 	_thenStatement(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(thenStatement))),
@@ -75,8 +77,10 @@ const vector<const BoundNode*> BoundWhileStatement::GetChildren() const
 	return MakeVecOfRaw<const BoundNode>(_condition, _body);
 }
 
-BoundForStatement::BoundForStatement(const VariableSymbol & variable, const unique_ptr<BoundExpression>& lowerBound,
-									 const unique_ptr<BoundExpression>& upperBound, const unique_ptr<BoundStatement>& body)
+BoundForStatement::BoundForStatement(const VariableSymbol & variable, 
+									 const unique_ptr<BoundExpression>& lowerBound,
+									 const unique_ptr<BoundExpression>& upperBound, 
+									 const unique_ptr<BoundStatement>& body)
 	: _variable(variable),
 	_lowerBound(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(lowerBound))),
 	_upperBound(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(upperBound))),

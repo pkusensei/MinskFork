@@ -13,12 +13,14 @@
 
 namespace MCF {
 
-EvaluationResult::EvaluationResult(const DiagnosticBag* diagnostics, const ValueType & value)
+EvaluationResult::EvaluationResult(const DiagnosticBag* diagnostics, 
+								   const ValueType & value)
 	:_diagnostics(diagnostics), _value(value)
 {
 }
 
-Evaluator::Evaluator(const BoundBlockStatement* root, const std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
+Evaluator::Evaluator(const BoundBlockStatement* root, 
+					 const std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
 	: _root(root),
 	_variables(std::remove_const_t<std::unordered_map<VariableSymbol, ValueType, VariableHash>*>(&variables))
 {
@@ -262,7 +264,7 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node) co
 	} else if (node->Function() == GetBuiltinFunction(BuiltinFuncEnum::Print))
 	{
 		auto message = EvaluateExpression(node->Arguments()[0]);
-		std::cout << message.GetValue<string>();
+		std::cout << message.GetValue<string>() << '\n';
 		return NullValue;
 	} else if (node->Function() == GetBuiltinFunction(BuiltinFuncEnum::Rnd))
 	{
@@ -316,14 +318,16 @@ Compilation::Compilation()
 {
 }
 
-Compilation::Compilation(const unique_ptr<Compilation>& previous, const SyntaxTree& tree)
+Compilation::Compilation(const unique_ptr<Compilation>& previous, 
+						 const SyntaxTree& tree)
 	: _previous(std::move(std::remove_const_t<unique_ptr<Compilation>&>(previous))),
 	_syntaxTree(&tree),
 	_globalScope(nullptr)
 {
 }
 
-Compilation::Compilation(const unique_ptr<Compilation>& previous, const unique_ptr<SyntaxTree>& tree)
+Compilation::Compilation(const unique_ptr<Compilation>& previous, 
+						 const unique_ptr<SyntaxTree>& tree)
 	: _previous(std::move(std::remove_const_t<unique_ptr<Compilation>&>(previous))),
 	_syntaxTree(tree.get()),
 	_globalScope(nullptr)
@@ -360,17 +364,20 @@ const BoundGlobalScope* Compilation::GlobalScope()
 	return _globalScope.get();
 }
 
-unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous, const SyntaxTree & tree)
+unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous, 
+												  const SyntaxTree & tree)
 {
 	return make_unique<Compilation>(previous, tree);
 }
 
-unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous, const unique_ptr<SyntaxTree>& tree)
+unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous, 
+												  const unique_ptr<SyntaxTree>& tree)
 {
 	return make_unique<Compilation>(previous, tree);
 }
 
-EvaluationResult Compilation::Evaluate(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
+EvaluationResult Compilation::Evaluate(
+	std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
 {
 	_syntaxTree->Diagnostics()->AddRange(*(GlobalScope()->Diagnostics()));
 	auto diagnostics = _syntaxTree->Diagnostics();

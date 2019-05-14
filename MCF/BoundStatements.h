@@ -40,7 +40,8 @@ private:
 	unique_ptr<BoundExpression> _initializer;
 
 public:
-	BoundVariableDeclaration(const VariableSymbol& variable, const unique_ptr<BoundExpression>& initializer);
+	BoundVariableDeclaration(const VariableSymbol& variable, 
+							 const unique_ptr<BoundExpression>& initializer);
 	BoundVariableDeclaration(BoundVariableDeclaration&&) = default;
 	BoundVariableDeclaration& operator=(BoundVariableDeclaration&&) = default;
 
@@ -61,7 +62,8 @@ private:
 	unique_ptr<BoundStatement> _elseStatement;
 
 public:
-	BoundIfStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& thenStatement,
+	BoundIfStatement(const unique_ptr<BoundExpression>& condition, 
+					 const unique_ptr<BoundStatement>& thenStatement,
 					 const unique_ptr<BoundStatement>& elseStatement);
 	BoundIfStatement(BoundIfStatement&&) = default;
 	BoundIfStatement& operator=(BoundIfStatement&&) = default;
@@ -82,7 +84,8 @@ private:
 	unique_ptr<BoundStatement> _body;
 
 public:
-	BoundWhileStatement(const unique_ptr<BoundExpression>& condition, const unique_ptr<BoundStatement>& body);
+	BoundWhileStatement(const unique_ptr<BoundExpression>& condition, 
+						const unique_ptr<BoundStatement>& body);
 	BoundWhileStatement(BoundWhileStatement&&) = default;
 	BoundWhileStatement& operator=(BoundWhileStatement&&) = default;
 
@@ -103,8 +106,10 @@ private:
 	unique_ptr<BoundStatement> _body;
 
 public:
-	BoundForStatement(const VariableSymbol& variable, const unique_ptr<BoundExpression>& lowerBound,
-					  const unique_ptr<BoundExpression>& upperBound, const unique_ptr<BoundStatement>& body);
+	BoundForStatement(const VariableSymbol& variable, 
+					  const unique_ptr<BoundExpression>& lowerBound,
+					  const unique_ptr<BoundExpression>& upperBound, 
+					  const unique_ptr<BoundStatement>& body);
 	BoundForStatement(BoundForStatement&&) = default;
 	BoundForStatement& operator=(BoundForStatement&&) = default;
 
@@ -161,7 +166,9 @@ private:
 	bool _jumpIfTrue;
 
 public:
-	BoundConditionalGotoStatement(const BoundLabel& label, const unique_ptr<BoundExpression>& condition, bool jumpIfTrue = true);
+	BoundConditionalGotoStatement(const BoundLabel& label, 
+								  const unique_ptr<BoundExpression>& condition, 
+								  bool jumpIfTrue = true);
 	BoundConditionalGotoStatement(BoundConditionalGotoStatement&&) = default;
 	BoundConditionalGotoStatement& operator=(BoundConditionalGotoStatement&&) = default;
 

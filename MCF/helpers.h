@@ -6,21 +6,25 @@ namespace MCF {
 
 enum class ConsoleColor
 {
+	Black,
 	Red,
-	DarkRed,
-	Blue,
-	DarkBlue,
 	Green,
-	DarkGreen,
-	Cyan,
 	Yellow,
-	DarkYellow,
+	Blue,
 	Magenta,
+	Cyan,
 	White,
-	Grey,
+	DarkRed,
+	DarkBlue,
+	DarkGreen,
+	DarkYellow,
+
+	Gray,
+	DarkGray,
 };
 
-MCF_API void SetConsoleColor(const ConsoleColor& color = ConsoleColor::Grey);
+MCF_API bool EnableVTMode();
+MCF_API void SetConsoleColor(const ConsoleColor& color = ConsoleColor::Gray);
 MCF_API void ResetConsoleColor();
 MCF_API void ClearConsole(char fill = ' ');
 MCF_API void SetCursorVisibility(bool visible = true);

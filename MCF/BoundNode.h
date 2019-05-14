@@ -39,7 +39,8 @@ class BoundNode
 private:
 	static ConsoleColor GetColor(const BoundNode* node);
 	static string GetText(const BoundNode* node);
-	static void PrettyPrint(std::ostream& out, const BoundNode* node, string indent = "", bool isLast = true);
+	static void PrettyPrint(std::ostream& out, const BoundNode* node, 
+							string indent = "", bool isLast = true);
 public:
 	virtual ~BoundNode() = default;
 	virtual BoundNodeKind Kind() const = 0;

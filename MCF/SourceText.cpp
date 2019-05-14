@@ -42,7 +42,8 @@ size_t SourceText::GetLineBreakWidth(const string & text, size_t position)
 	else return 0;
 }
 
-vector<TextLine> SourceText::ParseLines(const SourceText * sourceText, const string & text)
+vector<TextLine> SourceText::ParseLines(const SourceText * sourceText, 
+										const string & text)
 {
 	auto result = vector<TextLine>();
 	size_t position = 0;

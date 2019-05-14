@@ -94,8 +94,10 @@ public:
 	const SyntaxTree* Syntax()const noexcept { return _syntaxTree; }
 
 	const BoundGlobalScope* GlobalScope();
-	static unique_ptr<Compilation> ContinueWith(const unique_ptr<Compilation>& previous, const SyntaxTree& tree);
-	static unique_ptr<Compilation> ContinueWith(const unique_ptr<Compilation>& previous, const unique_ptr<SyntaxTree>& tree);
+	static unique_ptr<Compilation> ContinueWith(const unique_ptr<Compilation>& previous, 
+												const SyntaxTree& tree);
+	static unique_ptr<Compilation> ContinueWith(const unique_ptr<Compilation>& previous, 
+												const unique_ptr<SyntaxTree>& tree);
 
 	EvaluationResult Evaluate(std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables);
 
