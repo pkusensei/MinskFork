@@ -72,6 +72,8 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "OpenBraceToken";
 		case SyntaxKind::CloseBraceToken:
 			return "CloseBraceToken";
+		case SyntaxKind::ColonToken:
+			return "ColonToken";
 		case SyntaxKind::CommaToken:
 			return "CommaToken";
 		case SyntaxKind::IdentifierToken:
@@ -83,6 +85,8 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "FalseKeyword";
 		case SyntaxKind::ForKeyword:
 			return "ForKeyword";
+		case SyntaxKind::FunctionKeyword:
+			return "FunctionKeyword";
 		case SyntaxKind::IfKeyword:
 			return "IfKeyword";
 		case SyntaxKind::LetKeyword:
@@ -95,9 +99,19 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "VarKeyword";
 		case SyntaxKind::WhileKeyword:
 			return "WhileKeyword";
+		case SyntaxKind::DoKeyword:
+			return "DoKeyword";
 
 		case SyntaxKind::CompilationUnit:
 			return "CompilationUnit";
+		case SyntaxKind::FunctionDeclaration:
+			return "FunctionDeclaration";
+		case SyntaxKind::GlobalStatement:
+			return "GlobalStatement";
+		case SyntaxKind::Parameter:
+			return "Parameter";
+		case SyntaxKind::TypeClause:
+			return "TypeClause";
 		case SyntaxKind::ElseClause:
 			return "ElseClause";
 
@@ -109,6 +123,8 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "IfStatement";
 		case SyntaxKind::WhileStatement:
 			return "WhileStatement";
+		case SyntaxKind::DoWhileStatement:
+			return "DoWhileStatement";
 		case SyntaxKind::ForStatement:
 			return "ForStatement";
 		case SyntaxKind::ExpressionStatement:
@@ -144,6 +160,8 @@ SyntaxKind GetKeywordKind(const string & text) noexcept
 		return SyntaxKind::FalseKeyword;
 	else if (text == "for")
 		return SyntaxKind::ForKeyword;
+	else if (text == "function")
+		return SyntaxKind::FunctionKeyword;
 	else if (text == "if")
 		return SyntaxKind::IfKeyword;
 	else if (text == "let")
@@ -156,6 +174,8 @@ SyntaxKind GetKeywordKind(const string & text) noexcept
 		return SyntaxKind::VarKeyword;
 	else if (text == "while")
 		return SyntaxKind::WhileKeyword;
+	else if (text == "do")
+		return SyntaxKind::DoKeyword;
 	else return SyntaxKind::IdentifierToken;
 }
 
@@ -188,16 +208,19 @@ string GetText(const SyntaxKind& kind)
 		case SyntaxKind::CloseParenthesisToken: return ")";
 		case SyntaxKind::OpenBraceToken: return "{";
 		case SyntaxKind::CloseBraceToken: return "}";
+		case SyntaxKind::ColonToken: return ":";
 		case SyntaxKind::CommaToken: return ",";
 		case SyntaxKind::ElseKeyword: return "else";
 		case SyntaxKind::FalseKeyword: return "false";
 		case SyntaxKind::ForKeyword: return "for";
+		case SyntaxKind::FunctionKeyword: return "function";
 		case SyntaxKind::IfKeyword: return "if";
 		case SyntaxKind::LetKeyword: return "let";
 		case SyntaxKind::ToKeyword: return "to";
 		case SyntaxKind::TrueKeyword: return "true";
 		case SyntaxKind::VarKeyword: return "var";
 		case SyntaxKind::WhileKeyword: return "while";
+		case SyntaxKind::DoKeyword: return "do";
 		default: return string();
 	}
 }

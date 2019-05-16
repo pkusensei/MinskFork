@@ -74,7 +74,8 @@ private:
 
 	class SubmissionView;
 	std::string EditSubmission();
-	void HandleKey(const MCF::KeyInfo& key, ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleKey(const MCF::KeyInfo& key, ObservableCollection<std::string>* document, 
+				   SubmissionView* view);
 
 	void HandleEscape(ObservableCollection<std::string>* document, SubmissionView* view);
 	void HandleEnter(ObservableCollection<std::string>* document, SubmissionView* view);
@@ -95,7 +96,8 @@ private:
 	void HandlePageDown(ObservableCollection<std::string>* document, SubmissionView* view);
 	void UpdateDocumentFromHistory(ObservableCollection<std::string>* document, SubmissionView* view);
 
-	void HandleTyping(ObservableCollection<std::string>* document, SubmissionView* view, const std::string& text);
+	void HandleTyping(ObservableCollection<std::string>* document, SubmissionView* view, 
+					  const std::string& text);
 
 protected:
 	virtual void RenderLine(const std::string& line)const;
@@ -125,7 +127,8 @@ private:
 	void UpdateCursorPosition();
 
 public:
-	SubmissionView(const std::function<void(std::string)>& lineRenderer, const ObservableCollection<std::string>& document);
+	SubmissionView(const std::function<void(std::string)>& lineRenderer, 
+				   const ObservableCollection<std::string>& document);
 
 	int CurrentLine()const { return _currentLine; }
 	void CurrentLine(const int value);

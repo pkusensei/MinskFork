@@ -22,6 +22,8 @@ string GetEnumText(const BoundNodeKind & kind)
 			return "IfStatement";
 		case BoundNodeKind::WhileStatement:
 			return "WhileStatement";
+		case BoundNodeKind::DoWhileStatement:
+			return "DoWhileStatement";
 		case BoundNodeKind::ForStatement:
 			return "ForStatement";
 		case BoundNodeKind::LabelStatement:

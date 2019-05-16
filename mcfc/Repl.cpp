@@ -52,7 +52,8 @@ std::string Repl::EditSubmission()
 	return MCF::StringJoin(document.Contents(), NEW_LINE);
 }
 
-void Repl::HandleKey(const MCF::KeyInfo& key, ObservableCollection<std::string>* document, SubmissionView * view)
+void Repl::HandleKey(const MCF::KeyInfo& key, 
+					 ObservableCollection<std::string>* document, SubmissionView * view)
 {
 	if (key.IsFunctionalKey)
 	{
@@ -206,7 +207,8 @@ void Repl::HandleDelete(ObservableCollection<std::string>* document, SubmissionV
 		if (view->CurrentLine() == document->size() - 1) return;
 
 		auto nextLine = (*document)[view->CurrentLine() + 1];
-		document->SetAt(view->CurrentLine(), (*document)[view->CurrentLine()] + nextLine);
+		document->SetAt(view->CurrentLine(), 
+			(*document)[view->CurrentLine()] + nextLine);
 		document->RemoveAt(view->CurrentLine() + 1);
 		return;
 	}
@@ -231,7 +233,8 @@ void Repl::HandleTab(ObservableCollection<std::string>* document, SubmissionView
 	auto start = view->CurrentCharacter();
 	auto remainingSpaces = tabWidth - start % tabWidth;
 	auto line = (*document)[view->CurrentLine()];
-	document->SetAt(view->CurrentLine(), line.insert(start, std::string(remainingSpaces, ' ')));
+	document->SetAt(view->CurrentLine(), 
+					line.insert(start, std::string(remainingSpaces, ' ')));
 	view->CurrentCharacter(view->CurrentCharacter() + remainingSpaces);
 }
 
@@ -251,7 +254,8 @@ void Repl::HandlePageDown(ObservableCollection<std::string>* document, Submissio
 	UpdateDocumentFromHistory(document, view);
 }
 
-void Repl::UpdateDocumentFromHistory(ObservableCollection<std::string>* document, SubmissionView * view)
+void Repl::UpdateDocumentFromHistory(ObservableCollection<std::string>* document,
+									 SubmissionView * view)
 {
 	if (_submissionHistory.empty()) return;
 
@@ -280,8 +284,10 @@ void Repl::RenderLine(const std::string & line) const
 	std::cout << line;
 }
 
-Repl::SubmissionView::SubmissionView(const std::function<void(std::string)>& lineRenderer, const ObservableCollection<std::string>& document)
-	:_lineRenderer(lineRenderer), _submissionDocument(&document), _cursorTop(MCF::GetCursorTop())
+Repl::SubmissionView::SubmissionView(const std::function<void(std::string)>& lineRenderer, 
+									 const ObservableCollection<std::string>& document)
+	:_lineRenderer(lineRenderer),
+	_submissionDocument(&document), _cursorTop(MCF::GetCursorTop())
 {
 	auto& d = std::remove_const_t<ObservableCollection<std::string>&>(document);
 	d.SetAction(std::bind(&SubmissionView::SubmissionDocumentChanged, this));

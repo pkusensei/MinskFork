@@ -37,22 +37,29 @@ enum class SyntaxKind
 	CloseParenthesisToken,
 	OpenBraceToken,
 	CloseBraceToken,
+	ColonToken,
 	CommaToken,
 	IdentifierToken,
 
 	// Keywords
 	ElseKeyword,
 	FalseKeyword,
-	ForKeyword,
+	ForKeyword, 
+	FunctionKeyword,
 	IfKeyword,
 	LetKeyword,
 	ToKeyword,
 	TrueKeyword,
 	VarKeyword,
 	WhileKeyword,
+	DoKeyword,
 
 	// Nodes
 	CompilationUnit,
+	FunctionDeclaration,
+	GlobalStatement,
+	Parameter,
+	TypeClause,
 	ElseClause,
 
 	// Statements
@@ -60,6 +67,7 @@ enum class SyntaxKind
 	VariableDeclaration,
 	IfStatement,
 	WhileStatement,
+	DoWhileStatement,
 	ForStatement,
 	ExpressionStatement,
 

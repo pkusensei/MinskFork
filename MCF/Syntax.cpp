@@ -183,6 +183,10 @@ SyntaxToken Lexer::Lex()
 			Next();
 			_kind = SyntaxKind::CloseBraceToken;
 			break;
+		case ':':
+			Next();
+			_kind = SyntaxKind::ColonToken;
+			break;
 		case ',':
 			Next();
 			_kind = SyntaxKind::CommaToken;
