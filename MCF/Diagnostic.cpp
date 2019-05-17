@@ -82,11 +82,32 @@ void DiagnosticBag::ReportUnterminatedString(const TextSpan & span)
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span, const SyntaxKind& actualKind,
+void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span, 
+										  const SyntaxKind& actualKind,
 										  const SyntaxKind& expectedKind)
 {
 	string message{"Unexpected token <"};
 	message += GetSyntaxKindName(actualKind) + ">, expected <" + GetSyntaxKindName(expectedKind) + ">.";
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportUndefinedUnaryOperator(const TextSpan & span, const string & operatorText,
+												 const TypeSymbol & operandType)
+{
+	string message{"Unary operator '"};
+	message += operatorText + "' is not defined for type '" 
+		+ operandType.ToString() + "'.";
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan & span, 
+												  const string & operatorText,
+												  const TypeSymbol& leftType, 
+												  const TypeSymbol& rightType)
+{
+	string message{"Binary operator '"};
+	message += operatorText + "' is not defined for types '" 
+		+ leftType.ToString() + "' and '"		+ rightType.ToString() + "'.";
 	Report(span, message);
 }
 
@@ -97,7 +118,15 @@ void DiagnosticBag::ReportUndefinedName(const TextSpan & span, const string & na
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportCannotConvert(const TextSpan & span, const TypeSymbol & fromType,
+void DiagnosticBag::ReportUndefinedType(const TextSpan & span, const string & name)
+{
+	string message{"Type '"};
+	message += name + "' doesn't exist.";
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportCannotConvert(const TextSpan & span, 
+										const TypeSymbol & fromType,
 										const TypeSymbol & toType)
 {
 	string message("Cannot convert type '");
@@ -105,24 +134,17 @@ void DiagnosticBag::ReportCannotConvert(const TextSpan & span, const TypeSymbol 
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportUndefinedUnaryOperator(const TextSpan & span, const string & operatorText,
-												 const TypeSymbol & operandType)
+void DiagnosticBag::ReportCannotConvertImplicitly(const TextSpan & span, 
+												  const TypeSymbol & fromType, 
+												  const TypeSymbol & toType)
 {
-	string message{"Unary operator '"};
-	message += operatorText + "' is not defined for type '" + operandType.ToString() + "'.";
+	string message("Cannot convert type '");
+	message += fromType.ToString() + "' to '" + toType.ToString() + "' implicitly.";
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan & span, const string & operatorText,
-												  const TypeSymbol& leftType, const TypeSymbol& rightType)
-{
-	string message{"Binary operator '"};
-	message += operatorText + "' is not defined for types '" + leftType.ToString() + "' and '"
-		+ rightType.ToString() + "'.";
-	Report(span, message);
-}
-
-void DiagnosticBag::ReportVariableAlreadyDeclared(const TextSpan & span, const string & name)
+void DiagnosticBag::ReportSymbolAlreadyDeclared(const TextSpan & span, 
+												const string & name)
 {
 	string message("Variable '");
 	message += name + "' is already declared.";
@@ -153,7 +175,8 @@ void DiagnosticBag::ReportWrongArgumentCount(const TextSpan & span, const string
 }
 
 void DiagnosticBag::ReportWrongArgumentType(const TextSpan & span, const string & name, 
-											const TypeSymbol & expectedType, const TypeSymbol & actualType)
+											const TypeSymbol & expectedType, 
+											const TypeSymbol & actualType)
 {
 	string message("Parameter '");
 	message += name + "' requires a value of type '" + expectedType.ToString()
@@ -167,7 +190,8 @@ void DiagnosticBag::ReportExpressionMustHaveValue(const TextSpan & span)
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(const TextSpan & span, const string & operatorText,
+void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(const TextSpan & span, 
+															  const string & operatorText,
 															  const SyntaxKind & kind)
 {
 	string message{"Operator '"};
@@ -175,7 +199,8 @@ void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(const TextSpan & s
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportVariableNotSupportPostfixOperator(const TextSpan & span, const string & operatorText,
+void DiagnosticBag::ReportVariableNotSupportPostfixOperator(const TextSpan & span, 
+															const string & operatorText,
 															const TypeSymbol & variableType)
 {
 	string message{"Operator '"};

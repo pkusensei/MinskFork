@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <unordered_map>
 
 #include "BoundNode.h"
@@ -9,6 +10,7 @@ namespace MCF {
 
 class DiagnosticBag;
 class BoundLabel;
+class TextSpan;
 
 class SyntaxToken;
 class ExpressionSyntax;
@@ -25,6 +27,7 @@ class PostfixExpressionSyntax;
 class StatementSyntax;
 class BlockStatementSyntax;
 class VariableDeclarationSyntax;
+class TypeClauseSyntax;
 class IfStatementSyntax;
 class WhileStatementSyntax;
 class DoWhileStatementSyntax;
@@ -110,8 +113,10 @@ private:
 	unique_ptr<BoundStatement> BindForStatement(const ForStatementSyntax* syntax);
 	unique_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax* syntax);
 
-	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax, const TypeSymbol& targetType);
-	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax, bool canBeVoid = false);
+	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,
+											   const TypeSymbol& targetType);
+	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,
+											   bool canBeVoid = false);
 	unique_ptr<BoundExpression> BindExpressionInternal(const ExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindParenthesizedExpression(const ParenthesizedExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindLiteralExpression(const LiteralExpressionSyntax* syntax);
@@ -122,9 +127,17 @@ private:
 	unique_ptr<BoundExpression> BindCallExpression(const CallExpressionSyntax* syntax);
 	unique_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax* syntax);
 
-	unique_ptr<BoundExpression> BindConversion(const TypeSymbol& type, const ExpressionSyntax* syntax);
-	VariableSymbol BindVariable(const SyntaxToken& identifier, bool isReadOnly, const TypeSymbol& type);
-	TypeSymbol LookupType(const string& name)const;
+	unique_ptr<BoundExpression> BindConversion(const ExpressionSyntax* syntax,
+											   const TypeSymbol& type,
+											   bool allowExplicit = false);
+	unique_ptr<BoundExpression> BindConversion(const TextSpan& diagnosticSpan,
+											   unique_ptr<BoundExpression>& syntax,
+											   const TypeSymbol& type,
+											   bool allowExplicit = false);
+	VariableSymbol BindVariable(const SyntaxToken& identifier, bool isReadOnly,
+								const TypeSymbol& type);
+	std::optional<TypeSymbol> BindTypeClause(const TypeClauseSyntax* syntax);
+	std::optional<TypeSymbol> LookupType(const string& name)const;
 
 	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
 	static unique_ptr<BoundScope> CreateRootScope();

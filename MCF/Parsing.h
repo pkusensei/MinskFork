@@ -40,6 +40,7 @@ class UnaryExpressionSyntax final :public ExpressionSyntax
 private:
 	SyntaxToken _operatorToken;
 	unique_ptr<ExpressionSyntax> _operand;
+
 public:
 	UnaryExpressionSyntax(const SyntaxToken& operatorToken,
 						  const unique_ptr<ExpressionSyntax>& operand);
@@ -60,6 +61,7 @@ private:
 	SyntaxToken _operatorToken;
 	unique_ptr<ExpressionSyntax> _left;
 	unique_ptr<ExpressionSyntax> _right;
+
 public:
 	BinaryExpressionSyntax(const unique_ptr<ExpressionSyntax>& left,
 						   const SyntaxToken& operatorToken,
@@ -82,6 +84,7 @@ private:
 	SyntaxToken _openParenthesisToken;
 	SyntaxToken _closeParenthesisToken;
 	unique_ptr<ExpressionSyntax> _expression;
+
 public:
 	ParenthesizedExpressionSyntax(const SyntaxToken& open,
 								  const unique_ptr<ExpressionSyntax>& expression,
@@ -103,6 +106,7 @@ class LiteralExpressionSyntax final :public ExpressionSyntax
 private:
 	SyntaxToken _literalToken;
 	ValueType _value;
+
 public:
 	LiteralExpressionSyntax(const SyntaxToken& literalToken, const ValueType& value);
 	explicit LiteralExpressionSyntax(const SyntaxToken& literalToken);
@@ -121,6 +125,7 @@ class NameExpressionSyntax final :public ExpressionSyntax
 {
 private:
 	SyntaxToken _identifierToken;
+
 public:
 	explicit NameExpressionSyntax(const SyntaxToken& identifier);
 	NameExpressionSyntax(NameExpressionSyntax&&) = default;
@@ -207,6 +212,7 @@ private:
 	SyntaxToken _identifier;
 	SyntaxToken _op;
 	unique_ptr<ExpressionSyntax> _expression;
+
 public:
 	PostfixExpressionSyntax(const SyntaxToken& identifier, const SyntaxToken& op,
 							const unique_ptr<ExpressionSyntax>& expression);
@@ -252,15 +258,33 @@ public:
 	const vector<const StatementSyntax*> Statements()const;
 };
 
+class TypeClauseSyntax final :public SyntaxNode
+{
+private:
+	SyntaxToken _colonToken;
+	SyntaxToken _identifier;
+
+public:
+	TypeClauseSyntax(const SyntaxToken& colon, const SyntaxToken& identifier);
+	// Inherited via SyntaxNode
+	SyntaxKind Kind() const override { return SyntaxKind::TypeClause; };
+	const vector<const SyntaxNode*> GetChildren() const override;
+
+	SyntaxToken ColonToken()const { return _colonToken; }
+	SyntaxToken Identifier()const { return _identifier; }
+};
+
 class VariableDeclarationSyntax final : public StatementSyntax
 {
 private:
 	SyntaxToken _keyword;
 	SyntaxToken _identifier;
+	unique_ptr<TypeClauseSyntax> _typeClause;
 	SyntaxToken _equalsToken;
 	unique_ptr<ExpressionSyntax> _initializer;
 public:
 	VariableDeclarationSyntax(const SyntaxToken& keyword, const SyntaxToken& identifier,
+							  const unique_ptr<TypeClauseSyntax>& typeClause,
 							  const SyntaxToken& equals,
 							  const unique_ptr<ExpressionSyntax>& initializer);
 	VariableDeclarationSyntax(VariableDeclarationSyntax&&) = default;
@@ -272,6 +296,7 @@ public:
 
 	SyntaxToken Keyword()const { return _keyword; }
 	SyntaxToken Identifier()const { return _identifier; }
+	const TypeClauseSyntax* TypeClause()const { return _typeClause.get(); }
 	SyntaxToken EqualsToken()const { return _equalsToken; }
 	const ExpressionSyntax* Initializer()const noexcept { return _initializer.get(); }
 };
@@ -281,6 +306,7 @@ class ElseClauseSyntax final :public SyntaxNode
 private:
 	SyntaxToken _elseKeyword;
 	unique_ptr<StatementSyntax> _elseStatement;
+
 public:
 	ElseClauseSyntax(const SyntaxToken& elseKeyword, const unique_ptr<StatementSyntax>& elseStatement);
 	ElseClauseSyntax(ElseClauseSyntax&&) = default;
@@ -301,6 +327,7 @@ private:
 	unique_ptr<ExpressionSyntax> _condition;
 	unique_ptr<StatementSyntax> _thenStatement;
 	unique_ptr<ElseClauseSyntax> _elseClause;
+
 public:
 	IfStatementSyntax(const SyntaxToken& ifKeyword,
 					  const unique_ptr<ExpressionSyntax>& condition,
@@ -325,6 +352,7 @@ private:
 	SyntaxToken _whileKeyword;
 	unique_ptr<ExpressionSyntax> _condition;
 	unique_ptr<StatementSyntax> _body;
+
 public:
 	WhileStatementSyntax(const SyntaxToken& whileKeyword,
 						 const unique_ptr<ExpressionSyntax>& condition,
@@ -350,9 +378,9 @@ private:
 	unique_ptr<ExpressionSyntax> _condition;
 
 public:
-	DoWhileStatementSyntax(const SyntaxToken& doKeyword, 
+	DoWhileStatementSyntax(const SyntaxToken& doKeyword,
 						   const unique_ptr<StatementSyntax>& body,
-						   const SyntaxToken& whileKeyword, 
+						   const SyntaxToken& whileKeyword,
 						   const unique_ptr<ExpressionSyntax>& condition);
 	DoWhileStatementSyntax(DoWhileStatementSyntax&&) = default;
 	DoWhileStatementSyntax& operator=(DoWhileStatementSyntax&&) = default;
@@ -378,6 +406,7 @@ private:
 	SyntaxToken _toKeyword;
 	unique_ptr<ExpressionSyntax> _upperBound;
 	unique_ptr<StatementSyntax> _body;
+
 public:
 	ForStatementSyntax(const SyntaxToken& keyword, const SyntaxToken& identifier,
 					   const SyntaxToken& equals, unique_ptr<ExpressionSyntax>& lowerBound,
@@ -454,6 +483,8 @@ private:
 	unique_ptr<StatementSyntax> ParseStatement();
 	unique_ptr<StatementSyntax> ParseBlockStatement();
 	unique_ptr<StatementSyntax> ParseVariableDeclaration();
+	unique_ptr<TypeClauseSyntax> ParseOptionalTypeClause();
+	unique_ptr<TypeClauseSyntax> ParseTypeClause();
 	unique_ptr<StatementSyntax> ParseIfStatement();
 	unique_ptr<ElseClauseSyntax> ParseElseClause();
 	unique_ptr<StatementSyntax> ParseWhileStatement();

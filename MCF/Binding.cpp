@@ -170,10 +170,13 @@ unique_ptr<BoundStatement> Binder::BindBlockStatement(const BlockStatementSyntax
 unique_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclarationSyntax * syntax)
 {
 	auto readOnly = syntax->Keyword().Kind() == SyntaxKind::LetKeyword;
+	auto type = BindTypeClause(syntax->TypeClause());
 	auto init = BindExpression(syntax->Initializer());
-	auto variable = BindVariable(syntax->Identifier(), readOnly, init->Type());
+	auto variableType = type.has_value() ? *type : init->Type();
+	auto variable = BindVariable(syntax->Identifier(), readOnly, variableType);
+	auto convertInitializer = BindConversion(syntax->Identifier().Span(), init, variableType);
 
-	return make_unique<BoundVariableDeclaration>(variable, init);
+	return make_unique<BoundVariableDeclaration>(variable, convertInitializer);
 }
 
 unique_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax * syntax)
@@ -392,8 +395,8 @@ unique_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	if (syntax->Arguments()->size() == 1)
 	{
 		auto type = LookupType(syntax->Identifier().Text());
-		if (type != TypeSymbol::GetType(TypeEnum::Error))
-			return BindConversion(type, (*syntax->Arguments())[0]);
+		if (type.has_value())
+			return BindConversion((*syntax->Arguments())[0], *type, true);
 	}
 
 	auto boundArguments = vector<unique_ptr<BoundExpression>>();
@@ -472,35 +475,63 @@ unique_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	}
 }
 
-unique_ptr<BoundExpression> Binder::BindConversion(const TypeSymbol & type, const ExpressionSyntax * syntax)
+unique_ptr<BoundExpression> Binder::BindConversion(const ExpressionSyntax* syntax,
+												   const TypeSymbol& type,
+												   bool allowExplicit)
 {
 	auto expression = BindExpression(syntax);
+	return BindConversion(syntax->Span(), expression, type, allowExplicit);
+}
+
+unique_ptr<BoundExpression> Binder::BindConversion(const TextSpan & diagnosticSpan,
+												   unique_ptr<BoundExpression>& expression,
+												   const TypeSymbol & type,
+												   bool allowExplicit)
+{
 	auto conversion = Conversion::Classify(expression->Type(), type);
 	if (!conversion.Exists())
 	{
-		_diagnostics->ReportCannotConvert(syntax->Span(), expression->Type(), type);
+		if (expression->Type() != TypeSymbol::GetType(TypeEnum::Error)
+			&& type != TypeSymbol::GetType(TypeEnum::Error))
+			_diagnostics->ReportCannotConvert(diagnosticSpan, expression->Type(), type);
 		return make_unique<BoundErrorExpression>();
 	}
+	if (!allowExplicit&&conversion.IsExplicit())
+		_diagnostics->ReportCannotConvertImplicitly(diagnosticSpan, expression->Type(), type);
+	if (conversion.IsIdentity())
+		return std::move(expression);
 	return make_unique<BoundConversionExpression>(type, expression);
 }
 
-VariableSymbol Binder::BindVariable(const SyntaxToken & identifier, bool isReadOnly, const TypeSymbol & type)
+VariableSymbol Binder::BindVariable(const SyntaxToken & identifier, bool isReadOnly,
+									const TypeSymbol & type)
 {
 	auto name = identifier.Text().empty() ? "?" : identifier.Text();
 	auto declare = !identifier.IsMissing();
 	auto variable = VariableSymbol(name, isReadOnly, type);
 
 	if (declare && !_scope->TryDeclareVariable(variable))
-		_diagnostics->ReportVariableAlreadyDeclared(identifier.Span(), name);
+		_diagnostics->ReportSymbolAlreadyDeclared(identifier.Span(), name);
 	return variable;
 }
 
-TypeSymbol Binder::LookupType(const string & name) const
+std::optional<TypeSymbol> Binder::BindTypeClause(const TypeClauseSyntax * syntax)
+{
+	if (syntax == nullptr) return std::nullopt;
+
+	auto type = LookupType(syntax->Identifier().Text());
+	if (!type.has_value())
+		_diagnostics->ReportUndefinedType(syntax->Identifier().Span(),
+										  syntax->Identifier().Text());
+	return type;
+}
+
+std::optional<TypeSymbol> Binder::LookupType(const string & name) const
 {
 	if (name == "bool") return TypeSymbol::GetType(TypeEnum::Bool);
 	else if (name == "int") return TypeSymbol::GetType(TypeEnum::Int);
 	else if (name == "string") return TypeSymbol::GetType(TypeEnum::String);
-	else return TypeSymbol::GetType(TypeEnum::Error);
+	else return std::nullopt;
 }
 
 unique_ptr<BoundScope> Binder::CreateParentScope(const BoundGlobalScope* previous)

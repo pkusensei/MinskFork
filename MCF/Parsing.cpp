@@ -150,19 +150,38 @@ const vector<const StatementSyntax*> BlockStatementSyntax::Statements() const
 	return result;
 }
 
+TypeClauseSyntax::TypeClauseSyntax(const SyntaxToken & colon,
+								   const SyntaxToken & identifier)
+	:_colonToken(colon), _identifier(identifier)
+{
+}
+
+const vector<const SyntaxNode*> TypeClauseSyntax::GetChildren() const
+{
+	return MakeVecOfRaw<const SyntaxNode>(_colonToken, _identifier);
+}
+
 VariableDeclarationSyntax::VariableDeclarationSyntax(const SyntaxToken & keyword,
 													 const SyntaxToken & identifier,
+													 const unique_ptr<TypeClauseSyntax>& typeClause,
 													 const SyntaxToken & equals,
 													 const unique_ptr<ExpressionSyntax>& initializer)
-	:_keyword(keyword), _identifier(identifier), _equalsToken(equals),
+	: _keyword(keyword), _identifier(identifier),
+	_typeClause(nullptr), _equalsToken(equals),
 	_initializer(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(initializer)))
 {
+	if (typeClause != nullptr)
+		_typeClause = std::move(std::remove_const_t<unique_ptr<TypeClauseSyntax>&>(typeClause));
 }
 
 const vector<const SyntaxNode*> VariableDeclarationSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<const SyntaxNode>(_keyword, _identifier,
-										  _equalsToken, _initializer);
+	if (_typeClause == nullptr)
+		return MakeVecOfRaw<const SyntaxNode>(_keyword, _identifier,
+											  _equalsToken, _initializer);
+	else
+		return MakeVecOfRaw<const SyntaxNode>(_keyword, _identifier, _typeClause,
+											  _equalsToken, _initializer);
 }
 
 
@@ -209,12 +228,13 @@ const vector<const SyntaxNode*> WhileStatementSyntax::GetChildren() const
 	return MakeVecOfRaw<const SyntaxNode>(_whileKeyword, _condition, _body);
 }
 
-DoWhileStatementSyntax::DoWhileStatementSyntax(const SyntaxToken & doKeyword, 
+DoWhileStatementSyntax::DoWhileStatementSyntax(const SyntaxToken & doKeyword,
 											   const unique_ptr<StatementSyntax>& body,
-											   const SyntaxToken & whileKeyword, 
+											   const SyntaxToken & whileKeyword,
 											   const unique_ptr<ExpressionSyntax>& condition)
-	:_doKeyword(doKeyword), _whileKeyword(whileKeyword),
+	:_doKeyword(doKeyword),
 	_body(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(body))),
+	_whileKeyword(whileKeyword),
 	_condition(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(condition)))
 {
 }
@@ -366,10 +386,25 @@ unique_ptr<StatementSyntax> Parser::ParseVariableDeclaration()
 		: SyntaxKind::VarKeyword;
 	auto keyword = MatchToken(expected);
 	auto identifier = MatchToken(SyntaxKind::IdentifierToken);
+	auto typeClause = ParseOptionalTypeClause();
 	auto equals = MatchToken(SyntaxKind::EqualsToken);
 	auto initializer = ParseExpression();
 
-	return make_unique<VariableDeclarationSyntax>(keyword, identifier, equals, initializer);
+	return make_unique<VariableDeclarationSyntax>(keyword, identifier, typeClause, 
+												  equals, initializer);
+}
+
+unique_ptr<TypeClauseSyntax> Parser::ParseOptionalTypeClause()
+{
+	if (Current()->Kind() != SyntaxKind::ColonToken) return nullptr;
+	return ParseTypeClause();
+}
+
+unique_ptr<TypeClauseSyntax> Parser::ParseTypeClause()
+{
+	auto colon = MatchToken(SyntaxKind::ColonToken);
+	auto identifier = MatchToken(SyntaxKind::IdentifierToken);
+	return make_unique<TypeClauseSyntax>(colon, identifier);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseIfStatement()
