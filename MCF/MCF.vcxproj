@@ -169,12 +169,14 @@
     <ClInclude Include="Conversion.h" />
     <ClInclude Include="Diagnostic.h" />
     <ClInclude Include="EnumHelper.h" />
+    <ClInclude Include="Lexer.h" />
+    <ClInclude Include="Parsing.h" />
     <ClInclude Include="ReflectionHelper.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="SourceText.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Symbols.h" />
-    <ClInclude Include="Syntax.h" />
+    <ClInclude Include="SyntaxToken.h" />
     <ClInclude Include="SyntaxKind.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
@@ -188,7 +190,9 @@
     <ClCompile Include="Diagnostic.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="helpers.cpp" />
+    <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="MCF.cpp" />
+    <ClCompile Include="Parsing.cpp" />
     <ClCompile Include="SourceText.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -197,7 +201,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Symbols.cpp" />
-    <ClCompile Include="Syntax.cpp" />
+    <ClCompile Include="SyntaxToken.cpp" />
     <ClCompile Include="SyntaxKind.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

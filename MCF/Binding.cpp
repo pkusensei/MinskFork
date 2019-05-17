@@ -7,7 +7,7 @@
 #include "BoundStatements.h"
 #include "Conversion.h"
 #include "Diagnostic.h"
-#include "Syntax.h"
+#include "Parsing.h"
 #include "SourceText.h"
 
 namespace MCF {
@@ -131,6 +131,13 @@ unique_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax * syntax)
 			if (p) return BindWhileStatement(p);
 			else break;
 		}
+		case SyntaxKind::DoWhileStatement:
+		{
+			auto p = dynamic_cast<const DoWhileStatementSyntax*>(syntax);
+			if (p) return BindDoWhileStatement(p);
+			else break;
+		}
+
 		case SyntaxKind::ForStatement:
 		{
 			auto p = dynamic_cast<const ForStatementSyntax*>(syntax);
@@ -183,6 +190,13 @@ unique_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax
 	auto condition = BindExpression(syntax->Condition(), TypeSymbol::GetType(TypeEnum::Bool));
 	auto body = BindStatement(syntax->Body());
 	return make_unique<BoundWhileStatement>(condition, body);
+}
+
+unique_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSyntax * syntax)
+{
+	auto body = BindStatement(syntax->Body());
+	auto condition = BindExpression(syntax->Condition());
+	return make_unique<BoundDoWhileStatement>(body, condition);
 }
 
 unique_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax * syntax)
@@ -558,6 +572,12 @@ unique_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(const BoundStatem
 			if (p) return RewriteWhileStatement(p);
 			else break;
 		}
+		case BoundNodeKind::DoWhileStatement:
+		{
+			auto p = dynamic_cast<const BoundDoWhileStatement*>(node);
+			if (p) return RewriteDoWhileStatement(p);
+			else break;
+		}
 		case BoundNodeKind::ForStatement:
 		{
 			auto p = dynamic_cast<const BoundForStatement*>(node);
@@ -622,6 +642,13 @@ unique_ptr<BoundStatement> BoundTreeRewriter::RewriteWhileStatement(const BoundW
 	auto condition = RewriteExpression(node->Condition());
 	auto body = RewriteStatement(node->Body());
 	return make_unique<BoundWhileStatement>(condition, body);
+}
+
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteDoWhileStatement(const BoundDoWhileStatement * node)
+{
+	auto body = RewriteStatement(node->Body());
+	auto condition = RewriteExpression(node->Condition());
+	return make_unique<BoundDoWhileStatement>(body, condition);
 }
 
 unique_ptr<BoundStatement> BoundTreeRewriter::RewriteForStatement(const BoundForStatement * node)
@@ -880,6 +907,21 @@ unique_ptr<BoundStatement> Lowerer::RewriteWhileStatement(const BoundWhileStatem
 	statements.emplace_back(std::move(gotoTrue));
 	statements.emplace_back(std::move(endLabelStatement));
 
+	auto result = make_unique<BoundBlockStatement>(statements);
+	return RewriteStatement(result.get());
+}
+
+unique_ptr<BoundStatement> Lowerer::RewriteDoWhileStatement(const BoundDoWhileStatement * node)
+{
+	auto continueLabel = GenerateLabel();
+	auto continueLabelStatement = make_unique<BoundLabelStatement>(continueLabel);
+	auto condition = RewriteExpression(node->Condition());
+	auto gotoTrue = make_unique<BoundConditionalGotoStatement>(continueLabel, condition);
+
+	auto statements = vector<unique_ptr<BoundStatement>>();
+	statements.emplace_back(std::move(continueLabelStatement));
+	statements.emplace_back(RewriteStatement(node->Body()));
+	statements.emplace_back(std::move(gotoTrue));
 	auto result = make_unique<BoundBlockStatement>(statements);
 	return RewriteStatement(result.get());
 }

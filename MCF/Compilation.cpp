@@ -9,7 +9,7 @@
 #include "BoundExpressions.h"
 #include "BoundStatements.h"
 #include "Diagnostic.h"
-#include "Syntax.h"
+#include "Parsing.h"
 
 namespace MCF {
 

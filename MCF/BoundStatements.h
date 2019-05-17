@@ -4,7 +4,7 @@
 #include "BoundNode.h"
 #include "Symbols.h"
 
-namespace MCF{
+namespace MCF {
 
 class BoundExpression;
 
@@ -40,7 +40,7 @@ private:
 	unique_ptr<BoundExpression> _initializer;
 
 public:
-	BoundVariableDeclaration(const VariableSymbol& variable, 
+	BoundVariableDeclaration(const VariableSymbol& variable,
 							 const unique_ptr<BoundExpression>& initializer);
 	BoundVariableDeclaration(BoundVariableDeclaration&&) = default;
 	BoundVariableDeclaration& operator=(BoundVariableDeclaration&&) = default;
@@ -62,7 +62,7 @@ private:
 	unique_ptr<BoundStatement> _elseStatement;
 
 public:
-	BoundIfStatement(const unique_ptr<BoundExpression>& condition, 
+	BoundIfStatement(const unique_ptr<BoundExpression>& condition,
 					 const unique_ptr<BoundStatement>& thenStatement,
 					 const unique_ptr<BoundStatement>& elseStatement);
 	BoundIfStatement(BoundIfStatement&&) = default;
@@ -84,7 +84,7 @@ private:
 	unique_ptr<BoundStatement> _body;
 
 public:
-	BoundWhileStatement(const unique_ptr<BoundExpression>& condition, 
+	BoundWhileStatement(const unique_ptr<BoundExpression>& condition,
 						const unique_ptr<BoundStatement>& body);
 	BoundWhileStatement(BoundWhileStatement&&) = default;
 	BoundWhileStatement& operator=(BoundWhileStatement&&) = default;
@@ -97,6 +97,26 @@ public:
 	const BoundStatement* Body()const noexcept { return _body.get(); }
 };
 
+class BoundDoWhileStatement final :public BoundStatement
+{
+private:
+	unique_ptr<BoundStatement> _body;
+	unique_ptr<BoundExpression> _condition;
+
+public:
+	BoundDoWhileStatement(const unique_ptr<BoundStatement>& body,
+						  const unique_ptr<BoundExpression>& condition);
+	BoundDoWhileStatement(BoundDoWhileStatement&&) = default;
+	BoundDoWhileStatement& operator=(BoundDoWhileStatement&&) = default;
+
+	// Inherited via BoundStatement
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::DoWhileStatement; }
+	const vector<const BoundNode*> GetChildren() const override;
+
+	const BoundStatement* Body()const noexcept { return _body.get(); }
+	const BoundExpression* Condition()const noexcept { return _condition.get(); }
+};
+
 class BoundForStatement final :public BoundStatement
 {
 private:
@@ -106,9 +126,9 @@ private:
 	unique_ptr<BoundStatement> _body;
 
 public:
-	BoundForStatement(const VariableSymbol& variable, 
+	BoundForStatement(const VariableSymbol& variable,
 					  const unique_ptr<BoundExpression>& lowerBound,
-					  const unique_ptr<BoundExpression>& upperBound, 
+					  const unique_ptr<BoundExpression>& upperBound,
 					  const unique_ptr<BoundStatement>& body);
 	BoundForStatement(BoundForStatement&&) = default;
 	BoundForStatement& operator=(BoundForStatement&&) = default;
@@ -166,8 +186,8 @@ private:
 	bool _jumpIfTrue;
 
 public:
-	BoundConditionalGotoStatement(const BoundLabel& label, 
-								  const unique_ptr<BoundExpression>& condition, 
+	BoundConditionalGotoStatement(const BoundLabel& label,
+								  const unique_ptr<BoundExpression>& condition,
 								  bool jumpIfTrue = true);
 	BoundConditionalGotoStatement(BoundConditionalGotoStatement&&) = default;
 	BoundConditionalGotoStatement& operator=(BoundConditionalGotoStatement&&) = default;

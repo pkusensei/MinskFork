@@ -27,6 +27,7 @@ class BlockStatementSyntax;
 class VariableDeclarationSyntax;
 class IfStatementSyntax;
 class WhileStatementSyntax;
+class DoWhileStatementSyntax;
 class ForStatementSyntax;
 class ExpressionStatementSyntax;
 
@@ -47,6 +48,7 @@ class BoundBlockStatement;
 class BoundVariableDeclaration;
 class BoundIfStatement;
 class BoundWhileStatement;
+class BoundDoWhileStatement;
 class BoundForStatement;
 class BoundLabelStatement;
 class BoundExpressionStatement;
@@ -104,6 +106,7 @@ private:
 	unique_ptr<BoundStatement> BindVariableDeclaration(const VariableDeclarationSyntax* syntax);
 	unique_ptr<BoundStatement> BindIfStatement(const IfStatementSyntax* syntax);
 	unique_ptr<BoundStatement> BindWhileStatement(const WhileStatementSyntax* syntax);
+	unique_ptr<BoundStatement> BindDoWhileStatement(const DoWhileStatementSyntax* syntax);
 	unique_ptr<BoundStatement> BindForStatement(const ForStatementSyntax* syntax);
 	unique_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax* syntax);
 
@@ -147,6 +150,7 @@ protected:
 	virtual unique_ptr<BoundStatement> RewriteVariableDeclaration(const BoundVariableDeclaration* node);
 	virtual unique_ptr<BoundStatement> RewriteIfStatement(const BoundIfStatement* node);
 	virtual unique_ptr<BoundStatement> RewriteWhileStatement(const BoundWhileStatement* node);
+	virtual unique_ptr<BoundStatement> RewriteDoWhileStatement(const BoundDoWhileStatement* node);
 	virtual unique_ptr<BoundStatement> RewriteForStatement(const BoundForStatement* node);
 	virtual unique_ptr<BoundStatement> RewriteLabelStatement(const BoundLabelStatement* node);
 	virtual unique_ptr<BoundStatement> RewriteGotoStatement(const BoundGotoStatement* node);
@@ -182,6 +186,7 @@ private:
 protected:
 	unique_ptr<BoundStatement> RewriteIfStatement(const BoundIfStatement* node)override;
 	unique_ptr<BoundStatement> RewriteWhileStatement(const BoundWhileStatement* node)override;
+	unique_ptr<BoundStatement> RewriteDoWhileStatement(const BoundDoWhileStatement* node)override;
 	unique_ptr<BoundStatement> RewriteForStatement(const BoundForStatement* node)override;
 
 public:

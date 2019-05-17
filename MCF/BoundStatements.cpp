@@ -77,6 +77,18 @@ const vector<const BoundNode*> BoundWhileStatement::GetChildren() const
 	return MakeVecOfRaw<const BoundNode>(_condition, _body);
 }
 
+BoundDoWhileStatement::BoundDoWhileStatement(const unique_ptr<BoundStatement>& body, 
+											 const unique_ptr<BoundExpression>& condition)
+	: _body(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(body))),
+	_condition(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition)))
+{
+}
+
+const vector<const BoundNode*> BoundDoWhileStatement::GetChildren() const
+{
+	return MakeVecOfRaw<const BoundNode>(_body, _condition);
+}
+
 BoundForStatement::BoundForStatement(const VariableSymbol & variable, 
 									 const unique_ptr<BoundExpression>& lowerBound,
 									 const unique_ptr<BoundExpression>& upperBound, 

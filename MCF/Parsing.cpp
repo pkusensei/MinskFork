@@ -1,382 +1,16 @@
 #include "stdafx.h"
-#include "Syntax.h"
+#include "Parsing.h"
 
-#include <cctype>
-#include <iostream>
-#include <sstream>
-
-#include "helpers.h"
 #include "Diagnostic.h"
+#include "Lexer.h"
 #include "ReflectionHelper.h"
 #include "SourceText.h"
 
 namespace MCF {
 
-void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node, 
-							 string indent, bool isLast)
-{
-	auto isToConsole = out.rdbuf() == std::cout.rdbuf();
-	string marker = isLast ? "+--" : "---";//"©¸©¤©¤" : "©À©¤©¤";
-	out << indent;
+#pragma region expression
 
-	if (isToConsole)
-		SetConsoleColor(ConsoleColor::DarkGray);
-	out << marker;
-
-	if (isToConsole)
-		SetConsoleColor(dynamic_cast<const SyntaxToken*>(node) ? ConsoleColor::Blue : ConsoleColor::Cyan);
-	out << GetSyntaxKindName(node->Kind());
-
-	auto token = dynamic_cast<const SyntaxToken*>(node);
-	if (token != nullptr && token->Value().HasValue())
-	{
-		out << " " << token->Value();
-	}
-
-	if (isToConsole)
-		ResetConsoleColor();
-
-	out << "\n";
-	indent += isLast ? "   " : "|  ";
-	auto children = node->GetChildren();
-	if (!children.empty())
-	{
-		auto lastChild = children.back();
-		for (const auto& child : children)
-			PrettyPrint(out, child, indent, lastChild == child);
-	}
-}
-
-TextSpan SyntaxNode::Span() const
-{
-	auto children = GetChildren();
-	auto first = children.front()->Span();
-	auto last = children.back()->Span();
-	return TextSpan::FromBounds(first.Start(), last.End());
-}
-
-SyntaxToken SyntaxNode::GetLastToken() const
-{
-	auto p = dynamic_cast<const SyntaxToken*>(this);
-	if (p) return p->Clone();
-
-	return GetChildren().back()->GetLastToken();
-}
-
-string SyntaxNode::ToString() const
-{
-	std::stringstream ss;
-	WriteTo(ss);
-	return ss.str();
-}
-
-#pragma region SyntaxToken
-SyntaxToken::SyntaxToken(const SyntaxKind& kind, size_t position,
-						 const string& text, const ValueType& value)
-	:_kind(kind), _position(position), _text(text), _value(value)
-{
-}
-
-bool SyntaxToken::operator==(const SyntaxToken & other) const noexcept
-{
-	return _kind == other._kind && _position == other._position
-		&& _text == other._text && _value == other._value;
-}
-
-bool SyntaxToken::operator!=(const SyntaxToken & other) const noexcept
-{
-	return !(*this == other);
-}
-
-const vector<const SyntaxNode*> SyntaxToken::GetChildren() const
-{
-	return vector<const SyntaxNode*>();
-}
-
-SyntaxToken SyntaxToken::Clone() const
-{
-	return SyntaxToken(_kind, _position, _text, _value);
-}
-
-TextSpan SyntaxToken::Span() const
-{
-	return TextSpan(_position, _text.length());
-}
-
-#pragma endregion
-
-#pragma region Lexer
-Lexer::Lexer(const SourceText& text)
-	:_text(&text), _diagnostics(make_unique<DiagnosticBag>()),
-	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(NullValue)
-{
-}
-
-char Lexer::Peek(int offset) const
-{
-	size_t idx = _position + offset;
-	if (idx >= _text->Length())
-		return '\0';
-	return (*_text)[idx];
-}
-
-SyntaxToken Lexer::Lex()
-{
-	_start = _position;
-	_kind = SyntaxKind::BadToken;
-	_value = NullValue;
-	auto character = Current();
-
-	switch (character)
-	{
-		case '\0':
-			_kind = SyntaxKind::EndOfFileToken;
-			break;
-		case '+':
-			if (Lookahead() == '+')
-			{
-				Next(2);
-				_kind = SyntaxKind::PlusPlusToken;
-			} else
-			{
-				Next();
-				_kind = SyntaxKind::PlusToken;
-			}
-			break;
-		case '-':
-			if (Lookahead() == '-')
-			{
-				Next(2);
-				_kind = SyntaxKind::MinusMinusToken;
-			} else
-			{
-				// NOTE "---" works as "-- -" so that "3---5" is -3
-				Next();
-				_kind = SyntaxKind::MinusToken;
-			}
-			break;
-		case '*':
-			Next();
-			_kind = SyntaxKind::StarToken;
-			break;
-		case '/':
-			Next();
-			_kind = SyntaxKind::SlashToken;
-			break;
-		case '%':
-			Next();
-			_kind = SyntaxKind::PercentToken;
-			break;
-		case '(':
-			Next();
-			_kind = SyntaxKind::OpenParenthesisToken;
-			break;
-		case ')':
-			Next();
-			_kind = SyntaxKind::CloseParenthesisToken;
-			break;
-		case '{':
-			Next();
-			_kind = SyntaxKind::OpenBraceToken;
-			break;
-		case '}':
-			Next();
-			_kind = SyntaxKind::CloseBraceToken;
-			break;
-		case ':':
-			Next();
-			_kind = SyntaxKind::ColonToken;
-			break;
-		case ',':
-			Next();
-			_kind = SyntaxKind::CommaToken;
-			break;
-		case '~':
-			Next();
-			_kind = SyntaxKind::TildeToken;
-			break;
-		case '^':
-			Next();
-			_kind = SyntaxKind::HatToken;
-			break;
-		case '&':
-			if (Lookahead() == '&')
-			{
-				Next(2);
-				_kind = SyntaxKind::AmpersandAmpersandToken;
-			} else
-			{
-				Next();
-				_kind = SyntaxKind::AmpersandToken;
-			}
-			break;
-		case '|':
-			if (Lookahead() == '|')
-			{
-				Next(2);
-				_kind = SyntaxKind::PipePipeToken;
-			} else
-			{
-				Next();
-				_kind = SyntaxKind::PipeToken;
-			}
-			break;
-		case '=':
-			if (Lookahead() == '=')
-			{
-				Next(2);
-				_kind = SyntaxKind::EqualsEqualsToken;
-			} else
-			{
-				Next();
-				_kind = SyntaxKind::EqualsToken;
-			}
-			break;
-		case '!':
-			if (Lookahead() == '=')
-			{
-				Next(2);
-				_kind = SyntaxKind::BangEqualsToken;
-			} else
-			{
-				Next();
-				_kind = SyntaxKind::BangToken;
-			}
-			break;
-		case '<':
-			if (Lookahead() == '=')
-			{
-				Next(2);
-				_kind = SyntaxKind::LessOrEqualsToken;
-			} else
-			{
-				Next();
-				_kind = SyntaxKind::LessToken;
-			}
-			break;
-		case '>':
-			if (Lookahead() == '=')
-			{
-				Next(2);
-				_kind = SyntaxKind::GreaterOrEqualsToken;
-			} else
-			{
-				Next();
-				_kind = SyntaxKind::GreaterToken;
-			}
-			break;
-		case '"':
-			ReadString();
-			break;
-		case '0': case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-			ReadNumberToken();
-			break;
-		case ' ': case '\n': case '\t': case '\r':
-			ReadWhiteSpace();
-			break;
-		default:
-			if (std::isalpha(character))
-				ReadIdentifierOrKeyword();
-			else if (std::isspace(character))
-				ReadWhiteSpace();
-			else
-			{
-				_diagnostics->ReportBadCharacter(_position, character);
-				Next();
-			}
-			break;
-	}
-	auto length = _position - _start;
-	auto text = GetText(_kind);
-	if (text.empty())
-		text = _text->ToString(_start, length);
-
-	return SyntaxToken(_kind, _start, text, _value);
-}
-
-void Lexer::ReadString()
-{
-	Next();
-	auto s = string();
-	auto done = false;
-
-	while (!done)
-	{
-		auto c = Current();
-		switch (c)
-		{
-			case '\0': case '\r': case '\n':
-			{
-				auto span = TextSpan(_start, 1);
-				_diagnostics->ReportUnterminatedString(span);
-				done = true;
-				break;
-			}
-			case '"':
-			{
-				if (Lookahead() == '"')
-				{
-					s.push_back(c);
-					Next(2);
-				} else
-				{
-					Next();
-					done = true;
-				}
-				break;
-			}
-			default:
-			{
-				s.push_back(c);
-				Next();
-				break;
-			}
-		}
-	}
-	_kind = SyntaxKind::StringToken;
-	_value = ValueType(s);
-}
-
-void Lexer::ReadWhiteSpace()
-{
-	while (std::isspace(Current()))
-		Next();
-	_kind = SyntaxKind::WhitespaceToken;
-}
-
-void Lexer::ReadNumberToken()
-{
-	while (std::isdigit(Current()))
-		Next();
-	auto length = _position - _start;
-	auto text = _text->ToString(_start, length);
-
-	IntegerType value;
-	try
-	{
-		value = StringToInteger(text);
-	} catch (...)
-	{
-		_diagnostics->ReportInvalidNumber(TextSpan(_start, length), text, TypeSymbol::GetType(TypeEnum::Int));
-	}
-	_value = ValueType(value);
-	_kind = SyntaxKind::NumberToken;
-}
-
-void Lexer::ReadIdentifierOrKeyword()
-{
-	while (std::isalpha(Current()))
-		Next();
-	auto length = _position - _start;
-	auto text = _text->ToString(_start, length);
-	_kind = GetKeywordKind(text);
-}
-#pragma endregion
-
-#pragma region Expression
-
-AssignmentExpressionSyntax::AssignmentExpressionSyntax(const SyntaxToken & identifier, 
+AssignmentExpressionSyntax::AssignmentExpressionSyntax(const SyntaxToken & identifier,
 													   const SyntaxToken & equals,
 													   const unique_ptr<ExpressionSyntax>& expression)
 	:_identifierToken(identifier), _equalsToken(equals),
@@ -401,7 +35,7 @@ const vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const
 	return MakeVecOfRaw<const SyntaxNode>(_operatorToken, _operand);
 }
 
-BinaryExpressionSyntax::BinaryExpressionSyntax(const unique_ptr<ExpressionSyntax>& left, 
+BinaryExpressionSyntax::BinaryExpressionSyntax(const unique_ptr<ExpressionSyntax>& left,
 											   const SyntaxToken & operatorToken,
 											   const unique_ptr<ExpressionSyntax>& right)
 	:_operatorToken(operatorToken),
@@ -415,7 +49,7 @@ const vector<const SyntaxNode*> BinaryExpressionSyntax::GetChildren() const
 	return MakeVecOfRaw<const SyntaxNode>(_left, _operatorToken, _right);
 }
 
-ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(const SyntaxToken & open, 
+ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(const SyntaxToken & open,
 															 const unique_ptr<ExpressionSyntax>& expression,
 															 const SyntaxToken & close)
 	:_openParenthesisToken(open), _closeParenthesisToken(close),
@@ -429,7 +63,7 @@ const vector<const SyntaxNode*> ParenthesizedExpressionSyntax::GetChildren() con
 										  _closeParenthesisToken);
 }
 
-LiteralExpressionSyntax::LiteralExpressionSyntax(const SyntaxToken& literalToken, 
+LiteralExpressionSyntax::LiteralExpressionSyntax(const SyntaxToken& literalToken,
 												 const ValueType& value)
 	:_literalToken(literalToken), _value(value)
 {
@@ -455,15 +89,7 @@ const vector<const SyntaxNode*> NameExpressionSyntax::GetChildren() const
 	return MakeVecOfRaw<const SyntaxNode>(_identifierToken);
 }
 
-PostfixExpressionSyntax::PostfixExpressionSyntax(const SyntaxToken & identifier, 
-												 const SyntaxToken& op, 
-												 const unique_ptr<ExpressionSyntax>& expression)
-	:_identifier(identifier), _op(op),
-	_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
-{
-}
-
-CallExpressionSyntax::CallExpressionSyntax(const SyntaxToken & identifier, 
+CallExpressionSyntax::CallExpressionSyntax(const SyntaxToken & identifier,
 										   const SyntaxToken & open,
 										   const SeparatedSyntaxList<ExpressionSyntax>& arguments, const SyntaxToken & close)
 	: _identifier(identifier), _openParenthesisToken(open),
@@ -482,16 +108,23 @@ const vector<const SyntaxNode*> CallExpressionSyntax::GetChildren() const
 	return result;
 }
 
+PostfixExpressionSyntax::PostfixExpressionSyntax(const SyntaxToken & identifier,
+												 const SyntaxToken& op,
+												 const unique_ptr<ExpressionSyntax>& expression)
+	:_identifier(identifier), _op(op),
+	_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
+{
+}
+
 const vector<const SyntaxNode*> PostfixExpressionSyntax::GetChildren() const
 {
 	return MakeVecOfRaw<const SyntaxNode>(_identifier, _op, _expression);
 }
 
 #pragma endregion
+#pragma region statement
 
-#pragma region Statement
-
-BlockStatementSyntax::BlockStatementSyntax(const SyntaxToken & open, 
+BlockStatementSyntax::BlockStatementSyntax(const SyntaxToken & open,
 										   const vector<unique_ptr<StatementSyntax>>& statements,
 										   const SyntaxToken & close)
 	:_openBraceToken(open), _closeBraceToken(close),
@@ -517,9 +150,9 @@ const vector<const StatementSyntax*> BlockStatementSyntax::Statements() const
 	return result;
 }
 
-VariableDeclarationSyntax::VariableDeclarationSyntax(const SyntaxToken & keyword, 
+VariableDeclarationSyntax::VariableDeclarationSyntax(const SyntaxToken & keyword,
 													 const SyntaxToken & identifier,
-													 const SyntaxToken & equals, 
+													 const SyntaxToken & equals,
 													 const unique_ptr<ExpressionSyntax>& initializer)
 	:_keyword(keyword), _identifier(identifier), _equalsToken(equals),
 	_initializer(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(initializer)))
@@ -533,7 +166,7 @@ const vector<const SyntaxNode*> VariableDeclarationSyntax::GetChildren() const
 }
 
 
-ElseClauseSyntax::ElseClauseSyntax(const SyntaxToken & elseKeyword, 
+ElseClauseSyntax::ElseClauseSyntax(const SyntaxToken & elseKeyword,
 								   const unique_ptr<StatementSyntax>& elseStatement)
 	:_elseKeyword(elseKeyword),
 	_elseStatement(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(elseStatement)))
@@ -545,9 +178,9 @@ const vector<const SyntaxNode*> ElseClauseSyntax::GetChildren() const
 	return MakeVecOfRaw<const SyntaxNode>(_elseKeyword, _elseStatement);
 }
 
-IfStatementSyntax::IfStatementSyntax(const SyntaxToken & ifKeyword, 
+IfStatementSyntax::IfStatementSyntax(const SyntaxToken & ifKeyword,
 									 const unique_ptr<ExpressionSyntax>& condition,
-									 const unique_ptr<StatementSyntax>& thenStatement, 
+									 const unique_ptr<StatementSyntax>& thenStatement,
 									 const unique_ptr<ElseClauseSyntax>& elseClause)
 	:_ifKeyword(ifKeyword),
 	_condition(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(condition))),
@@ -562,7 +195,7 @@ const vector<const SyntaxNode*> IfStatementSyntax::GetChildren() const
 										  _thenStatement, _elseClause);
 }
 
-WhileStatementSyntax::WhileStatementSyntax(const SyntaxToken & whileKeyword, 
+WhileStatementSyntax::WhileStatementSyntax(const SyntaxToken & whileKeyword,
 										   const unique_ptr<ExpressionSyntax>& condition,
 										   const unique_ptr<StatementSyntax>& body)
 	:_whileKeyword(whileKeyword),
@@ -576,12 +209,27 @@ const vector<const SyntaxNode*> WhileStatementSyntax::GetChildren() const
 	return MakeVecOfRaw<const SyntaxNode>(_whileKeyword, _condition, _body);
 }
 
-ForStatementSyntax::ForStatementSyntax(const SyntaxToken & keyword, 
-									   const SyntaxToken & identifier, 
+DoWhileStatementSyntax::DoWhileStatementSyntax(const SyntaxToken & doKeyword, 
+											   const unique_ptr<StatementSyntax>& body,
+											   const SyntaxToken & whileKeyword, 
+											   const unique_ptr<ExpressionSyntax>& condition)
+	:_doKeyword(doKeyword), _whileKeyword(whileKeyword),
+	_body(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(body))),
+	_condition(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(condition)))
+{
+}
+
+const vector<const SyntaxNode*> DoWhileStatementSyntax::GetChildren() const
+{
+	return MakeVecOfRaw<const SyntaxNode>(_doKeyword, _body, _whileKeyword, _condition);
+}
+
+ForStatementSyntax::ForStatementSyntax(const SyntaxToken & keyword,
+									   const SyntaxToken & identifier,
 									   const SyntaxToken & equals,
-									   unique_ptr<ExpressionSyntax>& lowerBound, 
+									   unique_ptr<ExpressionSyntax>& lowerBound,
 									   const SyntaxToken & toKeyword,
-									   unique_ptr<ExpressionSyntax>& upperBound, 
+									   unique_ptr<ExpressionSyntax>& upperBound,
 									   const unique_ptr<StatementSyntax>& body)
 	:_keyword(keyword), _identifier(identifier), _equalsToken(equals),
 	_lowerBound(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(lowerBound))),
@@ -609,7 +257,7 @@ const vector<const SyntaxNode*> ExpressionStatementSyntax::GetChildren() const
 
 #pragma endregion
 
-CompilationUnitSyntax::CompilationUnitSyntax(const unique_ptr<StatementSyntax>& statement, 
+CompilationUnitSyntax::CompilationUnitSyntax(const unique_ptr<StatementSyntax>& statement,
 											 const SyntaxToken & endOfFile)
 	:_statement(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(statement))),
 	_endOfFileToken(endOfFile)
@@ -681,6 +329,8 @@ unique_ptr<StatementSyntax> Parser::ParseStatement()
 			return ParseIfStatement();
 		case SyntaxKind::WhileKeyword:
 			return ParseWhileStatement();
+		case SyntaxKind::DoKeyword:
+			return ParseDoWhileStatement();
 		case SyntaxKind::ForKeyword:
 			return ParseForStatement();
 		default:
@@ -748,6 +398,16 @@ unique_ptr<StatementSyntax> Parser::ParseWhileStatement()
 	return make_unique<WhileStatementSyntax>(keyword, condition, body);
 }
 
+unique_ptr<StatementSyntax> Parser::ParseDoWhileStatement()
+{
+	auto doKeyword = MatchToken(SyntaxKind::DoKeyword);
+	auto body = ParseStatement();
+	auto whileKeyword = MatchToken(SyntaxKind::WhileKeyword);
+	auto condition = ParseExpression();
+
+	return make_unique<DoWhileStatementSyntax>(doKeyword, body, whileKeyword, condition);
+}
+
 unique_ptr<StatementSyntax> Parser::ParseForStatement()
 {
 	auto keyword = MatchToken(SyntaxKind::ForKeyword);
@@ -789,7 +449,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 {
 	unique_ptr<ExpressionSyntax> left = nullptr;
 	auto unaryOperatorPrecedence = GetUnaryOperatorPrecedence(Current()->Kind());
-	if (unaryOperatorPrecedence != 0 
+	if (unaryOperatorPrecedence != 0
 		&& unaryOperatorPrecedence >= parentPrecedence)
 	{
 		auto operatorToken = NextToken();
@@ -802,7 +462,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 	} else
 	{
 		left = ParsePrimaryExpression();
-		while (Current()->Kind() == SyntaxKind::PlusPlusToken 
+		while (Current()->Kind() == SyntaxKind::PlusPlusToken
 			   || Current()->Kind() == SyntaxKind::MinusMinusToken)
 		{
 			if (left->Kind() != SyntaxKind::ParenthesizedExpression
@@ -894,7 +554,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseStringLiteral()
 
 unique_ptr<ExpressionSyntax> Parser::ParseNameOrCallExpression()
 {
-	if (Peek(0)->Kind() == SyntaxKind::IdentifierToken 
+	if (Peek(0)->Kind() == SyntaxKind::IdentifierToken
 		&& Peek(1)->Kind() == SyntaxKind::OpenParenthesisToken)
 		return ParseCallExpression();
 	return ParseNameExpression();
