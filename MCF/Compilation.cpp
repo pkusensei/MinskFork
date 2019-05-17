@@ -50,8 +50,8 @@ ValueType Evaluator::Evaluate()
 				{
 					EvaluateVariableDeclaration(p);
 					++index;
-					break;
 				}
+				break;
 			}
 			case BoundNodeKind::ExpressionStatement:
 			{
@@ -60,8 +60,8 @@ ValueType Evaluator::Evaluate()
 				{
 					EvaluateExpressionStatement(p);
 					++index;
-					break;
 				}
+				break;
 			}
 			case BoundNodeKind::GotoStatement:
 			{
@@ -69,8 +69,8 @@ ValueType Evaluator::Evaluate()
 				if (gs)
 				{
 					index = labelToIndex.at(gs->Label());
-					break;
 				}
+				break;
 			}
 			case BoundNodeKind::ConditionalGotoStatement:
 			{
@@ -81,8 +81,8 @@ ValueType Evaluator::Evaluate()
 					if (condition == cgs->JumpIfTrue())
 						index = labelToIndex.at(cgs->Label());
 					else ++index;
-					break;
 				}
+				break;
 			}
 			case BoundNodeKind::LabelStatement:
 				++index;
