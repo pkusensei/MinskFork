@@ -13,26 +13,30 @@
 
 namespace MCF {
 
-EvaluationResult::EvaluationResult(const DiagnosticBag* diagnostics, 
+EvaluationResult::EvaluationResult(const DiagnosticBag* diagnostics,
 								   const ValueType & value)
 	:_diagnostics(diagnostics), _value(value)
 {
 }
 
-Evaluator::Evaluator(const BoundBlockStatement* root, 
-					 const std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
-	: _root(root),
-	_variables(std::remove_const_t<std::unordered_map<VariableSymbol, ValueType, VariableHash>*>(&variables))
+Evaluator::Evaluator(unique_ptr<BoundProgram>& program, VarMap& variables)
+	: _program(std::move(program)), _globals(&variables)
 {
+	_locals.emplace(VarMap());
 }
 
 ValueType Evaluator::Evaluate()
 {
+	return EvaluateStatement(_program->Statement());
+}
+
+ValueType Evaluator::EvaluateStatement(const BoundBlockStatement * body)
+{
 	auto labelToIndex = std::unordered_map<BoundLabel, size_t, LabelHash>();
-	auto statements = _root->Statements();
+	auto statements = body->Statements();
 	for (size_t i = 0; i < statements.size(); ++i)
 	{
-		auto p = dynamic_cast<const BoundLabelStatement*>(statements.at(i));
+		auto p = dynamic_cast<const BoundLabelStatement*>(statements.at(i).get());
 		if (p)
 			labelToIndex.emplace(p->Label(), i + 1);
 	}
@@ -40,36 +44,31 @@ ValueType Evaluator::Evaluate()
 	size_t index = 0;
 	while (index < statements.size())
 	{
-		auto s = statements.at(index);
+		auto s = statements.at(index).get();
 		switch (s->Kind())
 		{
 			case BoundNodeKind::VariableDeclaration:
 			{
 				auto p = dynamic_cast<const BoundVariableDeclaration*>(s);
 				if (p)
-				{
 					EvaluateVariableDeclaration(p);
-					++index;
-				}
+				++index;
 				break;
 			}
 			case BoundNodeKind::ExpressionStatement:
 			{
 				auto p = dynamic_cast<const BoundExpressionStatement*>(s);
 				if (p)
-				{
+
 					EvaluateExpressionStatement(p);
-					++index;
-				}
+				++index;
 				break;
 			}
 			case BoundNodeKind::GotoStatement:
 			{
 				auto gs = dynamic_cast<const BoundGotoStatement*>(s);
 				if (gs)
-				{
 					index = labelToIndex.at(gs->Label());
-				}
 				break;
 			}
 			case BoundNodeKind::ConditionalGotoStatement:
@@ -77,7 +76,8 @@ ValueType Evaluator::Evaluate()
 				auto cgs = dynamic_cast<const BoundConditionalGotoStatement*>(s);
 				if (cgs)
 				{
-					auto condition = EvaluateExpression(cgs->Condition()).GetValue<bool>();
+					auto condition =
+						EvaluateExpression(cgs->Condition().get()).GetValue<bool>();
 					if (condition == cgs->JumpIfTrue())
 						index = labelToIndex.at(cgs->Label());
 					else ++index;
@@ -96,17 +96,17 @@ ValueType Evaluator::Evaluate()
 
 void Evaluator::EvaluateVariableDeclaration(const BoundVariableDeclaration * node)
 {
-	auto value = EvaluateExpression(node->Initializer());
-	_variables->emplace(node->Variable(), value);
+	auto value = EvaluateExpression(node->Initializer().get());
 	_lastValue = value;
+	Assign(node->Variable(), value);
 }
 
 void Evaluator::EvaluateExpressionStatement(const BoundExpressionStatement * node)
 {
-	_lastValue = EvaluateExpression(node->Expression());
+	_lastValue = EvaluateExpression(node->Expression().get());
 }
 
-ValueType Evaluator::EvaluateExpression(const BoundExpression * node)const
+ValueType Evaluator::EvaluateExpression(const BoundExpression * node)
 {
 	switch (node->Kind())
 	{
@@ -169,21 +169,27 @@ ValueType Evaluator::EvaluateLiteralExpression(const BoundLiteralExpression * no
 	return node->Value();
 }
 
-ValueType Evaluator::EvaluateVariableExpression(const BoundVariableExpression * node)const
+ValueType Evaluator::EvaluateVariableExpression(const BoundVariableExpression * node)
 {
-	return _variables->at(node->Variable());
+	if (node->Variable()->Kind() == SymbolKind::GlobalVariable)
+		return _globals->at(node->Variable());
+	else
+	{
+		auto locals = _locals.top();
+		return locals.at(node->Variable());
+	}
 }
 
-ValueType Evaluator::EvaluateAssignmentExpression(const BoundAssignmentExpression * node)const
+ValueType Evaluator::EvaluateAssignmentExpression(const BoundAssignmentExpression * node)
 {
-	auto value = EvaluateExpression(node->Expression());
-	_variables->insert_or_assign(node->Variable(), value);
+	auto value = EvaluateExpression(node->Expression().get());
+	Assign(node->Variable(), value);
 	return value;
 }
 
-ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression * node)const
+ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression * node)
 {
-	auto operand = EvaluateExpression(node->Operand());
+	auto operand = EvaluateExpression(node->Operand().get());
 	switch (node->Op()->Kind())
 	{
 		case BoundUnaryOperatorKind::Identity:
@@ -199,10 +205,10 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression * node)c
 	}
 }
 
-ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node)const
+ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node)
 {
-	auto left = EvaluateExpression(node->Left());
-	auto right = EvaluateExpression(node->Right());
+	auto left = EvaluateExpression(node->Left().get());
+	auto right = EvaluateExpression(node->Right().get());
 	switch (node->Op()->Kind())
 	{
 		case BoundBinaryOperatorKind::Addition:
@@ -251,9 +257,9 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 	}
 }
 
-ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node) const
+ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node)
 {
-	if (node->Function() == GetBuiltinFunction(BuiltinFuncEnum::Input))
+	if (*(node->Function()) == GetBuiltinFunction(BuiltinFuncEnum::Input))
 	{
 		auto f = []() {
 			auto result = string();
@@ -261,14 +267,15 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node) co
 			return result;
 		};
 		return f();
-	} else if (node->Function() == GetBuiltinFunction(BuiltinFuncEnum::Print))
+	} else if (*(node->Function()) == GetBuiltinFunction(BuiltinFuncEnum::Print))
 	{
-		auto message = EvaluateExpression(node->Arguments()[0]);
+		auto message = EvaluateExpression(node->Arguments()[0].get());
 		std::cout << message.GetValue<string>() << '\n';
 		return NullValue;
-	} else if (node->Function() == GetBuiltinFunction(BuiltinFuncEnum::Rnd))
+	} else if (*(node->Function()) == GetBuiltinFunction(BuiltinFuncEnum::Rnd))
 	{
-		auto max = EvaluateExpression(node->Arguments()[0]).GetValue<IntegerType>();
+		auto max =
+			EvaluateExpression(node->Arguments()[0].get()).GetValue<IntegerType>();
 		auto f = [max]() {
 			static auto rd = std::random_device();
 			auto mt = std::mt19937(rd());
@@ -279,13 +286,25 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node) co
 		return f();
 	} else
 	{
-		throw std::invalid_argument("Unexpected function " + node->Function().ToString());
+		auto locals = VarMap();
+		for (auto i = 0; i < node->Arguments().size(); ++i)
+		{
+			auto param = node->Function()->Parameters()[i];
+			auto value = EvaluateExpression(node->Arguments()[i].get());
+			locals.emplace(make_shared<ParameterSymbol>(param), value);
+		}
+		_locals.emplace(locals);
+		auto statement = _program->Functions()->at(node->Function()).get();
+		auto result = EvaluateStatement(statement);
+
+		_locals.pop();
+		return result;
 	}
 }
 
-ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpression * node) const
+ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpression * node)
 {
-	auto value = EvaluateExpression(node->Expression());
+	auto value = EvaluateExpression(node->Expression().get());
 	if (node->Type() == TypeSymbol::GetType(TypeEnum::Bool))
 		return value.ToBoolean();
 	else if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
@@ -296,20 +315,31 @@ ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpressio
 		throw std::invalid_argument("Unexpected type " + node->Type().ToString());
 }
 
-ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression * node) const
+ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression * node)
 {
-	auto value = EvaluateExpression(node->Expression());
+	auto value = EvaluateExpression(node->Expression().get());
 	auto result = value.GetValue<IntegerType>();
 	switch (node->OperatorKind())
 	{
 		case BoundPostfixOperatorEnum::Increment:
-			_variables->insert_or_assign(node->Variable(), ++result);
+			Assign(node->Variable(), ++result);
 			return result;
 		case BoundPostfixOperatorEnum::Decrement:
-			_variables->insert_or_assign(node->Variable(), --result);
+			Assign(node->Variable(), --result);
 			return result;
 		default:
 			throw std::invalid_argument("Unexpected postfix operator " + GetEnumText(node->OperatorKind()));
+	}
+}
+
+void Evaluator::Assign(const shared_ptr<VariableSymbol>& variable, const ValueType & value)
+{
+	if (variable->Kind() == SymbolKind::GlobalVariable)
+		_globals->insert_or_assign(variable, value);
+	else
+	{
+		auto locals = _locals.top();
+		locals.insert_or_assign(variable, value);
 	}
 }
 
@@ -318,7 +348,7 @@ Compilation::Compilation()
 {
 }
 
-Compilation::Compilation(const unique_ptr<Compilation>& previous, 
+Compilation::Compilation(const unique_ptr<Compilation>& previous,
 						 const SyntaxTree& tree)
 	: _previous(std::move(std::remove_const_t<unique_ptr<Compilation>&>(previous))),
 	_syntaxTree(&tree),
@@ -326,7 +356,7 @@ Compilation::Compilation(const unique_ptr<Compilation>& previous,
 {
 }
 
-Compilation::Compilation(const unique_ptr<Compilation>& previous, 
+Compilation::Compilation(const unique_ptr<Compilation>& previous,
 						 const unique_ptr<SyntaxTree>& tree)
 	: _previous(std::move(std::remove_const_t<unique_ptr<Compilation>&>(previous))),
 	_syntaxTree(tree.get()),
@@ -364,20 +394,19 @@ const BoundGlobalScope* Compilation::GlobalScope()
 	return _globalScope.get();
 }
 
-unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous, 
+unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous,
 												  const SyntaxTree & tree)
 {
 	return make_unique<Compilation>(previous, tree);
 }
 
-unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous, 
+unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous,
 												  const unique_ptr<SyntaxTree>& tree)
 {
 	return make_unique<Compilation>(previous, tree);
 }
 
-EvaluationResult Compilation::Evaluate(
-	std::unordered_map<VariableSymbol, ValueType, VariableHash>& variables)
+EvaluationResult Compilation::Evaluate(VarMap& variables)
 {
 	_syntaxTree->Diagnostics()->AddRange(*(GlobalScope()->Diagnostics()));
 	auto diagnostics = _syntaxTree->Diagnostics();
@@ -385,22 +414,19 @@ EvaluationResult Compilation::Evaluate(
 	if (!diagnostics->empty())
 		return EvaluationResult(diagnostics, NullValue);
 
-	auto statement = GetStatement();
-	Evaluator evaluator(statement.get(), variables);
+	auto program = Binder::BindProgram(GlobalScope());
+	if (!program->Diagnostics()->empty())
+		return EvaluationResult(program->Diagnostics(), NullValue);
+
+	Evaluator evaluator(program, variables);
 	auto value = evaluator.Evaluate();
 	return EvaluationResult(diagnostics, value);
 }
 
-unique_ptr<BoundBlockStatement> Compilation::GetStatement()
-{
-	auto result = GlobalScope()->Statement();
-	return Lowerer::Lower(result);
-}
-
 void Compilation::EmitTree(std::ostream & out)
 {
-	auto statement = GetStatement();
-	statement->WriteTo(out);
+	auto program = Binder::BindProgram(GlobalScope());
+	program->Statement()->WriteTo(out);
 }
 
 }//MCF

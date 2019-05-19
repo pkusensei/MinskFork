@@ -19,10 +19,10 @@ public:
 class BoundBlockStatement final : public BoundStatement
 {
 private:
-	vector<unique_ptr<BoundStatement>> _statements;
+	vector<shared_ptr<BoundStatement>> _statements;
 
 public:
-	explicit BoundBlockStatement(const vector<unique_ptr<BoundStatement>>& statements);
+	explicit BoundBlockStatement(const vector<shared_ptr<BoundStatement>>& statements);
 	BoundBlockStatement(BoundBlockStatement&&) = default;
 	BoundBlockStatement& operator=(BoundBlockStatement&&) = default;
 
@@ -30,18 +30,18 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BlockStatement; }
 	const vector<const BoundNode*> GetChildren() const override;
 
-	const vector<const BoundStatement*> Statements()const;
+	const vector<shared_ptr<BoundStatement>>& Statements()const noexcept { return _statements; }
 };
 
 class BoundVariableDeclaration final :public BoundStatement
 {
 private:
-	VariableSymbol _variable;
-	unique_ptr<BoundExpression> _initializer;
+	shared_ptr<VariableSymbol> _variable;
+	shared_ptr<BoundExpression> _initializer;
 
 public:
-	BoundVariableDeclaration(const VariableSymbol& variable,
-							 const unique_ptr<BoundExpression>& initializer);
+	BoundVariableDeclaration(const shared_ptr<VariableSymbol>& variable,
+							 const shared_ptr<BoundExpression>& initializer);
 	BoundVariableDeclaration(BoundVariableDeclaration&&) = default;
 	BoundVariableDeclaration& operator=(BoundVariableDeclaration&&) = default;
 
@@ -50,21 +50,21 @@ public:
 	const vector<std::pair<string, string>> GetProperties() const override;
 	const vector<const BoundNode*> GetChildren() const override;
 
-	VariableSymbol Variable()const { return _variable; }
-	const BoundExpression* Initializer()const noexcept { return _initializer.get(); }
+	const shared_ptr<VariableSymbol>& Variable()const { return _variable; }
+	const shared_ptr<BoundExpression>& Initializer()const noexcept { return _initializer; }
 };
 
 class BoundIfStatement final :public BoundStatement
 {
 private:
-	unique_ptr<BoundExpression> _condition;
-	unique_ptr<BoundStatement> _thenStatement;
-	unique_ptr<BoundStatement> _elseStatement;
+	shared_ptr<BoundExpression> _condition;
+	shared_ptr<BoundStatement> _thenStatement;
+	shared_ptr<BoundStatement> _elseStatement;
 
 public:
-	BoundIfStatement(const unique_ptr<BoundExpression>& condition,
-					 const unique_ptr<BoundStatement>& thenStatement,
-					 const unique_ptr<BoundStatement>& elseStatement);
+	BoundIfStatement(const shared_ptr<BoundExpression>& condition,
+					 const shared_ptr<BoundStatement>& thenStatement,
+					 const shared_ptr<BoundStatement>& elseStatement);
 	BoundIfStatement(BoundIfStatement&&) = default;
 	BoundIfStatement& operator=(BoundIfStatement&&) = default;
 
@@ -72,20 +72,20 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::IfStatement; }
 	const vector<const BoundNode*> GetChildren() const override;
 
-	const BoundExpression* Condition()const noexcept { return _condition.get(); }
-	const BoundStatement* ThenStatement()const noexcept { return _thenStatement.get(); }
-	const BoundStatement* ElseStatement()const noexcept { return _elseStatement.get(); }
+	const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
+	const shared_ptr<BoundStatement>& ThenStatement()const noexcept { return _thenStatement; }
+	const shared_ptr<BoundStatement>& ElseStatement()const noexcept { return _elseStatement; }
 };
 
 class BoundWhileStatement final :public BoundStatement
 {
 private:
-	unique_ptr<BoundExpression> _condition;
-	unique_ptr<BoundStatement> _body;
+	shared_ptr<BoundExpression> _condition;
+	shared_ptr<BoundStatement> _body;
 
 public:
-	BoundWhileStatement(const unique_ptr<BoundExpression>& condition,
-						const unique_ptr<BoundStatement>& body);
+	BoundWhileStatement(const shared_ptr<BoundExpression>& condition,
+						const shared_ptr<BoundStatement>& body);
 	BoundWhileStatement(BoundWhileStatement&&) = default;
 	BoundWhileStatement& operator=(BoundWhileStatement&&) = default;
 
@@ -93,19 +93,19 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::WhileStatement; }
 	const vector<const BoundNode*> GetChildren() const override;
 
-	const BoundExpression* Condition()const noexcept { return _condition.get(); }
-	const BoundStatement* Body()const noexcept { return _body.get(); }
+	const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
+	const shared_ptr<BoundStatement>& Body()const noexcept { return _body; }
 };
 
 class BoundDoWhileStatement final :public BoundStatement
 {
 private:
-	unique_ptr<BoundStatement> _body;
-	unique_ptr<BoundExpression> _condition;
+	shared_ptr<BoundStatement> _body;
+	shared_ptr<BoundExpression> _condition;
 
 public:
-	BoundDoWhileStatement(const unique_ptr<BoundStatement>& body,
-						  const unique_ptr<BoundExpression>& condition);
+	BoundDoWhileStatement(const shared_ptr<BoundStatement>& body,
+						  const shared_ptr<BoundExpression>& condition);
 	BoundDoWhileStatement(BoundDoWhileStatement&&) = default;
 	BoundDoWhileStatement& operator=(BoundDoWhileStatement&&) = default;
 
@@ -113,23 +113,23 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::DoWhileStatement; }
 	const vector<const BoundNode*> GetChildren() const override;
 
-	const BoundStatement* Body()const noexcept { return _body.get(); }
-	const BoundExpression* Condition()const noexcept { return _condition.get(); }
+	const shared_ptr<BoundStatement>& Body()const noexcept { return _body; }
+	const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
 };
 
 class BoundForStatement final :public BoundStatement
 {
 private:
-	VariableSymbol _variable;
-	unique_ptr<BoundExpression> _lowerBound;
-	unique_ptr<BoundExpression> _upperBound;
-	unique_ptr<BoundStatement> _body;
+	shared_ptr<VariableSymbol> _variable;
+	shared_ptr<BoundExpression> _lowerBound;
+	shared_ptr<BoundExpression> _upperBound;
+	shared_ptr<BoundStatement> _body;
 
 public:
-	BoundForStatement(const VariableSymbol& variable,
-					  const unique_ptr<BoundExpression>& lowerBound,
-					  const unique_ptr<BoundExpression>& upperBound,
-					  const unique_ptr<BoundStatement>& body);
+	BoundForStatement(const shared_ptr<VariableSymbol>& variable,
+					  const shared_ptr<BoundExpression>& lowerBound,
+					  const shared_ptr<BoundExpression>& upperBound,
+					  const shared_ptr<BoundStatement>& body);
 	BoundForStatement(BoundForStatement&&) = default;
 	BoundForStatement& operator=(BoundForStatement&&) = default;
 
@@ -138,10 +138,10 @@ public:
 	const vector<std::pair<string, string>> GetProperties() const override;
 	const vector<const BoundNode*> GetChildren() const override;
 
-	VariableSymbol Variable()const { return _variable; }
-	const BoundExpression* LowerBound()const noexcept { return _lowerBound.get(); }
-	const BoundExpression* UpperBound()const noexcept { return _upperBound.get(); }
-	const BoundStatement* Body()const noexcept { return _body.get(); }
+	const shared_ptr<VariableSymbol>& Variable()const { return _variable; }
+	const shared_ptr<BoundExpression>& LowerBound()const noexcept { return _lowerBound; }
+	const shared_ptr<BoundExpression>& UpperBound()const noexcept { return _upperBound; }
+	const shared_ptr<BoundStatement>& Body()const noexcept { return _body; }
 };
 
 class BoundLabelStatement final :public BoundStatement
@@ -182,12 +182,12 @@ class BoundConditionalGotoStatement final :public BoundStatement
 {
 private:
 	BoundLabel _label;
-	unique_ptr<BoundExpression> _condition;
+	shared_ptr<BoundExpression> _condition;
 	bool _jumpIfTrue;
 
 public:
 	BoundConditionalGotoStatement(const BoundLabel& label,
-								  const unique_ptr<BoundExpression>& condition,
+								  const shared_ptr<BoundExpression>& condition,
 								  bool jumpIfTrue = true);
 	BoundConditionalGotoStatement(BoundConditionalGotoStatement&&) = default;
 	BoundConditionalGotoStatement& operator=(BoundConditionalGotoStatement&&) = default;
@@ -198,17 +198,17 @@ public:
 	const vector<const BoundNode*> GetChildren() const override;
 
 	BoundLabel Label()const { return _label; }
-	const BoundExpression* Condition()const { return _condition.get(); }
+	const shared_ptr<BoundExpression>& Condition()const { return _condition; }
 	bool JumpIfTrue()const noexcept { return _jumpIfTrue; }
 };
 
 class BoundExpressionStatement final : public BoundStatement
 {
 private:
-	unique_ptr<BoundExpression> _expression;
+	shared_ptr<BoundExpression> _expression;
 
 public:
-	BoundExpressionStatement(const unique_ptr<BoundExpression>& expression);
+	BoundExpressionStatement(const shared_ptr<BoundExpression>& expression);
 	BoundExpressionStatement(BoundExpressionStatement&&) = default;
 	BoundExpressionStatement& operator=(BoundExpressionStatement&&) = default;
 
@@ -216,7 +216,7 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ExpressionStatement; }
 	const vector<const BoundNode*> GetChildren() const override;
 
-	const BoundExpression* Expression()const noexcept { return _expression.get(); }
+	const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
 };
 
 }//MCF

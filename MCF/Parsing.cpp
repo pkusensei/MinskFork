@@ -12,9 +12,9 @@ namespace MCF {
 
 AssignmentExpressionSyntax::AssignmentExpressionSyntax(const SyntaxToken & identifier,
 													   const SyntaxToken & equals,
-													   const unique_ptr<ExpressionSyntax>& expression)
+													   unique_ptr<ExpressionSyntax>& expression)
 	:_identifierToken(identifier), _equalsToken(equals),
-	_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
+	_expression(std::move(expression))
 {
 }
 
@@ -24,9 +24,8 @@ const vector<const SyntaxNode*> AssignmentExpressionSyntax::GetChildren() const
 }
 
 UnaryExpressionSyntax::UnaryExpressionSyntax(const SyntaxToken & operatorToken,
-											 const unique_ptr<ExpressionSyntax>& operand)
-	:_operatorToken(operatorToken),
-	_operand(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(operand)))
+											 unique_ptr<ExpressionSyntax>& operand)
+	:_operatorToken(operatorToken), _operand(std::move(operand))
 {
 }
 
@@ -35,12 +34,10 @@ const vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const
 	return MakeVecOfRaw<const SyntaxNode>(_operatorToken, _operand);
 }
 
-BinaryExpressionSyntax::BinaryExpressionSyntax(const unique_ptr<ExpressionSyntax>& left,
+BinaryExpressionSyntax::BinaryExpressionSyntax(unique_ptr<ExpressionSyntax>& left,
 											   const SyntaxToken & operatorToken,
-											   const unique_ptr<ExpressionSyntax>& right)
-	:_operatorToken(operatorToken),
-	_left(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(left))),
-	_right(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(right)))
+											   unique_ptr<ExpressionSyntax>& right)
+	:_operatorToken(operatorToken), _left(std::move(left)), _right(std::move(right))
 {
 }
 
@@ -50,10 +47,10 @@ const vector<const SyntaxNode*> BinaryExpressionSyntax::GetChildren() const
 }
 
 ParenthesizedExpressionSyntax::ParenthesizedExpressionSyntax(const SyntaxToken & open,
-															 const unique_ptr<ExpressionSyntax>& expression,
+															 unique_ptr<ExpressionSyntax>& expression,
 															 const SyntaxToken & close)
 	:_openParenthesisToken(open), _closeParenthesisToken(close),
-	_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
+	_expression(std::move(expression))
 {
 }
 
@@ -91,10 +88,9 @@ const vector<const SyntaxNode*> NameExpressionSyntax::GetChildren() const
 
 CallExpressionSyntax::CallExpressionSyntax(const SyntaxToken & identifier,
 										   const SyntaxToken & open,
-										   const SeparatedSyntaxList<ExpressionSyntax>& arguments, const SyntaxToken & close)
+										   SeparatedSyntaxList<ExpressionSyntax>& arguments, const SyntaxToken & close)
 	: _identifier(identifier), _openParenthesisToken(open),
-	_arguments(std::move(std::remove_const_t<SeparatedSyntaxList<ExpressionSyntax>&>(arguments))),
-	_closeParenthesisToken(close)
+	_arguments(std::move(arguments)), _closeParenthesisToken(close)
 {
 }
 
@@ -110,9 +106,8 @@ const vector<const SyntaxNode*> CallExpressionSyntax::GetChildren() const
 
 PostfixExpressionSyntax::PostfixExpressionSyntax(const SyntaxToken & identifier,
 												 const SyntaxToken& op,
-												 const unique_ptr<ExpressionSyntax>& expression)
-	:_identifier(identifier), _op(op),
-	_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
+												 unique_ptr<ExpressionSyntax>& expression)
+	:_identifier(identifier), _op(op), _expression(std::move(expression))
 {
 }
 
@@ -125,10 +120,10 @@ const vector<const SyntaxNode*> PostfixExpressionSyntax::GetChildren() const
 #pragma region statement
 
 BlockStatementSyntax::BlockStatementSyntax(const SyntaxToken & open,
-										   const vector<unique_ptr<StatementSyntax>>& statements,
+										   vector<unique_ptr<StatementSyntax>>& statements,
 										   const SyntaxToken & close)
 	:_openBraceToken(open), _closeBraceToken(close),
-	_statements(std::move(std::remove_const_t<vector<unique_ptr<StatementSyntax>>&>(statements)))
+	_statements(std::move(statements))
 {
 }
 
@@ -163,15 +158,15 @@ const vector<const SyntaxNode*> TypeClauseSyntax::GetChildren() const
 
 VariableDeclarationSyntax::VariableDeclarationSyntax(const SyntaxToken & keyword,
 													 const SyntaxToken & identifier,
-													 const unique_ptr<TypeClauseSyntax>& typeClause,
+													 unique_ptr<TypeClauseSyntax>& typeClause,
 													 const SyntaxToken & equals,
-													 const unique_ptr<ExpressionSyntax>& initializer)
+													 unique_ptr<ExpressionSyntax>& initializer)
 	: _keyword(keyword), _identifier(identifier),
 	_typeClause(nullptr), _equalsToken(equals),
-	_initializer(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(initializer)))
+	_initializer(std::move(initializer))
 {
 	if (typeClause != nullptr)
-		_typeClause = std::move(std::remove_const_t<unique_ptr<TypeClauseSyntax>&>(typeClause));
+		_typeClause = std::move(typeClause);
 }
 
 const vector<const SyntaxNode*> VariableDeclarationSyntax::GetChildren() const
@@ -186,9 +181,9 @@ const vector<const SyntaxNode*> VariableDeclarationSyntax::GetChildren() const
 
 
 ElseClauseSyntax::ElseClauseSyntax(const SyntaxToken & elseKeyword,
-								   const unique_ptr<StatementSyntax>& elseStatement)
+								   unique_ptr<StatementSyntax>& elseStatement)
 	:_elseKeyword(elseKeyword),
-	_elseStatement(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(elseStatement)))
+	_elseStatement(std::move(elseStatement))
 {
 }
 
@@ -198,13 +193,11 @@ const vector<const SyntaxNode*> ElseClauseSyntax::GetChildren() const
 }
 
 IfStatementSyntax::IfStatementSyntax(const SyntaxToken & ifKeyword,
-									 const unique_ptr<ExpressionSyntax>& condition,
-									 const unique_ptr<StatementSyntax>& thenStatement,
-									 const unique_ptr<ElseClauseSyntax>& elseClause)
-	:_ifKeyword(ifKeyword),
-	_condition(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(condition))),
-	_thenStatement(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(thenStatement))),
-	_elseClause(std::move(std::remove_const_t<unique_ptr<ElseClauseSyntax>&>(elseClause)))
+									 unique_ptr<ExpressionSyntax>& condition,
+									 unique_ptr<StatementSyntax>& thenStatement,
+									 unique_ptr<ElseClauseSyntax>& elseClause)
+	:_ifKeyword(ifKeyword), _condition(std::move(condition)),
+	_thenStatement(std::move(thenStatement)), _elseClause(std::move(elseClause))
 {
 }
 
@@ -215,11 +208,10 @@ const vector<const SyntaxNode*> IfStatementSyntax::GetChildren() const
 }
 
 WhileStatementSyntax::WhileStatementSyntax(const SyntaxToken & whileKeyword,
-										   const unique_ptr<ExpressionSyntax>& condition,
-										   const unique_ptr<StatementSyntax>& body)
-	:_whileKeyword(whileKeyword),
-	_condition(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(condition))),
-	_body(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(body)))
+										   unique_ptr<ExpressionSyntax>& condition,
+										   unique_ptr<StatementSyntax>& body)
+	:_whileKeyword(whileKeyword), _condition(std::move(condition)),
+	_body(std::move(body))
 {
 }
 
@@ -229,13 +221,11 @@ const vector<const SyntaxNode*> WhileStatementSyntax::GetChildren() const
 }
 
 DoWhileStatementSyntax::DoWhileStatementSyntax(const SyntaxToken & doKeyword,
-											   const unique_ptr<StatementSyntax>& body,
+											   unique_ptr<StatementSyntax>& body,
 											   const SyntaxToken & whileKeyword,
-											   const unique_ptr<ExpressionSyntax>& condition)
-	:_doKeyword(doKeyword),
-	_body(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(body))),
-	_whileKeyword(whileKeyword),
-	_condition(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(condition)))
+											   unique_ptr<ExpressionSyntax>& condition)
+	:_doKeyword(doKeyword), _body(std::move(body)),
+	_whileKeyword(whileKeyword), _condition(std::move(condition))
 {
 }
 
@@ -250,12 +240,10 @@ ForStatementSyntax::ForStatementSyntax(const SyntaxToken & keyword,
 									   unique_ptr<ExpressionSyntax>& lowerBound,
 									   const SyntaxToken & toKeyword,
 									   unique_ptr<ExpressionSyntax>& upperBound,
-									   const unique_ptr<StatementSyntax>& body)
+									   unique_ptr<StatementSyntax>& body)
 	:_keyword(keyword), _identifier(identifier), _equalsToken(equals),
-	_lowerBound(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(lowerBound))),
-	_toKeyword(toKeyword),
-	_upperBound(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(upperBound))),
-	_body(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(body)))
+	_lowerBound(std::move(lowerBound)), _toKeyword(toKeyword),
+	_upperBound(std::move(upperBound)), _body(std::move(body))
 {
 }
 
@@ -265,8 +253,8 @@ const vector<const SyntaxNode*> ForStatementSyntax::GetChildren() const
 										  _lowerBound, _toKeyword, _upperBound, _body);
 }
 
-ExpressionStatementSyntax::ExpressionStatementSyntax(const unique_ptr<ExpressionSyntax>& expression)
-	:_expression(std::move(std::remove_const_t<unique_ptr<ExpressionSyntax>&>(expression)))
+ExpressionStatementSyntax::ExpressionStatementSyntax(unique_ptr<ExpressionSyntax>& expression)
+	:_expression(std::move(expression))
 {
 }
 
@@ -277,16 +265,63 @@ const vector<const SyntaxNode*> ExpressionStatementSyntax::GetChildren() const
 
 #pragma endregion
 
-CompilationUnitSyntax::CompilationUnitSyntax(const unique_ptr<StatementSyntax>& statement,
+ParameterSyntax::ParameterSyntax(const SyntaxToken & identifier,
+								 unique_ptr<TypeClauseSyntax> & type)
+	:_identifier(identifier),
+	_type(std::move(type))
+{
+}
+
+const vector<const SyntaxNode*> ParameterSyntax::GetChildren() const
+{
+	return MakeVecOfRaw<const SyntaxNode>(_identifier, _type);
+}
+
+FunctionDeclarationSyntax::FunctionDeclarationSyntax(const SyntaxToken & funcKeyword,
+													 const SyntaxToken & identifier,
+													 const SyntaxToken & openParenthesisToken,
+													 SeparatedSyntaxList<ParameterSyntax>& params,
+													 const SyntaxToken & closeParenthesisToken,
+													 unique_ptr<TypeClauseSyntax>& type,
+													 unique_ptr<BlockStatementSyntax>& body)
+	:_funcKeyword(funcKeyword), _identifier(identifier), _openParenthesisToken(openParenthesisToken),
+	_parameters(std::move(params)), _closeParenthesisToken(closeParenthesisToken),
+	_type(std::move(type)), _body(std::move(body))
+{
+}
+
+const vector<const SyntaxNode*> FunctionDeclarationSyntax::GetChildren() const
+{
+	auto result = MakeVecOfRaw<const SyntaxNode>(_funcKeyword, _identifier, _openParenthesisToken);
+	auto nodes = _parameters.GetWithSeparators();
+	result.insert(result.end(), nodes.begin(), nodes.end());
+	auto rest = MakeVecOfRaw<const SyntaxNode>(_closeParenthesisToken, _type, _body);
+	result.insert(result.end(), rest.begin(), rest.end());
+	return result;
+}
+
+GlobalStatementSyntax::GlobalStatementSyntax(unique_ptr<StatementSyntax>& statement)
+	:_statement(std::move(statement))
+{
+}
+
+const vector<const SyntaxNode*> GlobalStatementSyntax::GetChildren() const
+{
+	return MakeVecOfRaw<const SyntaxNode>(_statement);
+}
+
+CompilationUnitSyntax::CompilationUnitSyntax(vector<unique_ptr<MemberSyntax>>& members,
 											 const SyntaxToken & endOfFile)
-	:_statement(std::move(std::remove_const_t<unique_ptr<StatementSyntax>&>(statement))),
-	_endOfFileToken(endOfFile)
+	: _members(std::move(members)), _endOfFileToken(endOfFile)
 {
 }
 
 const vector<const SyntaxNode*> CompilationUnitSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<const SyntaxNode>(_statement, _endOfFileToken);
+	auto result = MakeVecOfRaw<const SyntaxNode, const MemberSyntax>(_members.begin(), _members.end());
+	auto rest = MakeVecOfRaw<const SyntaxNode>(_endOfFileToken);
+	result.insert(result.end(), rest.begin(), rest.end());
+	return result;
 }
 
 Parser::Parser(const SourceText& text)
@@ -336,6 +371,75 @@ SyntaxToken Parser::MatchToken(const SyntaxKind& kind)
 	return SyntaxToken(kind, current->Position(), string(), NullValue);
 }
 
+vector<unique_ptr<MemberSyntax>> Parser::ParseMembers()
+{
+	auto members = vector<unique_ptr<MemberSyntax>>();
+	while (Current()->Kind() != SyntaxKind::EndOfFileToken)
+	{
+		auto startToken = Current();
+		members.emplace_back(ParseMember()); //NOTE inline variable?
+
+		if (Current() == startToken)
+			NextToken();
+	}
+	return members;
+}
+
+unique_ptr<MemberSyntax> Parser::ParseMember()
+{
+	if (Current()->Kind() == SyntaxKind::FunctionKeyword)
+		return ParseFunctionDeclaration();
+	return ParseGlobalStatement();
+}
+
+unique_ptr<MemberSyntax> Parser::ParseFunctionDeclaration()
+{
+	auto functionKeyword = MatchToken(SyntaxKind::FunctionKeyword);
+	auto identifier = MatchToken(SyntaxKind::IdentifierToken);
+	auto openParenthesisToken = MatchToken(SyntaxKind::OpenParenthesisToken);
+	auto parameters = ParseParameterList();
+	auto closeParenthesisToken = MatchToken(SyntaxKind::CloseParenthesisToken);
+	auto type = ParseOptionalTypeClause();
+	auto body = ParseBlockStatement();
+
+	return make_unique<FunctionDeclarationSyntax>(functionKeyword, identifier,
+												  openParenthesisToken, parameters,
+												  closeParenthesisToken, type, body);
+}
+
+SeparatedSyntaxList<ParameterSyntax> Parser::ParseParameterList()
+{
+	auto nodes = vector<unique_ptr<SyntaxNode>>();
+
+	while (Current()->Kind() != SyntaxKind::CloseBraceToken
+		   && Current()->Kind() != SyntaxKind::EndOfFileToken)
+	{
+		auto param = ParseParameter();
+		nodes.emplace_back(std::move(param));
+
+		if (Current()->Kind() != SyntaxKind::CloseParenthesisToken)
+		{
+			auto comma = MatchToken(SyntaxKind::CommaToken);
+			nodes.emplace_back(make_unique<SyntaxToken>(comma));
+		}
+	}
+
+	return SeparatedSyntaxList<ParameterSyntax>(nodes);
+}
+
+unique_ptr<ParameterSyntax> Parser::ParseParameter()
+{
+	auto identifier = MatchToken(SyntaxKind::IdentifierToken);
+	auto type = ParseTypeClause();
+	return make_unique<ParameterSyntax>(identifier, type);
+}
+
+unique_ptr<MemberSyntax> Parser::ParseGlobalStatement()
+{
+	auto statement = ParseStatement();
+	return make_unique<GlobalStatementSyntax>(statement);
+}
+
 unique_ptr<StatementSyntax> Parser::ParseStatement()
 {
 	switch (Current()->Kind())
@@ -358,7 +462,7 @@ unique_ptr<StatementSyntax> Parser::ParseStatement()
 	}
 }
 
-unique_ptr<StatementSyntax> Parser::ParseBlockStatement()
+unique_ptr<BlockStatementSyntax> Parser::ParseBlockStatement()
 {
 	auto statements = vector<unique_ptr<StatementSyntax>>();
 	auto openBraceToken = MatchToken(SyntaxKind::OpenBraceToken);
@@ -368,7 +472,7 @@ unique_ptr<StatementSyntax> Parser::ParseBlockStatement()
 	{
 		auto startToken = Current();
 
-		statements.emplace_back(ParseStatement());
+		statements.emplace_back(ParseStatement()); //NOTE inline variable?
 
 		// Make sure ParseStatement() consumes a token or more
 		if (Current() == startToken)
@@ -390,7 +494,7 @@ unique_ptr<StatementSyntax> Parser::ParseVariableDeclaration()
 	auto equals = MatchToken(SyntaxKind::EqualsToken);
 	auto initializer = ParseExpression();
 
-	return make_unique<VariableDeclarationSyntax>(keyword, identifier, typeClause, 
+	return make_unique<VariableDeclarationSyntax>(keyword, identifier, typeClause,
 												  equals, initializer);
 }
 
@@ -456,7 +560,7 @@ unique_ptr<StatementSyntax> Parser::ParseForStatement()
 										   toKeyword, upperBound, body);
 }
 
-unique_ptr<StatementSyntax> Parser::ParseExpressionStatement()
+unique_ptr<ExpressionStatementSyntax> Parser::ParseExpressionStatement()
 {
 	auto expression = ParseExpression();
 	return make_unique<ExpressionStatementSyntax>(expression);
@@ -523,7 +627,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 	return left;
 }
 
-unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(const unique_ptr<ExpressionSyntax>& expression)
+unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(unique_ptr<ExpressionSyntax>& expression)
 {
 	auto operatorToken = NextToken();
 	auto pre = dynamic_cast<ParenthesizedExpressionSyntax*>(expression.get());
@@ -632,9 +736,9 @@ unique_ptr<ExpressionSyntax> Parser::ParseNameExpression()
 
 unique_ptr<CompilationUnitSyntax> Parser::ParseCompilationUnit()
 {
-	auto statement = ParseStatement();
+	auto members = ParseMembers();
 	auto endOfFileToken = MatchToken(SyntaxKind::EndOfFileToken);
-	return make_unique<CompilationUnitSyntax>(statement, endOfFileToken);
+	return make_unique<CompilationUnitSyntax>(members, endOfFileToken);
 }
 
 SyntaxTree::SyntaxTree(const SourceText& text)

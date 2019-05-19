@@ -6,10 +6,13 @@
 
 namespace MCF {
 
+class FunctionDeclarationSyntax;
+
 enum class SymbolKind
 {
 	Function,
-	Variable,
+	GlobalVariable,
+	LocalVariable,
 	Parameter,
 	Type,
 };
@@ -36,6 +39,11 @@ public:
 	bool operator!=(const Symbol& other)const noexcept;
 };
 
+struct SymbolHash
+{
+	size_t operator()(const Symbol& s)const noexcept;
+};
+
 enum class TypeEnum
 {
 	Error, Bool, Int, String, Void
@@ -58,11 +66,6 @@ public:
 	static const TypeSymbol GetType(const TypeEnum& kind);
 };
 
-struct TypeHash
-{
-	size_t operator()(const TypeSymbol& ts)const noexcept;
-};
-
 class MCF_API VariableSymbol : public Symbol
 {
 private:
@@ -81,27 +84,52 @@ public:
 	VariableSymbol(const VariableSymbol& other) = default;
 	VariableSymbol& operator=(const VariableSymbol& other) = default;
 
-	SymbolKind Kind() const noexcept override { return SymbolKind::Variable; }
 	bool IsReadOnly()const noexcept { return _isReadOnly; }
 	TypeSymbol Type()const { return _type; }
 };
 
-struct MCF_API VariableHash
+class GlobalVariableSymbol final :public VariableSymbol
 {
-	size_t operator()(const VariableSymbol& vs)const noexcept;
+public:
+	GlobalVariableSymbol(const string & name, bool isReadOnly, const TypeSymbol & type)
+		:VariableSymbol(name, isReadOnly, type)
+	{
+	}
+	GlobalVariableSymbol(const GlobalVariableSymbol&) = default;
+	GlobalVariableSymbol& operator=(const GlobalVariableSymbol&) = default;
+
+	SymbolKind Kind() const noexcept override { return SymbolKind::GlobalVariable; }
 };
 
-class ParameterSymbol final : public VariableSymbol
+class LocalVariableSymbol :public VariableSymbol
+{
+public:
+	LocalVariableSymbol(const string & name, bool isReadOnly, const TypeSymbol & type)
+		:VariableSymbol(name, isReadOnly, type)
+	{
+	}
+	LocalVariableSymbol(const LocalVariableSymbol&) = default;
+	LocalVariableSymbol& operator=(const LocalVariableSymbol&) = default;
+
+	SymbolKind Kind() const noexcept override { return SymbolKind::LocalVariable; }
+};
+
+class ParameterSymbol final : public LocalVariableSymbol
 {
 public:
 	ParameterSymbol(const string & name, const TypeSymbol & type)
-		:VariableSymbol(name, true, type)
+		:LocalVariableSymbol(name, true, type)
 	{
 	}
-	ParameterSymbol(const ParameterSymbol& other) = default;
-	ParameterSymbol& operator=(const ParameterSymbol& other) = default;
+	ParameterSymbol(const ParameterSymbol&) = default;
+	ParameterSymbol& operator=(const ParameterSymbol&) = default;
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Parameter; }
+};
+
+struct ParameterHash final
+{
+	size_t operator()(const ParameterSymbol& ps)const noexcept;
 };
 
 class FunctionSymbol final :public Symbol
@@ -109,22 +137,26 @@ class FunctionSymbol final :public Symbol
 private:
 	vector<ParameterSymbol> _params;
 	TypeSymbol _type;
+	const FunctionDeclarationSyntax* _declaration;
 
 public:
-	FunctionSymbol(const string& name, const vector<ParameterSymbol>& params, const TypeSymbol& type)
-		:Symbol(name), _params(params), _type(type)
-	{
-	}
-	FunctionSymbol()
-		:FunctionSymbol("", vector<ParameterSymbol>(), TypeSymbol::GetType(TypeEnum::Error))
-	{
-	}
-	FunctionSymbol(const FunctionSymbol& other) = default;
-	FunctionSymbol& operator=(const FunctionSymbol& other) = default;
+	FunctionSymbol(const string& name, const vector<ParameterSymbol>& params,
+				   const TypeSymbol& type, const FunctionDeclarationSyntax* declaration);
+	FunctionSymbol(const string& name, const vector<ParameterSymbol>& params,
+				   const TypeSymbol& type);
+	FunctionSymbol();
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Function; }
 	const vector<ParameterSymbol>& Parameters()const noexcept { return _params; }
 	TypeSymbol Type()const { return _type; }
+	const FunctionDeclarationSyntax* Declaration()const noexcept { return  _declaration; }
+
+};
+
+struct FunctionHash final
+{
+	size_t operator()(const FunctionSymbol& fs)const noexcept;
+	size_t operator()(const shared_ptr<FunctionSymbol>& fs)const noexcept;
 };
 
 enum class BuiltinFuncEnum

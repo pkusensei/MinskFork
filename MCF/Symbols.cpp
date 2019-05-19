@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include "EnumHelper.h"
+#include "Parsing.h"
 
 namespace MCF {
 
@@ -15,6 +16,11 @@ bool Symbol::operator==(const Symbol & other) const noexcept
 bool Symbol::operator!=(const Symbol & other) const noexcept
 {
 	return !(*this == other);
+}
+
+size_t SymbolHash::operator()(const Symbol & s) const noexcept
+{
+	return std::hash<string>{}(s.Name());
 }
 
 const TypeSymbol TypeSymbol::GetType(const TypeEnum& kind)
@@ -31,16 +37,43 @@ const TypeSymbol TypeSymbol::GetType(const TypeEnum& kind)
 	}
 }
 
-size_t TypeHash::operator()(const TypeSymbol & ts) const noexcept
+size_t ParameterHash::operator()(const ParameterSymbol & ps) const noexcept
 {
-	return std::hash<string>{}(ts.Name());
+	return std::hash<string>{}(ps.Type().Name());
 }
 
-size_t VariableHash::operator()(const VariableSymbol & vs) const noexcept
+FunctionSymbol::FunctionSymbol(const string & name, const vector<ParameterSymbol>& params,
+							   const TypeSymbol & type,
+							   const FunctionDeclarationSyntax* declaration)
+	: Symbol(name), _params(params), _type(type), _declaration(declaration)
 {
-	auto h1 = std::hash<string>{}(vs.Name());
-	auto h2 = TypeHash{}(vs.Type());
-	return h1 ^ (h2 << 1);
+}
+
+FunctionSymbol::FunctionSymbol(const string & name, const vector<ParameterSymbol>& params,
+							   const TypeSymbol & type)
+	: FunctionSymbol(name, params, type, nullptr)
+{
+}
+
+FunctionSymbol::FunctionSymbol()
+	: FunctionSymbol("", vector<ParameterSymbol>(), TypeSymbol::GetType(TypeEnum::Error))
+{
+}
+
+size_t FunctionHash::operator()(const FunctionSymbol & fs) const noexcept
+{
+	auto result = SymbolHash{}(fs);
+	for (const auto& it : fs.Parameters())
+	{
+		auto h = ParameterHash{}(it);
+		result = result ^ (h << 1);
+	}
+	return result;
+}
+
+size_t FunctionHash::operator()(const shared_ptr<FunctionSymbol>& fs) const noexcept
+{
+	return (*this)(*fs);
 }
 
 const FunctionSymbol GetBuiltinFunction(const BuiltinFuncEnum & kind)
@@ -63,8 +96,6 @@ const FunctionSymbol GetBuiltinFunction(const BuiltinFuncEnum & kind)
 	}
 }
 
-namespace {
-
 const vector<FunctionSymbol> GetAllBuiltinFunctionsImpl()
 {
 	auto enums = GetAllEnumValue<BuiltinFuncEnum>(BuiltinFuncEnum::Input, BuiltinFuncEnum::Rnd);
@@ -73,8 +104,6 @@ const vector<FunctionSymbol> GetAllBuiltinFunctionsImpl()
 		funcs.emplace_back(GetBuiltinFunction(it));
 	funcs.shrink_to_fit();
 	return funcs;
-}
-
 }
 
 const vector<FunctionSymbol>& GetAllBuiltinFunctions()
@@ -156,7 +185,7 @@ string ValueType::ToString() const
 
 size_t ValueType::GetValueTypeId(const TypeSymbol & inType)
 {
-	static std::unordered_map<TypeSymbol, size_t, TypeHash> types = {
+	static std::unordered_map<TypeSymbol, size_t, SymbolHash> types = {
 		{TypeSymbol::GetType(TypeEnum::Error), 0},
 		{TypeSymbol::GetType(TypeEnum::Bool), 1},
 		{TypeSymbol::GetType(TypeEnum::Int), 2},

@@ -142,7 +142,7 @@ private:
 	std::unique_ptr<MCF::Compilation> _previous{nullptr};
 	bool _showTree{false};
 	bool _showProgram{true};
-	std::unordered_map<MCF::VariableSymbol, MCF::ValueType, MCF::VariableHash> _variables;
+	std::unordered_map<std::shared_ptr<MCF::VariableSymbol>, MCF::ValueType> _variables;
 
 protected:
 	// Inherited via Repl

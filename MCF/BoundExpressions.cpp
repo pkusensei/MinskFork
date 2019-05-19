@@ -141,9 +141,8 @@ BoundUnaryOperator BoundUnaryOperator::Bind(const enum SyntaxKind& synKind, cons
 }
 
 BoundUnaryExpression::BoundUnaryExpression(const BoundUnaryOperator & op,
-										   const unique_ptr<BoundExpression>& operand)
-	:_op(op),
-	_operand(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(operand)))
+										   const shared_ptr<BoundExpression>& operand)
+	:_op(op), _operand(operand)
 {
 }
 
@@ -193,79 +192,77 @@ BoundBinaryOperator::BoundBinaryOperator()
 const vector<BoundBinaryOperator>& BoundBinaryOperator::Operators()
 {
 	static const auto operators = vector<BoundBinaryOperator>{
-		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, 
+		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
 							TypeSymbol::GetType(TypeEnum::Int)),
-		BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction, 
+		BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction,
 							TypeSymbol::GetType(TypeEnum::Int)),
-		BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication, 
+		BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication,
 							TypeSymbol::GetType(TypeEnum::Int)),
-		BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division, 
+		BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division,
 							TypeSymbol::GetType(TypeEnum::Int)),
-		BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus, 
-							TypeSymbol::GetType(TypeEnum::Int)),
-
-		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, 
-							TypeSymbol::GetType(TypeEnum::Int)),
-		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, 
-							TypeSymbol::GetType(TypeEnum::Int)),
-		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, 
+		BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus,
 							TypeSymbol::GetType(TypeEnum::Int)),
 
-		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, 
+		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd,
+							TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr,
+							TypeSymbol::GetType(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor,
+							TypeSymbol::GetType(TypeEnum::Int)),
+
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
 							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, 
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
 							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less, 
+		BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less,
 							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals, 
+		BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals,
 							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater, 
+		BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater,
 							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals, 
+		BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals,
 							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
 
-		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd, 
+		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd,
 							TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd, 
+		BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd,
 							TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr, 
+		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr,
 							TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr, 
+		BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr,
 							TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor, 
+		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor,
 							TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals, 
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
 							TypeSymbol::GetType(TypeEnum::Bool)),
-		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals, 
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
 							TypeSymbol::GetType(TypeEnum::Bool)),
 
-		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition, 
+		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
 							TypeSymbol::GetType(TypeEnum::String))
 	};
 
 	return operators;
 }
 
-BoundBinaryOperator BoundBinaryOperator::Bind(const enum SyntaxKind& synKind, 
-											  const TypeSymbol& leftType, 
+BoundBinaryOperator BoundBinaryOperator::Bind(const enum SyntaxKind& synKind,
+											  const TypeSymbol& leftType,
 											  const TypeSymbol& rightType)
 {
 	for (const auto& op : Operators())
 	{
-		if (op.SyntaxKind() == synKind 
-			&& op.LeftType() == leftType 
+		if (op.SyntaxKind() == synKind
+			&& op.LeftType() == leftType
 			&& op.RightType() == rightType)
 			return op;
 	}
 	return BoundBinaryOperator();
 }
 
-BoundBinaryExpression::BoundBinaryExpression(const unique_ptr<BoundExpression>& left, 
-											 const BoundBinaryOperator & op, 
-											 const unique_ptr<BoundExpression>& right)
-	:_left(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(left))),
-	_right(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(right))),
-	_op(op)
+BoundBinaryExpression::BoundBinaryExpression(const shared_ptr<BoundExpression>& left,
+											 const BoundBinaryOperator & op,
+											 const shared_ptr<BoundExpression>& right)
+	:_left(left), _right(right), _op(op)
 {
 }
 
@@ -281,10 +278,9 @@ const vector<std::pair<string, string>> BoundBinaryExpression::GetProperties() c
 	};
 }
 
-BoundAssignmentExpression::BoundAssignmentExpression(const VariableSymbol & variable, 
-													 const unique_ptr<BoundExpression>& expression)
-	:_variable(variable),
-	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
+BoundAssignmentExpression::BoundAssignmentExpression(const shared_ptr<VariableSymbol>& variable,
+													 const shared_ptr<BoundExpression>& expression)
+	:_variable(variable), _expression(expression)
 {
 }
 
@@ -296,7 +292,7 @@ const vector<const BoundNode*> BoundAssignmentExpression::GetChildren() const
 const vector<std::pair<string, string>> BoundAssignmentExpression::GetProperties() const
 {
 	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Variable", Variable().ToString()),
+		std::pair<string, string>("Variable", Variable()->ToString()),
 			std::pair<string, string>("Type", Type().Name())
 	};
 }
@@ -314,7 +310,7 @@ const vector<std::pair<string, string>> BoundLiteralExpression::GetProperties() 
 	};
 }
 
-BoundVariableExpression::BoundVariableExpression(const VariableSymbol & variable)
+BoundVariableExpression::BoundVariableExpression(const shared_ptr<VariableSymbol>& variable)
 	: _variable(variable)
 {
 }
@@ -322,15 +318,14 @@ BoundVariableExpression::BoundVariableExpression(const VariableSymbol & variable
 const vector<std::pair<string, string>> BoundVariableExpression::GetProperties() const
 {
 	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Variable", Variable().ToString()),
+		std::pair<string, string>("Variable", Variable()->ToString()),
 			std::pair<string, string>("Type", Type().Name())
 	};
 }
 
-BoundCallExpression::BoundCallExpression(const FunctionSymbol & function,
-										 const vector<unique_ptr<BoundExpression>>& arguments)
-	:_function(function),
-	_arguments(std::move(std::remove_const_t<vector<unique_ptr<BoundExpression>>&>(arguments)))
+BoundCallExpression::BoundCallExpression(const shared_ptr<FunctionSymbol>& function,
+										 const vector<shared_ptr<BoundExpression>>& arguments)
+	:_function(function), _arguments(arguments)
 {
 }
 
@@ -347,16 +342,9 @@ const vector<std::pair<string, string>> BoundCallExpression::GetProperties() con
 	};
 }
 
-const vector<const BoundExpression*> BoundCallExpression::Arguments() const
-{
-	return MakeVecOfRaw<const BoundExpression, BoundExpression>(_arguments.begin(),
-																_arguments.end());
-}
-
 BoundConversionExpression::BoundConversionExpression(const TypeSymbol& type,
-													 const unique_ptr<BoundExpression>& expression)
-	:_type(type),
-	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
+													 const shared_ptr<BoundExpression>& expression)
+	:_type(type), _expression(expression)
 {
 }
 
@@ -372,11 +360,10 @@ const vector<std::pair<string, string>> BoundConversionExpression::GetProperties
 	};
 }
 
-BoundPostfixExpression::BoundPostfixExpression(const VariableSymbol & variable,
+BoundPostfixExpression::BoundPostfixExpression(const shared_ptr<VariableSymbol>& variable,
 											   const BoundPostfixOperatorEnum& kind,
-											   const unique_ptr<BoundExpression>& expression)
-	:_variable(variable), _kind(kind),
-	_expression(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression)))
+											   const shared_ptr<BoundExpression>& expression)
+	:_variable(variable), _kind(kind), _expression(expression)
 {
 }
 
@@ -388,7 +375,7 @@ const vector<const BoundNode*> BoundPostfixExpression::GetChildren() const
 const vector<std::pair<string, string>> BoundPostfixExpression::GetProperties() const
 {
 	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Variable", Variable().ToString()),
+		std::pair<string, string>("Variable", Variable()->ToString()),
 			std::pair<string, string>("Type", Type().Name()),
 			std::pair<string, string>("OperatorKind", GetEnumText(OperatorKind()))
 	};

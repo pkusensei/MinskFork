@@ -12,9 +12,12 @@
 namespace MCF {
 
 using std::string;
+using std::vector;
+
 using std::unique_ptr;
 using std::make_unique;
-using std::vector;
+using std::shared_ptr;
+using std::make_shared;
 
 using IntegerType = long; // HACK use long as interger type
 

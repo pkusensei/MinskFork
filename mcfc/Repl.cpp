@@ -447,7 +447,7 @@ bool McfRepl::IsCompleteSubmission(const std::string & text) const
 	if (lastTwoLinesAreBlank()) return true;
 
 	auto tree = MCF::SyntaxTree::Parse(text);
-	if (tree->Root()->Statement()->GetLastToken().IsMissing())
+	if (tree->Root()->Members().back()->GetLastToken().IsMissing())
 		return false;
 	return true;
 }

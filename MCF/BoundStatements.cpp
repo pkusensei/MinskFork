@@ -16,8 +16,8 @@ const vector<const BoundNode*> BoundStatement::GetChildren() const
 	return vector<const BoundNode*>();
 }
 
-BoundBlockStatement::BoundBlockStatement(const vector<unique_ptr<BoundStatement>>& statements)
-	: _statements(std::move(std::remove_const_t<vector<unique_ptr<BoundStatement>>&>(statements)))
+BoundBlockStatement::BoundBlockStatement(const vector<shared_ptr<BoundStatement>>& statements)
+	: _statements(statements)
 {
 }
 
@@ -26,23 +26,16 @@ const vector<const BoundNode*> BoundBlockStatement::GetChildren() const
 	return MakeVecOfRaw<const BoundNode, BoundStatement>(_statements.begin(), _statements.end());
 }
 
-const vector<const BoundStatement*> BoundBlockStatement::Statements() const
-{
-	return MakeVecOfRaw<const BoundStatement, BoundStatement>(_statements.begin(), _statements.end());
-}
-
-
-BoundVariableDeclaration::BoundVariableDeclaration(const VariableSymbol & variable, 
-												   const unique_ptr<BoundExpression>& initializer)
-	:_variable(variable),
-	_initializer(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(initializer)))
+BoundVariableDeclaration::BoundVariableDeclaration(const shared_ptr<VariableSymbol> & variable,
+												   const shared_ptr<BoundExpression>& initializer)
+	:_variable(variable), _initializer(initializer)
 {
 }
 
 const vector<std::pair<string, string>> BoundVariableDeclaration::GetProperties() const
 {
 	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Variable", Variable().ToString())
+		std::pair<string, string>("Variable", Variable()->ToString())
 	};
 }
 
@@ -51,12 +44,10 @@ const vector<const BoundNode*> BoundVariableDeclaration::GetChildren() const
 	return MakeVecOfRaw<const BoundNode>(_initializer);
 }
 
-BoundIfStatement::BoundIfStatement(const unique_ptr<BoundExpression>& condition, 
-								   const unique_ptr<BoundStatement>& thenStatement,
-								   const unique_ptr<BoundStatement>& elseStatement)
-	: _condition(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition))),
-	_thenStatement(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(thenStatement))),
-	_elseStatement(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(elseStatement)))
+BoundIfStatement::BoundIfStatement(const shared_ptr<BoundExpression>& condition,
+								   const shared_ptr<BoundStatement>& thenStatement,
+								   const shared_ptr<BoundStatement>& elseStatement)
+	: _condition(condition), _thenStatement(thenStatement), _elseStatement(elseStatement)
 {
 }
 
@@ -65,10 +56,9 @@ const vector<const BoundNode*> BoundIfStatement::GetChildren() const
 	return MakeVecOfRaw<const BoundNode>(_condition, _thenStatement, _elseStatement);
 }
 
-BoundWhileStatement::BoundWhileStatement(const unique_ptr<BoundExpression>& condition,
-										 const unique_ptr<BoundStatement>& body)
-	:_condition(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition))),
-	_body(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(body)))
+BoundWhileStatement::BoundWhileStatement(const shared_ptr<BoundExpression>& condition,
+										 const shared_ptr<BoundStatement>& body)
+	:_condition(condition), _body(body)
 {
 }
 
@@ -77,10 +67,9 @@ const vector<const BoundNode*> BoundWhileStatement::GetChildren() const
 	return MakeVecOfRaw<const BoundNode>(_condition, _body);
 }
 
-BoundDoWhileStatement::BoundDoWhileStatement(const unique_ptr<BoundStatement>& body, 
-											 const unique_ptr<BoundExpression>& condition)
-	: _body(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(body))),
-	_condition(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition)))
+BoundDoWhileStatement::BoundDoWhileStatement(const shared_ptr<BoundStatement>& body,
+											 const shared_ptr<BoundExpression>& condition)
+	: _body(body), _condition(condition)
 {
 }
 
@@ -89,21 +78,18 @@ const vector<const BoundNode*> BoundDoWhileStatement::GetChildren() const
 	return MakeVecOfRaw<const BoundNode>(_body, _condition);
 }
 
-BoundForStatement::BoundForStatement(const VariableSymbol & variable, 
-									 const unique_ptr<BoundExpression>& lowerBound,
-									 const unique_ptr<BoundExpression>& upperBound, 
-									 const unique_ptr<BoundStatement>& body)
-	: _variable(variable),
-	_lowerBound(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(lowerBound))),
-	_upperBound(std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(upperBound))),
-	_body(std::move(std::remove_const_t<unique_ptr<BoundStatement>&>(body)))
+BoundForStatement::BoundForStatement(const shared_ptr<VariableSymbol>& variable,
+									 const shared_ptr<BoundExpression>& lowerBound,
+									 const shared_ptr<BoundExpression>& upperBound,
+									 const shared_ptr<BoundStatement>& body)
+	: _variable(variable), _lowerBound(lowerBound), _upperBound(upperBound), _body(body)
 {
 }
 
 const vector<std::pair<string, string>> BoundForStatement::GetProperties() const
 {
 	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Variable", Variable().ToString())
+		std::pair<string, string>("Variable", Variable()->ToString())
 	};
 }
 
@@ -137,11 +123,9 @@ const vector<std::pair<string, string>> BoundGotoStatement::GetProperties() cons
 }
 
 BoundConditionalGotoStatement::BoundConditionalGotoStatement(const BoundLabel & label,
-															 const unique_ptr<BoundExpression>& condition,
+															 const shared_ptr<BoundExpression>& condition,
 															 bool jumpIfTrue)
-	:_label(label),
-	_condition((std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(condition)))),
-	_jumpIfTrue(jumpIfTrue)
+	:_label(label), _condition(condition), _jumpIfTrue(jumpIfTrue)
 {
 }
 
@@ -158,8 +142,8 @@ const vector<const BoundNode*> BoundConditionalGotoStatement::GetChildren() cons
 	return MakeVecOfRaw<const BoundNode>(_condition);
 }
 
-BoundExpressionStatement::BoundExpressionStatement(const unique_ptr<BoundExpression>& expression)
-	: _expression((std::move(std::remove_const_t<unique_ptr<BoundExpression>&>(expression))))
+BoundExpressionStatement::BoundExpressionStatement(const shared_ptr<BoundExpression>& expression)
+	: _expression(expression)
 {
 }
 
