@@ -540,9 +540,9 @@ shared_ptr<VariableSymbol> Binder::BindVariable(const SyntaxToken & identifier, 
 	return variable;
 }
 
-std::optional<TypeSymbol> Binder::BindTypeClause(const TypeClauseSyntax * syntax)
+std::optional<TypeSymbol> Binder::BindTypeClause(const std::optional<TypeClauseSyntax>& syntax)
 {
-	if (syntax == nullptr) return std::nullopt;
+	if (!syntax.has_value()) return std::nullopt;
 
 	auto type = LookupType(syntax->Identifier().Text());
 	if (!type.has_value())

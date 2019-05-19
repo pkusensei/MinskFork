@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "SyntaxToken.h"
 
 namespace MCF {
@@ -266,6 +268,8 @@ private:
 
 public:
 	TypeClauseSyntax(const SyntaxToken& colon, const SyntaxToken& identifier);
+	TypeClauseSyntax(const TypeClauseSyntax&) = default;
+	TypeClauseSyntax& operator=(const TypeClauseSyntax&) = default;
 
 	// Inherited via SyntaxNode
 	SyntaxKind Kind() const override { return SyntaxKind::TypeClause; };
@@ -280,12 +284,12 @@ class VariableDeclarationSyntax final : public StatementSyntax
 private:
 	SyntaxToken _keyword;
 	SyntaxToken _identifier;
-	unique_ptr<TypeClauseSyntax> _typeClause;
+	std::optional<TypeClauseSyntax> _typeClause;
 	SyntaxToken _equalsToken;
 	unique_ptr<ExpressionSyntax> _initializer;
 public:
 	VariableDeclarationSyntax(const SyntaxToken& keyword, const SyntaxToken& identifier,
-							  unique_ptr<TypeClauseSyntax>& typeClause,
+							  const std::optional<TypeClauseSyntax>& typeClause,
 							  const SyntaxToken& equals,
 							  unique_ptr<ExpressionSyntax>& initializer);
 	VariableDeclarationSyntax(VariableDeclarationSyntax&&) = default;
@@ -297,7 +301,7 @@ public:
 
 	SyntaxToken Keyword()const { return _keyword; }
 	SyntaxToken Identifier()const { return _identifier; }
-	const TypeClauseSyntax* TypeClause()const { return _typeClause.get(); }
+	const std::optional<TypeClauseSyntax>& TypeClause()const noexcept{ return _typeClause; }
 	SyntaxToken EqualsToken()const { return _equalsToken; }
 	const ExpressionSyntax* Initializer()const noexcept { return _initializer.get(); }
 };
@@ -456,17 +460,17 @@ class ParameterSyntax final :public SyntaxNode
 {
 private:
 	SyntaxToken _identifier;
-	unique_ptr<TypeClauseSyntax> _type;
+	TypeClauseSyntax _type;
 
 public:
-	ParameterSyntax(const SyntaxToken& identifier, unique_ptr<TypeClauseSyntax>& type);
+	ParameterSyntax(const SyntaxToken& identifier, const TypeClauseSyntax& type);
 
 	// Inherited via SyntaxNode
 	virtual SyntaxKind Kind() const override { return SyntaxKind::Parameter; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	SyntaxToken Identifier()const { return _identifier; }
-	const TypeClauseSyntax* Type()const noexcept { return _type.get(); }
+	const TypeClauseSyntax& Type()const noexcept { return _type; }
 };
 
 class FunctionDeclarationSyntax :public MemberSyntax
@@ -477,7 +481,7 @@ private:
 	SyntaxToken _openParenthesisToken;
 	SeparatedSyntaxList<ParameterSyntax> _parameters;
 	SyntaxToken _closeParenthesisToken;
-	unique_ptr<TypeClauseSyntax> _type;
+	std::optional<TypeClauseSyntax> _type;
 	unique_ptr<BlockStatementSyntax> _body;
 
 public:
@@ -485,10 +489,11 @@ public:
 							  const SyntaxToken& openParenthesisToken,
 							  SeparatedSyntaxList<ParameterSyntax>& params,
 							  const SyntaxToken& closeParenthesisToken,
-							  unique_ptr<TypeClauseSyntax>& type,
+							  const std::optional<TypeClauseSyntax>& type,
 							  unique_ptr<BlockStatementSyntax>& body);
 	FunctionDeclarationSyntax(FunctionDeclarationSyntax&&) = default;
 	FunctionDeclarationSyntax& operator=(FunctionDeclarationSyntax&&) = default;
+
 	// Inherited via MemberSyntax
 	SyntaxKind Kind() const override { return SyntaxKind::FunctionDeclaration; }
 	const vector<const SyntaxNode*> GetChildren() const override;
@@ -498,7 +503,7 @@ public:
 	SyntaxToken OpenParenthesisToken()const { return _openParenthesisToken; }
 	decltype(auto) Parameters()const noexcept { return &_parameters; }
 	SyntaxToken CloseParenthesisToken()const { return _closeParenthesisToken; }
-	const TypeClauseSyntax* Type()const noexcept { return _type.get(); }
+	const std::optional<TypeClauseSyntax>& Type()const noexcept { return _type; }
 	const BlockStatementSyntax* Body()const noexcept { return _body.get(); }
 };
 
@@ -562,8 +567,8 @@ private:
 	unique_ptr<StatementSyntax> ParseStatement();
 	unique_ptr<BlockStatementSyntax> ParseBlockStatement();
 	unique_ptr<StatementSyntax> ParseVariableDeclaration();
-	unique_ptr<TypeClauseSyntax> ParseOptionalTypeClause();
-	unique_ptr<TypeClauseSyntax> ParseTypeClause();
+	std::optional<TypeClauseSyntax> ParseOptionalTypeClause();
+	TypeClauseSyntax ParseTypeClause();
 	unique_ptr<StatementSyntax> ParseIfStatement();
 	unique_ptr<ElseClauseSyntax> ParseElseClause();
 	unique_ptr<StatementSyntax> ParseWhileStatement();

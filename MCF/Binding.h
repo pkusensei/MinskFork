@@ -208,7 +208,7 @@ private:
 											   bool allowExplicit = false);
 	shared_ptr<VariableSymbol> BindVariable(const SyntaxToken& identifier, bool isReadOnly,
 											const TypeSymbol& type);
-	std::optional<TypeSymbol> BindTypeClause(const TypeClauseSyntax* syntax);
+	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
 	std::optional<TypeSymbol> LookupType(const string& name)const;
 
 	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);

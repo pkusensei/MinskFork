@@ -158,24 +158,22 @@ const vector<const SyntaxNode*> TypeClauseSyntax::GetChildren() const
 
 VariableDeclarationSyntax::VariableDeclarationSyntax(const SyntaxToken & keyword,
 													 const SyntaxToken & identifier,
-													 unique_ptr<TypeClauseSyntax>& typeClause,
+													 const std::optional<TypeClauseSyntax>& typeClause,
 													 const SyntaxToken & equals,
 													 unique_ptr<ExpressionSyntax>& initializer)
 	: _keyword(keyword), _identifier(identifier),
-	_typeClause(nullptr), _equalsToken(equals),
+	_typeClause(typeClause), _equalsToken(equals),
 	_initializer(std::move(initializer))
 {
-	if (typeClause != nullptr)
-		_typeClause = std::move(typeClause);
 }
 
 const vector<const SyntaxNode*> VariableDeclarationSyntax::GetChildren() const
 {
-	if (_typeClause == nullptr)
-		return MakeVecOfRaw<const SyntaxNode>(_keyword, _identifier,
+	if (_typeClause.has_value())
+		return MakeVecOfRaw<const SyntaxNode>(_keyword, _identifier, *_typeClause,
 											  _equalsToken, _initializer);
 	else
-		return MakeVecOfRaw<const SyntaxNode>(_keyword, _identifier, _typeClause,
+		return MakeVecOfRaw<const SyntaxNode>(_keyword, _identifier,
 											  _equalsToken, _initializer);
 }
 
@@ -266,9 +264,8 @@ const vector<const SyntaxNode*> ExpressionStatementSyntax::GetChildren() const
 #pragma endregion
 
 ParameterSyntax::ParameterSyntax(const SyntaxToken & identifier,
-								 unique_ptr<TypeClauseSyntax> & type)
-	:_identifier(identifier),
-	_type(std::move(type))
+								 const TypeClauseSyntax& type)
+	:_identifier(identifier), _type(type)
 {
 }
 
@@ -282,11 +279,11 @@ FunctionDeclarationSyntax::FunctionDeclarationSyntax(const SyntaxToken & funcKey
 													 const SyntaxToken & openParenthesisToken,
 													 SeparatedSyntaxList<ParameterSyntax>& params,
 													 const SyntaxToken & closeParenthesisToken,
-													 unique_ptr<TypeClauseSyntax>& type,
+													 const std::optional<TypeClauseSyntax>& type,
 													 unique_ptr<BlockStatementSyntax>& body)
 	:_funcKeyword(funcKeyword), _identifier(identifier), _openParenthesisToken(openParenthesisToken),
 	_parameters(std::move(params)), _closeParenthesisToken(closeParenthesisToken),
-	_type(std::move(type)), _body(std::move(body))
+	_type(type), _body(std::move(body))
 {
 }
 
@@ -295,8 +292,15 @@ const vector<const SyntaxNode*> FunctionDeclarationSyntax::GetChildren() const
 	auto result = MakeVecOfRaw<const SyntaxNode>(_funcKeyword, _identifier, _openParenthesisToken);
 	auto nodes = _parameters.GetWithSeparators();
 	result.insert(result.end(), nodes.begin(), nodes.end());
-	auto rest = MakeVecOfRaw<const SyntaxNode>(_closeParenthesisToken, _type, _body);
-	result.insert(result.end(), rest.begin(), rest.end());
+	if (_type.has_value())
+	{
+		auto rest = MakeVecOfRaw<const SyntaxNode>(_closeParenthesisToken, *_type, _body);
+		result.insert(result.end(), rest.begin(), rest.end());
+	} else
+	{
+		auto rest = MakeVecOfRaw<const SyntaxNode>(_closeParenthesisToken, _body);
+		result.insert(result.end(), rest.begin(), rest.end());
+	}
 	return result;
 }
 
@@ -377,7 +381,8 @@ vector<unique_ptr<MemberSyntax>> Parser::ParseMembers()
 	while (Current()->Kind() != SyntaxKind::EndOfFileToken)
 	{
 		auto startToken = Current();
-		members.emplace_back(ParseMember()); //NOTE inline variable?
+		auto member = ParseMember();
+		members.emplace_back(std::move(member));
 
 		if (Current() == startToken)
 			NextToken();
@@ -411,7 +416,7 @@ SeparatedSyntaxList<ParameterSyntax> Parser::ParseParameterList()
 {
 	auto nodes = vector<unique_ptr<SyntaxNode>>();
 
-	while (Current()->Kind() != SyntaxKind::CloseBraceToken
+	while (Current()->Kind() != SyntaxKind::CloseParenthesisToken
 		   && Current()->Kind() != SyntaxKind::EndOfFileToken)
 	{
 		auto param = ParseParameter();
@@ -486,8 +491,9 @@ unique_ptr<BlockStatementSyntax> Parser::ParseBlockStatement()
 
 unique_ptr<StatementSyntax> Parser::ParseVariableDeclaration()
 {
-	auto expected = Current()->Kind() == SyntaxKind::LetKeyword ? SyntaxKind::LetKeyword
-		: SyntaxKind::VarKeyword;
+	auto expected =
+		Current()->Kind() == SyntaxKind::LetKeyword ?
+		SyntaxKind::LetKeyword : SyntaxKind::VarKeyword;
 	auto keyword = MatchToken(expected);
 	auto identifier = MatchToken(SyntaxKind::IdentifierToken);
 	auto typeClause = ParseOptionalTypeClause();
@@ -498,17 +504,17 @@ unique_ptr<StatementSyntax> Parser::ParseVariableDeclaration()
 												  equals, initializer);
 }
 
-unique_ptr<TypeClauseSyntax> Parser::ParseOptionalTypeClause()
+std::optional<TypeClauseSyntax> Parser::ParseOptionalTypeClause()
 {
-	if (Current()->Kind() != SyntaxKind::ColonToken) return nullptr;
+	if (Current()->Kind() != SyntaxKind::ColonToken) return std::nullopt;
 	return ParseTypeClause();
 }
 
-unique_ptr<TypeClauseSyntax> Parser::ParseTypeClause()
+TypeClauseSyntax Parser::ParseTypeClause()
 {
 	auto colon = MatchToken(SyntaxKind::ColonToken);
 	auto identifier = MatchToken(SyntaxKind::IdentifierToken);
-	return make_unique<TypeClauseSyntax>(colon, identifier);
+	return TypeClauseSyntax(colon, identifier);
 }
 
 unique_ptr<StatementSyntax> Parser::ParseIfStatement()
