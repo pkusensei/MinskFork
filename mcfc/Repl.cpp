@@ -48,7 +48,7 @@ std::string Repl::EditSubmission()
 	}
 	view.CurrentLine(document.size() - 1);
 	view.CurrentCharacter(document[view.CurrentLine()].length());
-	std::cout << "\n";
+	std::cout << '\n';
 	return MCF::StringJoin(document.Contents(), NEW_LINE);
 }
 
@@ -408,11 +408,11 @@ void McfRepl::EvaluateMetaCommand(const std::string & input)
 	if (input == "#showTree")
 	{
 		_showTree = !_showTree;
-		std::cout << (_showTree ? "Showing parse trees." : "Not showing parse trees.") << "\n";
+		std::cout << (_showTree ? "Showing parse trees." : "Not showing parse trees.") << '\n';
 	} else if (input == "#showProgram")
 	{
 		_showProgram = !_showProgram;
-		std::cout << (_showProgram ? "Showing bound tree." : "Not showing bound tree.") << "\n";
+		std::cout << (_showProgram ? "Showing bound tree." : "Not showing bound tree.") << '\n';
 	} else if (input == "#cls")
 	{
 		MCF::ClearConsole();
@@ -459,7 +459,7 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 	auto compilation = _previous == nullptr ? std::make_unique<MCF::Compilation>(tree)
 		: MCF::Compilation::ContinueWith(_previous, tree);
 	if (_showTree)
-		tree->Root()->WriteTo(std::cout);
+		compilation->Syntax()->Root()->WriteTo(std::cout);
 	if (_showProgram)
 		compilation->EmitTree(std::cout);
 
@@ -471,7 +471,7 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 		if (value.HasValue())
 		{
 			MCF::SetConsoleColor(MCF::ConsoleColor::White);
-			std::cout << value << "\n";
+			std::cout << value << '\n';
 			MCF::ResetConsoleColor();
 		}
 
@@ -484,11 +484,11 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 			auto lineNumber = lineIndex + 1;
 			auto line = tree->Text().Lines()[lineIndex];
 			auto character = diag.Span().Start() - line.Start() + 1;
-			std::cout << "\n";
+			std::cout << '\n';
 
 			MCF::SetConsoleColor(MCF::ConsoleColor::DarkRed);
 			std::cout << "(" << lineNumber << ", " << character << ") ";
-			std::cout << diag.Message() << "\n";
+			std::cout << diag.Message() << '\n';
 			MCF::ResetConsoleColor();
 
 			auto prefixSpan = MCF::TextSpan::FromBounds(line.Start(), diag.Span().Start());
@@ -503,9 +503,9 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 			std::cout << error;
 			MCF::ResetConsoleColor();
 
-			std::cout << suffix << "\n";
+			std::cout << suffix << '\n';
 		}
-		std::cout << "\n";
+		std::cout << '\n';
 	}
-	std::cout << "\n";
+	std::cout << '\n';
 }

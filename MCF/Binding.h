@@ -226,12 +226,6 @@ public:
 
 class BoundTreeRewriter
 {
-	/*
-	* HACK The BoundTreeRewriter class takes the existing bound tree and analyzes
-	* its structure. Its return value is a completely newly constructed bound tree.
-	* The original C# version tries its best to reduce memory allocation. This one
-	* does not.
-	*/
 protected:
 	virtual shared_ptr<BoundStatement> RewriteBlockStatement(const shared_ptr<BoundBlockStatement>& node);
 	virtual shared_ptr<BoundStatement> RewriteVariableDeclaration(const shared_ptr<BoundVariableDeclaration>& node);

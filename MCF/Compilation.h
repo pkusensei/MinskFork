@@ -31,7 +31,8 @@ class BoundGlobalScope;
 class BoundProgram;
 class SyntaxTree;
 
-using VarMap = std::unordered_map<shared_ptr<VariableSymbol>, ValueType>;
+using VarMap = std::unordered_map<shared_ptr<VariableSymbol>, ValueType, 
+								  SymbolHash, SymbolEqual>;
 
 class MCF_API EvaluationResult final
 {
@@ -82,7 +83,7 @@ class MCF_API Compilation final
 private:
 	unique_ptr<Compilation> _previous;
 	unique_ptr<SyntaxTree> _syntaxTree;
-	unique_ptr<BoundGlobalScope> _globalScope;
+	unique_ptr<BoundGlobalScope> _globalScope; //NOTE store BoundProgram here? 
 
 	std::mutex _mtx;
 

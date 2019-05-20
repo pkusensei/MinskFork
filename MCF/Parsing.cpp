@@ -477,7 +477,7 @@ unique_ptr<BlockStatementSyntax> Parser::ParseBlockStatement()
 	{
 		auto startToken = Current();
 
-		statements.emplace_back(ParseStatement()); //NOTE inline variable?
+		statements.emplace_back(ParseStatement());
 
 		// Make sure ParseStatement() consumes a token or more
 		if (Current() == startToken)
@@ -721,7 +721,7 @@ SeparatedSyntaxList<ExpressionSyntax> Parser::ParseArguments()
 	while (Current()->Kind() != SyntaxKind::CloseParenthesisToken
 		   && Current()->Kind() != SyntaxKind::EndOfFileToken)
 	{
-		auto expression = ParseExpression(); //HACK
+		auto expression = ParseExpression();
 		nodesAndSeparators.emplace_back(std::move(expression));
 
 		if (Current()->Kind() != SyntaxKind::CloseParenthesisToken)

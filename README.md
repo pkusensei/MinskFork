@@ -15,9 +15,9 @@ Although this fork stays as close to the original as possible, there are some de
 
     The lack of reflection makes writing such functions in `SyntaxNode` and `BoundNode` base classes impossible. C++ doesn't even have the concept of property. 
 
-- The lowering process, i.e. `BoundTreeReriter` & `Lowerer`, analyzes the existing bound tree and generates a new one. 
+- The lowering process, i.e. `BoundTreeReriter` & `Lowerer` ~~, analyzes the existing bound tree and generates a new one.~~
 
-    This is mainly because `BoundNode`s exposing `std::unique_ptr`s directly would break encapsulation. `std::shared_ptr`s would cause another slew of problems. The original lowering process tries its best to reduce memory allocation while this one does not. As a result, `Lowerer::Flatten` has to be a non-static member function.
+    ~~This is mainly because `BoundNode`s exposing `std::unique_ptr`s directly would break encapsulation. `std::shared_ptr`s would cause another slew of problems. The original lowering process tries its best to reduce memory allocation while this one does not. As a result, `Lowerer::Flatten` has to be a non-static member function.~~ I caved in. The ownership of `BoundNode`s between `BoundProgram` and `BoundGlobalScope` and `BoundScope` is sometimes hard to reason. Esp. between the former two, shared ownership cannot be ruled out.
 
 - Postfix operations, i.e. `i++` & `i--`
 

@@ -3,13 +3,14 @@
 #include <functional>
 #include <initializer_list>
 #include <string>
-#include <unordered_map>
 
 #include "Symbols.h"
 
 namespace MCF {
 class Compilation;
 struct KeyInfo;
+
+using VarMap = std::unordered_map<shared_ptr<VariableSymbol>, ValueType, SymbolHash, SymbolEqual>;
 }
 
 template<typename T>
@@ -74,7 +75,7 @@ private:
 
 	class SubmissionView;
 	std::string EditSubmission();
-	void HandleKey(const MCF::KeyInfo& key, ObservableCollection<std::string>* document, 
+	void HandleKey(const MCF::KeyInfo& key, ObservableCollection<std::string>* document,
 				   SubmissionView* view);
 
 	void HandleEscape(ObservableCollection<std::string>* document, SubmissionView* view);
@@ -96,7 +97,7 @@ private:
 	void HandlePageDown(ObservableCollection<std::string>* document, SubmissionView* view);
 	void UpdateDocumentFromHistory(ObservableCollection<std::string>* document, SubmissionView* view);
 
-	void HandleTyping(ObservableCollection<std::string>* document, SubmissionView* view, 
+	void HandleTyping(ObservableCollection<std::string>* document, SubmissionView* view,
 					  const std::string& text);
 
 protected:
@@ -127,7 +128,7 @@ private:
 	void UpdateCursorPosition();
 
 public:
-	SubmissionView(const std::function<void(std::string)>& lineRenderer, 
+	SubmissionView(const std::function<void(std::string)>& lineRenderer,
 				   const ObservableCollection<std::string>& document);
 
 	int CurrentLine()const { return _currentLine; }
@@ -142,7 +143,7 @@ private:
 	std::unique_ptr<MCF::Compilation> _previous{nullptr};
 	bool _showTree{false};
 	bool _showProgram{true};
-	std::unordered_map<std::shared_ptr<MCF::VariableSymbol>, MCF::ValueType> _variables;
+	MCF::VarMap _variables;
 
 protected:
 	// Inherited via Repl

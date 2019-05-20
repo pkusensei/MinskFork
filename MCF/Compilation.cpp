@@ -59,7 +59,6 @@ ValueType Evaluator::EvaluateStatement(const BoundBlockStatement * body)
 			{
 				auto p = dynamic_cast<const BoundExpressionStatement*>(s);
 				if (p)
-
 					EvaluateExpressionStatement(p);
 				++index;
 				break;
@@ -175,7 +174,7 @@ ValueType Evaluator::EvaluateVariableExpression(const BoundVariableExpression * 
 		return _globals->at(node->Variable());
 	else
 	{
-		auto locals = _locals.top();
+		auto& locals = _locals.top();
 		return locals.at(node->Variable());
 	}
 }

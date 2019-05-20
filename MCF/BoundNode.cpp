@@ -128,7 +128,7 @@ void BoundNode::PrettyPrint(std::ostream & out, const BoundNode * node,
 	if (isToConsole)
 		ResetConsoleColor();
 
-	out << "\n";
+	out << '\n';
 	indent += isLast ? "   " : "|  ";
 	auto children = node->GetChildren();
 	if (!children.empty())
