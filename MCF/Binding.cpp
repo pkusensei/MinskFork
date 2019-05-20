@@ -112,15 +112,16 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax * syntax)
 			} else
 				_diagnostics->ReportSymbolAlreadyDeclared(p->Span(), paramName);
 		}
-		auto type = BindTypeClause(syntax->Type())
-			.value_or(TypeSymbol::GetType(TypeEnum::Void));
-		auto function = make_shared<FunctionSymbol>(syntax->Identifier().Text(),
-													parameters, type, syntax);
-
-		if (!_scope->TryDeclareFunction(function))
-			_diagnostics->ReportSymbolAlreadyDeclared(syntax->Identifier().Span(),
-													  function->Name());
 	}
+	auto type = BindTypeClause(syntax->Type())
+		.value_or(TypeSymbol::GetType(TypeEnum::Void));
+	auto function = make_shared<FunctionSymbol>(syntax->Identifier().Text(),
+												parameters, type, syntax);
+
+	if (!_scope->TryDeclareFunction(function))
+		_diagnostics->ReportSymbolAlreadyDeclared(syntax->Identifier().Span(),
+												  function->Name());
+
 }
 
 shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax * syntax)

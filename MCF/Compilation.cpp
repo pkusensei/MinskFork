@@ -343,35 +343,16 @@ void Evaluator::Assign(const shared_ptr<VariableSymbol>& variable, const ValueTy
 	}
 }
 
-Compilation::Compilation()
-	: Compilation(nullptr)
-{
-}
-
-Compilation::Compilation(const unique_ptr<Compilation>& previous,
-						 const SyntaxTree& tree)
-	: _previous(std::move(std::remove_const_t<unique_ptr<Compilation>&>(previous))),
-	_syntaxTree(&tree),
+Compilation::Compilation(unique_ptr<Compilation>& previous,
+						 unique_ptr<SyntaxTree>& tree)
+	: _previous(std::move(previous)), _syntaxTree(std::move(tree)),
 	_globalScope(nullptr)
 {
 }
 
-Compilation::Compilation(const unique_ptr<Compilation>& previous,
-						 const unique_ptr<SyntaxTree>& tree)
-	: _previous(std::move(std::remove_const_t<unique_ptr<Compilation>&>(previous))),
-	_syntaxTree(tree.get()),
+Compilation::Compilation(unique_ptr<SyntaxTree>& tree)
+	: _previous(nullptr), _syntaxTree(std::move(tree)),
 	_globalScope(nullptr)
-{
-}
-
-
-Compilation::Compilation(const SyntaxTree & tree)
-	:Compilation(nullptr, tree)
-{
-}
-
-Compilation::Compilation(const unique_ptr<SyntaxTree>& tree)
-	: Compilation(nullptr, tree)
 {
 }
 
@@ -383,7 +364,7 @@ const BoundGlobalScope* Compilation::GlobalScope()
 	{
 		unique_ptr<BoundGlobalScope> tmp{nullptr};
 		if (_previous == nullptr)
-			tmp = Binder::BindGlobalScope({}, _syntaxTree->Root());
+			tmp = Binder::BindGlobalScope(nullptr, _syntaxTree->Root());
 		else
 			tmp = Binder::BindGlobalScope(_previous->GlobalScope(), _syntaxTree->Root());
 
@@ -394,14 +375,8 @@ const BoundGlobalScope* Compilation::GlobalScope()
 	return _globalScope.get();
 }
 
-unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous,
-												  const SyntaxTree & tree)
-{
-	return make_unique<Compilation>(previous, tree);
-}
-
-unique_ptr<Compilation> Compilation::ContinueWith(const unique_ptr<Compilation>& previous,
-												  const unique_ptr<SyntaxTree>& tree)
+unique_ptr<Compilation> Compilation::ContinueWith(unique_ptr<Compilation>& previous,
+												  unique_ptr<SyntaxTree>& tree)
 {
 	return make_unique<Compilation>(previous, tree);
 }

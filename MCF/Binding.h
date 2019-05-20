@@ -99,7 +99,7 @@ private:
 		auto result = vector<shared_ptr<T>>();
 		for (const auto& it : _symbols)
 		{
-			auto p = dynamic_cast<T*>(it.second.get());
+			auto p = std::dynamic_pointer_cast<T>(it.second);
 			if (p) result.emplace_back(p);
 		}
 		return result;
