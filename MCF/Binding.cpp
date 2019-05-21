@@ -212,7 +212,8 @@ shared_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax * syn
 
 shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax * syntax)
 {
-	auto condition = BindExpression(syntax->Condition(), TypeSymbol::GetType(TypeEnum::Bool));
+	auto condition = BindExpression(syntax->Condition(),
+									TypeSymbol::GetType(TypeEnum::Bool));
 	auto body = BindStatement(syntax->Body());
 	return make_shared<BoundWhileStatement>(condition, body);
 }
@@ -220,7 +221,8 @@ shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax
 shared_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSyntax * syntax)
 {
 	auto body = BindStatement(syntax->Body());
-	auto condition = BindExpression(syntax->Condition());
+	auto condition = BindExpression(syntax->Condition(),
+									TypeSymbol::GetType(TypeEnum::Bool));
 	return make_shared<BoundDoWhileStatement>(body, condition);
 }
 
@@ -716,9 +718,23 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(const shared_ptr<
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(const shared_ptr<BoundBlockStatement>& node)
 {
 	auto result = vector<shared_ptr<BoundStatement>>();
-	auto statements = node->Statements();
-	for (const auto& it : statements)
-		result.emplace_back(RewriteStatement(it));
+	auto& statements = node->Statements();
+	for (auto i = 0; i < statements.size(); ++i)
+	{
+		auto oldStatement = statements[i];
+		auto newStatement = RewriteStatement(oldStatement);
+		result.emplace_back(newStatement);
+
+		//The block of code below and similarly in RewriteCallExpression
+		//produces malformed rewritten tree which fails to evaluate. :(
+		//if (newStatement != oldStatement)
+		//{
+		//	for (auto j = 0; j < i; ++j)
+		//		result.emplace_back(statements[j]);
+		//}
+		//if (!result.empty())
+		//	result.emplace_back(newStatement);
+	}
 	if (result.empty())
 		return node;
 	return make_shared<BoundBlockStatement>(result);
@@ -913,14 +929,15 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteCallExpression(const share
 	{
 		auto oldArg = node->Arguments()[i];
 		auto newArg = RewriteExpression(oldArg);
-		if (newArg != oldArg)
-		{
-			if (result.empty())
-				for (auto j = 0; j < i; ++j)
-					result.emplace_back(node->Arguments()[i]);
-		}
-		if (!result.empty())
-			result.emplace_back(newArg);
+		result.emplace_back(newArg);
+		//if (newArg != oldArg)
+		//{
+		//	if (result.empty())
+		//		for (auto j = 0; j < i; ++j)
+		//			result.emplace_back(node->Arguments()[i]);
+		//}
+		//if (!result.empty())
+		//	result.emplace_back(newArg);
 	}
 	if (result.empty())
 		return node;
@@ -1010,7 +1027,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(const shared_ptr<BoundIfS
 
 		auto statements = vector<shared_ptr<BoundStatement>>{
 			gotoFalse, node->ThenStatement(), gotoEndStatement,
-			elseLabelStatement,node->ElseStatement(),	endLabelStatement
+			elseLabelStatement, node->ElseStatement(), endLabelStatement
 		};
 		auto result = make_shared<BoundBlockStatement>(statements);
 		return RewriteStatement(result);
@@ -1066,7 +1083,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteForStatement(const shared_ptr<BoundFo
 																	   node->UpperBound());
 
 	auto condition = make_shared<BoundBinaryExpression>(
-		RewriteExpression(variableExpression),
+		variableExpression,
 		BoundBinaryOperator::Bind(SyntaxKind::LessOrEqualsToken,
 								  TypeSymbol::GetType(TypeEnum::Int),
 								  TypeSymbol::GetType(TypeEnum::Int)),
@@ -1077,7 +1094,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteForStatement(const shared_ptr<BoundFo
 		make_shared<BoundAssignmentExpression>(
 			node->Variable(),
 			make_shared<BoundBinaryExpression>(
-				RewriteExpression(variableExpression),
+				variableExpression,
 				BoundBinaryOperator::Bind(SyntaxKind::PlusToken,
 										  TypeSymbol::GetType(TypeEnum::Int),
 										  TypeSymbol::GetType(TypeEnum::Int)),
@@ -1086,7 +1103,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteForStatement(const shared_ptr<BoundFo
 			)
 		);
 
-	auto statements = vector<shared_ptr<BoundStatement>>{node->Body(),increment};
+	auto statements = vector<shared_ptr<BoundStatement>>{node->Body(), increment};
 	auto whileBody = make_shared<BoundBlockStatement>(statements);
 	auto whileStatement = make_shared<BoundWhileStatement>(condition, whileBody);
 

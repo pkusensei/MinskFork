@@ -10,7 +10,8 @@ namespace MCF {
 class Compilation;
 struct KeyInfo;
 
-using VarMap = std::unordered_map<shared_ptr<VariableSymbol>, ValueType, SymbolHash, SymbolEqual>;
+using VarMap = std::unordered_map<shared_ptr<VariableSymbol>, ValueType,
+								 SymbolHash, SymbolEqual>; //HACK
 }
 
 template<typename T>

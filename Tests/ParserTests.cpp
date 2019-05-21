@@ -188,10 +188,14 @@ private:
 	{
 		_tree = MCF::SyntaxTree::Parse(text);
 		auto root = _tree->Root();
-		auto statement = root->Statement();
-		Assert::IsTrue(typeid(MCF::ExpressionStatementSyntax) == typeid(*statement));
-		auto p = dynamic_cast<const MCF::ExpressionStatementSyntax*>(statement);
-		return p->Expression();
+		auto& members = root->Members();
+		Assert::IsTrue(1 == members.size());
+		auto gs = dynamic_cast<MCF::GlobalStatementSyntax*>(members[0].get());
+		Assert::IsFalse(nullptr == gs);
+		auto s = gs->Statement();
+		auto es = dynamic_cast<const MCF::ExpressionStatementSyntax*>(s);
+		Assert::IsFalse(nullptr == es);
+		return es->Expression();
 	}
 
 	static std::vector<std::pair<MCF::SyntaxKind, MCF::SyntaxKind>> GetBinaryOperatorPairsData()
