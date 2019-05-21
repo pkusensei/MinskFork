@@ -176,8 +176,8 @@ public:
 			{"{var a = 0 if a == 0 a = 10 else a = 5 a }", 10},
 			{"{var a = 0 if a == 4 a = 10 else a = 5 a }", 5},
 			{"{ var i = 10 var result = 0 while i > 0 { result = result + i i = i - 1} result }", 55},
-			//{"{ var result = 0 for i = 1 to 10 { result = result + i } result }", 55},
-			//{"{ var a = 10 for i = 1 to (a = a - 1) { } a }", 9},
+			{"{ var result = 0 for i = 1 to 10 { result = result + i } result }", 55},
+			{"{ var a = 10 for i = 1 to (a = a - 1) { } a }", 9},
 			{"{ var a = 0 do a = a + 1 while a < 10 a}", 10},
 
 			{"{var x = 41 x++}", 42},

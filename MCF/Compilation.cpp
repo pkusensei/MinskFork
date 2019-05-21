@@ -293,7 +293,7 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node)
 			locals.emplace(make_shared<ParameterSymbol>(param), value);
 		}
 		_locals.emplace(locals);
-		auto statement = _program->Functions()->at(node->Function()).get();
+		auto statement = _program->Functions().at(node->Function()).get();
 		auto result = EvaluateStatement(statement);
 
 		_locals.pop();
@@ -337,7 +337,7 @@ void Evaluator::Assign(const shared_ptr<VariableSymbol>& variable, const ValueTy
 		_globals->insert_or_assign(variable, value);
 	else
 	{
-		auto locals = _locals.top();
+		auto& locals = _locals.top();
 		locals.insert_or_assign(variable, value);
 	}
 }

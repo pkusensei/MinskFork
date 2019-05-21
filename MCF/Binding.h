@@ -163,7 +163,7 @@ public:
 	BoundProgram& operator=(BoundProgram&&) = default;
 
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
-	decltype(auto) Functions()const noexcept { return &_functions; }
+	const FuncMap& Functions()const noexcept { return _functions; }
 	const BoundBlockStatement* Statement()const noexcept { return _statement.get(); }
 };
 
