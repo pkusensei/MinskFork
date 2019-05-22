@@ -22,8 +22,9 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{DD49EF12-0D4B-4FFA-8E5C-F8F76164FFE6}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>mcfc</RootNamespace>
+    <RootNamespace>mcfi</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <ProjectName>mcfi</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -166,7 +167,7 @@
     <ClInclude Include="Repl.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mcfc.cpp" />
+    <ClCompile Include="mcfi.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

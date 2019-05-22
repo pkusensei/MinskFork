@@ -26,7 +26,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mcfc.cpp">
+    <ClCompile Include="mcfi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Repl.cpp">
