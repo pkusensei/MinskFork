@@ -117,8 +117,9 @@ void Repl::HandleKey(const MCF::KeyInfo& key,
 
 void Repl::HandleEscape(ObservableCollection<std::string>* document, SubmissionView * view)
 {
-	document->SetAt(view->CurrentLine(), std::string());
-	view->CurrentCharacter(0);
+	document->Clear();
+	document->Add(std::string());
+	view->CurrentLine(0);
 }
 
 void Repl::HandleEnter(ObservableCollection<std::string>* document, SubmissionView * view)
