@@ -144,9 +144,9 @@ private:
 
 public:
 	FunctionSymbol(const string& name, const vector<ParameterSymbol>& params,
-				   const TypeSymbol& type, const FunctionDeclarationSyntax* declaration);
+		const TypeSymbol& type, const FunctionDeclarationSyntax* declaration);
 	FunctionSymbol(const string& name, const vector<ParameterSymbol>& params,
-				   const TypeSymbol& type);
+		const TypeSymbol& type);
 	FunctionSymbol();
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Function; }
@@ -183,6 +183,7 @@ public:
 	constexpr ValueType(const int value)noexcept :_inner(static_cast<IntegerType>(value)) {}
 	constexpr ValueType(const bool value)noexcept :_inner(value) {}
 	constexpr ValueType(const string& s) : _inner(s) {}
+	ValueType(const char* s) : _inner(string(s)) {}
 
 	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
 	TypeSymbol Type()const;

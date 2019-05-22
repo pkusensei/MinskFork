@@ -239,7 +239,11 @@ const vector<BoundBinaryOperator>& BoundBinaryOperator::Operators()
 							TypeSymbol::GetType(TypeEnum::Bool)),
 
 		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
-							TypeSymbol::GetType(TypeEnum::String))
+							TypeSymbol::GetType(TypeEnum::String)),
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
+							TypeSymbol::GetType(TypeEnum::String), TypeSymbol::GetType(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
+							TypeSymbol::GetType(TypeEnum::String), TypeSymbol::GetType(TypeEnum::Bool)),
 	};
 
 	return operators;
