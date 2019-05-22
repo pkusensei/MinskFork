@@ -455,10 +455,11 @@ bool McfRepl::IsCompleteSubmission(const std::string & text) const
 
 void McfRepl::EvaluateSubmission(const std::string & text)
 {
-	auto tree = MCF::SyntaxTree::Parse(text);
+	auto syntaxTree = MCF::SyntaxTree::Parse(text);
 
-	auto compilation = _previous == nullptr ? std::make_unique<MCF::Compilation>(tree)
-		: MCF::Compilation::ContinueWith(_previous, tree);
+	auto compilation = _previous == nullptr ? 
+		std::make_unique<MCF::Compilation>(syntaxTree)
+		: MCF::Compilation::ContinueWith(_previous, syntaxTree);
 	if (_showTree)
 		compilation->Syntax()->Root()->WriteTo(std::cout);
 	if (_showProgram)
@@ -479,8 +480,9 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 		_previous = std::move(compilation);
 	} else
 	{
-		for (const auto& diag : *diagnostics)
+		for (const auto& diag : diagnostics->SortBySpanAscending())
 		{
+			auto tree = compilation->Syntax();
 			auto lineIndex = tree->Text().GetLineIndex(diag.Span().Start());
 			auto lineNumber = lineIndex + 1;
 			auto line = tree->Text().Lines()[lineIndex];

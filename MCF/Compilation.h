@@ -37,15 +37,15 @@ extern "C" using VarMap = std::unordered_map<shared_ptr<VariableSymbol>, ValueTy
 class MCF_API EvaluationResult final
 {
 private:
-	const DiagnosticBag* _diagnostics;
+	DiagnosticBag* _diagnostics;
 	ValueType _value;
 
 public:
-	EvaluationResult(const DiagnosticBag* diagnostics, const ValueType& value);
+	EvaluationResult(DiagnosticBag* diagnostics, const ValueType& value);
 	EvaluationResult(EvaluationResult&&) = default;
 	EvaluationResult& operator=(EvaluationResult&&) = default;
 
-	const DiagnosticBag* Diagnostics() const noexcept { return _diagnostics; }
+	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics; }
 	ValueType Value()const { return _value; }
 };
 

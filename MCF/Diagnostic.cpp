@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Diagnostic.h"
 
+#include <algorithm>
+
 #include "SourceText.h"
 #include "SyntaxKind.h"
 
@@ -29,6 +31,13 @@ void DiagnosticBag::Report(const TextSpan& span, const string& message)
 {
 	//if(_diagnostics==nullptr)
 	_diagnostics.emplace_back(span, message);
+}
+
+const DiagnosticBag& DiagnosticBag::SortBySpanAscending()
+{
+	std::sort(_diagnostics.begin(), _diagnostics.end(),
+		[](const auto& a, const auto& b) { return a.Span().Start() < b.Span().Start(); });
+	return *this;
 }
 
 const Diagnostic & DiagnosticBag::operator[](size_t idx) const

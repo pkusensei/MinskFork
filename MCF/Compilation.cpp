@@ -13,7 +13,7 @@
 
 namespace MCF {
 
-EvaluationResult::EvaluationResult(const DiagnosticBag* diagnostics,
+EvaluationResult::EvaluationResult(DiagnosticBag* diagnostics,
 								   const ValueType & value)
 	:_diagnostics(diagnostics), _value(value)
 {
