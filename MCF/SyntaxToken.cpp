@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "helpers.h"
+#include "ConsoleHelper.h"
 #include "SourceText.h"
 
 namespace MCF {

@@ -7,6 +7,7 @@
 
 #include "helpers.h"
 #include "Compilation.h"
+#include "ConsoleHelper.h"
 #include "Diagnostic.h"
 #include "Parsing.h"
 #include "SourceText.h"

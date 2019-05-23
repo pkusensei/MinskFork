@@ -226,6 +226,40 @@ public:
 		AssertDiagnostics(text, diag);
 	}
 
+	TEST_METHOD(Evaluator_InvokeFunctionArguments_NoInfiniteLoop) {
+		std::string text = R"(
+			print(""Hi""[[=]][)]
+			)";
+
+		std::string diagnostics = R"(
+			Unexpected token <EqualsToken>, expected <CloseParenthesisToken>.
+			Unexpected token <EqualsToken>, expected <IdentifierToken>.
+			Unexpected token <CloseParenthesisToken>, expected <IdentifierToken>.
+			)";
+
+		AssertDiagnostics(text, diagnostics);
+	}
+
+	TEST_METHOD(Evaluator_FunctionParameters_NoInfiniteLoop)
+	{
+		std::string text = R"(
+			function hi(name: string[[[=]]][)]
+            {
+                print(""Hi "" + name + ""!"" )
+            }[]			
+			)";
+
+		std::string diagnostics = R"(
+			Unexpected token <EqualsToken>, expected <CloseParenthesisToken>.
+            Unexpected token <EqualsToken>, expected <OpenBraceToken>.
+            Unexpected token <EqualsToken>, expected <IdentifierToken>.
+            Unexpected token <CloseParenthesisToken>, expected <IdentifierToken>.
+            Unexpected token <EndOfFileToken>, expected <CloseBraceToken>.
+			)";
+
+		AssertDiagnostics(text, diagnostics);
+	}
+
 	TEST_METHOD(Evaluator_IfStatement_Reports_CannotConvert)
 	{
 		std::string text = R"(

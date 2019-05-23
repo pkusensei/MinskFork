@@ -4,8 +4,6 @@
 
 namespace MCF {
 
-enum class ConsoleColor;
-
 enum class BoundNodeKind
 {
 	// Statements
@@ -37,11 +35,6 @@ string GetEnumText(const BoundNodeKind& kind);
 
 class BoundNode
 {
-private:
-	static ConsoleColor GetColor(const BoundNode* node);
-	static string GetText(const BoundNode* node);
-	static void PrettyPrint(std::ostream& out, const BoundNode* node, 
-							string indent = "", bool isLast = true);
 public:
 	virtual ~BoundNode() = default;
 	virtual BoundNodeKind Kind() const = 0;
@@ -50,7 +43,7 @@ public:
 	// pair: name of property + its value
 	virtual const vector<std::pair<string, string>> GetProperties() const = 0;
 
-	void WriteTo(std::ostream& out)const { PrettyPrint(out, this); }
+	void WriteTo(std::ostream& out)const {  }
 	string ToString() const;
 };
 
