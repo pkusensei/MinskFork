@@ -45,10 +45,9 @@ void SymbolPrinter::Write(const Symbol * symbol)
 			break;
 		}
 		default:
-			break;
+			throw std::invalid_argument("Unexpected symbol: "
+				+ GetEnumText(symbol->Kind()));
 	}
-	throw std::invalid_argument("Unexpected symbol: "
-		+ GetEnumText(symbol->Kind()));
 }
 
 void SymbolPrinter::WriteFunction(const FunctionSymbol * symbol)

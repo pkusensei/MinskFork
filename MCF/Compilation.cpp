@@ -189,7 +189,7 @@ ValueType Evaluator::EvaluateAssignmentExpression(const BoundAssignmentExpressio
 ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression * node)
 {
 	auto operand = EvaluateExpression(node->Operand().get());
-	switch (node->Op()->Kind())
+	switch (node->Op().Kind())
 	{
 		case BoundUnaryOperatorKind::Identity:
 			return operand.GetValue<IntegerType>();
@@ -200,7 +200,8 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression * node)
 		case BoundUnaryOperatorKind::OnesComplement:
 			return ~operand.GetValue<IntegerType>();
 		default:
-			throw std::invalid_argument("Invalid unary operator " + GetEnumText(node->Op()->Kind()));
+			throw std::invalid_argument("Invalid unary operator "
+				+ GetEnumText(node->Op().Kind()));
 	}
 }
 
@@ -208,7 +209,7 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 {
 	auto left = EvaluateExpression(node->Left().get());
 	auto right = EvaluateExpression(node->Right().get());
-	switch (node->Op()->Kind())
+	switch (node->Op().Kind())
 	{
 		case BoundBinaryOperatorKind::Addition:
 			if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
@@ -252,7 +253,8 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 			return left.GetValue<IntegerType>() >= right.GetValue<IntegerType>();
 
 		default:
-			throw std::invalid_argument("Invalid binary operator " + GetEnumText(node->Op()->Kind()));
+			throw std::invalid_argument("Invalid binary operator "
+				+ GetEnumText(node->Op().Kind()));
 	}
 }
 
@@ -409,7 +411,11 @@ void Compilation::EmitTree(std::ostream & out)
 	{
 		for (const auto& it : program->Functions())
 		{
-			//TODO
+			auto& funcs = GlobalScope()->Functions();
+			if (std::find(funcs.begin(), funcs.end(), it.first) == funcs.end())
+				continue;
+			it.first->WriteTo(out);
+			it.second->WriteTo(out);
 		}
 	}
 }

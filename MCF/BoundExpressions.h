@@ -52,7 +52,6 @@ class BoundExpression :public BoundNode
 public:
 	// Inherited via BoundNode
 	virtual TypeSymbol Type() const = 0;
-	const vector<const BoundNode*> GetChildren() const override;
 };
 
 class BoundErrorExpression final :public BoundExpression
@@ -61,7 +60,6 @@ public:
 	// Inherited via BoundExpression
 	TypeSymbol Type()const override { return TypeSymbol::GetType(TypeEnum::Error); }
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ErrorExpression; }
-	const vector<std::pair<string, string>> GetProperties() const override;
 };
 
 class BoundUnaryOperator final
@@ -83,8 +81,8 @@ private:
 public:
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
 	constexpr BoundUnaryOperatorKind Kind()const noexcept { return _kind; }
-	TypeSymbol OperandType()const { return _operandType; }
-	TypeSymbol Type()const { return _resultType; }
+	const TypeSymbol& OperandType()const { return _operandType; }
+	const TypeSymbol& Type()const { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
 	static BoundUnaryOperator Bind(const enum SyntaxKind& synKind, 
@@ -105,11 +103,9 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::UnaryExpression; }
-	const vector<const BoundNode*> GetChildren() const override;
-	const vector<std::pair<string, string>> GetProperties() const override;
 	TypeSymbol Type() const override { return _op.Type(); }
 
-	const BoundUnaryOperator* Op()const noexcept { return &_op; }
+	const BoundUnaryOperator& Op()const noexcept { return _op; }
 	const shared_ptr<BoundExpression>& Operand()const noexcept { return _operand; }
 };
 
@@ -137,9 +133,9 @@ private:
 public:
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
 	constexpr BoundBinaryOperatorKind Kind()const noexcept { return _kind; }
-	TypeSymbol LeftType()const { return _leftType; }
-	TypeSymbol RightType()const { return _rightType; }
-	TypeSymbol Type()const { return _resultType; }
+	const TypeSymbol& LeftType()const { return _leftType; }
+	const TypeSymbol& RightType()const { return _rightType; }
+	const TypeSymbol& Type()const { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
 	static BoundBinaryOperator Bind(const enum SyntaxKind& synKind, 
@@ -162,13 +158,11 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BinaryExpression; }
-	const vector<const BoundNode*> GetChildren() const override;
-	const vector<std::pair<string, string>> GetProperties() const override;
 	TypeSymbol Type() const override { return _op.Type(); }
 
 	const shared_ptr<BoundExpression> Left()const noexcept { return _left; }
 	const shared_ptr<BoundExpression> Right()const noexcept { return _right; }
-	const BoundBinaryOperator* Op()const noexcept { return &_op; }
+	const BoundBinaryOperator& Op()const noexcept { return _op; }
 };
 
 class BoundAssignmentExpression final : public BoundExpression
@@ -185,8 +179,6 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::AssignmentExpression; }
-	const vector<const BoundNode*> GetChildren() const override;
-	const vector<std::pair<string, string>> GetProperties() const override;
 	TypeSymbol Type() const override { return _expression->Type(); }
 
 	const shared_ptr<VariableSymbol>& Variable()const { return _variable; }
@@ -205,10 +197,9 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LiteralExpression; }
-	const vector<std::pair<string, string>> GetProperties() const override;
 	TypeSymbol Type() const override { return _value.Type(); }
 
-	ValueType Value()const { return _value; }
+	const ValueType& Value()const { return _value; }
 };
 
 class BoundVariableExpression final : public BoundExpression
@@ -223,7 +214,6 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableExpression; }
-	const vector<std::pair<string, string>> GetProperties() const override;
 	TypeSymbol Type() const override { return _variable->Type(); }
 
 	const shared_ptr<VariableSymbol>& Variable()const { return _variable; }
@@ -244,8 +234,6 @@ public:
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::CallExpression; }
 	TypeSymbol Type() const override { return _function->Type(); }
-	const vector<const BoundNode*> GetChildren() const override;
-	const vector<std::pair<string, string>> GetProperties() const override;
 
 	const shared_ptr<FunctionSymbol>& Function()const { return _function; }
 	const vector<shared_ptr<BoundExpression>>& Arguments()const noexcept { return _arguments; }
@@ -266,8 +254,6 @@ public:
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ConversionExpression; }
 	TypeSymbol Type() const override { return _type; }
-	const vector<const BoundNode*> GetChildren() const override;
-	const vector<std::pair<string, string>> GetProperties() const override;
 
 	const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
 };
@@ -288,8 +274,6 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::PostfixExpression; }
-	const vector<const BoundNode*> GetChildren() const override;
-	const vector<std::pair<string, string>> GetProperties() const override;
 	TypeSymbol Type() const override { return _variable->Type(); }
 
 	const shared_ptr<VariableSymbol>& Variable()const { return _variable; }

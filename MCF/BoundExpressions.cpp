@@ -79,18 +79,6 @@ string GetEnumText(const BoundPostfixOperatorEnum & kind)
 	}
 }
 
-const vector<const BoundNode*> BoundExpression::GetChildren() const
-{
-	return vector<const BoundNode*>();
-}
-
-const vector<std::pair<string, string>> BoundErrorExpression::GetProperties() const
-{
-	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Type", Type().Name())
-	};
-}
-
 BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind,
 									   const BoundUnaryOperatorKind& kind,
 									   const TypeSymbol& operandType,
@@ -144,18 +132,6 @@ BoundUnaryExpression::BoundUnaryExpression(const BoundUnaryOperator & op,
 										   const shared_ptr<BoundExpression>& operand)
 	:_op(op), _operand(operand)
 {
-}
-
-const vector<const BoundNode*> BoundUnaryExpression::GetChildren() const
-{
-	return MakeVecOfRaw<const BoundNode>(_operand);
-}
-
-const vector<std::pair<string, string>> BoundUnaryExpression::GetProperties() const
-{
-	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Type", Type().Name())
-	};
 }
 
 BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind,
@@ -270,35 +246,10 @@ BoundBinaryExpression::BoundBinaryExpression(const shared_ptr<BoundExpression>& 
 {
 }
 
-const vector<const BoundNode*> BoundBinaryExpression::GetChildren() const
-{
-	return MakeVecOfRaw<const BoundNode>(_left, _right);
-}
-
-const vector<std::pair<string, string>> BoundBinaryExpression::GetProperties() const
-{
-	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Type", Type().Name())
-	};
-}
-
 BoundAssignmentExpression::BoundAssignmentExpression(const shared_ptr<VariableSymbol>& variable,
 													 const shared_ptr<BoundExpression>& expression)
 	:_variable(variable), _expression(expression)
 {
-}
-
-const vector<const BoundNode*> BoundAssignmentExpression::GetChildren() const
-{
-	return MakeVecOfRaw<const BoundNode>(_expression);
-}
-
-const vector<std::pair<string, string>> BoundAssignmentExpression::GetProperties() const
-{
-	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Variable", Variable()->ToString()),
-			std::pair<string, string>("Type", Type().Name())
-	};
 }
 
 BoundLiteralExpression::BoundLiteralExpression(const ValueType & value)
@@ -306,25 +257,9 @@ BoundLiteralExpression::BoundLiteralExpression(const ValueType & value)
 {
 }
 
-const vector<std::pair<string, string>> BoundLiteralExpression::GetProperties() const
-{
-	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Value", Value().ToString()),
-			std::pair<string, string>("Type", Type().Name())
-	};
-}
-
 BoundVariableExpression::BoundVariableExpression(const shared_ptr<VariableSymbol>& variable)
 	: _variable(variable)
 {
-}
-
-const vector<std::pair<string, string>> BoundVariableExpression::GetProperties() const
-{
-	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Variable", Variable()->ToString()),
-			std::pair<string, string>("Type", Type().Name())
-	};
 }
 
 BoundCallExpression::BoundCallExpression(const shared_ptr<FunctionSymbol>& function,
@@ -333,35 +268,10 @@ BoundCallExpression::BoundCallExpression(const shared_ptr<FunctionSymbol>& funct
 {
 }
 
-const vector<const BoundNode*> BoundCallExpression::GetChildren() const
-{
-	return MakeVecOfRaw<const BoundNode, BoundExpression>(_arguments.begin(),
-														  _arguments.end());
-}
-
-const vector<std::pair<string, string>> BoundCallExpression::GetProperties() const
-{
-	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Type", Type().Name())
-	};
-}
-
 BoundConversionExpression::BoundConversionExpression(const TypeSymbol& type,
 													 const shared_ptr<BoundExpression>& expression)
 	:_type(type), _expression(expression)
 {
-}
-
-const vector<const BoundNode*> BoundConversionExpression::GetChildren() const
-{
-	return MakeVecOfRaw<const BoundNode>(_expression);
-}
-
-const vector<std::pair<string, string>> BoundConversionExpression::GetProperties() const
-{
-	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Type", Type().ToString())
-	};
 }
 
 BoundPostfixExpression::BoundPostfixExpression(const shared_ptr<VariableSymbol>& variable,
@@ -369,20 +279,6 @@ BoundPostfixExpression::BoundPostfixExpression(const shared_ptr<VariableSymbol>&
 											   const shared_ptr<BoundExpression>& expression)
 	:_variable(variable), _kind(kind), _expression(expression)
 {
-}
-
-const vector<const BoundNode*> BoundPostfixExpression::GetChildren() const
-{
-	return MakeVecOfRaw<const BoundNode>(_expression);
-}
-
-const vector<std::pair<string, string>> BoundPostfixExpression::GetProperties() const
-{
-	return vector<std::pair<string, string>>{
-		std::pair<string, string>("Variable", Variable()->ToString()),
-			std::pair<string, string>("Type", Type().Name()),
-			std::pair<string, string>("OperatorKind", GetEnumText(OperatorKind()))
-	};
 }
 
 }//MCF

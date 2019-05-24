@@ -980,7 +980,7 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteUnaryExpression(const shar
 	auto operand = RewriteExpression(node->Operand());
 	if (operand == node->Operand())
 		return node;
-	return make_shared<BoundUnaryExpression>(*(node->Op()), operand);
+	return make_shared<BoundUnaryExpression>(node->Op(), operand);
 }
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteBinaryExpression(const shared_ptr<BoundBinaryExpression>& node)
@@ -989,7 +989,7 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteBinaryExpression(const sha
 	auto right = RewriteExpression(node->Right());
 	if (left == node->Left() && right == node->Right())
 		return node;
-	return make_shared<BoundBinaryExpression>(left, *(node->Op()), right);
+	return make_shared<BoundBinaryExpression>(left, node->Op(), right);
 }
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteCallExpression(const shared_ptr<BoundCallExpression>& node)

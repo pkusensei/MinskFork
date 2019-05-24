@@ -151,10 +151,10 @@ void BoundNodePrinter::WriteNestedExpression(int parentPrecedence,
 	auto b = dynamic_cast<const BoundBinaryExpression*>(node);
 	if (u)
 		WriteNestedExpression(parentPrecedence,
-			GetUnaryOperatorPrecedence(u->Op()->SyntaxKind()), u);
+			GetUnaryOperatorPrecedence(u->Op().SyntaxKind()), u);
 	else if (b)
 		WriteNestedExpression(parentPrecedence,
-			GetBinaryOperatorPrecedence(b->Op()->SyntaxKind()), b);
+			GetBinaryOperatorPrecedence(b->Op().SyntaxKind()), b);
 	else
 		Write(node);
 }
@@ -297,16 +297,16 @@ void BoundNodePrinter::WriteAssignmentExpression(const BoundAssignmentExpression
 
 void BoundNodePrinter::WriteUnaryExpression(const BoundUnaryExpression * node)
 {
-	auto op = GetText(node->Op()->SyntaxKind());
-	auto precedence = GetUnaryOperatorPrecedence(node->Op()->SyntaxKind());
+	auto op = GetText(node->Op().SyntaxKind());
+	auto precedence = GetUnaryOperatorPrecedence(node->Op().SyntaxKind());
 	_writer.WritePunctuation(op);
 	WriteNestedExpression(precedence, node->Operand().get());
 }
 
 void BoundNodePrinter::WriteBinaryExpression(const BoundBinaryExpression * node)
 {
-	auto op = GetText(node->Op()->SyntaxKind());
-	auto precedence = GetBinaryOperatorPrecedence(node->Op()->SyntaxKind());
+	auto op = GetText(node->Op().SyntaxKind());
+	auto precedence = GetBinaryOperatorPrecedence(node->Op().SyntaxKind());
 	WriteNestedExpression(precedence, node->Left().get());
 	_writer.Write(" ");
 	_writer.WritePunctuation(op);

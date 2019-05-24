@@ -16,13 +16,6 @@ template<typename Base, typename Derived,
 
 template<typename Base, typename Derived,
 	typename = std::enable_if_t<std::is_base_of_v<Base, Derived>>>
-	decltype(auto) MakeVecOfRaw(const shared_ptr<Derived>& ptr)
-{
-	return vector<Base*>{ptr.get()};
-}
-
-template<typename Base, typename Derived,
-	typename = std::enable_if_t<std::is_base_of_v<Base, Derived>>>
 	decltype(auto) MakeVecOfRaw(const Derived& value)
 {
 	return vector<Base*>{&value};
@@ -43,16 +36,6 @@ template<typename Base, typename Derived, typename...Args,
 	decltype(auto) MakeVecOfRaw(const Derived& value, Args&... args)
 {
 	auto result = MakeVecOfRaw<Base>(value);
-	auto rest = MakeVecOfRaw<Base>(args...);
-	result.insert(result.end(), rest.begin(), rest.end());
-	return result;
-}
-
-template<typename Base, typename Derived, typename...Args,
-	typename = std::enable_if_t<std::is_base_of_v<Base, Derived>>>
-	decltype(auto) MakeVecOfRaw(const shared_ptr<Derived>& ptr, Args&... args)
-{
-	auto result = MakeVecOfRaw<Base>(ptr);
 	auto rest = MakeVecOfRaw<Base>(args...);
 	result.insert(result.end(), rest.begin(), rest.end());
 	return result;

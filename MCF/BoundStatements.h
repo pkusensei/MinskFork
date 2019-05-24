@@ -10,10 +10,6 @@ class BoundExpression;
 
 class BoundStatement :public BoundNode
 {
-public:
-	// Inherited via BoundNode
-	const vector<std::pair<string, string>> GetProperties() const override;
-	const vector<const BoundNode*> GetChildren() const override;
 };
 
 class BoundBlockStatement final : public BoundStatement
@@ -28,7 +24,6 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BlockStatement; }
-	const vector<const BoundNode*> GetChildren() const override;
 
 	const vector<shared_ptr<BoundStatement>>& Statements()const noexcept { return _statements; }
 };
@@ -47,8 +42,6 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableDeclaration; }
-	const vector<std::pair<string, string>> GetProperties() const override;
-	const vector<const BoundNode*> GetChildren() const override;
 
 	const shared_ptr<VariableSymbol>& Variable()const { return _variable; }
 	const shared_ptr<BoundExpression>& Initializer()const noexcept { return _initializer; }
@@ -70,7 +63,6 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::IfStatement; }
-	const vector<const BoundNode*> GetChildren() const override;
 
 	const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
 	const shared_ptr<BoundStatement>& ThenStatement()const noexcept { return _thenStatement; }
@@ -90,8 +82,8 @@ protected:
 	}
 
 public:
-	BoundLabel BreakLabel()const { return _breakLabel; }
-	BoundLabel ContinueLabel()const { return _continueLabel; }
+	const BoundLabel& BreakLabel()const { return _breakLabel; }
+	const BoundLabel& ContinueLabel()const { return _continueLabel; }
 };
 
 class BoundWhileStatement final :public BoundLoopStatement
@@ -109,7 +101,6 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::WhileStatement; }
-	const vector<const BoundNode*> GetChildren() const override;
 
 	const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
 	const shared_ptr<BoundStatement>& Body()const noexcept { return _body; }
@@ -130,7 +121,6 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::DoWhileStatement; }
-	const vector<const BoundNode*> GetChildren() const override;
 
 	const shared_ptr<BoundStatement>& Body()const noexcept { return _body; }
 	const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
@@ -155,8 +145,6 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ForStatement; }
-	const vector<std::pair<string, string>> GetProperties() const override;
-	const vector<const BoundNode*> GetChildren() const override;
 
 	const shared_ptr<VariableSymbol>& Variable()const { return _variable; }
 	const shared_ptr<BoundExpression>& LowerBound()const noexcept { return _lowerBound; }
@@ -176,9 +164,8 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LabelStatement; }
-	const vector<std::pair<string, string>> GetProperties() const override;
 
-	BoundLabel Label()const { return _label; }
+	const BoundLabel& Label()const { return _label; }
 };
 
 class BoundGotoStatement final :public BoundStatement
@@ -193,9 +180,8 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::GotoStatement; }
-	const vector<std::pair<string, string>> GetProperties() const override;
 
-	BoundLabel Label()const { return _label; }
+	const BoundLabel& Label()const { return _label; }
 };
 
 class BoundConditionalGotoStatement final :public BoundStatement
@@ -214,10 +200,8 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ConditionalGotoStatement; }
-	const vector<std::pair<string, string>> GetProperties() const override;
-	const vector<const BoundNode*> GetChildren() const override;
 
-	BoundLabel Label()const { return _label; }
+	const BoundLabel& Label()const { return _label; }
 	const shared_ptr<BoundExpression>& Condition()const { return _condition; }
 	bool JumpIfTrue()const noexcept { return _jumpIfTrue; }
 };
@@ -234,7 +218,6 @@ public:
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ExpressionStatement; }
-	const vector<const BoundNode*> GetChildren() const override;
 
 	const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
 };

@@ -91,7 +91,7 @@ public:
 	VariableSymbol& operator=(const VariableSymbol& other) = default;
 
 	bool IsReadOnly()const noexcept { return _isReadOnly; }
-	TypeSymbol Type()const { return _type; }
+	const TypeSymbol& Type()const { return _type; }
 };
 
 class GlobalVariableSymbol final :public VariableSymbol
@@ -154,7 +154,7 @@ public:
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Function; }
 	const vector<ParameterSymbol>& Parameters()const noexcept { return _params; }
-	TypeSymbol Type()const { return _type; }
+	const TypeSymbol& Type()const { return _type; }
 	const FunctionDeclarationSyntax* Declaration()const noexcept { return  _declaration; }
 
 };
