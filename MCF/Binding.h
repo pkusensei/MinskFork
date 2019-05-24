@@ -1,15 +1,16 @@
 #pragma once
 
 #include <optional>
+#include <stack>
 #include <unordered_map>
 
 #include "BoundNode.h"
+#include "BoundLabel.h"
 #include "Symbols.h"
 
 namespace MCF {
 
 class DiagnosticBag;
-class BoundLabel;
 class TextSpan;
 
 class SyntaxToken;
@@ -32,6 +33,8 @@ class IfStatementSyntax;
 class WhileStatementSyntax;
 class DoWhileStatementSyntax;
 class ForStatementSyntax;
+class BreakStatementSyntax;
+class ContinueStatementSyntax;
 class ExpressionStatementSyntax;
 
 class CompilationUnitSyntax;
@@ -134,10 +137,10 @@ private:
 
 public:
 	BoundGlobalScope(const BoundGlobalScope* previous,
-					 unique_ptr<DiagnosticBag>& diagnostics,
-					 const vector<shared_ptr<FunctionSymbol>>& functions,
-					 const vector<shared_ptr<VariableSymbol>>& variables,
-					 const vector<shared_ptr<BoundStatement>>& statements);
+		unique_ptr<DiagnosticBag>& diagnostics,
+		const vector<shared_ptr<FunctionSymbol>>& functions,
+		const vector<shared_ptr<VariableSymbol>>& variables,
+		const vector<shared_ptr<BoundStatement>>& statements);
 
 	const BoundGlobalScope* Previous()const noexcept { return _previous; }
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
@@ -158,7 +161,7 @@ private:
 
 public:
 	BoundProgram(unique_ptr<DiagnosticBag>& diagnostics, FuncMap& functions,
-				 unique_ptr<BoundBlockStatement>& statement);
+		unique_ptr<BoundBlockStatement>& statement);
 	BoundProgram(BoundProgram&&) = default;
 	BoundProgram& operator=(BoundProgram&&) = default;
 
@@ -173,9 +176,12 @@ private:
 	unique_ptr<DiagnosticBag> _diagnostics;
 	unique_ptr<BoundScope> _scope;
 	const FunctionSymbol* _function;
+	std::stack<std::pair<BoundLabel, BoundLabel>> _loopStack;
+	size_t _labelCount;
 
 	void BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax);
 
+	shared_ptr<BoundStatement> BindErrorStatement();
 	shared_ptr<BoundStatement> BindStatement(const StatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindBlockStatement(const BlockStatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindVariableDeclaration(const VariableDeclarationSyntax* syntax);
@@ -183,12 +189,16 @@ private:
 	shared_ptr<BoundStatement> BindWhileStatement(const WhileStatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindDoWhileStatement(const DoWhileStatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindForStatement(const ForStatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindLoopBody(const StatementSyntax* syntax,
+		BoundLabel& breakLabel, BoundLabel& continueLabel);
+	shared_ptr<BoundStatement> BindBreakStatement(const BreakStatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindContinueStatement(const ContinueStatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax* syntax);
 
 	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,
-											   const TypeSymbol& targetType);
+		const TypeSymbol& targetType);
 	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,
-											   bool canBeVoid = false);
+		bool canBeVoid = false);
 	shared_ptr<BoundExpression> BindExpressionInternal(const ExpressionSyntax* syntax);
 	shared_ptr<BoundExpression> BindParenthesizedExpression(const ParenthesizedExpressionSyntax* syntax);
 	shared_ptr<BoundExpression> BindLiteralExpression(const LiteralExpressionSyntax* syntax);
@@ -200,14 +210,14 @@ private:
 	shared_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax* syntax);
 
 	shared_ptr<BoundExpression> BindConversion(const ExpressionSyntax* syntax,
-											   const TypeSymbol& type,
-											   bool allowExplicit = false);
+		const TypeSymbol& type,
+		bool allowExplicit = false);
 	shared_ptr<BoundExpression> BindConversion(const TextSpan& diagnosticSpan,
-											   const shared_ptr<BoundExpression>& syntax,
-											   const TypeSymbol& type,
-											   bool allowExplicit = false);
+		const shared_ptr<BoundExpression>& syntax,
+		const TypeSymbol& type,
+		bool allowExplicit = false);
 	shared_ptr<VariableSymbol> BindVariable(const SyntaxToken& identifier, bool isReadOnly,
-											const TypeSymbol& type);
+		const TypeSymbol& type);
 	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
 	std::optional<TypeSymbol> LookupType(const string& name)const;
 
@@ -220,7 +230,7 @@ public:
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
 
 	static unique_ptr<BoundGlobalScope> BindGlobalScope(const BoundGlobalScope* previous,
-														const CompilationUnitSyntax* syntax);
+		const CompilationUnitSyntax* syntax);
 	static unique_ptr<BoundProgram> BindProgram(const BoundGlobalScope* globalScope);
 };
 
@@ -258,7 +268,7 @@ public:
 class Lowerer final :public BoundTreeRewriter
 {
 private:
-	size_t _labelCount{0};
+	size_t _labelCount{ 0 };
 
 	Lowerer() = default;
 	BoundLabel GenerateLabel();

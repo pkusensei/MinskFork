@@ -62,18 +62,18 @@ void BoundScope::ResetToParent(unique_ptr<BoundScope>& current)
 
 
 BoundGlobalScope::BoundGlobalScope(const BoundGlobalScope* previous,
-								   unique_ptr<DiagnosticBag>& diagnostics,
-								   const vector<shared_ptr<FunctionSymbol>>& functions,
-								   const vector<shared_ptr<VariableSymbol>>& variables,
-								   const vector<shared_ptr<BoundStatement>>& statements)
+	unique_ptr<DiagnosticBag>& diagnostics,
+	const vector<shared_ptr<FunctionSymbol>>& functions,
+	const vector<shared_ptr<VariableSymbol>>& variables,
+	const vector<shared_ptr<BoundStatement>>& statements)
 	:_previous(previous), _diagnostics(std::move(diagnostics)),
 	_functions(functions), _variables(variables), _statements(statements)
 {
 }
 
 BoundProgram::BoundProgram(unique_ptr<DiagnosticBag>& diagnostics,
-						   FuncMap& functions,
-						   unique_ptr<BoundBlockStatement>& statement)
+	FuncMap& functions,
+	unique_ptr<BoundBlockStatement>& statement)
 	: _diagnostics(std::move(diagnostics)), _functions(std::move(functions)),
 	_statement(std::move(statement))
 {
@@ -81,7 +81,8 @@ BoundProgram::BoundProgram(unique_ptr<DiagnosticBag>& diagnostics,
 
 Binder::Binder(unique_ptr<BoundScope>& parent, const FunctionSymbol* function)
 	: _diagnostics(make_unique<DiagnosticBag>()),
-	_scope(make_unique<BoundScope>(parent)), _function(function)
+	_scope(make_unique<BoundScope>(parent)), _function(function),
+	_loopStack(), _labelCount(0)
 {
 	if (function != nullptr)
 		for (const auto& p : function->Parameters())
@@ -116,12 +117,17 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax * syntax)
 	auto type = BindTypeClause(syntax->Type())
 		.value_or(TypeSymbol::GetType(TypeEnum::Void));
 	auto function = make_shared<FunctionSymbol>(syntax->Identifier().Text(),
-												parameters, type, syntax);
+		parameters, type, syntax);
 
 	if (!_scope->TryDeclareFunction(function))
 		_diagnostics->ReportSymbolAlreadyDeclared(syntax->Identifier().Span(),
-												  function->Name());
+			function->Name());
 
+}
+
+shared_ptr<BoundStatement> Binder::BindErrorStatement()
+{
+	return make_shared<BoundExpressionStatement>(make_shared<BoundErrorExpression>());
 }
 
 shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax * syntax)
@@ -163,6 +169,18 @@ shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax * syntax)
 		{
 			auto p = dynamic_cast<const ForStatementSyntax*>(syntax);
 			if (p) return BindForStatement(p);
+			else break;
+		}
+		case SyntaxKind::BreakStatement:
+		{
+			auto p = dynamic_cast<const BreakStatementSyntax*>(syntax);
+			if (p) return BindBreakStatement(p);
+			else break;
+		}
+		case SyntaxKind::ContinueStatement:
+		{
+			auto p = dynamic_cast<const ContinueStatementSyntax*>(syntax);
+			if (p) return BindContinueStatement(p);
 			else break;
 		}
 		case SyntaxKind::ExpressionStatement:
@@ -213,31 +231,80 @@ shared_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax * syn
 shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax * syntax)
 {
 	auto condition = BindExpression(syntax->Condition(),
-									TypeSymbol::GetType(TypeEnum::Bool));
-	auto body = BindStatement(syntax->Body());
-	return make_shared<BoundWhileStatement>(condition, body);
+		TypeSymbol::GetType(TypeEnum::Bool));
+	BoundLabel breakLabel;
+	BoundLabel continueLabel;
+	auto body = BindLoopBody(syntax->Body(), breakLabel, continueLabel);
+	return make_shared<BoundWhileStatement>(condition, body, breakLabel, continueLabel);
 }
 
 shared_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSyntax * syntax)
 {
-	auto body = BindStatement(syntax->Body());
+	BoundLabel breakLabel;
+	BoundLabel continueLabel;
+	auto body = BindLoopBody(syntax->Body(), breakLabel, continueLabel);
 	auto condition = BindExpression(syntax->Condition(),
-									TypeSymbol::GetType(TypeEnum::Bool));
-	return make_shared<BoundDoWhileStatement>(body, condition);
+		TypeSymbol::GetType(TypeEnum::Bool));
+	return make_shared<BoundDoWhileStatement>(body, condition, breakLabel, continueLabel);
 }
 
 shared_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax * syntax)
 {
-	auto lowerBound = BindExpression(syntax->LowerBound(), TypeSymbol::GetType(TypeEnum::Int));
-	auto upperBound = BindExpression(syntax->UpperBound(), TypeSymbol::GetType(TypeEnum::Int));
+	auto lowerBound = BindExpression(syntax->LowerBound(),
+		TypeSymbol::GetType(TypeEnum::Int));
+	auto upperBound = BindExpression(syntax->UpperBound(),
+		TypeSymbol::GetType(TypeEnum::Int));
 
 	_scope = make_unique<BoundScope>(_scope);
 
-	auto variable = BindVariable(syntax->Identifier(), true, TypeSymbol::GetType(TypeEnum::Int));
-	auto body = BindStatement(syntax->Body());
+	auto variable = BindVariable(syntax->Identifier(), true,
+		TypeSymbol::GetType(TypeEnum::Int));
+	BoundLabel breakLabel;
+	BoundLabel continueLabel;
+	auto body = BindLoopBody(syntax->Body(), breakLabel, continueLabel);
 
 	BoundScope::ResetToParent(_scope);
-	return make_shared<BoundForStatement>(variable, lowerBound, upperBound, body);
+	return make_shared<BoundForStatement>(variable, lowerBound, upperBound,
+		body, breakLabel, continueLabel);
+}
+
+shared_ptr<BoundStatement> Binder::BindLoopBody(const StatementSyntax * syntax,
+	BoundLabel & breakLabel, BoundLabel & continueLabel)
+{
+	++_labelCount;
+	auto brLabel = BoundLabel("break" + std::to_string(_labelCount));
+	breakLabel = brLabel;
+	auto conLabel = BoundLabel("continue" + std::to_string(_labelCount));
+	continueLabel = conLabel;
+
+	_loopStack.emplace(brLabel, conLabel);
+	auto boundBody = BindStatement(syntax);
+	_loopStack.pop();
+	return boundBody;
+}
+
+shared_ptr<BoundStatement> Binder::BindBreakStatement(const BreakStatementSyntax * syntax)
+{
+	if (_loopStack.empty())
+	{
+		_diagnostics->ReportInvalidBreakOrContinue(syntax->Keyword().Span(),
+			syntax->Keyword().Text());
+		return BindErrorStatement();
+	}
+	auto brLabel = _loopStack.top().first;
+	return make_shared<BoundGotoStatement>(brLabel);
+}
+
+shared_ptr<BoundStatement> Binder::BindContinueStatement(const ContinueStatementSyntax * syntax)
+{
+	if (_loopStack.empty())
+	{
+		_diagnostics->ReportInvalidBreakOrContinue(syntax->Keyword().Span(),
+			syntax->Keyword().Text());
+		return BindErrorStatement();
+	}
+	auto conLabel = _loopStack.top().second;
+	return make_shared<BoundGotoStatement>(conLabel);
 }
 
 shared_ptr<BoundStatement> Binder::BindExpressionStatement(const ExpressionStatementSyntax * syntax)
@@ -247,13 +314,13 @@ shared_ptr<BoundStatement> Binder::BindExpressionStatement(const ExpressionState
 }
 
 shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * syntax,
-												   const TypeSymbol & targetType)
+	const TypeSymbol & targetType)
 {
 	return BindConversion(syntax, targetType);
 }
 
 shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * syntax,
-												   bool canBeVoid)
+	bool canBeVoid)
 {
 	auto result = BindExpressionInternal(syntax);
 	if (!canBeVoid && result->Type() == TypeSymbol::GetType(TypeEnum::Void))
@@ -362,7 +429,7 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 	if (variable->IsReadOnly())
 		_diagnostics->ReportCannotAssign(syntax->EqualsToken().Span(), name);
 	auto convertExpression = BindConversion(syntax->Expression()->Span(),
-											boundExpression, variable->Type());
+		boundExpression, variable->Type());
 	return make_shared<BoundAssignmentExpression>(variable, convertExpression);
 }
 
@@ -373,15 +440,15 @@ shared_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyn
 		return make_shared<BoundErrorExpression>();
 
 	auto boundOperator = BoundUnaryOperator::Bind(syntax->OperatorToken().Kind(),
-												  boundOperand->Type());
+		boundOperand->Type());
 	if (boundOperator.IsUseful())
 	{
 		return make_shared<BoundUnaryExpression>(boundOperator, boundOperand);
 	} else
 	{
 		_diagnostics->ReportUndefinedUnaryOperator(syntax->OperatorToken().Span(),
-												   syntax->OperatorToken().Text(),
-												   boundOperand->Type());
+			syntax->OperatorToken().Text(),
+			boundOperand->Type());
 		return make_shared<BoundErrorExpression>();
 	}
 }
@@ -395,15 +462,15 @@ shared_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 		return make_shared<BoundErrorExpression>();
 
 	auto boundOperator = BoundBinaryOperator::Bind(syntax->OperatorToken().Kind(),
-												   boundLeft->Type(), boundRight->Type());
+		boundLeft->Type(), boundRight->Type());
 	if (boundOperator.IsUseful())
 	{
 		return make_shared<BoundBinaryExpression>(boundLeft, boundOperator, boundRight);
 	} else
 	{
 		_diagnostics->ReportUndefinedBinaryOperator(syntax->OperatorToken().Span(),
-													syntax->OperatorToken().Text(),
-													boundLeft->Type(), boundRight->Type());
+			syntax->OperatorToken().Text(),
+			boundLeft->Type(), boundRight->Type());
 		return make_shared<BoundErrorExpression>();
 	}
 }
@@ -428,14 +495,14 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	if (!_scope->TryLookupFunction(syntax->Identifier().Text(), function))
 	{
 		_diagnostics->ReportUndefinedFunction(syntax->Identifier().Span(),
-											  syntax->Identifier().Text());
+			syntax->Identifier().Text());
 		return make_shared<BoundErrorExpression>();
 	}
 	if (syntax->Arguments()->size() != function->Parameters().size())
 	{
 		_diagnostics->ReportWrongArgumentCount(syntax->Span(), function->Name(),
-											   function->Parameters().size(),
-											   syntax->Arguments()->size());
+			function->Parameters().size(),
+			syntax->Arguments()->size());
 		return make_shared<BoundErrorExpression>();
 	}
 
@@ -446,7 +513,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		if (arg->Type() != param.Type())
 		{
 			_diagnostics->ReportWrongArgumentType(syntax->Span(), param.Name(),
-												  param.Type(), arg->Type());
+				param.Type(), arg->Type());
 			return make_shared<BoundErrorExpression>();
 		}
 	}
@@ -473,44 +540,44 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	if (boundExpression->Type() != variable->Type())
 	{
 		_diagnostics->ReportCannotConvert(syntax->Expression()->Span(),
-										  boundExpression->Type(), variable->Type());
+			boundExpression->Type(), variable->Type());
 		return make_shared<BoundErrorExpression>();
 	}
 	if (variable->Type() != TypeSymbol::GetType(TypeEnum::Int))
 	{
 		_diagnostics->ReportVariableNotSupportPostfixOperator(syntax->Expression()->Span(),
-															  syntax->Op().Text(),
-															  variable->Type());
+			syntax->Op().Text(),
+			variable->Type());
 		return make_shared<BoundErrorExpression>();
 	}
 	switch (syntax->Op().Kind())
 	{
 		case SyntaxKind::PlusPlusToken:
 			return make_shared<BoundPostfixExpression>(variable,
-													   BoundPostfixOperatorEnum::Increment,
-													   boundExpression);
+				BoundPostfixOperatorEnum::Increment,
+				boundExpression);
 		case SyntaxKind::MinusMinusToken:
 			return make_shared<BoundPostfixExpression>(variable,
-													   BoundPostfixOperatorEnum::Decrement,
-													   boundExpression);
+				BoundPostfixOperatorEnum::Decrement,
+				boundExpression);
 		default:
 			throw std::invalid_argument("Unexpected operator token "
-										+ GetSyntaxKindName(syntax->Op().Kind()));
+				+ GetSyntaxKindName(syntax->Op().Kind()));
 	}
 }
 
 shared_ptr<BoundExpression> Binder::BindConversion(const ExpressionSyntax* syntax,
-												   const TypeSymbol& type,
-												   bool allowExplicit)
+	const TypeSymbol& type,
+	bool allowExplicit)
 {
 	auto expression = BindExpression(syntax);
 	return BindConversion(syntax->Span(), expression, type, allowExplicit);
 }
 
 shared_ptr<BoundExpression> Binder::BindConversion(const TextSpan & diagnosticSpan,
-												   const shared_ptr<BoundExpression>& expression,
-												   const TypeSymbol & type,
-												   bool allowExplicit)
+	const shared_ptr<BoundExpression>& expression,
+	const TypeSymbol & type,
+	bool allowExplicit)
 {
 	auto conversion = Conversion::Classify(expression->Type(), type);
 	if (!conversion.Exists())
@@ -528,7 +595,7 @@ shared_ptr<BoundExpression> Binder::BindConversion(const TextSpan & diagnosticSp
 }
 
 shared_ptr<VariableSymbol> Binder::BindVariable(const SyntaxToken & identifier, bool isReadOnly,
-												const TypeSymbol & type)
+	const TypeSymbol & type)
 {
 	auto name = identifier.Text().empty() ? "?" : identifier.Text();
 	auto declare = !identifier.IsMissing();
@@ -550,7 +617,7 @@ std::optional<TypeSymbol> Binder::BindTypeClause(const std::optional<TypeClauseS
 	auto type = LookupType(syntax->Identifier().Text());
 	if (!type.has_value())
 		_diagnostics->ReportUndefinedType(syntax->Identifier().Span(),
-										  syntax->Identifier().Text());
+			syntax->Identifier().Text());
 	return type;
 }
 
@@ -594,7 +661,7 @@ unique_ptr<BoundScope> Binder::CreateRootScope()
 }
 
 unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* previous,
-													 const CompilationUnitSyntax* syntax)
+	const CompilationUnitSyntax* syntax)
 {
 	auto parentScope = CreateParentScope(previous);
 	auto binder = Binder(parentScope, nullptr);
@@ -616,7 +683,7 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* pre
 	if (previous != nullptr)
 		diagnostics->AddRangeFront(*previous->Diagnostics());
 	return make_unique<BoundGlobalScope>(previous, binder._diagnostics,
-										 functions, variables, statements);
+		functions, variables, statements);
 }
 
 unique_ptr<BoundProgram> Binder::BindProgram(const BoundGlobalScope * globalScope)
@@ -768,7 +835,8 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteWhileStatement(const shared
 	auto body = RewriteStatement(node->Body());
 	if (condition == node->Condition() && body == node->Body())
 		return node;
-	return make_shared<BoundWhileStatement>(condition, body);
+	return make_shared<BoundWhileStatement>(condition, body,
+		node->BreakLabel(), node->ContinueLabel());
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteDoWhileStatement(const shared_ptr<BoundDoWhileStatement>& node)
@@ -777,7 +845,8 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteDoWhileStatement(const shar
 	auto condition = RewriteExpression(node->Condition());
 	if (body == node->Body() && condition == node->Condition())
 		return node;
-	return make_shared<BoundDoWhileStatement>(body, condition);
+	return make_shared<BoundDoWhileStatement>(body, condition,
+		node->BreakLabel(), node->ContinueLabel());
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteForStatement(const shared_ptr<BoundForStatement>& node)
@@ -789,7 +858,8 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteForStatement(const shared_p
 		&& upperBound == node->UpperBound()
 		&& body == node->Body())
 		return node;
-	return make_shared<BoundForStatement>(node->Variable(), lowerBound, upperBound, body);
+	return make_shared<BoundForStatement>(node->Variable(), lowerBound,
+		upperBound, body, node->BreakLabel(), node->ContinueLabel());
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteLabelStatement(const shared_ptr<BoundLabelStatement>& node)
@@ -1036,20 +1106,18 @@ shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(const shared_ptr<BoundIfS
 
 shared_ptr<BoundStatement> Lowerer::RewriteWhileStatement(const shared_ptr<BoundWhileStatement>& node)
 {
-	auto continueLabel = GenerateLabel();
 	auto checkLabel = GenerateLabel();
-	auto endLabel = GenerateLabel();
 
 	auto gotoCheck = make_shared<BoundGotoStatement>(checkLabel);
-	auto continueLabelStatement = make_shared<BoundLabelStatement>(continueLabel);
+	auto continueLabelStatement = make_shared<BoundLabelStatement>(node->ContinueLabel());
 	auto checkLabelStatement = make_shared<BoundLabelStatement>(checkLabel);
-	auto gotoTrue = make_shared<BoundConditionalGotoStatement>(continueLabel,
-															   node->Condition());
-	auto endLabelStatement = make_shared<BoundLabelStatement>(endLabel);
+	auto gotoTrue = make_shared<BoundConditionalGotoStatement>(node->ContinueLabel(),
+		node->Condition());
+	auto breakLabelStatement = make_shared<BoundLabelStatement>(node->BreakLabel());
 
 	auto statements = vector<shared_ptr<BoundStatement>>{
 		gotoCheck, continueLabelStatement, node->Body(),
-		checkLabelStatement, gotoTrue, endLabelStatement
+		checkLabelStatement, gotoTrue, breakLabelStatement
 	};
 
 	auto result = make_shared<BoundBlockStatement>(statements);
@@ -1058,14 +1126,13 @@ shared_ptr<BoundStatement> Lowerer::RewriteWhileStatement(const shared_ptr<Bound
 
 shared_ptr<BoundStatement> Lowerer::RewriteDoWhileStatement(const shared_ptr<BoundDoWhileStatement>& node)
 {
-	auto continueLabel = GenerateLabel();
-
-	auto continueLabelStatement = make_shared<BoundLabelStatement>(continueLabel);
-	auto gotoTrue = make_shared<BoundConditionalGotoStatement>(continueLabel,
-															   node->Condition());
+	auto continueLabelStatement = make_shared<BoundLabelStatement>(node->ContinueLabel());
+	auto gotoTrue = make_shared<BoundConditionalGotoStatement>(node->ContinueLabel(),
+		node->Condition());
+	auto breakLabelStatement = make_shared<BoundLabelStatement>(node->BreakLabel());
 
 	auto statements = vector<shared_ptr<BoundStatement>>{
-		continueLabelStatement, node->Body(), gotoTrue
+		continueLabelStatement, node->Body(), gotoTrue, breakLabelStatement
 	};
 	auto result = make_shared<BoundBlockStatement>(statements);
 	return RewriteStatement(result);
@@ -1074,40 +1141,42 @@ shared_ptr<BoundStatement> Lowerer::RewriteDoWhileStatement(const shared_ptr<Bou
 shared_ptr<BoundStatement> Lowerer::RewriteForStatement(const shared_ptr<BoundForStatement>& node)
 {
 	auto variableDeclaration = make_shared<BoundVariableDeclaration>(node->Variable(),
-																	 node->LowerBound());
+		node->LowerBound());
 	auto variableExpression = make_shared<BoundVariableExpression>(node->Variable());
 	auto upperBoundSymbol = make_shared<LocalVariableSymbol>(
 		"upperBound", true, TypeSymbol::GetType(TypeEnum::Int)
 		);
 	auto upperBoundDeclaration = make_shared<BoundVariableDeclaration>(upperBoundSymbol,
-																	   node->UpperBound());
+		node->UpperBound());
 
 	auto condition = make_shared<BoundBinaryExpression>(
 		variableExpression,
 		BoundBinaryOperator::Bind(SyntaxKind::LessOrEqualsToken,
-								  TypeSymbol::GetType(TypeEnum::Int),
-								  TypeSymbol::GetType(TypeEnum::Int)),
+			TypeSymbol::GetType(TypeEnum::Int),
+			TypeSymbol::GetType(TypeEnum::Int)),
 		make_shared<BoundVariableExpression>(upperBoundSymbol)
 		);
-
+	auto continueLabelStatement = make_shared<BoundLabelStatement>(node->ContinueLabel());
 	auto increment = make_shared<BoundExpressionStatement>(
 		make_shared<BoundAssignmentExpression>(
 			node->Variable(),
 			make_shared<BoundBinaryExpression>(
 				variableExpression,
 				BoundBinaryOperator::Bind(SyntaxKind::PlusToken,
-										  TypeSymbol::GetType(TypeEnum::Int),
-										  TypeSymbol::GetType(TypeEnum::Int)),
+					TypeSymbol::GetType(TypeEnum::Int),
+					TypeSymbol::GetType(TypeEnum::Int)),
 				make_shared<BoundLiteralExpression>(1)
 				)
 			)
 		);
 
-	auto statements = vector<shared_ptr<BoundStatement>>{node->Body(), increment};
+	auto statements = vector<shared_ptr<BoundStatement>>{
+		node->Body(),continueLabelStatement, increment };
 	auto whileBody = make_shared<BoundBlockStatement>(statements);
-	auto whileStatement = make_shared<BoundWhileStatement>(condition, whileBody);
+	auto whileStatement = make_shared<BoundWhileStatement>(condition, whileBody,
+		node->BreakLabel(), GenerateLabel());
 
-	statements = {variableDeclaration, upperBoundDeclaration, whileStatement};
+	statements = { variableDeclaration, upperBoundDeclaration, whileStatement };
 	auto result = make_shared<BoundBlockStatement>(statements);
 	return RewriteStatement(result);
 }

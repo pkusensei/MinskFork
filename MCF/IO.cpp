@@ -17,39 +17,72 @@ void TextWriter::ResetColor()
 		ResetConsoleColor();
 }
 
+void TextWriter::Write(const string & text)
+{
+	_out << text;
+}
+
+void TextWriter::WriteLine()
+{
+	_out << '\n';
+}
+
 void TextWriter::WriteKeyword(const string & text)
 {
 	SetForeground(ConsoleColor::Blue);
-	_out << text;
+	Write(text);
 	ResetColor();
 }
 
 void TextWriter::WriteIdentifier(const string & text)
 {
 	SetForeground(ConsoleColor::DarkYellow);
-	_out << text;
+	Write(text);
 	ResetColor();
 }
 
 void TextWriter::WriteNumber(const string & text)
 {
 	SetForeground(ConsoleColor::Cyan);
-	_out << text;
+	Write(text);
 	ResetColor();
 }
 
 void TextWriter::WriteString(const string & text)
 {
 	SetForeground(ConsoleColor::Magenta);
-	_out << text;
+	Write(text);
 	ResetColor();
 }
 
 void TextWriter::WritePunctuation(const string & text)
 {
 	SetForeground(ConsoleColor::DarkGray);
-	_out << text;
+	Write(text);
 	ResetColor();
+}
+
+void IndentedTextWriter::WriteIndent()
+{
+	if (_indentPending)
+	{
+		for (auto i = 0; i < _indentCount; ++i)
+			_out << INDENT_UNIT;
+		_indentPending = false;
+	}
+}
+
+void IndentedTextWriter::Write(const string & text)
+{
+	WriteIndent();
+	TextWriter::Write(text);
+}
+
+void IndentedTextWriter::WriteLine()
+{
+	WriteIndent();
+	TextWriter::WriteLine();
+	_indentPending = true;
 }
 
 }//MCF

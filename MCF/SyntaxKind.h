@@ -42,6 +42,8 @@ enum class SyntaxKind
 	IdentifierToken,
 
 	// Keywords
+	BreakKeyword,
+	ContinueKeyword,
 	ElseKeyword,
 	FalseKeyword,
 	ForKeyword, 
@@ -69,6 +71,8 @@ enum class SyntaxKind
 	WhileStatement,
 	DoWhileStatement,
 	ForStatement,
+	BreakStatement,
+	ContinueStatement,
 	ExpressionStatement,
 
 	// Expressions

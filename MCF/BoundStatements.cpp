@@ -27,7 +27,7 @@ const vector<const BoundNode*> BoundBlockStatement::GetChildren() const
 }
 
 BoundVariableDeclaration::BoundVariableDeclaration(const shared_ptr<VariableSymbol> & variable,
-												   const shared_ptr<BoundExpression>& initializer)
+	const shared_ptr<BoundExpression>& initializer)
 	:_variable(variable), _initializer(initializer)
 {
 }
@@ -45,8 +45,8 @@ const vector<const BoundNode*> BoundVariableDeclaration::GetChildren() const
 }
 
 BoundIfStatement::BoundIfStatement(const shared_ptr<BoundExpression>& condition,
-								   const shared_ptr<BoundStatement>& thenStatement,
-								   const shared_ptr<BoundStatement>& elseStatement)
+	const shared_ptr<BoundStatement>& thenStatement,
+	const shared_ptr<BoundStatement>& elseStatement)
 	: _condition(condition), _thenStatement(thenStatement), _elseStatement(elseStatement)
 {
 }
@@ -57,8 +57,10 @@ const vector<const BoundNode*> BoundIfStatement::GetChildren() const
 }
 
 BoundWhileStatement::BoundWhileStatement(const shared_ptr<BoundExpression>& condition,
-										 const shared_ptr<BoundStatement>& body)
-	:_condition(condition), _body(body)
+	const shared_ptr<BoundStatement>& body,
+	const BoundLabel& breakLabel, const BoundLabel& continueLabel)
+	:BoundLoopStatement(breakLabel, continueLabel),
+	_condition(condition), _body(body)
 {
 }
 
@@ -68,8 +70,10 @@ const vector<const BoundNode*> BoundWhileStatement::GetChildren() const
 }
 
 BoundDoWhileStatement::BoundDoWhileStatement(const shared_ptr<BoundStatement>& body,
-											 const shared_ptr<BoundExpression>& condition)
-	: _body(body), _condition(condition)
+	const shared_ptr<BoundExpression>& condition,
+	const BoundLabel& breakLabel, const BoundLabel& continueLabel)
+	:BoundLoopStatement(breakLabel, continueLabel),
+	_body(body), _condition(condition)
 {
 }
 
@@ -79,10 +83,12 @@ const vector<const BoundNode*> BoundDoWhileStatement::GetChildren() const
 }
 
 BoundForStatement::BoundForStatement(const shared_ptr<VariableSymbol>& variable,
-									 const shared_ptr<BoundExpression>& lowerBound,
-									 const shared_ptr<BoundExpression>& upperBound,
-									 const shared_ptr<BoundStatement>& body)
-	: _variable(variable), _lowerBound(lowerBound), _upperBound(upperBound), _body(body)
+	const shared_ptr<BoundExpression>& lowerBound,
+	const shared_ptr<BoundExpression>& upperBound,
+	const shared_ptr<BoundStatement>& body,
+	const BoundLabel& breakLabel, const BoundLabel& continueLabel)
+	:BoundLoopStatement(breakLabel, continueLabel),
+	_variable(variable), _lowerBound(lowerBound), _upperBound(upperBound), _body(body)
 {
 }
 
@@ -123,8 +129,8 @@ const vector<std::pair<string, string>> BoundGotoStatement::GetProperties() cons
 }
 
 BoundConditionalGotoStatement::BoundConditionalGotoStatement(const BoundLabel & label,
-															 const shared_ptr<BoundExpression>& condition,
-															 bool jumpIfTrue)
+	const shared_ptr<BoundExpression>& condition,
+	bool jumpIfTrue)
 	:_label(label), _condition(condition), _jumpIfTrue(jumpIfTrue)
 {
 }

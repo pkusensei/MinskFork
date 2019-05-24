@@ -53,30 +53,33 @@ public:
 	void ReportBadCharacter(size_t position, char character);
 	void ReportUnterminatedString(const TextSpan& span);
 	void ReportUnexpectedToken(const TextSpan& span, const SyntaxKind& actualKind,
-							   const SyntaxKind& expectedKind);
+		const SyntaxKind& expectedKind);
 	void ReportUndefinedUnaryOperator(const TextSpan& span, const string& operatorText,
-									  const TypeSymbol& operandType);
+		const TypeSymbol& operandType);
 	void ReportUndefinedBinaryOperator(const TextSpan& span, const string& operatorText,
-									   const TypeSymbol& leftType, const TypeSymbol& rightType);
+		const TypeSymbol& leftType, const TypeSymbol& rightType);
 	void ReportUndefinedName(const TextSpan& span, const string& name);
 	void ReportUndefinedType(const TextSpan& span, const string& name);
 	void ReportCannotConvert(const TextSpan& span, const TypeSymbol& fromType,
-							 const TypeSymbol& toType);
+		const TypeSymbol& toType);
 	void ReportCannotConvertImplicitly(const TextSpan& span, const TypeSymbol& fromType,
-									   const TypeSymbol& toType);
+		const TypeSymbol& toType);
 	void ReportSymbolAlreadyDeclared(const TextSpan& span, const string& name);
 	void ReportCannotAssign(const TextSpan& span, const string& name);
 
 	void ReportUndefinedFunction(const TextSpan& span, const string& name);
 	void ReportWrongArgumentCount(const TextSpan& span, const string& name,
-								  size_t expectedCount, size_t actualCount);
+		size_t expectedCount, size_t actualCount);
 	void ReportWrongArgumentType(const TextSpan& span, const string& name,
-								 const TypeSymbol& expectedType, const TypeSymbol& actualType);
+		const TypeSymbol& expectedType, const TypeSymbol& actualType);
 	void ReportExpressionMustHaveValue(const TextSpan& span);
+	void ReportInvalidBreakOrContinue(const TextSpan & span, const string& text);
 
-	void ReportExpressionNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const SyntaxKind& kind);
+	void ReportExpressionNotSupportPostfixOperator(const TextSpan & span,
+		const string & operatorText, const SyntaxKind& kind);
 
-	void ReportVariableNotSupportPostfixOperator(const TextSpan & span, const string & operatorText, const TypeSymbol& variableType);
+	void ReportVariableNotSupportPostfixOperator(const TextSpan & span,
+		const string & operatorText, const TypeSymbol& variableType);
 };
 
 class MCF_API DiagnosticBag::iterator

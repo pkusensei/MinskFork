@@ -24,7 +24,7 @@ private:
 
 public:
 	AssignmentExpressionSyntax(const SyntaxToken& identifier, const SyntaxToken& equals,
-							   unique_ptr<ExpressionSyntax>& expression);
+		unique_ptr<ExpressionSyntax>& expression);
 	AssignmentExpressionSyntax(AssignmentExpressionSyntax&&) = default;
 	AssignmentExpressionSyntax& operator=(AssignmentExpressionSyntax&&) = default;
 
@@ -45,7 +45,7 @@ private:
 
 public:
 	UnaryExpressionSyntax(const SyntaxToken& operatorToken,
-						  unique_ptr<ExpressionSyntax>& operand);
+		unique_ptr<ExpressionSyntax>& operand);
 	UnaryExpressionSyntax(UnaryExpressionSyntax&&) = default;
 	UnaryExpressionSyntax& operator=(UnaryExpressionSyntax&&) = default;
 
@@ -66,8 +66,8 @@ private:
 
 public:
 	BinaryExpressionSyntax(unique_ptr<ExpressionSyntax>& left,
-						   const SyntaxToken& operatorToken,
-						   unique_ptr<ExpressionSyntax>& right);
+		const SyntaxToken& operatorToken,
+		unique_ptr<ExpressionSyntax>& right);
 	BinaryExpressionSyntax(BinaryExpressionSyntax&&) = default;
 	BinaryExpressionSyntax& operator=(BinaryExpressionSyntax&&) = default;
 
@@ -89,8 +89,8 @@ private:
 
 public:
 	ParenthesizedExpressionSyntax(const SyntaxToken& open,
-								  unique_ptr<ExpressionSyntax>& expression,
-								  const SyntaxToken& close);
+		unique_ptr<ExpressionSyntax>& expression,
+		const SyntaxToken& close);
 	ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax&&) = default;
 	ParenthesizedExpressionSyntax& operator=(ParenthesizedExpressionSyntax&&) = default;
 
@@ -193,8 +193,8 @@ private:
 
 public:
 	CallExpressionSyntax(const SyntaxToken& identifier, const SyntaxToken& open,
-						 SeparatedSyntaxList<ExpressionSyntax>& arguments,
-						 const SyntaxToken& close);
+		SeparatedSyntaxList<ExpressionSyntax>& arguments,
+		const SyntaxToken& close);
 	CallExpressionSyntax(CallExpressionSyntax&& other) = default;
 	CallExpressionSyntax& operator=(CallExpressionSyntax&& other) = default;
 
@@ -217,7 +217,7 @@ private:
 
 public:
 	PostfixExpressionSyntax(const SyntaxToken& identifier, const SyntaxToken& op,
-							unique_ptr<ExpressionSyntax>& expression);
+		unique_ptr<ExpressionSyntax>& expression);
 	PostfixExpressionSyntax(PostfixExpressionSyntax&&) = default;
 	PostfixExpressionSyntax& operator=(PostfixExpressionSyntax&&) = default;
 
@@ -246,8 +246,8 @@ private:
 
 public:
 	BlockStatementSyntax(const SyntaxToken& open,
-						 vector<unique_ptr<StatementSyntax>>& statements,
-						 const SyntaxToken& close);
+		vector<unique_ptr<StatementSyntax>>& statements,
+		const SyntaxToken& close);
 	BlockStatementSyntax(BlockStatementSyntax&&) = default;
 	BlockStatementSyntax& operator=(BlockStatementSyntax&&) = default;
 
@@ -289,9 +289,9 @@ private:
 	unique_ptr<ExpressionSyntax> _initializer;
 public:
 	VariableDeclarationSyntax(const SyntaxToken& keyword, const SyntaxToken& identifier,
-							  const std::optional<TypeClauseSyntax>& typeClause,
-							  const SyntaxToken& equals,
-							  unique_ptr<ExpressionSyntax>& initializer);
+		const std::optional<TypeClauseSyntax>& typeClause,
+		const SyntaxToken& equals,
+		unique_ptr<ExpressionSyntax>& initializer);
 	VariableDeclarationSyntax(VariableDeclarationSyntax&&) = default;
 	VariableDeclarationSyntax& operator=(VariableDeclarationSyntax&&) = default;
 
@@ -301,7 +301,7 @@ public:
 
 	SyntaxToken Keyword()const { return _keyword; }
 	SyntaxToken Identifier()const { return _identifier; }
-	const std::optional<TypeClauseSyntax>& TypeClause()const noexcept{ return _typeClause; }
+	const std::optional<TypeClauseSyntax>& TypeClause()const noexcept { return _typeClause; }
 	SyntaxToken EqualsToken()const { return _equalsToken; }
 	const ExpressionSyntax* Initializer()const noexcept { return _initializer.get(); }
 };
@@ -335,9 +335,9 @@ private:
 
 public:
 	IfStatementSyntax(const SyntaxToken& ifKeyword,
-					  unique_ptr<ExpressionSyntax>& condition,
-					  unique_ptr<StatementSyntax>& thenStatement,
-					  unique_ptr<ElseClauseSyntax>& elseClause);
+		unique_ptr<ExpressionSyntax>& condition,
+		unique_ptr<StatementSyntax>& thenStatement,
+		unique_ptr<ElseClauseSyntax>& elseClause);
 	IfStatementSyntax(IfStatementSyntax&&) = default;
 	IfStatementSyntax& operator=(IfStatementSyntax&&) = default;
 
@@ -360,8 +360,8 @@ private:
 
 public:
 	WhileStatementSyntax(const SyntaxToken& whileKeyword,
-						 unique_ptr<ExpressionSyntax>& condition,
-						 unique_ptr<StatementSyntax>& body);
+		unique_ptr<ExpressionSyntax>& condition,
+		unique_ptr<StatementSyntax>& body);
 	WhileStatementSyntax(WhileStatementSyntax&&) = default;
 	WhileStatementSyntax& operator=(WhileStatementSyntax&&) = default;
 
@@ -384,9 +384,9 @@ private:
 
 public:
 	DoWhileStatementSyntax(const SyntaxToken& doKeyword,
-						   unique_ptr<StatementSyntax>& body,
-						   const SyntaxToken& whileKeyword,
-						   unique_ptr<ExpressionSyntax>& condition);
+		unique_ptr<StatementSyntax>& body,
+		const SyntaxToken& whileKeyword,
+		unique_ptr<ExpressionSyntax>& condition);
 	DoWhileStatementSyntax(DoWhileStatementSyntax&&) = default;
 	DoWhileStatementSyntax& operator=(DoWhileStatementSyntax&&) = default;
 
@@ -414,9 +414,9 @@ private:
 
 public:
 	ForStatementSyntax(const SyntaxToken& keyword, const SyntaxToken& identifier,
-					   const SyntaxToken& equals, unique_ptr<ExpressionSyntax>& lowerBound,
-					   const SyntaxToken& toKeyword, unique_ptr<ExpressionSyntax>& upperBound,
-					   unique_ptr<StatementSyntax>& body);
+		const SyntaxToken& equals, unique_ptr<ExpressionSyntax>& lowerBound,
+		const SyntaxToken& toKeyword, unique_ptr<ExpressionSyntax>& upperBound,
+		unique_ptr<StatementSyntax>& body);
 	ForStatementSyntax(ForStatementSyntax&&) = default;
 	ForStatementSyntax& operator=(ForStatementSyntax&&) = default;
 
@@ -431,6 +431,40 @@ public:
 	SyntaxToken ToKeyword()const { return _toKeyword; }
 	const ExpressionSyntax* UpperBound()const noexcept { return _upperBound.get(); }
 	const StatementSyntax* Body()const noexcept { return _body.get(); }
+};
+
+class BreakStatementSyntax final :public StatementSyntax
+{
+private:
+	SyntaxToken _keyword;
+
+public:
+	BreakStatementSyntax(const SyntaxToken& keyword);
+	BreakStatementSyntax(BreakStatementSyntax&&) = default;
+	BreakStatementSyntax& operator=(BreakStatementSyntax&&) = default;
+
+	// Inherited via StatementSyntax
+	SyntaxKind Kind() const noexcept override { return SyntaxKind::BreakStatement; }
+	const vector<const SyntaxNode*> GetChildren() const override;
+
+	SyntaxToken Keyword()const { return _keyword; }
+};
+
+class ContinueStatementSyntax final :public StatementSyntax
+{
+private:
+	SyntaxToken _keyword;
+
+public:
+	ContinueStatementSyntax(const SyntaxToken& keyword);
+	ContinueStatementSyntax(ContinueStatementSyntax&&) = default;
+	ContinueStatementSyntax& operator=(ContinueStatementSyntax&&) = default;
+
+	// Inherited via StatementSyntax
+	SyntaxKind Kind() const noexcept override { return SyntaxKind::ContinueStatement; }
+	const vector<const SyntaxNode*> GetChildren() const override;
+
+	SyntaxToken Keyword()const { return _keyword; }
 };
 
 class ExpressionStatementSyntax final : public StatementSyntax
@@ -486,11 +520,11 @@ private:
 
 public:
 	FunctionDeclarationSyntax(const SyntaxToken& funcKeyword, const SyntaxToken& identifier,
-							  const SyntaxToken& openParenthesisToken,
-							  SeparatedSyntaxList<ParameterSyntax>& params,
-							  const SyntaxToken& closeParenthesisToken,
-							  const std::optional<TypeClauseSyntax>& type,
-							  unique_ptr<BlockStatementSyntax>& body);
+		const SyntaxToken& openParenthesisToken,
+		SeparatedSyntaxList<ParameterSyntax>& params,
+		const SyntaxToken& closeParenthesisToken,
+		const std::optional<TypeClauseSyntax>& type,
+		unique_ptr<BlockStatementSyntax>& body);
 	FunctionDeclarationSyntax(FunctionDeclarationSyntax&&) = default;
 	FunctionDeclarationSyntax& operator=(FunctionDeclarationSyntax&&) = default;
 
@@ -532,7 +566,7 @@ private:
 
 public:
 	CompilationUnitSyntax(vector<unique_ptr<MemberSyntax>>& members,
-						  const SyntaxToken& endOfFile);
+		const SyntaxToken& endOfFile);
 	CompilationUnitSyntax(CompilationUnitSyntax&&) = default;
 	CompilationUnitSyntax& operator=(CompilationUnitSyntax&&) = default;
 
@@ -574,6 +608,8 @@ private:
 	unique_ptr<StatementSyntax> ParseWhileStatement();
 	unique_ptr<StatementSyntax> ParseDoWhileStatement();
 	unique_ptr<StatementSyntax> ParseForStatement();
+	unique_ptr<StatementSyntax> ParseBreakStatement();
+	unique_ptr<StatementSyntax> ParseContinueStatement();
 	unique_ptr<ExpressionStatementSyntax> ParseExpressionStatement();
 
 	unique_ptr<ExpressionSyntax> ParseExpression();

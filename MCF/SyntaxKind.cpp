@@ -6,7 +6,7 @@
 namespace MCF {
 
 const vector<SyntaxKind> AllSyntaxKinds
-	= GetAllEnumValue<SyntaxKind>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
+= GetAllEnumValue<SyntaxKind>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
 
 string GetSyntaxKindName(const SyntaxKind& kind)
 {
@@ -79,6 +79,10 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 		case SyntaxKind::IdentifierToken:
 			return "IdentifierToken";
 
+		case SyntaxKind::BreakKeyword:
+			return "BreakKeyword";
+		case SyntaxKind::ContinueKeyword:
+			return "ContinueKeyword";
 		case SyntaxKind::ElseKeyword:
 			return "ElseKeyword";
 		case SyntaxKind::FalseKeyword:
@@ -127,6 +131,10 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "DoWhileStatement";
 		case SyntaxKind::ForStatement:
 			return "ForStatement";
+		case SyntaxKind::BreakStatement:
+			return "BreakStatement";
+		case SyntaxKind::ContinueStatement:
+			return "ContinueStatement";
 		case SyntaxKind::ExpressionStatement:
 			return "ExpressionStatement";
 
@@ -154,7 +162,11 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 
 SyntaxKind GetKeywordKind(const string & text) noexcept
 {
-	if (text == "else")
+	if (text == "break")
+		return SyntaxKind::BreakKeyword;
+	else if (text == "continue")
+		return SyntaxKind::ContinueKeyword;
+	else if (text == "else")
 		return SyntaxKind::ElseKeyword;
 	else if (text == "false")
 		return SyntaxKind::FalseKeyword;
@@ -210,6 +222,8 @@ string GetText(const SyntaxKind& kind)
 		case SyntaxKind::CloseBraceToken: return "}";
 		case SyntaxKind::ColonToken: return ":";
 		case SyntaxKind::CommaToken: return ",";
+		case SyntaxKind::BreakKeyword: return "break";
+		case SyntaxKind::ContinueKeyword: return "continue";
 		case SyntaxKind::ElseKeyword: return "else";
 		case SyntaxKind::FalseKeyword: return "false";
 		case SyntaxKind::ForKeyword: return "for";

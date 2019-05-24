@@ -250,6 +250,26 @@ const vector<const SyntaxNode*> ForStatementSyntax::GetChildren() const
 		_lowerBound, _toKeyword, _upperBound, _body);
 }
 
+BreakStatementSyntax::BreakStatementSyntax(const SyntaxToken & keyword)
+	:_keyword(keyword)
+{
+}
+
+const vector<const SyntaxNode*> BreakStatementSyntax::GetChildren() const
+{
+	return MakeVecOfRaw<const SyntaxNode>(_keyword);
+}
+
+ContinueStatementSyntax::ContinueStatementSyntax(const SyntaxToken & keyword)
+	:_keyword(keyword)
+{
+}
+
+const vector<const SyntaxNode*> ContinueStatementSyntax::GetChildren() const
+{
+	return MakeVecOfRaw<const SyntaxNode>(_keyword);
+}
+
 ExpressionStatementSyntax::ExpressionStatementSyntax(unique_ptr<ExpressionSyntax>& expression)
 	:_expression(std::move(expression))
 {
@@ -466,6 +486,10 @@ unique_ptr<StatementSyntax> Parser::ParseStatement()
 			return ParseDoWhileStatement();
 		case SyntaxKind::ForKeyword:
 			return ParseForStatement();
+		case SyntaxKind::BreakKeyword:
+			return ParseBreakStatement();
+		case SyntaxKind::ContinueKeyword:
+			return ParseContinueStatement();
 		default:
 			return ParseExpressionStatement();
 	}
@@ -568,6 +592,18 @@ unique_ptr<StatementSyntax> Parser::ParseForStatement()
 	auto body = ParseStatement();
 	return make_unique<ForStatementSyntax>(keyword, identifier, equalsToken, lowerBound,
 		toKeyword, upperBound, body);
+}
+
+unique_ptr<StatementSyntax> Parser::ParseBreakStatement()
+{
+	auto token = MatchToken(SyntaxKind::BreakKeyword);
+	return make_unique<BreakStatementSyntax>(token);
+}
+
+unique_ptr<StatementSyntax> Parser::ParseContinueStatement()
+{
+	auto token = MatchToken(SyntaxKind::ContinueKeyword);
+	return make_unique<ContinueStatementSyntax>(token);
 }
 
 unique_ptr<ExpressionStatementSyntax> Parser::ParseExpressionStatement()

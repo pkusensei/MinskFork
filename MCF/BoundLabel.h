@@ -8,8 +8,10 @@ class BoundLabel final
 {
 private:
 	string _name;
+
 public:
 	explicit BoundLabel(const string& name) :_name(name) {}
+	BoundLabel() :BoundLabel(string()) {}
 
 	bool operator==(const BoundLabel& other) const noexcept { return _name == other._name; }
 	bool operator!=(const BoundLabel& other) const noexcept { return !(*this == other); }
