@@ -17,6 +17,8 @@ enum class SymbolKind
 	Type,
 };
 
+string GetEnumText(const SymbolKind& kind);
+
 class MCF_API Symbol
 {
 private:
@@ -33,7 +35,8 @@ public:
 
 	virtual SymbolKind Kind() const noexcept = 0;
 	string Name() const { return _name; }
-	string ToString() const { return Name(); }
+	void WriteTo(std::ostream& out)const;
+	string ToString() const;
 
 	bool operator==(const Symbol& other)const noexcept;
 	bool operator!=(const Symbol& other)const noexcept;

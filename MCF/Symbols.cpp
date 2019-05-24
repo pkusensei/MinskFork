@@ -1,12 +1,27 @@
 #include "stdafx.h"
 #include "Symbols.h"
 
+#include <sstream>
 #include <unordered_map>
 
 #include "EnumHelper.h"
 #include "Parsing.h"
+#include "SymbolPrinter.h"
 
 namespace MCF {
+
+void Symbol::WriteTo(std::ostream & out) const
+{
+	auto printer = SymbolPrinter(out);
+	printer.Write(this);
+}
+
+string Symbol::ToString() const
+{
+	std::stringstream ss;
+	WriteTo(ss);
+	return ss.str();
+}
 
 bool Symbol::operator==(const Symbol & other) const noexcept
 {
@@ -33,8 +48,8 @@ bool SymbolEqual::operator()(const Symbol & lhs, const Symbol & rhs) const
 	return lhs == rhs;
 }
 
-bool SymbolEqual::operator()(const shared_ptr<Symbol>& lhs, 
-							 const shared_ptr<Symbol>& rhs) const
+bool SymbolEqual::operator()(const shared_ptr<Symbol>& lhs,
+	const shared_ptr<Symbol>& rhs) const
 {
 	return (*lhs) == (*rhs);
 }
@@ -59,14 +74,14 @@ size_t ParameterHash::operator()(const ParameterSymbol & ps) const noexcept
 }
 
 FunctionSymbol::FunctionSymbol(const string & name, const vector<ParameterSymbol>& params,
-							   const TypeSymbol & type,
-							   const FunctionDeclarationSyntax* declaration)
+	const TypeSymbol & type,
+	const FunctionDeclarationSyntax* declaration)
 	: Symbol(name), _params(params), _type(type), _declaration(declaration)
 {
 }
 
-FunctionSymbol::FunctionSymbol(const string & name, const vector<ParameterSymbol>& params,
-							   const TypeSymbol & type)
+FunctionSymbol::FunctionSymbol(const string & name,
+	const vector<ParameterSymbol>& params, const TypeSymbol & type)
 	: FunctionSymbol(name, params, type, nullptr)
 {
 }
@@ -92,21 +107,42 @@ size_t FunctionHash::operator()(const shared_ptr<FunctionSymbol>& fs) const noex
 	return (*this)(*fs);
 }
 
+string GetEnumText(const SymbolKind & kind)
+{
+	switch (kind)
+	{
+		case SymbolKind::Function:
+			return "Function";
+		case SymbolKind::GlobalVariable:
+			return "GlobalVariable";
+		case SymbolKind::LocalVariable:
+			return "LocalVariable";
+		case SymbolKind::Parameter:
+			return "Parameter";
+		case SymbolKind::Type:
+			return "Type";
+		default:
+			return string();
+	}
+}
+
 const FunctionSymbol GetBuiltinFunction(const BuiltinFuncEnum & kind)
 {
 	switch (kind)
 	{
 		case BuiltinFuncEnum::Print:
 			return FunctionSymbol("print",
-								  vector<ParameterSymbol>{ParameterSymbol("text", TypeSymbol::GetType(TypeEnum::String))},
-								  TypeSymbol::GetType(TypeEnum::Void));
+				vector<ParameterSymbol>{ParameterSymbol("text",
+					TypeSymbol::GetType(TypeEnum::String))},
+				TypeSymbol::GetType(TypeEnum::Void));
 		case BuiltinFuncEnum::Input:
 			return FunctionSymbol("input", vector<ParameterSymbol>(),
-								  TypeSymbol::GetType(TypeEnum::String));
+				TypeSymbol::GetType(TypeEnum::String));
 		case BuiltinFuncEnum::Rnd:
 			return FunctionSymbol("rnd",
-								  vector<ParameterSymbol>{ParameterSymbol("max", TypeSymbol::GetType(TypeEnum::Int))},
-								  TypeSymbol::GetType(TypeEnum::Int));
+				vector<ParameterSymbol>{ParameterSymbol("max",
+					TypeSymbol::GetType(TypeEnum::Int))},
+				TypeSymbol::GetType(TypeEnum::Int));
 		default:
 			throw std::invalid_argument("Unexpected BuiltinFuncEnum enum value.");
 	}

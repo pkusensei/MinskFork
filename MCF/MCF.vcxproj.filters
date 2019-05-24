@@ -81,6 +81,12 @@
     <ClInclude Include="ConsoleHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BoundNodePrinter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SymbolPrinter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -138,6 +144,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ConsoleHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BoundNodePrinter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SymbolPrinter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -163,6 +163,7 @@
     <ClInclude Include="BoundExpressions.h" />
     <ClInclude Include="BoundLabel.h" />
     <ClInclude Include="BoundNode.h" />
+    <ClInclude Include="BoundNodePrinter.h" />
     <ClInclude Include="BoundStatements.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="Compilation.h" />
@@ -177,6 +178,7 @@
     <ClInclude Include="helpers.h" />
     <ClInclude Include="SourceText.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="SymbolPrinter.h" />
     <ClInclude Include="Symbols.h" />
     <ClInclude Include="SyntaxToken.h" />
     <ClInclude Include="SyntaxKind.h" />
@@ -186,6 +188,7 @@
     <ClCompile Include="Binding.cpp" />
     <ClCompile Include="BoundExpressions.cpp" />
     <ClCompile Include="BoundNode.cpp" />
+    <ClCompile Include="BoundNodePrinter.cpp" />
     <ClCompile Include="BoundStatements.cpp" />
     <ClCompile Include="Compilation.cpp" />
     <ClCompile Include="ConsoleHelper.cpp" />
@@ -204,6 +207,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="SymbolPrinter.cpp" />
     <ClCompile Include="Symbols.cpp" />
     <ClCompile Include="SyntaxToken.cpp" />
     <ClCompile Include="SyntaxKind.cpp" />

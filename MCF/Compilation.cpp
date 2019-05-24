@@ -14,7 +14,7 @@
 namespace MCF {
 
 EvaluationResult::EvaluationResult(DiagnosticBag* diagnostics,
-								   const ValueType & value)
+	const ValueType & value)
 	:_diagnostics(diagnostics), _value(value)
 {
 }
@@ -260,7 +260,8 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node)
 {
 	if (*(node->Function()) == GetBuiltinFunction(BuiltinFuncEnum::Input))
 	{
-		auto f = []() {
+		auto f = []()
+		{
 			auto result = string();
 			std::getline(std::cin, result);
 			return result;
@@ -275,7 +276,8 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node)
 	{
 		auto max =
 			EvaluateExpression(node->Arguments()[0].get()).GetValue<IntegerType>();
-		auto f = [max]() {
+		auto f = [max]()
+		{
 			static auto rd = std::random_device();
 			auto mt = std::mt19937(rd());
 			auto dist = std::uniform_int_distribution<IntegerType>(0, max);
@@ -343,7 +345,7 @@ void Evaluator::Assign(const shared_ptr<VariableSymbol>& variable, const ValueTy
 }
 
 Compilation::Compilation(unique_ptr<Compilation>& previous,
-						 unique_ptr<SyntaxTree>& tree)
+	unique_ptr<SyntaxTree>& tree)
 	: _previous(std::move(previous)), _syntaxTree(std::move(tree)),
 	_globalScope(nullptr)
 {
@@ -361,7 +363,7 @@ const BoundGlobalScope* Compilation::GlobalScope()
 {
 	while (_globalScope == nullptr)
 	{
-		unique_ptr<BoundGlobalScope> tmp{nullptr};
+		unique_ptr<BoundGlobalScope> tmp{ nullptr };
 		if (_previous == nullptr)
 			tmp = Binder::BindGlobalScope(nullptr, _syntaxTree->Root());
 		else
@@ -375,7 +377,7 @@ const BoundGlobalScope* Compilation::GlobalScope()
 }
 
 unique_ptr<Compilation> Compilation::ContinueWith(unique_ptr<Compilation>& previous,
-												  unique_ptr<SyntaxTree>& tree)
+	unique_ptr<SyntaxTree>& tree)
 {
 	return make_unique<Compilation>(previous, tree);
 }
@@ -400,7 +402,16 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 void Compilation::EmitTree(std::ostream & out)
 {
 	auto program = Binder::BindProgram(GlobalScope());
-	program->Statement()->WriteTo(out);
+	if (!program->Statement()->Statements().empty())
+	{
+		program->Statement()->WriteTo(out);
+	} else
+	{
+		for (const auto& it : program->Functions())
+		{
+			//TODO
+		}
+	}
 }
 
 }//MCF
