@@ -173,6 +173,7 @@
     <ClInclude Include="EnumHelper.h" />
     <ClInclude Include="IO.h" />
     <ClInclude Include="Lexer.h" />
+    <ClInclude Include="Lowering.h" />
     <ClInclude Include="Parsing.h" />
     <ClInclude Include="ReflectionHelper.h" />
     <ClInclude Include="helpers.h" />
@@ -198,6 +199,7 @@
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="IO.cpp" />
     <ClCompile Include="Lexer.cpp" />
+    <ClCompile Include="Lowering.cpp" />
     <ClCompile Include="MCF.cpp" />
     <ClCompile Include="Parsing.cpp" />
     <ClCompile Include="SourceText.cpp" />

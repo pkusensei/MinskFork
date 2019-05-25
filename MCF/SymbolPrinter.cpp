@@ -96,4 +96,4 @@ void SymbolPrinter::WriteType(const TypeSymbol * symbol)
 	_writer.WriteIdentifier(symbol->Name());
 }
 
-}
+}//MCF
