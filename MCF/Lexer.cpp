@@ -261,7 +261,7 @@ void Lexer::ReadNumberToken()
 		value = StringToInteger(text);
 	} catch (...)
 	{
-		_diagnostics->ReportInvalidNumber(TextSpan(_start, length), text, TypeSymbol::GetType(TypeEnum::Int));
+		_diagnostics->ReportInvalidNumber(TextSpan(_start, length), text, GetTypeSymbol(TypeEnum::Int));
 	}
 	_value = ValueType(value);
 	_kind = SyntaxKind::NumberToken;

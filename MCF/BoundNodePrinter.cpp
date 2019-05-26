@@ -273,11 +273,11 @@ void BoundNodePrinter::WriteErrorExpression(const BoundErrorExpression * node)
 void BoundNodePrinter::WriteLiteralExpression(const BoundLiteralExpression * node)
 {
 	auto value = node->Value().ToString();
-	if (node->Type() == TypeSymbol::GetType(TypeEnum::Bool))
+	if (node->Type() == GetTypeSymbol(TypeEnum::Bool))
 		_writer.WriteKeyword(value);
-	else if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
+	else if (node->Type() == GetTypeSymbol(TypeEnum::Int))
 		_writer.WriteNumber(value);
-	else if (node->Type() == TypeSymbol::GetType(TypeEnum::String))
+	else if (node->Type() == GetTypeSymbol(TypeEnum::String))
 		_writer.WriteKeyword(value);
 	else
 		throw std::invalid_argument("Unexpected type " + node->Type().Name());

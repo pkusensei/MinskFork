@@ -116,7 +116,7 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax * syntax)
 		}
 	}
 	auto type = BindTypeClause(syntax->Type())
-		.value_or(TypeSymbol::GetType(TypeEnum::Void));
+		.value_or(GetTypeSymbol(TypeEnum::Void));
 	auto function = make_shared<FunctionSymbol>(syntax->Identifier().Text(),
 		parameters, type, syntax);
 
@@ -221,7 +221,7 @@ shared_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclara
 
 shared_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax * syntax)
 {
-	auto condition = BindExpression(syntax->Condition(), TypeSymbol::GetType(TypeEnum::Bool));
+	auto condition = BindExpression(syntax->Condition(), GetTypeSymbol(TypeEnum::Bool));
 	auto thenStatement = BindStatement(syntax->ThenStatement());
 	auto elseStatement =
 		syntax->ElseClause() == nullptr ?
@@ -232,7 +232,7 @@ shared_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax * syn
 shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax * syntax)
 {
 	auto condition = BindExpression(syntax->Condition(),
-		TypeSymbol::GetType(TypeEnum::Bool));
+		GetTypeSymbol(TypeEnum::Bool));
 	BoundLabel breakLabel;
 	BoundLabel continueLabel;
 	auto body = BindLoopBody(syntax->Body(), breakLabel, continueLabel);
@@ -245,21 +245,21 @@ shared_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSy
 	BoundLabel continueLabel;
 	auto body = BindLoopBody(syntax->Body(), breakLabel, continueLabel);
 	auto condition = BindExpression(syntax->Condition(),
-		TypeSymbol::GetType(TypeEnum::Bool));
+		GetTypeSymbol(TypeEnum::Bool));
 	return make_shared<BoundDoWhileStatement>(body, condition, breakLabel, continueLabel);
 }
 
 shared_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax * syntax)
 {
 	auto lowerBound = BindExpression(syntax->LowerBound(),
-		TypeSymbol::GetType(TypeEnum::Int));
+		GetTypeSymbol(TypeEnum::Int));
 	auto upperBound = BindExpression(syntax->UpperBound(),
-		TypeSymbol::GetType(TypeEnum::Int));
+		GetTypeSymbol(TypeEnum::Int));
 
 	_scope = make_unique<BoundScope>(_scope);
 
 	auto variable = BindVariable(syntax->Identifier(), true,
-		TypeSymbol::GetType(TypeEnum::Int));
+		GetTypeSymbol(TypeEnum::Int));
 	BoundLabel breakLabel;
 	BoundLabel continueLabel;
 	auto body = BindLoopBody(syntax->Body(), breakLabel, continueLabel);
@@ -324,7 +324,7 @@ shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax * synt
 	bool canBeVoid)
 {
 	auto result = BindExpressionInternal(syntax);
-	if (!canBeVoid && result->Type() == TypeSymbol::GetType(TypeEnum::Void))
+	if (!canBeVoid && result->Type() == GetTypeSymbol(TypeEnum::Void))
 	{
 		_diagnostics->ReportExpressionMustHaveValue(syntax->Span());
 		return make_shared<BoundErrorExpression>();
@@ -437,7 +437,7 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 shared_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyntax * syntax)
 {
 	auto boundOperand = BindExpression(syntax->Operand());
-	if (boundOperand->Type() == TypeSymbol::GetType(TypeEnum::Error))
+	if (boundOperand->Type() == GetTypeSymbol(TypeEnum::Error))
 		return make_shared<BoundErrorExpression>();
 
 	auto boundOperator = BoundUnaryOperator::Bind(syntax->OperatorToken().Kind(),
@@ -458,8 +458,8 @@ shared_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 {
 	auto boundLeft = BindExpression(syntax->Left());
 	auto boundRight = BindExpression(syntax->Right());
-	if (boundLeft->Type() == TypeSymbol::GetType(TypeEnum::Error)
-		|| boundRight->Type() == TypeSymbol::GetType(TypeEnum::Error))
+	if (boundLeft->Type() == GetTypeSymbol(TypeEnum::Error)
+		|| boundRight->Type() == GetTypeSymbol(TypeEnum::Error))
 		return make_shared<BoundErrorExpression>();
 
 	auto boundOperator = BoundBinaryOperator::Bind(syntax->OperatorToken().Kind(),
@@ -544,7 +544,7 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 			boundExpression->Type(), variable->Type());
 		return make_shared<BoundErrorExpression>();
 	}
-	if (variable->Type() != TypeSymbol::GetType(TypeEnum::Int))
+	if (variable->Type() != GetTypeSymbol(TypeEnum::Int))
 	{
 		_diagnostics->ReportVariableNotSupportPostfixOperator(syntax->Expression()->Span(),
 			syntax->Op().Text(),
@@ -583,8 +583,8 @@ shared_ptr<BoundExpression> Binder::BindConversion(const TextSpan & diagnosticSp
 	auto conversion = Conversion::Classify(expression->Type(), type);
 	if (!conversion.Exists())
 	{
-		if (expression->Type() != TypeSymbol::GetType(TypeEnum::Error)
-			&& type != TypeSymbol::GetType(TypeEnum::Error))
+		if (expression->Type() != GetTypeSymbol(TypeEnum::Error)
+			&& type != GetTypeSymbol(TypeEnum::Error))
 			_diagnostics->ReportCannotConvert(diagnosticSpan, expression->Type(), type);
 		return make_shared<BoundErrorExpression>();
 	}
@@ -624,9 +624,9 @@ std::optional<TypeSymbol> Binder::BindTypeClause(const std::optional<TypeClauseS
 
 std::optional<TypeSymbol> Binder::LookupType(const string & name) const
 {
-	if (name == "bool") return TypeSymbol::GetType(TypeEnum::Bool);
-	else if (name == "int") return TypeSymbol::GetType(TypeEnum::Int);
-	else if (name == "string") return TypeSymbol::GetType(TypeEnum::String);
+	if (name == "bool") return GetTypeSymbol(TypeEnum::Bool);
+	else if (name == "int") return GetTypeSymbol(TypeEnum::Int);
+	else if (name == "string") return GetTypeSymbol(TypeEnum::String);
 	else return std::nullopt;
 }
 

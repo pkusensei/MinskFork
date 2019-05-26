@@ -212,7 +212,7 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 	switch (node->Op().Kind())
 	{
 		case BoundBinaryOperatorKind::Addition:
-			if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
+			if (node->Type() == GetTypeSymbol(TypeEnum::Int))
 				return left.GetValue<IntegerType>() + right.GetValue<IntegerType>();
 			else return left.GetValue<string>() + right.GetValue<string>();
 		case BoundBinaryOperatorKind::Subtraction:
@@ -224,15 +224,15 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 		case BoundBinaryOperatorKind::Modulus:
 			return left.GetValue<IntegerType>() % right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::BitwiseAnd:
-			if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
+			if (node->Type() == GetTypeSymbol(TypeEnum::Int))
 				return left.GetValue<IntegerType>() & right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() & right.GetValue<bool>();
 		case BoundBinaryOperatorKind::BitwiseOr:
-			if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
+			if (node->Type() == GetTypeSymbol(TypeEnum::Int))
 				return left.GetValue<IntegerType>() | right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() | right.GetValue<bool>();
 		case BoundBinaryOperatorKind::BitwiseXor:
-			if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
+			if (node->Type() == GetTypeSymbol(TypeEnum::Int))
 				return left.GetValue<IntegerType>() ^ right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() ^ right.GetValue<bool>();
 		case BoundBinaryOperatorKind::LogicalAnd:
@@ -308,11 +308,11 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node)
 ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpression * node)
 {
 	auto value = EvaluateExpression(node->Expression().get());
-	if (node->Type() == TypeSymbol::GetType(TypeEnum::Bool))
+	if (node->Type() == GetTypeSymbol(TypeEnum::Bool))
 		return value.ToBoolean();
-	else if (node->Type() == TypeSymbol::GetType(TypeEnum::Int))
+	else if (node->Type() == GetTypeSymbol(TypeEnum::Int))
 		return value.ToInteger();
-	else if (node->Type() == TypeSymbol::GetType(TypeEnum::String))
+	else if (node->Type() == GetTypeSymbol(TypeEnum::String))
 		return value.ToString();
 	else
 		throw std::invalid_argument("Unexpected type " + node->Type().ToString());

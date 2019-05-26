@@ -26,16 +26,16 @@ Conversion Conversion::Classify(const TypeSymbol & from, const TypeSymbol & to)
 {
 	if (from == to)
 		return GetConversion(ConversionEnum::Identity);
-	if (from == TypeSymbol::GetType(TypeEnum::Int)
-		|| from == TypeSymbol::GetType(TypeEnum::Bool))
+	if (from == GetTypeSymbol(TypeEnum::Int)
+		|| from == GetTypeSymbol(TypeEnum::Bool))
 	{
-		if (to == TypeSymbol::GetType(TypeEnum::String))
+		if (to == GetTypeSymbol(TypeEnum::String))
 			return GetConversion(ConversionEnum::Explicit);
 	}
-	if (from == TypeSymbol::GetType(TypeEnum::String))
+	if (from == GetTypeSymbol(TypeEnum::String))
 	{
-		if (to == TypeSymbol::GetType(TypeEnum::Int)
-			|| to == TypeSymbol::GetType(TypeEnum::Bool))
+		if (to == GetTypeSymbol(TypeEnum::Int)
+			|| to == GetTypeSymbol(TypeEnum::Bool))
 			return GetConversion(ConversionEnum::Explicit);
 	}
 	return GetConversion(ConversionEnum::None);

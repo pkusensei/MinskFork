@@ -58,7 +58,7 @@ class BoundErrorExpression final :public BoundExpression
 {
 public:
 	// Inherited via BoundExpression
-	TypeSymbol Type()const override { return TypeSymbol::GetType(TypeEnum::Error); }
+	TypeSymbol Type()const override { return GetTypeSymbol(TypeEnum::Error); }
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ErrorExpression; }
 };
 

@@ -4,7 +4,6 @@
 #include <sstream>
 #include <unordered_map>
 
-#include "EnumHelper.h"
 #include "Parsing.h"
 #include "SymbolPrinter.h"
 
@@ -54,17 +53,20 @@ bool SymbolEqual::operator()(const shared_ptr<Symbol>& lhs,
 	return (*lhs) == (*rhs);
 }
 
-const TypeSymbol TypeSymbol::GetType(const TypeEnum& kind)
+const TypeSymbol& GetTypeSymbol(const TypeEnum& kind)
 {
+	static const auto types = std::make_tuple(TypeSymbol("?"), TypeSymbol("bool"),
+		TypeSymbol("int"), TypeSymbol("string"), TypeSymbol("void"));
+
 	switch (kind)
 	{
-		case TypeEnum::Error: return TypeSymbol("?");
-		case TypeEnum::Bool: return TypeSymbol("bool");
-		case TypeEnum::Int: return TypeSymbol("int");
-		case TypeEnum::String: return TypeSymbol("string");
-		case TypeEnum::Void: return TypeSymbol("void");
+		case TypeEnum::Error: return std::get<0>(types);
+		case TypeEnum::Bool: return std::get<1>(types);
+		case TypeEnum::Int: return std::get<2>(types);
+		case TypeEnum::String: return std::get<3>(types);
+		case TypeEnum::Void: return std::get<4>(types);
 		default:
-			throw std::invalid_argument("Unexpected TypeEnum enum value.");
+			throw std::invalid_argument("Unexpected TypeEnum value.");
 	}
 }
 
@@ -87,7 +89,7 @@ FunctionSymbol::FunctionSymbol(const string & name,
 }
 
 FunctionSymbol::FunctionSymbol()
-	: FunctionSymbol("", vector<ParameterSymbol>(), TypeSymbol::GetType(TypeEnum::Error))
+	: FunctionSymbol("", vector<ParameterSymbol>(), GetTypeSymbol(TypeEnum::Error))
 {
 }
 
@@ -126,41 +128,35 @@ string GetEnumText(const SymbolKind & kind)
 	}
 }
 
-const FunctionSymbol GetBuiltinFunction(const BuiltinFuncEnum & kind)
+const FunctionSymbol& GetBuiltinFunction(const BuiltinFuncEnum & kind)
 {
+	static const auto& funcs = GetAllBuiltinFunctions();
+
 	switch (kind)
 	{
-		case BuiltinFuncEnum::Print:
-			return FunctionSymbol("print",
-				vector<ParameterSymbol>{ParameterSymbol("text",
-					TypeSymbol::GetType(TypeEnum::String))},
-				TypeSymbol::GetType(TypeEnum::Void));
-		case BuiltinFuncEnum::Input:
-			return FunctionSymbol("input", vector<ParameterSymbol>(),
-				TypeSymbol::GetType(TypeEnum::String));
-		case BuiltinFuncEnum::Rnd:
-			return FunctionSymbol("rnd",
-				vector<ParameterSymbol>{ParameterSymbol("max",
-					TypeSymbol::GetType(TypeEnum::Int))},
-				TypeSymbol::GetType(TypeEnum::Int));
+		case BuiltinFuncEnum::Input: return funcs[0];
+		case BuiltinFuncEnum::Print: return funcs[1];
+		case BuiltinFuncEnum::Rnd: return funcs[2];
 		default:
 			throw std::invalid_argument("Unexpected BuiltinFuncEnum enum value.");
 	}
 }
 
-const vector<FunctionSymbol> GetAllBuiltinFunctionsImpl()
-{
-	auto enums = GetAllEnumValue<BuiltinFuncEnum>(BuiltinFuncEnum::Input, BuiltinFuncEnum::Rnd);
-	auto funcs = vector<FunctionSymbol>();
-	for (const auto& it : enums)
-		funcs.emplace_back(GetBuiltinFunction(it));
-	funcs.shrink_to_fit();
-	return funcs;
-}
-
 const vector<FunctionSymbol>& GetAllBuiltinFunctions()
 {
-	static auto funcs = GetAllBuiltinFunctionsImpl();
+	static const auto funcs = std::vector<FunctionSymbol>{
+		FunctionSymbol("input",
+			vector<ParameterSymbol>(),
+			GetTypeSymbol(TypeEnum::String)),
+		FunctionSymbol("print",
+			vector<ParameterSymbol>{ParameterSymbol("text",
+				GetTypeSymbol(TypeEnum::String))},
+			GetTypeSymbol(TypeEnum::Void)),
+		FunctionSymbol("rnd",
+			vector<ParameterSymbol>{ParameterSymbol("max",
+				GetTypeSymbol(TypeEnum::Int))},
+			GetTypeSymbol(TypeEnum::Int))
+	};
 	return funcs;
 }
 
@@ -169,14 +165,14 @@ TypeSymbol ValueType::Type() const
 	switch (_inner.index())
 	{
 		case 1:
-			return TypeSymbol::GetType(TypeEnum::Bool);
+			return GetTypeSymbol(TypeEnum::Bool);
 		case 2:
-			return TypeSymbol::GetType(TypeEnum::Int);
+			return GetTypeSymbol(TypeEnum::Int);
 		case 3:
-			return TypeSymbol::GetType(TypeEnum::String);
+			return GetTypeSymbol(TypeEnum::String);
 		case 0:
 		default:
-			return TypeSymbol::GetType(TypeEnum::Error);
+			return GetTypeSymbol(TypeEnum::Error);
 	}
 }
 
@@ -238,10 +234,10 @@ string ValueType::ToString() const
 size_t ValueType::GetValueTypeId(const TypeSymbol & inType)
 {
 	static std::unordered_map<TypeSymbol, size_t, SymbolHash> types = {
-		{TypeSymbol::GetType(TypeEnum::Error), 0},
-		{TypeSymbol::GetType(TypeEnum::Bool), 1},
-		{TypeSymbol::GetType(TypeEnum::Int), 2},
-		{TypeSymbol::GetType(TypeEnum::String), 3}
+		{GetTypeSymbol(TypeEnum::Error), 0},
+		{GetTypeSymbol(TypeEnum::Bool), 1},
+		{GetTypeSymbol(TypeEnum::Int), 2},
+		{GetTypeSymbol(TypeEnum::String), 3}
 	};
 
 	return types.at(inType);

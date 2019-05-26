@@ -214,8 +214,8 @@ private:
 	shared_ptr<BoundExpression> BindConversion(const TextSpan& diagnosticSpan,
 		const shared_ptr<BoundExpression>& syntax,
 		const TypeSymbol& type, bool allowExplicit = false);
-	shared_ptr<VariableSymbol> BindVariable(const SyntaxToken& identifier, bool isReadOnly,
-		const TypeSymbol& type);
+	shared_ptr<VariableSymbol> BindVariable(const SyntaxToken& identifier,
+		bool isReadOnly, const TypeSymbol& type);
 	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
 	std::optional<TypeSymbol> LookupType(const string& name)const;
 

@@ -516,7 +516,7 @@ unique_ptr<BlockStatementSyntax> Parser::ParseBlockStatement()
 		startToken = Current();
 	}
 	auto closeBraceToken = MatchToken(SyntaxKind::CloseBraceToken);
-	return make_unique<BlockStatementSyntax>(openBraceToken, statements, 
+	return make_unique<BlockStatementSyntax>(openBraceToken, statements,
 		closeBraceToken);
 }
 
@@ -531,8 +531,8 @@ unique_ptr<StatementSyntax> Parser::ParseVariableDeclaration()
 	auto equals = MatchToken(SyntaxKind::EqualsToken);
 	auto initializer = ParseExpression();
 
-	return make_unique<VariableDeclarationSyntax>(keyword, identifier, 
-		typeClause,		equals, initializer);
+	return make_unique<VariableDeclarationSyntax>(keyword, identifier,
+		typeClause, equals, initializer);
 }
 
 std::optional<TypeClauseSyntax> Parser::ParseOptionalTypeClause()
@@ -554,7 +554,7 @@ unique_ptr<StatementSyntax> Parser::ParseIfStatement()
 	auto condition = ParseExpression();
 	auto statement = ParseStatement();
 	auto elseClause = ParseElseClause();
-	return make_unique<IfStatementSyntax>(keyword, condition, statement, 
+	return make_unique<IfStatementSyntax>(keyword, condition, statement,
 		elseClause);
 }
 
@@ -582,7 +582,7 @@ unique_ptr<StatementSyntax> Parser::ParseDoWhileStatement()
 	auto whileKeyword = MatchToken(SyntaxKind::WhileKeyword);
 	auto condition = ParseExpression();
 
-	return make_unique<DoWhileStatementSyntax>(doKeyword, body, whileKeyword, 
+	return make_unique<DoWhileStatementSyntax>(doKeyword, body, whileKeyword,
 		condition);
 }
 
@@ -728,7 +728,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseParenthesizedExpression()
 unique_ptr<ExpressionSyntax> Parser::ParseBooleanLiteral()
 {
 	auto isTrue = Current().Kind() == SyntaxKind::TrueKeyword;
-	auto keywordToken = isTrue ? 
+	auto keywordToken = isTrue ?
 		MatchToken(SyntaxKind::TrueKeyword) : MatchToken(SyntaxKind::FalseKeyword);
 	return make_unique<LiteralExpressionSyntax>(keywordToken, isTrue);
 }
@@ -830,7 +830,8 @@ vector<SyntaxToken> SyntaxTree::ParseTokens(const string & text)
 	return ParseTokens(source);
 }
 
-vector<SyntaxToken> SyntaxTree::ParseTokens(const string & text, DiagnosticBag& diagnostics)
+vector<SyntaxToken> SyntaxTree::ParseTokens(const string & text,
+	DiagnosticBag& diagnostics)
 {
 	auto source = SourceText::From(text);
 	return ParseTokens(source, diagnostics);
@@ -842,7 +843,8 @@ vector<SyntaxToken> SyntaxTree::ParseTokens(const SourceText & text)
 	return ParseTokens(text, v);
 }
 
-vector<SyntaxToken> SyntaxTree::ParseTokens(const SourceText & text, DiagnosticBag& diagnostics)
+vector<SyntaxToken> SyntaxTree::ParseTokens(const SourceText & text,
+	DiagnosticBag& diagnostics)
 {
 	auto lexTokens = [](Lexer& lexer)
 	{

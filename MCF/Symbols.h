@@ -73,8 +73,11 @@ public:
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Type; }
 
-	static const TypeSymbol GetType(const TypeEnum& kind);
+	friend const TypeSymbol& GetTypeSymbol(const TypeEnum& kind);
+
 };
+
+const TypeSymbol& GetTypeSymbol(const TypeEnum& kind);
 
 class MCF_API VariableSymbol : public Symbol
 {
@@ -170,7 +173,7 @@ enum class BuiltinFuncEnum
 	Input, Print, Rnd
 };
 
-const FunctionSymbol GetBuiltinFunction(const BuiltinFuncEnum& kind);
+const FunctionSymbol& GetBuiltinFunction(const BuiltinFuncEnum& kind);
 const vector<FunctionSymbol>& GetAllBuiltinFunctions();
 
 class MCF_API ValueType final

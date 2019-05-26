@@ -33,7 +33,7 @@ private:
 public:
 	explicit Lexer(const SourceText& text);
 
-	SyntaxToken Lex();
+	[[nodiscard]] SyntaxToken Lex();
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
 };
 

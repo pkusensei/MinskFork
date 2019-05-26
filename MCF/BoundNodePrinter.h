@@ -60,7 +60,7 @@ private:
 	void WritePosifixExpression(const BoundPostfixExpression* node);
 
 public:
-	BoundNodePrinter(std::ostream& out);
+	explicit BoundNodePrinter(std::ostream& out);
 	void Write(const BoundNode* node);
 };
 

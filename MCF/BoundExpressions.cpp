@@ -97,7 +97,7 @@ BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind,
 
 BoundUnaryOperator::BoundUnaryOperator()
 	: BoundUnaryOperator(SyntaxKind::BadToken, BoundUnaryOperatorKind::Identity,
-						 TypeSymbol::GetType(TypeEnum::Error))
+						 GetTypeSymbol(TypeEnum::Error))
 {
 	_isUseful = false;
 }
@@ -106,13 +106,13 @@ const vector<BoundUnaryOperator>& BoundUnaryOperator::Operators()
 {
 	static const auto operators = vector<BoundUnaryOperator>{
 	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation,
-						TypeSymbol::GetType(TypeEnum::Bool)),
+						GetTypeSymbol(TypeEnum::Bool)),
 	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity,
-						TypeSymbol::GetType(TypeEnum::Int)),
+						GetTypeSymbol(TypeEnum::Int)),
 	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation,
-						TypeSymbol::GetType(TypeEnum::Int)),
+						GetTypeSymbol(TypeEnum::Int)),
 	BoundUnaryOperator(SyntaxKind::TildeToken, BoundUnaryOperatorKind::OnesComplement,
-						TypeSymbol::GetType(TypeEnum::Int))
+						GetTypeSymbol(TypeEnum::Int))
 	};
 
 	return operators;
@@ -160,7 +160,7 @@ BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind,
 
 BoundBinaryOperator::BoundBinaryOperator()
 	: BoundBinaryOperator(SyntaxKind::BadToken, BoundBinaryOperatorKind::Addition,
-						  TypeSymbol::GetType(TypeEnum::Error))
+						  GetTypeSymbol(TypeEnum::Error))
 {
 	_isUseful = false;
 }
@@ -169,57 +169,57 @@ const vector<BoundBinaryOperator>& BoundBinaryOperator::Operators()
 {
 	static const auto operators = vector<BoundBinaryOperator>{
 		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
-							TypeSymbol::GetType(TypeEnum::Int)),
+							GetTypeSymbol(TypeEnum::Int)),
 		BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction,
-							TypeSymbol::GetType(TypeEnum::Int)),
+							GetTypeSymbol(TypeEnum::Int)),
 		BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication,
-							TypeSymbol::GetType(TypeEnum::Int)),
+							GetTypeSymbol(TypeEnum::Int)),
 		BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division,
-							TypeSymbol::GetType(TypeEnum::Int)),
+							GetTypeSymbol(TypeEnum::Int)),
 		BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus,
-							TypeSymbol::GetType(TypeEnum::Int)),
+							GetTypeSymbol(TypeEnum::Int)),
 
 		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd,
-							TypeSymbol::GetType(TypeEnum::Int)),
+							GetTypeSymbol(TypeEnum::Int)),
 		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr,
-							TypeSymbol::GetType(TypeEnum::Int)),
+							GetTypeSymbol(TypeEnum::Int)),
 		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor,
-							TypeSymbol::GetType(TypeEnum::Int)),
+							GetTypeSymbol(TypeEnum::Int)),
 
 		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Int), GetTypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Int), GetTypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less,
-							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Int), GetTypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals,
-							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Int), GetTypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater,
-							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Int), GetTypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals,
-							TypeSymbol::GetType(TypeEnum::Int), TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Int), GetTypeSymbol(TypeEnum::Bool)),
 
 		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd,
-							TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd,
-							TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr,
-							TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr,
-							TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor,
-							TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::Bool)),
 
 		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
-							TypeSymbol::GetType(TypeEnum::String)),
+							GetTypeSymbol(TypeEnum::String)),
 		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TypeSymbol::GetType(TypeEnum::String), TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::String), GetTypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TypeSymbol::GetType(TypeEnum::String), TypeSymbol::GetType(TypeEnum::Bool)),
+							GetTypeSymbol(TypeEnum::String), GetTypeSymbol(TypeEnum::Bool)),
 	};
 
 	return operators;
