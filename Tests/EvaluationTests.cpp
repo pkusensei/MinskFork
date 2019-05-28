@@ -118,57 +118,57 @@ public:
 	TEST_METHOD(Evaluator_Computes_CorrectValues)
 	{
 		auto data = std::vector<std::pair<std::string, MCF::ValueType>>{
-			//{"1", 1},
-			//{"+34", 34},
-			//{"-42", -42},
-			//{"~1", -2},
-			//{"3 + 1", 4},
-			//{"2 * 4", 8},
-			//{"9 / 3", 3},
-			//{"(6 + 4)", 10},
-			//{"12 == 5", false},
-			//{"5 == 5", true},
-			//{"12 != 5", true},
-			//{"5 != 5", false},
-			//{"3 < 4", true},
-			//{"5 < 4", false},
-			//{"4 <= 4", true},
-			//{"4 <= 5", true},
-			//{"5 <= 4", false},
-			//{"3 > 4", false},
-			//{"5 > 4", true},
-			//{"4 >= 4", true},
-			//{"4 >= 5", false},
-			//{"5 >= 4", true},
-			//{"1 | 2", 3},
-			//{"1 | 0", 1},
-			//{"1 & 3", 1},
-			//{"1 & 0", 0},
-			//{"1 ^ 0", 1},
-			//{"0 ^ 1", 1},
-			//{"1 ^ 3", 2},
-			//{"true == false", false},
-			//{"false == false", true},
-			//{"true != false", true},
-			//{"false != false", false},
-			//{"true && true", true},
-			//{"false || false", false},
-			//{"false | false", 0}, // false
-			//{"false | true", 1}, // true
-			//{"true | false", 1},
-			//{"true | true", 1},
-			//{"false & false", 0},
-			//{"false & true", 0},
-			//{"true & false", 0},
-			//{"true & true", 1},
-			//{"false ^ false", 0},
-			//{"false ^ true", 1},
-			//{"true ^ false", 1},
-			//{"true ^ true", 0},
-			//{"true", true},
-			//{"!true", false},
-			//{"false", false},
-			//{"!false", true},
+			{"1", 1},
+			{"+34", 34},
+			{"-42", -42},
+			{"~1", -2},
+			{"3 + 1", 4},
+			{"2 * 4", 8},
+			{"9 / 3", 3},
+			{"(6 + 4)", 10},
+			{"12 == 5", false},
+			{"5 == 5", true},
+			{"12 != 5", true},
+			{"5 != 5", false},
+			{"3 < 4", true},
+			{"5 < 4", false},
+			{"4 <= 4", true},
+			{"4 <= 5", true},
+			{"5 <= 4", false},
+			{"3 > 4", false},
+			{"5 > 4", true},
+			{"4 >= 4", true},
+			{"4 >= 5", false},
+			{"5 >= 4", true},
+			{"1 | 2", 3},
+			{"1 | 0", 1},
+			{"1 & 3", 1},
+			{"1 & 0", 0},
+			{"1 ^ 0", 1},
+			{"0 ^ 1", 1},
+			{"1 ^ 3", 2},
+			{"true == false", false},
+			{"false == false", true},
+			{"true != false", true},
+			{"false != false", false},
+			{"true && true", true},
+			{"false || false", false},
+			{"false | false", 0}, // false
+			{"false | true", 1}, // true
+			{"true | false", 1},
+			{"true | true", 1},
+			{"false & false", 0},
+			{"false & true", 0},
+			{"true & false", 0},
+			{"true & true", 1},
+			{"false ^ false", 0},
+			{"false ^ true", 1},
+			{"true ^ false", 1},
+			{"true ^ true", 0},
+			{"true", true},
+			{"!true", false},
+			{"false", false},
+			{"!false", true},
 			{"\"test\"", "test"},
 			{"\"te\"\"st\"", "te\"st"},
 			{"\"test\" == \"test\"", true},
@@ -228,7 +228,7 @@ public:
 
 	TEST_METHOD(Evaluator_InvokeFunctionArguments_NoInfiniteLoop) {
 		std::string text = R"(
-			print(""Hi""[[=]][)]
+			print("Hi"[[=]][)]
 			)";
 
 		std::string diagnostics = R"(
@@ -245,7 +245,7 @@ public:
 		std::string text = R"(
 			function hi(name: string[[[=]]][)]
             {
-                print(""Hi "" + name + ""!"" )
+                print("Hi " + name + "!" )
             }[]			
 			)";
 

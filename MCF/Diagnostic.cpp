@@ -36,7 +36,13 @@ void DiagnosticBag::Report(const TextSpan& span, const string& message)
 const DiagnosticBag& DiagnosticBag::SortBySpanAscending()
 {
 	std::sort(_diagnostics.begin(), _diagnostics.end(),
-		[](const auto& a, const auto& b) { return a.Span().Start() < b.Span().Start(); });
+		[](const auto& a, const auto& b)
+	{
+		if (a.Span().Start() == b.Span().Start())
+			return a.Span().End() < b.Span().End();
+		else
+			return a.Span().Start() < b.Span().Start();
+	});
 	return *this;
 }
 

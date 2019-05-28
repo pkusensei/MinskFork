@@ -31,8 +31,8 @@ class BoundGlobalScope;
 class BoundProgram;
 class SyntaxTree;
 
-extern "C" using VarMap = std::unordered_map<shared_ptr<VariableSymbol>, ValueType,
-	SymbolHash, SymbolEqual>;
+extern "C" using VarMap = std::unordered_map<shared_ptr<VariableSymbol>,
+	ValueType, SymbolHash, SymbolEqual>;
 
 class MCF_API EvaluationResult final
 {
@@ -99,7 +99,7 @@ public:
 
 	const BoundGlobalScope* GlobalScope();
 	static unique_ptr<Compilation> ContinueWith(unique_ptr<Compilation>& previous,
-												unique_ptr<SyntaxTree>& tree);
+		unique_ptr<SyntaxTree>& tree);
 
 	EvaluationResult Evaluate(VarMap& variables);
 	void EmitTree(std::ostream& out);
