@@ -50,6 +50,7 @@ enum class SyntaxKind
 	FunctionKeyword,
 	IfKeyword,
 	LetKeyword,
+	ReturnKeyword,
 	ToKeyword,
 	TrueKeyword,
 	VarKeyword,
@@ -73,6 +74,7 @@ enum class SyntaxKind
 	ForStatement,
 	BreakStatement,
 	ContinueStatement,
+	ReturnStatement,
 	ExpressionStatement,
 
 	// Expressions

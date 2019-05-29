@@ -206,13 +206,27 @@ public:
 	bool JumpIfTrue()const noexcept { return _jumpIfTrue; }
 };
 
+class BoundReturnStatement final :public BoundStatement
+{
+private:
+	shared_ptr<BoundExpression> _expression;
+
+public:
+	explicit BoundReturnStatement(const shared_ptr<BoundExpression>& expression);
+	// Inherited via BoundStatement
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ReturnStatement; }
+
+	const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
+
+};
+
 class BoundExpressionStatement final : public BoundStatement
 {
 private:
 	shared_ptr<BoundExpression> _expression;
 
 public:
-	BoundExpressionStatement(const shared_ptr<BoundExpression>& expression);
+	explicit BoundExpressionStatement(const shared_ptr<BoundExpression>& expression);
 	BoundExpressionStatement(BoundExpressionStatement&&) = default;
 	BoundExpressionStatement& operator=(BoundExpressionStatement&&) = default;
 

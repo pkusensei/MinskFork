@@ -30,6 +30,8 @@ string GetEnumText(const BoundNodeKind & kind)
 			return "GotoStatement";
 		case BoundNodeKind::ConditionalGotoStatement:
 			return "ConditionalGotoStatement";
+		case BoundNodeKind::ReturnStatement:
+			return "ReturnStatement";
 		case BoundNodeKind::ExpressionStatement:
 			return "ExpressionStatement";
 

@@ -271,6 +271,23 @@ const vector<const SyntaxNode*> ContinueStatementSyntax::GetChildren() const
 	return MakeVecOfRaw<const SyntaxNode>(_keyword);
 }
 
+ReturnStatementSyntax::ReturnStatementSyntax(const SyntaxToken & retKeyword,
+	std::nullptr_t n)
+	:_keyword(retKeyword), _expression(nullptr)
+{
+}
+
+ReturnStatementSyntax::ReturnStatementSyntax(const SyntaxToken & retKeyword,
+	unique_ptr<ExpressionSyntax>& expression)
+	: _keyword(retKeyword), _expression(std::move(expression))
+{
+}
+
+const vector<const SyntaxNode*> ReturnStatementSyntax::GetChildren() const
+{
+	return MakeVecOfRaw<const SyntaxNode>(_keyword, _expression);
+}
+
 ExpressionStatementSyntax::ExpressionStatementSyntax(unique_ptr<ExpressionSyntax>& expression)
 	:_expression(std::move(expression))
 {
@@ -492,6 +509,8 @@ unique_ptr<StatementSyntax> Parser::ParseStatement()
 			return ParseBreakStatement();
 		case SyntaxKind::ContinueKeyword:
 			return ParseContinueStatement();
+		case SyntaxKind::ReturnKeyword:
+			return ParseReturnStatement();
 		default:
 			return ParseExpressionStatement();
 	}
@@ -609,6 +628,17 @@ unique_ptr<StatementSyntax> Parser::ParseContinueStatement()
 {
 	auto token = MatchToken(SyntaxKind::ContinueKeyword);
 	return make_unique<ContinueStatementSyntax>(token);
+}
+
+unique_ptr<StatementSyntax> Parser::ParseReturnStatement()
+{
+	auto keyword = MatchToken(SyntaxKind::ReturnKeyword);
+	auto keywordLine = _text->GetLineIndex(keyword.Span().Start());
+	auto currentLine = _text->GetLineIndex(Current().Span().Start());
+	auto isEof = Current().Kind() == SyntaxKind::EndOfFileToken;
+	auto sameLine = !isEof && keywordLine == currentLine;
+	auto expression = sameLine ? ParseExpression() : nullptr;
+	return make_unique<ReturnStatementSyntax>(keyword, expression);
 }
 
 unique_ptr<ExpressionStatementSyntax> Parser::ParseExpressionStatement()

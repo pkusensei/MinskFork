@@ -67,6 +67,12 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(const shared_ptr<
 			if (p) return RewriteConditionalGotoStatement(p);
 			else break;
 		}
+		case BoundNodeKind::ReturnStatement:
+		{
+			auto p = std::dynamic_pointer_cast<BoundReturnStatement>(node);
+			if (p) return RewriteReturnStatement(p);
+			else break;
+		}
 		case BoundNodeKind::ExpressionStatement:
 		{
 			auto p = std::dynamic_pointer_cast<BoundExpressionStatement>(node);
@@ -175,6 +181,16 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteConditionalGotoStatement(co
 	if (condition == node->Condition())
 		return node;
 	return make_shared<BoundConditionalGotoStatement>(node->Label(), condition, node->JumpIfTrue());
+}
+
+shared_ptr<BoundStatement> BoundTreeRewriter::RewriteReturnStatement(const shared_ptr<BoundReturnStatement>& node)
+{
+	auto expression = node->Expression() == nullptr ?
+		nullptr : RewriteExpression(node->Expression());
+
+	if (expression == node->Expression())
+		return node;
+	return make_shared<BoundReturnStatement>(expression);
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteExpressionStatement(const shared_ptr<BoundExpressionStatement>& node)

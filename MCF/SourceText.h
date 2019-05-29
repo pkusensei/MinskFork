@@ -10,6 +10,7 @@ class TextSpan final
 {
 private:
 	std::pair<size_t, size_t> _span;
+
 public:
 	constexpr explicit TextSpan(size_t start = 0, size_t length = 0)
 		:_span(start, length)
@@ -36,6 +37,7 @@ private:
 	const size_t _start;
 	const size_t _length;
 	const size_t _lengthIncludingLineBreak;
+
 public:
 	TextLine(const SourceText& text, size_t start, size_t length, size_t lengthWithBreak);
 	~TextLine() = default;

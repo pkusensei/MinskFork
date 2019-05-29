@@ -217,6 +217,32 @@ void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(const TextSpan & s
 	Report(span, message);
 }
 
+void DiagnosticBag::ReportAllPathsMustReturn(const TextSpan & span)
+{
+	string message = "Not all code paths return a value.";
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportInvalidReturn(const TextSpan & span)
+{
+	string message="The 'return' keyword can only be used inside of function";
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportInvalidReturnExpression(const TextSpan & span, const string & funcName)
+{
+	string message{ "Function '" };
+	message += funcName + "' does not return a value";
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportMissingReturnExpression(const TextSpan & span, const TypeSymbol & returnType)
+{
+	string message{ "An expression of Type '" };
+	message += returnType.ToString() + "' expected";
+	Report(span, message);
+}
+
 void DiagnosticBag::ReportVariableNotSupportPostfixOperator(const TextSpan & span,
 	const string & operatorText, const TypeSymbol & variableType)
 {

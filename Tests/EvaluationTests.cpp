@@ -226,6 +226,32 @@ public:
 		AssertDiagnostics(text, diag);
 	}
 
+	TEST_METHOD(Evaluator_InvokeFunctionArguments_Missing)
+	{
+		std::string text = R"(
+			print([)]
+			)";
+
+		std::string diag = R"(
+			Function 'print' requires 1 arguments but was given 0.
+			)";
+
+		AssertDiagnostics(text, diag);
+	}
+
+	TEST_METHOD(Evaluator_InvokeFunctionArguments_Exceeding)
+	{
+		std::string text = R"(
+			print("Hello"[, " ", ", world!"])
+			)";
+
+		std::string diag = R"(
+			Function 'print' requires 1 arguments but was given 3.
+			)";
+
+		AssertDiagnostics(text, diag);
+	}
+
 	TEST_METHOD(Evaluator_InvokeFunctionArguments_NoInfiniteLoop) {
 		std::string text = R"(
 			print("Hi"[[=]][)]

@@ -167,7 +167,7 @@ public:
 	const SyntaxToken* GetSeparator(size_t index)const
 	{
 		if (index == size() - 1) return nullptr;
-		return _nodesAndSeparators.at(index * 2 + 1).get();
+		return dynamic_cast<const SyntaxToken*>(_nodesAndSeparators.at(index * 2 + 1).get());
 	}
 
 	const vector<const SyntaxNode*> GetWithSeparators()const
@@ -467,6 +467,28 @@ public:
 	const SyntaxToken& Keyword()const noexcept { return _keyword; }
 };
 
+class ReturnStatementSyntax final :public StatementSyntax
+{
+private:
+	SyntaxToken _keyword;
+	unique_ptr<ExpressionSyntax> _expression;
+
+public:
+	explicit ReturnStatementSyntax(const SyntaxToken& retKeyword,
+		std::nullptr_t n = nullptr);
+	ReturnStatementSyntax(const SyntaxToken& retKeyword,
+		unique_ptr<ExpressionSyntax>& expression);
+	ReturnStatementSyntax(ReturnStatementSyntax&&) = default;
+	ReturnStatementSyntax& operator=(ReturnStatementSyntax&&) = default;
+
+	// Inherited via StatementSyntax
+	SyntaxKind Kind() const noexcept override { return SyntaxKind::ReturnStatement; }
+	const vector<const SyntaxNode*> GetChildren() const override;
+
+	const SyntaxToken& Keyword()const noexcept { return _keyword; }
+	const ExpressionSyntax* Expression()const noexcept { return _expression.get(); }
+};
+
 class ExpressionStatementSyntax final : public StatementSyntax
 {
 private:
@@ -581,7 +603,7 @@ public:
 class Parser final
 {
 private:
-	[[maybe_unused]] const SourceText* _text;
+	const SourceText* _text;
 	vector<SyntaxToken> _tokens;
 	size_t _position;
 	unique_ptr<DiagnosticBag> _diagnostics;
@@ -610,6 +632,7 @@ private:
 	unique_ptr<StatementSyntax> ParseForStatement();
 	unique_ptr<StatementSyntax> ParseBreakStatement();
 	unique_ptr<StatementSyntax> ParseContinueStatement();
+	unique_ptr<StatementSyntax> ParseReturnStatement();
 	unique_ptr<ExpressionStatementSyntax> ParseExpressionStatement();
 
 	unique_ptr<ExpressionSyntax> ParseExpression();

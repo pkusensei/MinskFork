@@ -84,6 +84,7 @@ private:
 	unique_ptr<Compilation> _previous;
 	unique_ptr<SyntaxTree> _syntaxTree;
 	unique_ptr<BoundGlobalScope> _globalScope;
+	unique_ptr<DiagnosticBag> _diagnostics; //NOTE one bag to rule them all
 
 	std::mutex _mtx;
 

@@ -70,6 +70,12 @@ void BoundNodePrinter::Write(const BoundNode* node)
 			if (p) WriteConditionalGotoStatement(p);
 			break;
 		}
+		case BoundNodeKind::ReturnStatement:
+		{
+			auto p = dynamic_cast<const BoundReturnStatement*>(node);
+			if (p) WriteReturnStatement(p);
+			break;
+		}
 		case BoundNodeKind::ExpressionStatement:
 		{
 			auto p = dynamic_cast<const BoundExpressionStatement*>(node);
@@ -163,42 +169,51 @@ void BoundNodePrinter::WriteNestedExpression(int parentPrecedence,
 	int currentPrecedence, const BoundExpression * node)
 {
 	auto needsParenthesis = parentPrecedence >= currentPrecedence;
-	if (needsParenthesis)_writer.WritePunctuation("(");
+	if (needsParenthesis)
+		_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
+	
 	Write(node);
-	if (needsParenthesis)_writer.WritePunctuation(")");
+
+	if (needsParenthesis)
+		_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
 }
 
 void BoundNodePrinter::WriteBlockStatement(const BoundBlockStatement * node)
 {
-	_writer.WritePunctuation("{");
-	_writer.Indent();
+	_writer.WritePunctuation(SyntaxKind::OpenBraceToken);
 	_writer.WriteLine();
+	_writer.Indent();
 	for (const auto& it : node->Statements())
 		Write(it.get());
 	_writer.Dedent();
-	_writer.WritePunctuation("}");
+	_writer.WritePunctuation(SyntaxKind::CloseBraceToken);
 	_writer.WriteLine();
 }
 
 void BoundNodePrinter::WriteVariableDeclaration(const BoundVariableDeclaration * node)
 {
-	_writer.WriteKeyword(node->Variable()->IsReadOnly() ? "let " : "var ");
+	_writer.WriteKeyword(node->Variable()->IsReadOnly() ? 
+		SyntaxKind::LetKeyword : SyntaxKind::VarKeyword);
+	_writer.WriteSpace();
 	_writer.WriteIdentifier(node->Variable()->Name());
-	_writer.WritePunctuation(" = ");
+	_writer.WriteSpace();
+	_writer.WritePunctuation(SyntaxKind::EqualsToken);
+	_writer.WriteSpace();
 	Write(node->Initializer().get());
 	_writer.WriteLine();
 }
 
 void BoundNodePrinter::WriteIfStatement(const BoundIfStatement * node)
 {
-	_writer.WriteKeyword("if ");
+	_writer.WriteKeyword(SyntaxKind::IfKeyword);
+	_writer.WriteSpace();
 	Write(node->Condition().get());
 	_writer.WriteLine();
 	WriteNestedStatement(node->ThenStatement().get());
 
 	if (node->ElseStatement() != nullptr)
 	{
-		_writer.WriteKeyword("else");
+		_writer.WriteKeyword(SyntaxKind::ElseKeyword);
 		_writer.WriteLine();
 		WriteNestedStatement(node->ElseStatement().get());
 	}
@@ -206,7 +221,8 @@ void BoundNodePrinter::WriteIfStatement(const BoundIfStatement * node)
 
 void BoundNodePrinter::WriteWhileStatement(const BoundWhileStatement * node)
 {
-	_writer.WriteKeyword("while ");
+	_writer.WriteKeyword(SyntaxKind::WhileKeyword);
+	_writer.WriteSpace();
 	Write(node->Condition().get());
 	_writer.WriteLine();
 	WriteNestedStatement(node->Body().get());
@@ -214,21 +230,27 @@ void BoundNodePrinter::WriteWhileStatement(const BoundWhileStatement * node)
 
 void BoundNodePrinter::WriteDoWhileStatement(const BoundDoWhileStatement * node)
 {
-	_writer.WriteKeyword("do");
+	_writer.WriteKeyword(SyntaxKind::DoKeyword);
 	_writer.WriteLine();
 	WriteNestedStatement(node->Body().get());
-	_writer.WriteKeyword("while ");
+	_writer.WriteKeyword(SyntaxKind::WhileKeyword);
+	_writer.WriteSpace();
 	Write(node->Condition().get());
 	_writer.WriteLine();
 }
 
 void BoundNodePrinter::WriteForStatement(const BoundForStatement * node)
 {
-	_writer.WriteKeyword("for ");
+	_writer.WriteKeyword(SyntaxKind::ForKeyword);
+	_writer.WriteSpace();
 	_writer.WriteIdentifier(node->Variable()->Name());
-	_writer.WritePunctuation(" = ");
+	_writer.WriteSpace();
+	_writer.WritePunctuation(SyntaxKind::EqualsToken);
+	_writer.WriteSpace();
 	Write(node->LowerBound().get());
-	_writer.WriteKeyword(" to ");
+	_writer.WriteSpace();
+	_writer.WriteKeyword(SyntaxKind::ToKeyword);
+	_writer.WriteSpace();
 	Write(node->UpperBound().get());
 	_writer.WriteLine();
 	WriteNestedStatement(node->Body().get());
@@ -238,7 +260,7 @@ void BoundNodePrinter::WriteLabelStatement(const BoundLabelStatement * node)
 {
 	_writer.Dedent();
 	_writer.WritePunctuation(node->Label().Name());
-	_writer.WritePunctuation(":");
+	_writer.WritePunctuation(SyntaxKind::ColonToken);
 	_writer.WriteLine();
 	_writer.Indent();
 }
@@ -256,6 +278,17 @@ void BoundNodePrinter::WriteConditionalGotoStatement(const BoundConditionalGotoS
 	_writer.WriteIdentifier(node->Label().Name());
 	_writer.WriteKeyword(node->JumpIfTrue() ? " if " : " unless ");
 	Write(node->Condition().get());
+	_writer.WriteLine();
+}
+
+void BoundNodePrinter::WriteReturnStatement(const BoundReturnStatement * node)
+{
+	_writer.WriteKeyword(SyntaxKind::ReturnKeyword);
+	if (node->Expression() != nullptr)
+	{
+		_writer.WriteSpace();
+		Write(node->Expression().get());
+	}
 	_writer.WriteLine();
 }
 
@@ -291,33 +324,33 @@ void BoundNodePrinter::WriteVariableExpression(const BoundVariableExpression * n
 void BoundNodePrinter::WriteAssignmentExpression(const BoundAssignmentExpression * node)
 {
 	_writer.WriteIdentifier(node->Variable()->Name());
-	_writer.WritePunctuation(" = ");
+	_writer.WriteSpace();
+	_writer.WritePunctuation(SyntaxKind::EqualsToken);
+	_writer.WriteSpace();
 	Write(node->Expression().get());
 }
 
 void BoundNodePrinter::WriteUnaryExpression(const BoundUnaryExpression * node)
 {
-	auto op = GetText(node->Op().SyntaxKind());
 	auto precedence = GetUnaryOperatorPrecedence(node->Op().SyntaxKind());
-	_writer.WritePunctuation(op);
+	_writer.WritePunctuation(node->Op().SyntaxKind());
 	WriteNestedExpression(precedence, node->Operand().get());
 }
 
 void BoundNodePrinter::WriteBinaryExpression(const BoundBinaryExpression * node)
 {
-	auto op = GetText(node->Op().SyntaxKind());
 	auto precedence = GetBinaryOperatorPrecedence(node->Op().SyntaxKind());
 	WriteNestedExpression(precedence, node->Left().get());
-	_writer.Write(" ");
-	_writer.WritePunctuation(op);
-	_writer.Write(" ");
+	_writer.WriteSpace();
+	_writer.WritePunctuation(node->Op().SyntaxKind());
+	_writer.WriteSpace();
 	WriteNestedExpression(precedence, node->Right().get());
 }
 
 void BoundNodePrinter::WriteCallExpression(const BoundCallExpression * node)
 {
 	_writer.WriteIdentifier(node->Function()->Name());
-	_writer.WritePunctuation("(");
+	_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
 
 	auto isFirst = true;
 	for (const auto& it : node->Arguments())
@@ -325,19 +358,22 @@ void BoundNodePrinter::WriteCallExpression(const BoundCallExpression * node)
 		if (isFirst)
 			isFirst = false;
 		else
-			_writer.WritePunctuation(", ");
+		{
+			_writer.WritePunctuation(SyntaxKind::CommaToken);
+			_writer.WriteSpace();
+		}
 
 		Write(it.get());
 	}
-	_writer.WritePunctuation(")");
+	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
 }
 
 void BoundNodePrinter::WriteConversionExpression(const BoundConversionExpression * node)
 {
 	_writer.WriteIdentifier(node->Type().Name());
-	_writer.WritePunctuation("(");
+	_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
 	Write(node->Expression().get());
-	_writer.WritePunctuation(")");
+	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
 }
 
 void BoundNodePrinter::WritePosifixExpression(const BoundPostfixExpression * node)

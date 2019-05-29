@@ -35,6 +35,7 @@ class DoWhileStatementSyntax;
 class ForStatementSyntax;
 class BreakStatementSyntax;
 class ContinueStatementSyntax;
+class ReturnStatementSyntax;
 class ExpressionStatementSyntax;
 
 class CompilationUnitSyntax;
@@ -193,6 +194,7 @@ private:
 		BoundLabel& breakLabel, BoundLabel& continueLabel);
 	shared_ptr<BoundStatement> BindBreakStatement(const BreakStatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindContinueStatement(const ContinueStatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindReturnStatement(const ReturnStatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax* syntax);
 
 	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,

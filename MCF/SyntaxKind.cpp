@@ -95,6 +95,8 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "IfKeyword";
 		case SyntaxKind::LetKeyword:
 			return "LetKeyword";
+		case SyntaxKind::ReturnKeyword:
+			return "ReturnKeyword";
 		case SyntaxKind::ToKeyword:
 			return "ToKeyword";
 		case SyntaxKind::TrueKeyword:
@@ -135,6 +137,8 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 			return "BreakStatement";
 		case SyntaxKind::ContinueStatement:
 			return "ContinueStatement";
+		case SyntaxKind::ReturnStatement:
+			return "ReturnStatement";
 		case SyntaxKind::ExpressionStatement:
 			return "ExpressionStatement";
 
@@ -178,6 +182,8 @@ SyntaxKind GetKeywordKind(const string & text) noexcept
 		return SyntaxKind::IfKeyword;
 	else if (text == "let")
 		return SyntaxKind::LetKeyword;
+	else if (text == "return")
+		return SyntaxKind::ReturnKeyword;
 	else if (text == "to")
 		return SyntaxKind::ToKeyword;
 	else if (text == "true")
@@ -230,6 +236,7 @@ string GetText(const SyntaxKind& kind)
 		case SyntaxKind::FunctionKeyword: return "function";
 		case SyntaxKind::IfKeyword: return "if";
 		case SyntaxKind::LetKeyword: return "let";
+		case SyntaxKind::ReturnKeyword: return "return";
 		case SyntaxKind::ToKeyword: return "to";
 		case SyntaxKind::TrueKeyword: return "true";
 		case SyntaxKind::VarKeyword: return "var";

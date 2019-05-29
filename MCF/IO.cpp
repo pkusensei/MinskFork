@@ -2,6 +2,7 @@
 #include "IO.h"
 
 #include "ConsoleHelper.h"
+#include "SyntaxKind.h"
 
 namespace MCF {
 
@@ -20,6 +21,11 @@ void TextWriter::ResetColor()
 void TextWriter::Write(const string & text)
 {
 	_out << text;
+}
+
+void TextWriter::WriteKeyword(const SyntaxKind & kind)
+{
+	WriteKeyword(GetText(kind));
 }
 
 void TextWriter::WriteLine()
@@ -53,6 +59,16 @@ void TextWriter::WriteString(const string & text)
 	SetForeground(ConsoleColor::Magenta);
 	Write(text);
 	ResetColor();
+}
+
+void TextWriter::WriteSpace()
+{
+	Write(" ");
+}
+
+void TextWriter::WritePunctuation(const SyntaxKind & kind)
+{
+	WritePunctuation(GetText(kind));
 }
 
 void TextWriter::WritePunctuation(const string & text)

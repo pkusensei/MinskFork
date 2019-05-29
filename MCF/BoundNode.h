@@ -16,6 +16,7 @@ enum class BoundNodeKind
 	LabelStatement,
 	GotoStatement,
 	ConditionalGotoStatement,
+	ReturnStatement,
 	ExpressionStatement,
 
 	// Expressions

@@ -27,6 +27,7 @@ class BoundForStatement;
 class BoundLabelStatement;
 class BoundExpressionStatement;
 class BoundGotoStatement;
+class BoundReturnStatement;
 class BoundConditionalGotoStatement;
 
 class BoundNodePrinter final
@@ -48,6 +49,7 @@ private:
 	void WriteLabelStatement(const BoundLabelStatement* node);
 	void WriteGotoStatement(const BoundGotoStatement* node);
 	void WriteConditionalGotoStatement(const BoundConditionalGotoStatement* node);
+	void WriteReturnStatement(const BoundReturnStatement* node);
 	void WriteExpressionStatement(const BoundExpressionStatement* node);
 	void WriteErrorExpression(const BoundErrorExpression* node);
 	void WriteLiteralExpression(const BoundLiteralExpression* node);

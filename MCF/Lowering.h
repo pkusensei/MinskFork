@@ -25,9 +25,10 @@ class BoundWhileStatement;
 class BoundDoWhileStatement;
 class BoundForStatement;
 class BoundLabelStatement;
-class BoundExpressionStatement;
 class BoundGotoStatement;
 class BoundConditionalGotoStatement;
+class BoundReturnStatement;
+class BoundExpressionStatement;
 
 class BoundTreeRewriter
 {
@@ -41,6 +42,7 @@ protected:
 	virtual shared_ptr<BoundStatement> RewriteLabelStatement(const shared_ptr<BoundLabelStatement>& node);
 	virtual shared_ptr<BoundStatement> RewriteGotoStatement(const shared_ptr<BoundGotoStatement>& node);
 	virtual shared_ptr<BoundStatement> RewriteConditionalGotoStatement(const shared_ptr<BoundConditionalGotoStatement>& node);
+	virtual shared_ptr<BoundStatement> RewriteReturnStatement(const shared_ptr<BoundReturnStatement>& node);
 	virtual shared_ptr<BoundStatement> RewriteExpressionStatement(const shared_ptr<BoundExpressionStatement>& node);
 
 	virtual shared_ptr<BoundExpression> RewriteErrorExpression(const shared_ptr<BoundErrorExpression>& node);

@@ -78,6 +78,12 @@ public:
 	void ReportExpressionNotSupportPostfixOperator(const TextSpan & span,
 		const string & operatorText, const SyntaxKind& kind);
 
+	void ReportAllPathsMustReturn(const TextSpan& span);
+	void ReportInvalidReturn(const TextSpan& span);
+	void ReportInvalidReturnExpression(const TextSpan& span, const string& funcName);
+	void ReportMissingReturnExpression(const TextSpan& span, 
+		const TypeSymbol& returnType);
+
 	void ReportVariableNotSupportPostfixOperator(const TextSpan & span,
 		const string & operatorText, const TypeSymbol& variableType);
 };

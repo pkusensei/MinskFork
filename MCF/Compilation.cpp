@@ -86,6 +86,13 @@ ValueType Evaluator::EvaluateStatement(const BoundBlockStatement * body)
 			case BoundNodeKind::LabelStatement:
 				++index;
 				break;
+			case BoundNodeKind::ReturnStatement:
+			{
+				auto rs = dynamic_cast<const BoundReturnStatement*>(s);
+				_lastValue = rs->Expression() == nullptr ?
+					NullValue : EvaluateExpression(rs->Expression().get());
+				return _lastValue;
+			}
 			default:
 				throw std::invalid_argument("Unexpected statement " + GetEnumText(s->Kind()));
 		}
@@ -349,13 +356,13 @@ void Evaluator::Assign(const shared_ptr<VariableSymbol>& variable, const ValueTy
 Compilation::Compilation(unique_ptr<Compilation>& previous,
 	unique_ptr<SyntaxTree>& tree)
 	: _previous(std::move(previous)), _syntaxTree(std::move(tree)),
-	_globalScope(nullptr)
+	_globalScope(nullptr), _diagnostics(make_unique<DiagnosticBag>())
 {
 }
 
 Compilation::Compilation(unique_ptr<SyntaxTree>& tree)
 	: _previous(nullptr), _syntaxTree(std::move(tree)),
-	_globalScope(nullptr)
+	_globalScope(nullptr), _diagnostics(make_unique<DiagnosticBag>())
 {
 }
 
@@ -387,18 +394,21 @@ unique_ptr<Compilation> Compilation::ContinueWith(unique_ptr<Compilation>& previ
 EvaluationResult Compilation::Evaluate(VarMap& variables)
 {
 	_syntaxTree->Diagnostics()->AddRange(*(GlobalScope()->Diagnostics()));
-	auto diagnostics = _syntaxTree->Diagnostics();
+	_diagnostics->AddRange(*_syntaxTree->Diagnostics());
 
-	if (!diagnostics->empty())
-		return EvaluationResult(diagnostics, NullValue);
+	if (!_diagnostics->empty())
+		return EvaluationResult(_diagnostics.get(), NullValue);
 
 	auto program = Binder::BindProgram(GlobalScope());
 	if (!program->Diagnostics()->empty())
-		return EvaluationResult(program->Diagnostics(), NullValue);
+	{
+		_diagnostics->AddRange(*program->Diagnostics());
+		return EvaluationResult(_diagnostics.get(), NullValue);
+	}
 
 	Evaluator evaluator(program, variables);
 	auto value = evaluator.Evaluate();
-	return EvaluationResult(diagnostics, value);
+	return EvaluationResult(_diagnostics.get(), value);
 }
 
 void Compilation::EmitTree(std::ostream & out)

@@ -184,6 +184,12 @@ shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax * syntax)
 			if (p) return BindContinueStatement(p);
 			else break;
 		}
+		case SyntaxKind::ReturnStatement:
+		{
+			auto p = dynamic_cast<const ReturnStatementSyntax*>(syntax);
+			if (p) return BindReturnStatement(p);
+			else break;
+		}
 		case SyntaxKind::ExpressionStatement:
 		{
 			auto p = dynamic_cast<const ExpressionStatementSyntax*>(syntax);
@@ -306,6 +312,33 @@ shared_ptr<BoundStatement> Binder::BindContinueStatement(const ContinueStatement
 	}
 	auto conLabel = _loopStack.top().second;
 	return make_shared<BoundGotoStatement>(conLabel);
+}
+
+shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSyntax * syntax)
+{
+	auto expression = syntax->Expression() == nullptr ?
+		nullptr : BindExpression(syntax->Expression());
+	if (_function == nullptr)
+	{
+		_diagnostics->ReportInvalidReturn(syntax->Keyword().Span());
+	} else
+	{
+		if (_function->Type() == GetTypeSymbol(TypeEnum::Void))
+		{
+			if (expression != nullptr)
+				_diagnostics->ReportInvalidReturnExpression(syntax->Expression()->Span(),
+					_function->Name());
+		} else
+		{
+			if (expression == nullptr)
+				_diagnostics->ReportMissingReturnExpression(syntax->Keyword().Span(),
+					_function->Type());
+			else
+				expression = BindConversion(syntax->Expression()->Span(),
+					expression, _function->Type());
+		}
+	}
+	return make_shared<BoundReturnStatement>(expression);
 }
 
 shared_ptr<BoundStatement> Binder::BindExpressionStatement(const ExpressionStatementSyntax * syntax)
@@ -488,8 +521,10 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	auto boundArguments = vector<shared_ptr<BoundExpression>>();
 	for (const auto& arg : *(syntax->Arguments()))
 	{
-		auto boundArgument = BindExpression(dynamic_cast<ExpressionSyntax*>(arg.get()));
-		boundArguments.emplace_back(std::move(boundArgument));
+		//NOTE here the difference comes from generics vs C++ template
+		auto p = dynamic_cast<ExpressionSyntax*>(arg.get());
+		if (p)
+			boundArguments.emplace_back(BindExpression(p));
 	}
 
 	auto function = shared_ptr<FunctionSymbol>(nullptr);
@@ -499,25 +534,45 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 			syntax->Identifier().Text());
 		return make_shared<BoundErrorExpression>();
 	}
+
 	if (syntax->Arguments()->size() != function->Parameters().size())
 	{
-		_diagnostics->ReportWrongArgumentCount(syntax->Span(), function->Name(),
-			function->Parameters().size(),
-			syntax->Arguments()->size());
+		TextSpan span;
+		if (syntax->Arguments()->size() > function->Parameters().size())
+		{
+			const SyntaxNode* firstExceedingNode = nullptr;
+			if (function->Parameters().size() > 0)
+				firstExceedingNode = syntax->Arguments()->GetSeparator(function->Parameters().size() - 1);
+			else
+				firstExceedingNode = (*syntax->Arguments())[0];
+			auto lastExceedingArg = (*syntax->Arguments())[syntax->Arguments()->size() - 1];
+
+			span = TextSpan::FromBounds(firstExceedingNode->Span().Start(),
+				lastExceedingArg->Span().End());
+		} else
+		{
+			span = syntax->CloseParenthesisToken().Span();
+		}
+		_diagnostics->ReportWrongArgumentCount(span, function->Name(),
+			function->Parameters().size(), syntax->Arguments()->size());
 		return make_shared<BoundErrorExpression>();
 	}
 
+	auto hasError = false;
 	for (auto i = 0; i < syntax->Arguments()->size(); ++i)
 	{
 		auto arg = boundArguments[i].get();
 		auto param = function->Parameters()[i];
 		if (arg->Type() != param.Type())
 		{
-			_diagnostics->ReportWrongArgumentType(syntax->Span(), param.Name(),
-				param.Type(), arg->Type());
-			return make_shared<BoundErrorExpression>();
+			_diagnostics->ReportWrongArgumentType((*syntax->Arguments())[i]->Span(),
+				param.Name(), param.Type(), arg->Type());
+			hasError = true;
 		}
 	}
+	if (hasError)
+		return make_shared<BoundErrorExpression>();
+
 	return make_shared<BoundCallExpression>(function, boundArguments);
 }
 
