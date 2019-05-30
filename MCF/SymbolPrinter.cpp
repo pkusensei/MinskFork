@@ -2,15 +2,16 @@
 #include "SymbolPrinter.h"
 
 #include "Symbols.h"
+#include "SyntaxKind.h"
 
 namespace MCF {
 
-SymbolPrinter::SymbolPrinter(std::ostream & out)
+SymbolPrinter::SymbolPrinter(std::ostream& out)
 	:_writer(out)
 {
 }
 
-void SymbolPrinter::Write(const Symbol * symbol)
+void SymbolPrinter::Write(const Symbol* symbol)
 {
 	switch (symbol->Kind())
 	{
@@ -50,48 +51,57 @@ void SymbolPrinter::Write(const Symbol * symbol)
 	}
 }
 
-void SymbolPrinter::WriteFunction(const FunctionSymbol * symbol)
+void SymbolPrinter::WriteFunction(const FunctionSymbol* symbol)
 {
-	_writer.WriteKeyword("function ");
+	_writer.WriteKeyword(SyntaxKind::FunctionKeyword);
+	_writer.WriteSpace();
 	_writer.WriteIdentifier(symbol->Name());
-	_writer.WritePunctuation("(");
+	_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
 
 	for (int i = 0; i < symbol->Parameters().size(); ++i)
 	{
 		if (i > 0)
-			_writer.WritePunctuation(", ");
-
+		{
+			_writer.WriteKeyword(SyntaxKind::CommaToken);
+			_writer.WriteSpace();
+		}
 		Write(&(symbol->Parameters()[i]));
 	}
 
-	_writer.WritePunctuation(")");
+	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
 	_writer.WriteLine();
 }
 
-void SymbolPrinter::WriteGlobalVariable(const GlobalVariableSymbol * symbol)
+void SymbolPrinter::WriteGlobalVariable(const GlobalVariableSymbol* symbol)
 {
-	_writer.WriteKeyword(symbol->IsReadOnly() ? "let " : "var ");
+	_writer.WriteKeyword(symbol->IsReadOnly() ? SyntaxKind::LetKeyword : SyntaxKind::VarKeyword);
+	_writer.WriteSpace();
 	_writer.WriteIdentifier(symbol->Name());
-	_writer.WritePunctuation(": ");
+	_writer.WritePunctuation(SyntaxKind::ColonToken);
+	_writer.WriteSpace();
 	Write(&(symbol->Type()));
 }
 
-void SymbolPrinter::WriteLocalVariable(const LocalVariableSymbol * symbol)
+void SymbolPrinter::WriteLocalVariable(const LocalVariableSymbol* symbol)
 {
-	_writer.WriteKeyword(symbol->IsReadOnly() ? "let " : "var ");
+	_writer.WriteKeyword(symbol->IsReadOnly() ?
+		SyntaxKind::LetKeyword : SyntaxKind::VarKeyword);
+	_writer.WriteSpace();
 	_writer.WriteIdentifier(symbol->Name());
-	_writer.WritePunctuation(": ");
+	_writer.WritePunctuation(SyntaxKind::ColonToken);
+	_writer.WriteSpace();
 	Write(&(symbol->Type()));
 }
 
-void SymbolPrinter::WriteParameter(const ParameterSymbol * symbol)
+void SymbolPrinter::WriteParameter(const ParameterSymbol* symbol)
 {
 	_writer.WriteIdentifier(symbol->Name());
-	_writer.WritePunctuation(": ");
+	_writer.WritePunctuation(SyntaxKind::ColonToken);
+	_writer.WriteSpace();
 	Write(&(symbol->Type()));
 }
 
-void SymbolPrinter::WriteType(const TypeSymbol * symbol)
+void SymbolPrinter::WriteType(const TypeSymbol* symbol)
 {
 	_writer.WriteIdentifier(symbol->Name());
 }
