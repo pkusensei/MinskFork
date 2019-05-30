@@ -71,7 +71,7 @@ class Repl
 {
 private:
 	std::vector<std::string> _submissionHistory;
-	int _submissionHistoryIndex{0};
+	size_t _submissionHistoryIndex{0};
 	bool _done{false};
 
 	class SubmissionView;
@@ -119,10 +119,10 @@ class Repl::SubmissionView final
 private:
 	std::function<void(std::string)> _lineRenderer;
 	const ObservableCollection<std::string>* _submissionDocument;
-	const int _cursorTop;
+	const size_t _cursorTop;
 	int _renderedLineCount{0};
-	int _currentLine{0};
-	int _currentCharacter{0};
+	size_t _currentLine{0};
+	size_t _currentCharacter{0};
 
 	void SubmissionDocumentChanged();
 	void Render();
@@ -132,10 +132,10 @@ public:
 	SubmissionView(const std::function<void(std::string)>& lineRenderer,
 				   const ObservableCollection<std::string>& document);
 
-	int CurrentLine()const { return _currentLine; }
-	void CurrentLine(const int value);
-	int CurrentCharacter()const { return _currentCharacter; }
-	void CurrentCharacter(const int value);
+	size_t CurrentLine()const { return _currentLine; }
+	void CurrentLine(const size_t value);
+	size_t CurrentCharacter()const { return _currentCharacter; }
+	void CurrentCharacter(const size_t value);
 };
 
 class McfRepl final :public Repl

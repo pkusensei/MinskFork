@@ -353,7 +353,7 @@ void Repl::SubmissionView::UpdateCursorPosition()
 	MCF::SetCursorPosition(2 + _currentCharacter, _cursorTop + _currentLine);
 }
 
-void Repl::SubmissionView::CurrentLine(const int value)
+void Repl::SubmissionView::CurrentLine(const size_t value)
 {
 	if (_currentLine != value)
 	{
@@ -364,7 +364,7 @@ void Repl::SubmissionView::CurrentLine(const int value)
 	}
 }
 
-void Repl::SubmissionView::CurrentCharacter(const int value)
+void Repl::SubmissionView::CurrentCharacter(const size_t value)
 {
 	if (_currentCharacter != value)
 	{

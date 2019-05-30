@@ -115,15 +115,15 @@ int GetConsoleWidth()
 	return static_cast<int>(csbiInfo.dwSize.X);
 }
 
-int GetCursorTop()
+size_t GetCursorTop()
 {
 	auto hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
 	GetConsoleScreenBufferInfo(hStdout, &csbiInfo);
-	return static_cast<int>(csbiInfo.dwCursorPosition.Y);
+	return static_cast<size_t>(csbiInfo.dwCursorPosition.Y);
 }
 
-void SetCursorPosition(int x, int y)
+void SetCursorPosition(size_t x, size_t y)
 {
 	//HACK where should this +1 be
 	std::cout << CSI << y << ';' << x + 1 << 'f';

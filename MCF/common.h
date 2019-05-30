@@ -1,7 +1,10 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
+
+#pragma warning(disable: 4251)
 
 #ifdef MCF_EXPORTS
 #define MCF_API __declspec(dllexport)

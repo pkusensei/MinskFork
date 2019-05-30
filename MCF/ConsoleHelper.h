@@ -29,8 +29,8 @@ MCF_API void ResetConsoleColor();
 MCF_API void ClearConsole(char fill = ' ');
 MCF_API void SetCursorVisibility(bool visible = true);
 MCF_API int GetConsoleWidth();
-MCF_API int GetCursorTop();
-MCF_API void SetCursorPosition(int x, int y);
+MCF_API size_t GetCursorTop();
+MCF_API void SetCursorPosition(size_t x, size_t y);
 
 enum class KeyInputKind
 {
