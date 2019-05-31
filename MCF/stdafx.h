@@ -13,6 +13,7 @@
 
 // reference additional headers your program requires here
 
+#include <algorithm>
 #include <memory>
 #include <stack>
 #include <stdexcept>

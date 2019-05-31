@@ -168,6 +168,7 @@
     <ClInclude Include="common.h" />
     <ClInclude Include="Compilation.h" />
     <ClInclude Include="ConsoleHelper.h" />
+    <ClInclude Include="ControlFlowGraph.h" />
     <ClInclude Include="Conversion.h" />
     <ClInclude Include="Diagnostic.h" />
     <ClInclude Include="EnumHelper.h" />
@@ -193,6 +194,7 @@
     <ClCompile Include="BoundStatements.cpp" />
     <ClCompile Include="Compilation.cpp" />
     <ClCompile Include="ConsoleHelper.cpp" />
+    <ClCompile Include="ControlFlowGraph.cpp" />
     <ClCompile Include="Conversion.cpp" />
     <ClCompile Include="Diagnostic.cpp" />
     <ClCompile Include="dllmain.cpp" />

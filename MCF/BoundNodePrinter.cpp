@@ -3,11 +3,12 @@
 
 #include "BoundExpressions.h"
 #include "BoundStatements.h"
+#include "helpers.h"
 #include "SyntaxKind.h"
 
 namespace MCF {
 
-BoundNodePrinter::BoundNodePrinter(std::ostream & out)
+BoundNodePrinter::BoundNodePrinter(std::ostream& out)
 	:_writer(out)
 {
 }
@@ -141,7 +142,7 @@ void BoundNodePrinter::Write(const BoundNode* node)
 	}
 }
 
-void BoundNodePrinter::WriteNestedStatement(const BoundStatement * node)
+void BoundNodePrinter::WriteNestedStatement(const BoundStatement* node)
 {
 	auto p = dynamic_cast<const BoundBlockStatement*>(node);
 	auto needsIndentation = p == nullptr;
@@ -151,7 +152,7 @@ void BoundNodePrinter::WriteNestedStatement(const BoundStatement * node)
 }
 
 void BoundNodePrinter::WriteNestedExpression(int parentPrecedence,
-	const BoundExpression * node)
+	const BoundExpression* node)
 {
 	auto u = dynamic_cast<const BoundUnaryExpression*>(node);
 	auto b = dynamic_cast<const BoundBinaryExpression*>(node);
@@ -166,19 +167,19 @@ void BoundNodePrinter::WriteNestedExpression(int parentPrecedence,
 }
 
 void BoundNodePrinter::WriteNestedExpression(int parentPrecedence,
-	int currentPrecedence, const BoundExpression * node)
+	int currentPrecedence, const BoundExpression* node)
 {
 	auto needsParenthesis = parentPrecedence >= currentPrecedence;
 	if (needsParenthesis)
 		_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
-	
+
 	Write(node);
 
 	if (needsParenthesis)
 		_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
 }
 
-void BoundNodePrinter::WriteBlockStatement(const BoundBlockStatement * node)
+void BoundNodePrinter::WriteBlockStatement(const BoundBlockStatement* node)
 {
 	_writer.WritePunctuation(SyntaxKind::OpenBraceToken);
 	_writer.WriteLine();
@@ -190,9 +191,9 @@ void BoundNodePrinter::WriteBlockStatement(const BoundBlockStatement * node)
 	_writer.WriteLine();
 }
 
-void BoundNodePrinter::WriteVariableDeclaration(const BoundVariableDeclaration * node)
+void BoundNodePrinter::WriteVariableDeclaration(const BoundVariableDeclaration* node)
 {
-	_writer.WriteKeyword(node->Variable()->IsReadOnly() ? 
+	_writer.WriteKeyword(node->Variable()->IsReadOnly() ?
 		SyntaxKind::LetKeyword : SyntaxKind::VarKeyword);
 	_writer.WriteSpace();
 	_writer.WriteIdentifier(node->Variable()->Name());
@@ -203,7 +204,7 @@ void BoundNodePrinter::WriteVariableDeclaration(const BoundVariableDeclaration *
 	_writer.WriteLine();
 }
 
-void BoundNodePrinter::WriteIfStatement(const BoundIfStatement * node)
+void BoundNodePrinter::WriteIfStatement(const BoundIfStatement* node)
 {
 	_writer.WriteKeyword(SyntaxKind::IfKeyword);
 	_writer.WriteSpace();
@@ -219,7 +220,7 @@ void BoundNodePrinter::WriteIfStatement(const BoundIfStatement * node)
 	}
 }
 
-void BoundNodePrinter::WriteWhileStatement(const BoundWhileStatement * node)
+void BoundNodePrinter::WriteWhileStatement(const BoundWhileStatement* node)
 {
 	_writer.WriteKeyword(SyntaxKind::WhileKeyword);
 	_writer.WriteSpace();
@@ -228,7 +229,7 @@ void BoundNodePrinter::WriteWhileStatement(const BoundWhileStatement * node)
 	WriteNestedStatement(node->Body().get());
 }
 
-void BoundNodePrinter::WriteDoWhileStatement(const BoundDoWhileStatement * node)
+void BoundNodePrinter::WriteDoWhileStatement(const BoundDoWhileStatement* node)
 {
 	_writer.WriteKeyword(SyntaxKind::DoKeyword);
 	_writer.WriteLine();
@@ -239,7 +240,7 @@ void BoundNodePrinter::WriteDoWhileStatement(const BoundDoWhileStatement * node)
 	_writer.WriteLine();
 }
 
-void BoundNodePrinter::WriteForStatement(const BoundForStatement * node)
+void BoundNodePrinter::WriteForStatement(const BoundForStatement* node)
 {
 	_writer.WriteKeyword(SyntaxKind::ForKeyword);
 	_writer.WriteSpace();
@@ -256,7 +257,7 @@ void BoundNodePrinter::WriteForStatement(const BoundForStatement * node)
 	WriteNestedStatement(node->Body().get());
 }
 
-void BoundNodePrinter::WriteLabelStatement(const BoundLabelStatement * node)
+void BoundNodePrinter::WriteLabelStatement(const BoundLabelStatement* node)
 {
 	_writer.Dedent();
 	_writer.WritePunctuation(node->Label().Name());
@@ -265,14 +266,14 @@ void BoundNodePrinter::WriteLabelStatement(const BoundLabelStatement * node)
 	_writer.Indent();
 }
 
-void BoundNodePrinter::WriteGotoStatement(const BoundGotoStatement * node)
+void BoundNodePrinter::WriteGotoStatement(const BoundGotoStatement* node)
 {
 	_writer.WriteKeyword("goto ");
 	_writer.WriteIdentifier(node->Label().Name());
 	_writer.WriteLine();
 }
 
-void BoundNodePrinter::WriteConditionalGotoStatement(const BoundConditionalGotoStatement * node)
+void BoundNodePrinter::WriteConditionalGotoStatement(const BoundConditionalGotoStatement* node)
 {
 	_writer.WriteKeyword("goto ");
 	_writer.WriteIdentifier(node->Label().Name());
@@ -281,7 +282,7 @@ void BoundNodePrinter::WriteConditionalGotoStatement(const BoundConditionalGotoS
 	_writer.WriteLine();
 }
 
-void BoundNodePrinter::WriteReturnStatement(const BoundReturnStatement * node)
+void BoundNodePrinter::WriteReturnStatement(const BoundReturnStatement* node)
 {
 	_writer.WriteKeyword(SyntaxKind::ReturnKeyword);
 	if (node->Expression() != nullptr)
@@ -292,18 +293,18 @@ void BoundNodePrinter::WriteReturnStatement(const BoundReturnStatement * node)
 	_writer.WriteLine();
 }
 
-void BoundNodePrinter::WriteExpressionStatement(const BoundExpressionStatement * node)
+void BoundNodePrinter::WriteExpressionStatement(const BoundExpressionStatement* node)
 {
 	Write(node->Expression().get());
 	_writer.WriteLine();
 }
 
-void BoundNodePrinter::WriteErrorExpression(const BoundErrorExpression * node)
+void BoundNodePrinter::WriteErrorExpression(const BoundErrorExpression* node)
 {
 	_writer.WriteKeyword("?");
 }
 
-void BoundNodePrinter::WriteLiteralExpression(const BoundLiteralExpression * node)
+void BoundNodePrinter::WriteLiteralExpression(const BoundLiteralExpression* node)
 {
 	auto value = node->Value().ToString();
 	if (node->Type() == GetTypeSymbol(TypeEnum::Bool))
@@ -311,17 +312,20 @@ void BoundNodePrinter::WriteLiteralExpression(const BoundLiteralExpression * nod
 	else if (node->Type() == GetTypeSymbol(TypeEnum::Int))
 		_writer.WriteNumber(value);
 	else if (node->Type() == GetTypeSymbol(TypeEnum::String))
-		_writer.WriteKeyword(value);
-	else
+	{
+		StringReplaceAll(value, "\"", "\"\"");
+		value = '"' + value + '"';
+		_writer.WriteString(value);
+	} else
 		throw std::invalid_argument("Unexpected type " + node->Type().Name());
 }
 
-void BoundNodePrinter::WriteVariableExpression(const BoundVariableExpression * node)
+void BoundNodePrinter::WriteVariableExpression(const BoundVariableExpression* node)
 {
 	_writer.WriteIdentifier(node->Variable()->Name());
 }
 
-void BoundNodePrinter::WriteAssignmentExpression(const BoundAssignmentExpression * node)
+void BoundNodePrinter::WriteAssignmentExpression(const BoundAssignmentExpression* node)
 {
 	_writer.WriteIdentifier(node->Variable()->Name());
 	_writer.WriteSpace();
@@ -330,14 +334,14 @@ void BoundNodePrinter::WriteAssignmentExpression(const BoundAssignmentExpression
 	Write(node->Expression().get());
 }
 
-void BoundNodePrinter::WriteUnaryExpression(const BoundUnaryExpression * node)
+void BoundNodePrinter::WriteUnaryExpression(const BoundUnaryExpression* node)
 {
 	auto precedence = GetUnaryOperatorPrecedence(node->Op().SyntaxKind());
 	_writer.WritePunctuation(node->Op().SyntaxKind());
 	WriteNestedExpression(precedence, node->Operand().get());
 }
 
-void BoundNodePrinter::WriteBinaryExpression(const BoundBinaryExpression * node)
+void BoundNodePrinter::WriteBinaryExpression(const BoundBinaryExpression* node)
 {
 	auto precedence = GetBinaryOperatorPrecedence(node->Op().SyntaxKind());
 	WriteNestedExpression(precedence, node->Left().get());
@@ -347,7 +351,7 @@ void BoundNodePrinter::WriteBinaryExpression(const BoundBinaryExpression * node)
 	WriteNestedExpression(precedence, node->Right().get());
 }
 
-void BoundNodePrinter::WriteCallExpression(const BoundCallExpression * node)
+void BoundNodePrinter::WriteCallExpression(const BoundCallExpression* node)
 {
 	_writer.WriteIdentifier(node->Function()->Name());
 	_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
@@ -368,7 +372,7 @@ void BoundNodePrinter::WriteCallExpression(const BoundCallExpression * node)
 	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
 }
 
-void BoundNodePrinter::WriteConversionExpression(const BoundConversionExpression * node)
+void BoundNodePrinter::WriteConversionExpression(const BoundConversionExpression* node)
 {
 	_writer.WriteIdentifier(node->Type().Name());
 	_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
@@ -376,7 +380,7 @@ void BoundNodePrinter::WriteConversionExpression(const BoundConversionExpression
 	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
 }
 
-void BoundNodePrinter::WritePosifixExpression(const BoundPostfixExpression * node)
+void BoundNodePrinter::WritePosifixExpression(const BoundPostfixExpression* node)
 {
 }
 
