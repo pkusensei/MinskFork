@@ -295,7 +295,10 @@ bool ControlFlowGraph::AllPathsReturn(const BoundBlockStatement* body)
 	auto graph = Create(body);
 	for (const auto& branch : graph.End()->Incoming())
 	{
-		auto& lastStatement = branch->From()->Statements().back();
+		auto& statements = branch->From()->Statements();
+		if (statements.empty()) return false;
+
+		auto& lastStatement = statements.back();
 		if (lastStatement->Kind() != BoundNodeKind::ReturnStatement)
 			return false;
 	}
