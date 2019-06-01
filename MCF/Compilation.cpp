@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Compilation.h"
 
+#include <fstream>
 #include <iostream>
 #include <random>
 
@@ -8,13 +9,14 @@
 #include "BoundLabel.h"
 #include "BoundExpressions.h"
 #include "BoundStatements.h"
+#include "ControlFlowGraph.h"
 #include "Diagnostic.h"
 #include "Parsing.h"
 
 namespace MCF {
 
 EvaluationResult::EvaluationResult(DiagnosticBag* diagnostics,
-	const ValueType & value)
+	const ValueType& value)
 	:_diagnostics(diagnostics), _value(value)
 {
 }
@@ -30,7 +32,7 @@ ValueType Evaluator::Evaluate()
 	return EvaluateStatement(_program->Statement());
 }
 
-ValueType Evaluator::EvaluateStatement(const BoundBlockStatement * body)
+ValueType Evaluator::EvaluateStatement(const BoundBlockStatement* body)
 {
 	auto labelToIndex = std::unordered_map<BoundLabel, size_t, LabelHash>();
 	auto statements = body->Statements();
@@ -100,19 +102,19 @@ ValueType Evaluator::EvaluateStatement(const BoundBlockStatement * body)
 	return _lastValue;
 }
 
-void Evaluator::EvaluateVariableDeclaration(const BoundVariableDeclaration * node)
+void Evaluator::EvaluateVariableDeclaration(const BoundVariableDeclaration* node)
 {
 	auto value = EvaluateExpression(node->Initializer().get());
 	_lastValue = value;
 	Assign(node->Variable(), value);
 }
 
-void Evaluator::EvaluateExpressionStatement(const BoundExpressionStatement * node)
+void Evaluator::EvaluateExpressionStatement(const BoundExpressionStatement* node)
 {
 	_lastValue = EvaluateExpression(node->Expression().get());
 }
 
-ValueType Evaluator::EvaluateExpression(const BoundExpression * node)
+ValueType Evaluator::EvaluateExpression(const BoundExpression* node)
 {
 	switch (node->Kind())
 	{
@@ -170,12 +172,12 @@ ValueType Evaluator::EvaluateExpression(const BoundExpression * node)
 	throw std::invalid_argument("Invalid expression " + GetEnumText(node->Kind()));
 }
 
-ValueType Evaluator::EvaluateLiteralExpression(const BoundLiteralExpression * node)const
+ValueType Evaluator::EvaluateLiteralExpression(const BoundLiteralExpression* node)const
 {
 	return node->Value();
 }
 
-ValueType Evaluator::EvaluateVariableExpression(const BoundVariableExpression * node)
+ValueType Evaluator::EvaluateVariableExpression(const BoundVariableExpression* node)
 {
 	if (node->Variable()->Kind() == SymbolKind::GlobalVariable)
 		return _globals->at(node->Variable());
@@ -186,14 +188,14 @@ ValueType Evaluator::EvaluateVariableExpression(const BoundVariableExpression * 
 	}
 }
 
-ValueType Evaluator::EvaluateAssignmentExpression(const BoundAssignmentExpression * node)
+ValueType Evaluator::EvaluateAssignmentExpression(const BoundAssignmentExpression* node)
 {
 	auto value = EvaluateExpression(node->Expression().get());
 	Assign(node->Variable(), value);
 	return value;
 }
 
-ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression * node)
+ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression* node)
 {
 	auto operand = EvaluateExpression(node->Operand().get());
 	switch (node->Op().Kind())
@@ -212,7 +214,7 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression * node)
 	}
 }
 
-ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node)
+ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression* node)
 {
 	auto left = EvaluateExpression(node->Left().get());
 	auto right = EvaluateExpression(node->Right().get());
@@ -265,7 +267,7 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression * node
 	}
 }
 
-ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node)
+ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 {
 	if (*(node->Function()) == GetBuiltinFunction(BuiltinFuncEnum::Input))
 	{
@@ -279,7 +281,7 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node)
 	} else if (*(node->Function()) == GetBuiltinFunction(BuiltinFuncEnum::Print))
 	{
 		auto message = EvaluateExpression(node->Arguments()[0].get());
-		std::cout << message.GetValue<string>() << '\n';
+		std::cout << message.GetValue<string>() << NEW_LINE;
 		return NullValue;
 	} else if (*(node->Function()) == GetBuiltinFunction(BuiltinFuncEnum::Rnd))
 	{
@@ -312,7 +314,7 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression * node)
 	}
 }
 
-ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpression * node)
+ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpression* node)
 {
 	auto value = EvaluateExpression(node->Expression().get());
 	if (node->Type() == GetTypeSymbol(TypeEnum::Bool))
@@ -325,7 +327,7 @@ ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpressio
 		throw std::invalid_argument("Unexpected type " + node->Type().ToString());
 }
 
-ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression * node)
+ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression* node)
 {
 	auto value = EvaluateExpression(node->Expression().get());
 	auto result = value.GetValue<IntegerType>();
@@ -342,7 +344,7 @@ ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression * no
 	}
 }
 
-void Evaluator::Assign(const shared_ptr<VariableSymbol>& variable, const ValueType & value)
+void Evaluator::Assign(const shared_ptr<VariableSymbol>& variable, const ValueType& value)
 {
 	if (variable->Kind() == SymbolKind::GlobalVariable)
 		_globals->insert_or_assign(variable, value);
@@ -393,6 +395,21 @@ unique_ptr<Compilation> Compilation::ContinueWith(unique_ptr<Compilation>& previ
 
 EvaluationResult Compilation::Evaluate(VarMap& variables)
 {
+	auto createCfgFile = [](const BoundProgram& p)
+	{
+		auto file = std::ofstream();
+		file.open("cfg.dot", std::ios_base::out | std::ios_base::trunc);
+		if (file.is_open())
+		{
+			auto cfgStatement =
+				p.Statement()->Statements().empty() && !p.Functions().empty() ?
+				(--p.Functions().end())->second.get()
+				: p.Statement();
+			auto cfg = ControlFlowGraph::Create(cfgStatement);
+			cfg.WriteTo(file);
+		}
+	};
+
 	_syntaxTree->Diagnostics()->AddRange(*(GlobalScope()->Diagnostics()));
 	_diagnostics->AddRange(*_syntaxTree->Diagnostics());
 
@@ -400,6 +417,7 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 		return EvaluationResult(_diagnostics.get(), NullValue);
 
 	auto program = Binder::BindProgram(GlobalScope());
+	createCfgFile(*program);
 	if (!program->Diagnostics()->empty())
 	{
 		_diagnostics->AddRange(*program->Diagnostics());
@@ -411,7 +429,7 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 	return EvaluationResult(_diagnostics.get(), value);
 }
 
-void Compilation::EmitTree(std::ostream & out)
+void Compilation::EmitTree(std::ostream& out)
 {
 	auto program = Binder::BindProgram(GlobalScope());
 	if (!program->Statement()->Statements().empty())

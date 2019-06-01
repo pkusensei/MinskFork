@@ -9,7 +9,7 @@
 
 namespace MCF {
 
-void Symbol::WriteTo(std::ostream & out) const
+void Symbol::WriteTo(std::ostream& out) const
 {
 	auto printer = SymbolPrinter(out);
 	printer.Write(this);
@@ -22,17 +22,17 @@ string Symbol::ToString() const
 	return ss.str();
 }
 
-bool Symbol::operator==(const Symbol & other) const noexcept
+bool Symbol::operator==(const Symbol& other) const noexcept
 {
 	return Name() == other.Name();
 }
 
-bool Symbol::operator!=(const Symbol & other) const noexcept
+bool Symbol::operator!=(const Symbol& other) const noexcept
 {
 	return !(*this == other);
 }
 
-size_t SymbolHash::operator()(const Symbol & s) const noexcept
+size_t SymbolHash::operator()(const Symbol& s) const noexcept
 {
 	return std::hash<string>{}(s.Name());
 }
@@ -42,7 +42,7 @@ size_t SymbolHash::operator()(const shared_ptr<Symbol>& s) const noexcept
 	return SymbolHash{}(*s);
 }
 
-bool SymbolEqual::operator()(const Symbol & lhs, const Symbol & rhs) const
+bool SymbolEqual::operator()(const Symbol& lhs, const Symbol& rhs) const
 {
 	return lhs == rhs;
 }
@@ -70,20 +70,20 @@ const TypeSymbol& GetTypeSymbol(const TypeEnum& kind)
 	}
 }
 
-size_t ParameterHash::operator()(const ParameterSymbol & ps) const noexcept
+size_t ParameterHash::operator()(const ParameterSymbol& ps) const noexcept
 {
 	return std::hash<string>{}(ps.Type().Name());
 }
 
-FunctionSymbol::FunctionSymbol(const string & name, const vector<ParameterSymbol>& params,
-	const TypeSymbol & type,
+FunctionSymbol::FunctionSymbol(const string& name, const vector<ParameterSymbol>& params,
+	const TypeSymbol& type,
 	const FunctionDeclarationSyntax* declaration)
 	: Symbol(name), _params(params), _type(type), _declaration(declaration)
 {
 }
 
-FunctionSymbol::FunctionSymbol(const string & name,
-	const vector<ParameterSymbol>& params, const TypeSymbol & type)
+FunctionSymbol::FunctionSymbol(const string& name,
+	const vector<ParameterSymbol>& params, const TypeSymbol& type)
 	: FunctionSymbol(name, params, type, nullptr)
 {
 }
@@ -93,7 +93,7 @@ FunctionSymbol::FunctionSymbol()
 {
 }
 
-size_t FunctionHash::operator()(const FunctionSymbol & fs) const noexcept
+size_t FunctionHash::operator()(const FunctionSymbol& fs) const noexcept
 {
 	auto result = SymbolHash{}(fs);
 	for (const auto& it : fs.Parameters())
@@ -109,7 +109,7 @@ size_t FunctionHash::operator()(const shared_ptr<FunctionSymbol>& fs) const noex
 	return (*this)(*fs);
 }
 
-string GetEnumText(const SymbolKind & kind)
+string GetEnumText(const SymbolKind& kind)
 {
 	switch (kind)
 	{
@@ -128,7 +128,7 @@ string GetEnumText(const SymbolKind & kind)
 	}
 }
 
-const FunctionSymbol& GetBuiltinFunction(const BuiltinFuncEnum & kind)
+const FunctionSymbol& GetBuiltinFunction(const BuiltinFuncEnum& kind)
 {
 	static const auto& funcs = GetAllBuiltinFunctions();
 
@@ -203,7 +203,7 @@ IntegerType ValueType::ToInteger() const
 				return StringToInteger(GetValue<string>());
 			} catch (...)
 			{
-				[[fallthrough]];
+				[[fallthrough]] ;
 			}
 		default:
 			throw std::invalid_argument("Type cannot convert to IntegerType");
@@ -231,7 +231,7 @@ string ValueType::ToString() const
 	return result;
 }
 
-size_t ValueType::GetValueTypeId(const TypeSymbol & inType)
+size_t ValueType::GetValueTypeId(const TypeSymbol& inType)
 {
 	static std::unordered_map<TypeSymbol, size_t, SymbolHash> types = {
 		{GetTypeSymbol(TypeEnum::Error), 0},
@@ -243,12 +243,12 @@ size_t ValueType::GetValueTypeId(const TypeSymbol & inType)
 	return types.at(inType);
 }
 
-std::ostream & operator<<(std::ostream & out, const ValueType & value)
+std::ostream& operator<<(std::ostream& out, const ValueType& value)
 {
 	if (value.HasValue())
 		out << value.ToString();
 	else
-		out << "Not valid value or type.\n";
+		out << "Not valid value or type." << NEW_LINE;
 	return out;
 }
 

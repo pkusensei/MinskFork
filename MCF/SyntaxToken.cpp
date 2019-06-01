@@ -34,7 +34,7 @@ void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node,
 	if (isToConsole)
 		ResetConsoleColor();
 
-	out << '\n';
+	out << NEW_LINE;
 	indent += isLast ? "   " : "|  ";
 	auto children = node->GetChildren();
 	if (!children.empty())

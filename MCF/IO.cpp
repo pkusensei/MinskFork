@@ -30,7 +30,7 @@ void TextWriter::WriteKeyword(const SyntaxKind & kind)
 
 void TextWriter::WriteLine()
 {
-	_out << '\n';
+	_out << NEW_LINE;
 }
 
 void TextWriter::WriteKeyword(const string & text)
