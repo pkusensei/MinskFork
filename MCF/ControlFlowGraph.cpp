@@ -113,23 +113,24 @@ void VectorErase_If(vector<T>& vec, Pred pred)
 void ControlFlowGraph::GraphBuilder::RemoveBlock(vector<unique_ptr<BasicBlock>>& blocks,
 	BasicBlock& block)
 {
+	auto capturePtrToErase = [](const auto* branch)
+	{
+		return [&branch](const auto& it) { return *it == *branch; };
+	};
+
 	for (const auto& branch : block.Incoming())
 	{
 		auto& outgoing = branch->From()->Outgoing();
-		auto it = std::find(outgoing.begin(), outgoing.end(), branch);
-		outgoing.erase(it);
-		VectorErase_If(_branches, 
-			[&branch](const auto& it) { return it.get() == branch; });
+		VectorErase_If(outgoing, capturePtrToErase(branch));
+		VectorErase_If(_branches, capturePtrToErase(branch));
 	}
 	for (const auto& branch : block.Outgoing())
 	{
 		auto& incoming = branch->To()->Incoming();
-		auto it = std::find(incoming.begin(), incoming.end(), branch);
-		incoming.erase(it);
-		VectorErase_If(_branches, 
-			[&branch](const auto& it) { return it.get() == branch; });
+		VectorErase_If(incoming, capturePtrToErase(branch));
+		VectorErase_If(_branches, capturePtrToErase(branch));
 	}
-	VectorErase_If(blocks, [&block](const auto& it) { return *it == block; });
+	VectorErase_If(blocks, capturePtrToErase(&block));
 }
 
 shared_ptr<BoundExpression> ControlFlowGraph::GraphBuilder::Negate(

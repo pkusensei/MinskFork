@@ -29,6 +29,6 @@ inline IntegerType StringToInteger(const string& s)
 	return std::stol(s);
 }
 
-extern constexpr auto NEW_LINE = '\n';
+constexpr auto NEW_LINE = '\n';
 
 }//MCF
