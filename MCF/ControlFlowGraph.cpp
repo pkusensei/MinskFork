@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "ControlFlowGraph.h"
 
-#include <sstream>
 #include <algorithm>
+#include <sstream>
 
 #include "BoundExpressions.h"
 #include "BoundStatements.h"
@@ -38,7 +38,7 @@ void ControlFlowGraph::BasicBlockBuilder::EndBlock()
 	if (!_statements.empty())
 	{
 		//NOTE using id to add == support
-		//intends to have start as 0, end as -1
+		//intends to have start as 1, end as 0
 		auto block = make_unique<BasicBlock>(++_blockId);
 		auto& s = block->Statements();
 		s.insert(s.end(), _statements.begin(), _statements.end());
@@ -106,8 +106,8 @@ void ControlFlowGraph::GraphBuilder::Connect(BasicBlock& from, BasicBlock& to,
 template<typename T, typename Pred>
 void VectorErase_If(vector<T>& vec, Pred pred)
 {
-	auto it = std::find_if(vec.begin(), vec.end(), pred);
-	vec.erase(it);
+	auto it = std::remove_if(vec.begin(), vec.end(), pred);
+	vec.erase(it, vec.end());
 }
 
 void ControlFlowGraph::GraphBuilder::RemoveBlock(vector<unique_ptr<BasicBlock>>& blocks,
@@ -231,7 +231,7 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 		loopAgain = false;
 		for (auto& block : blocks)
 		{
-			if (block && block->Incoming().empty())
+			if (block->Incoming().empty())
 			{
 				RemoveBlock(blocks, *block);
 				loopAgain = true;

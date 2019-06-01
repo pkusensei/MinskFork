@@ -30,7 +30,7 @@ public:
 		vector<BasicBlockBranch*> _outgoing;
 
 	public:
-		explicit BasicBlock(int id = -1, bool isStart = false, bool isEnd = false)
+		explicit BasicBlock(int id = 0, bool isStart = false, bool isEnd = false)
 			: _id(id), _isStart(isStart), _isEnd(isEnd)
 		{
 		}
@@ -101,7 +101,7 @@ public:
 class ControlFlowGraph::BasicBlockBuilder final
 {
 private:
-	int _blockId = 0;
+	int _blockId = 1;
 	vector<BoundStatement*> _statements;
 	vector<unique_ptr<BasicBlock>> _blocks;
 
@@ -128,7 +128,8 @@ private:
 
 public:
 	GraphBuilder()
-		:_start(make_unique<BasicBlock>(0, true)), _end(make_unique<BasicBlock>(-1, false, true))
+		:_start(make_unique<BasicBlock>(1, true)), 
+		_end(make_unique<BasicBlock>(0, false, true))
 	{
 	}
 	ControlFlowGraph Build(vector<unique_ptr<BasicBlock>>& blocks);
