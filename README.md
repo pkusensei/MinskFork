@@ -11,13 +11,19 @@ Although this fork stays as close to the original as possible, there are some de
 
     `std::variant` comes in handy here to mimic `object` in C#, and `std::monostate` acts as a placeholder for `null`. The caveat is consumers/users of this hack have to know the underlying type stored in `std::variant` if they want to read the value. Then again C++ is a statically typed language.
 
-- Redundancy in `GetChildren` and `GetProperties` virtual member functions. 
+- Redundancy in `GetChildren` ~~and `GetProperties`~~ virtual member functions. 
 
-    The lack of reflection makes writing such functions in `SyntaxNode` and `BoundNode` base classes impossible. C++ doesn't even have the concept of property. 
+    The lack of reflection makes writing such functions in `SyntaxNode` ~~and `BoundNode`~~ base class~~es~~ impossible. ~~C++ doesn't even have the concept of property.~~ This problem is partly alleviated by conjuring up some template functions.
 
 - The lowering process, i.e. `BoundTreeReriter` & `Lowerer` ~~, analyzes the existing bound tree and generates a new one.~~
 
-    ~~This is mainly because `BoundNode`s exposing `std::unique_ptr`s directly would break encapsulation. `std::shared_ptr`s would cause another slew of problems. The original lowering process tries its best to reduce memory allocation while this one does not. As a result, `Lowerer::Flatten` has to be a non-static member function.~~ I caved in. The ownership of `BoundNode`s between `BoundProgram` and `BoundGlobalScope` and `BoundScope` is sometimes hard to reason. Esp. between the former two, shared ownership cannot be ruled out.
+    ~~This is mainly because `BoundNode`s exposing `std::unique_ptr`s directly would break encapsulation. `std::shared_ptr`s would cause another slew of problems. The original lowering process tries its best to reduce memory allocation while this one does not. As a result, `Lowerer::Flatten` has to be a non-static member function.~~ 
+    
+    I caved in. The ownership of `BoundNode`s between `BoundProgram` and `BoundGlobalScope` and `BoundScope` is sometimes hard to reason. Esp. between the former two, shared ownership cannot be ruled out. On a flip side this helps reducing memory allocation when rewriting the bound tree.
+
+- Templates vs Generics
+
+    While powerful, C++ template functions and classes are hard to write, and (maybe) even harder to reason about. And using `std::enable_if` and such to mimic type constraints is not very elegant in any way. (What? CONCEPTS are coming? What about that?)
 
 - Postfix operations, i.e. `i++` & `i--`
 

@@ -113,9 +113,9 @@ void VectorErase_If(vector<T>& vec, Pred pred)
 void ControlFlowGraph::GraphBuilder::RemoveBlock(vector<unique_ptr<BasicBlock>>& blocks,
 	BasicBlock& block)
 {
-	auto capturePtrToErase = [](const auto* branch)
+	auto capturePtrToErase = [](const auto* p)
 	{
-		return [&branch](const auto& it) { return *it == *branch; };
+		return [p = p](const auto& it) { return *it == *p; };
 	};
 
 	for (const auto& branch : block.Incoming())

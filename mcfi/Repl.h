@@ -1,7 +1,6 @@
 #pragma once
 
 #include <functional>
-#include <initializer_list>
 #include <string>
 
 #include "Symbols.h"
@@ -11,7 +10,7 @@ class Compilation;
 struct KeyInfo;
 
 using VarMap = std::unordered_map<shared_ptr<VariableSymbol>, ValueType,
-								 SymbolHash, SymbolEqual>; //HACK
+	SymbolHash, SymbolEqual>; //HACK
 }
 
 template<typename T>
@@ -23,12 +22,18 @@ private:
 	void CollectionChanged() { _action(); }
 
 public:
-	ObservableCollection(const std::initializer_list<T>& init) :_collection(init) {}
+	template<typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T>>>
+	constexpr explicit ObservableCollection(U&& init)
+		:_collection()
+	{
+		_collection.emplace_back(std::forward<U>(init));
+	}
+
 	void SetAction(const std::function<void()>& action) { _action = action; }
 
-	size_t size()const { return _collection.size(); }
+	size_t size()const noexcept{ return _collection.size(); }
 	const T& operator[](size_t index)const { return _collection.at(index); }
-	const std::vector<T>& Contents()const { return _collection; }
+	const std::vector<T>& Contents()const noexcept{ return _collection; }
 
 	template<typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T>>>
 	void Add(U&& content)
@@ -71,13 +76,13 @@ class Repl
 {
 private:
 	std::vector<std::string> _submissionHistory;
-	size_t _submissionHistoryIndex{0};
-	bool _done{false};
+	size_t _submissionHistoryIndex{ 0 };
+	bool _done{ false };
 
 	class SubmissionView;
 	std::string EditSubmission();
 	void HandleKey(const MCF::KeyInfo& key, ObservableCollection<std::string>* document,
-				   SubmissionView* view);
+		SubmissionView* view);
 
 	void HandleEscape(ObservableCollection<std::string>* document, SubmissionView* view);
 	void HandleEnter(ObservableCollection<std::string>* document, SubmissionView* view);
@@ -99,7 +104,7 @@ private:
 	void UpdateDocumentFromHistory(ObservableCollection<std::string>* document, SubmissionView* view);
 
 	void HandleTyping(ObservableCollection<std::string>* document, SubmissionView* view,
-					  const std::string& text);
+		const std::string& text);
 
 protected:
 	virtual void RenderLine(const std::string& line)const;
@@ -120,9 +125,9 @@ private:
 	std::function<void(std::string)> _lineRenderer;
 	const ObservableCollection<std::string>* _submissionDocument;
 	const size_t _cursorTop;
-	int _renderedLineCount{0};
-	size_t _currentLine{0};
-	size_t _currentCharacter{0};
+	int _renderedLineCount{ 0 };
+	size_t _currentLine{ 0 };
+	size_t _currentCharacter{ 0 };
 
 	void SubmissionDocumentChanged();
 	void Render();
@@ -130,7 +135,7 @@ private:
 
 public:
 	SubmissionView(const std::function<void(std::string)>& lineRenderer,
-				   const ObservableCollection<std::string>& document);
+		const ObservableCollection<std::string>& document);
 
 	size_t CurrentLine()const { return _currentLine; }
 	void CurrentLine(const size_t value);
@@ -141,17 +146,17 @@ public:
 class McfRepl final :public Repl
 {
 private:
-	std::unique_ptr<MCF::Compilation> _previous{nullptr};
-	bool _showTree{false};
-	bool _showProgram{true};
+	std::unique_ptr<MCF::Compilation> _previous{ nullptr };
+	bool _showTree{ false };
+	bool _showProgram{ true };
 	MCF::VarMap _variables;
 
 protected:
 	// Inherited via Repl
 	void RenderLine(const std::string& line)const override;
 	void EvaluateMetaCommand(const std::string& input) override;
-	bool IsCompleteSubmission(const std::string & text) const override;
-	void EvaluateSubmission(const std::string & text) override;
+	bool IsCompleteSubmission(const std::string& text) const override;
+	void EvaluateSubmission(const std::string& text) override;
 
 public:
 	McfRepl();
