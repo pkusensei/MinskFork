@@ -8,11 +8,6 @@
 
 namespace MCF {
 
-BoundNodePrinter::BoundNodePrinter(std::ostream& out)
-	:_writer(out)
-{
-}
-
 void BoundNodePrinter::Write(const BoundNode* node)
 {
 	switch (node->Kind())
@@ -382,6 +377,9 @@ void BoundNodePrinter::WriteConversionExpression(const BoundConversionExpression
 
 void BoundNodePrinter::WritePosifixExpression(const BoundPostfixExpression* node)
 {
+	_writer.WriteIdentifier(node->Variable()->Name());
+	_writer.WritePunctuation(node->OperatorKind() == BoundPostfixOperatorEnum::Increment ?
+		SyntaxKind::PlusPlusToken : SyntaxKind::MinusMinusToken);
 }
 
 }//MCF

@@ -488,7 +488,7 @@ void McfRepl::EvaluateSubmission(const std::string& text)
 			auto tree = compilation->Syntax();
 			auto lineIndex = tree->Text().GetLineIndex(diag.Span().Start());
 			auto lineNumber = lineIndex + 1;
-			auto line = tree->Text().Lines()[lineIndex];
+			auto& line = tree->Text().Lines()[lineIndex];
 			auto character = diag.Span().Start() - line.Start() + 1;
 			std::cout << '\n';
 

@@ -2,28 +2,26 @@
 
 #include <deque>
 
+#include "SourceText.h"
 #include "Symbols.h"
 
 namespace MCF {
 
 enum class SyntaxKind;
-class TextSpan;
 
 class MCF_API Diagnostic final
 {
 private:
-	unique_ptr<TextSpan> _span;
+	TextSpan _span;
 	string _message;
 
 public:
-	Diagnostic(const TextSpan& span, const string& message);
-	~Diagnostic();
-	Diagnostic(const Diagnostic&) = default;
-	Diagnostic(Diagnostic&&);
-	Diagnostic& operator=(const Diagnostic& other) = default;
-	Diagnostic& operator=(Diagnostic&&);
+	Diagnostic(const TextSpan& span, const string& message)
+		:_span(span), _message(message)
+	{
+	}
 
-	TextSpan Span() const;
+	const TextSpan& Span() const noexcept { return _span; }
 	string Message() const { return _message; }
 };
 
@@ -34,7 +32,10 @@ private:
 	void Report(const TextSpan& span, const string& message);
 
 public:
-	DiagnosticBag();
+	DiagnosticBag()
+		:_diagnostics(std::deque<Diagnostic>())
+	{
+	}
 	DiagnosticBag(DiagnosticBag&&) = default;
 	DiagnosticBag& operator=(DiagnosticBag&&) = default;
 
@@ -73,19 +74,19 @@ public:
 	void ReportWrongArgumentType(const TextSpan& span, const string& name,
 		const TypeSymbol& expectedType, const TypeSymbol& actualType);
 	void ReportExpressionMustHaveValue(const TextSpan& span);
-	void ReportInvalidBreakOrContinue(const TextSpan & span, const string& text);
+	void ReportInvalidBreakOrContinue(const TextSpan& span, const string& text);
 
-	void ReportExpressionNotSupportPostfixOperator(const TextSpan & span,
-		const string & operatorText, const SyntaxKind& kind);
+	void ReportExpressionNotSupportPostfixOperator(const TextSpan& span,
+		const string& operatorText, const SyntaxKind& kind);
 
 	void ReportAllPathsMustReturn(const TextSpan& span);
 	void ReportInvalidReturn(const TextSpan& span);
 	void ReportInvalidReturnExpression(const TextSpan& span, const string& funcName);
-	void ReportMissingReturnExpression(const TextSpan& span, 
+	void ReportMissingReturnExpression(const TextSpan& span,
 		const TypeSymbol& returnType);
 
-	void ReportVariableNotSupportPostfixOperator(const TextSpan & span,
-		const string & operatorText, const TypeSymbol& variableType);
+	void ReportVariableNotSupportPostfixOperator(const TextSpan& span,
+		const string& operatorText, const TypeSymbol& variableType);
 };
 
 class MCF_API DiagnosticBag::iterator

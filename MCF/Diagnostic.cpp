@@ -3,29 +3,9 @@
 
 #include <algorithm>
 
-#include "SourceText.h"
 #include "SyntaxKind.h"
 
 namespace MCF {
-
-Diagnostic::Diagnostic(const TextSpan& span, const string& message)
-	:_span(make_unique<TextSpan>(span.Start(), span.Length())), _message(message)
-{
-}
-
-Diagnostic::~Diagnostic() = default;
-Diagnostic::Diagnostic(Diagnostic &&) = default;
-Diagnostic & Diagnostic::operator=(Diagnostic &&) = default;
-
-TextSpan Diagnostic::Span() const
-{
-	return *_span;
-}
-
-DiagnosticBag::DiagnosticBag()
-	:_diagnostics(std::deque<Diagnostic>())
-{
-}
 
 void DiagnosticBag::Report(const TextSpan& span, const string& message)
 {

@@ -50,7 +50,6 @@ string GetEnumText(const BoundPostfixOperatorEnum& kind);
 class BoundExpression :public BoundNode
 {
 public:
-	// Inherited via BoundNode
 	virtual TypeSymbol Type() const = 0;
 };
 
@@ -72,10 +71,11 @@ private:
 	bool _isUseful = true;
 
 	BoundUnaryOperator(const SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
-					   const TypeSymbol& operandType, const TypeSymbol& resultType);
+		const TypeSymbol& operandType, const TypeSymbol& resultType);
 	BoundUnaryOperator(const SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
-					   const TypeSymbol& operandType);
+		const TypeSymbol& operandType);
 	BoundUnaryOperator();
+
 	static const vector<BoundUnaryOperator>& Operators();
 
 public:
@@ -85,8 +85,8 @@ public:
 	const TypeSymbol& Type()const { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
-	static BoundUnaryOperator Bind(const enum SyntaxKind& synKind, 
-								   const TypeSymbol& type);
+	static BoundUnaryOperator Bind(const enum SyntaxKind& synKind,
+		const TypeSymbol& type);
 };
 
 class BoundUnaryExpression final : public BoundExpression
@@ -96,8 +96,11 @@ private:
 	shared_ptr<BoundExpression> _operand;
 
 public:
-	BoundUnaryExpression(const BoundUnaryOperator& op, 
-						 const shared_ptr<BoundExpression>& operand);
+	BoundUnaryExpression(const BoundUnaryOperator& op,
+		const shared_ptr<BoundExpression>& operand)
+		:_op(op), _operand(operand)
+	{
+	}
 	BoundUnaryExpression(BoundUnaryExpression&&) = default;
 	BoundUnaryExpression& operator=(BoundUnaryExpression&&) = default;
 
@@ -120,12 +123,11 @@ private:
 	bool _isUseful = true;
 
 	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
-						const TypeSymbol& left, const TypeSymbol& right, 
-						const TypeSymbol& result);
+		const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result);
 	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
-						const TypeSymbol& operandType, const TypeSymbol& resultType);
-	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind, 
-						const TypeSymbol& type);
+		const TypeSymbol& operandType, const TypeSymbol& resultType);
+	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
+		const TypeSymbol& type);
 	BoundBinaryOperator();
 
 	static const vector<BoundBinaryOperator>& Operators();
@@ -138,8 +140,8 @@ public:
 	const TypeSymbol& Type()const { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
-	static BoundBinaryOperator Bind(const enum SyntaxKind& synKind, 
-									const TypeSymbol& leftType, const TypeSymbol& rightType);
+	static BoundBinaryOperator Bind(const enum SyntaxKind& synKind,
+		const TypeSymbol& leftType, const TypeSymbol& rightType);
 };
 
 class BoundBinaryExpression final : public BoundExpression
@@ -151,8 +153,10 @@ private:
 
 public:
 	BoundBinaryExpression(const shared_ptr<BoundExpression>& left,
-						  const BoundBinaryOperator& op, 
-						  const shared_ptr<BoundExpression>& right);
+		const BoundBinaryOperator& op, const shared_ptr<BoundExpression>& right)
+		:_left(left), _right(right), _op(op)
+	{
+	}
 	BoundBinaryExpression(BoundBinaryExpression&&) = default;
 	BoundBinaryExpression& operator=(BoundBinaryExpression&&) = default;
 
@@ -173,7 +177,10 @@ private:
 
 public:
 	BoundAssignmentExpression(const shared_ptr<VariableSymbol>& variable,
-							  const shared_ptr<BoundExpression>& expression);
+		const shared_ptr<BoundExpression>& expression)
+		:_variable(variable), _expression(expression)
+	{
+	}
 	BoundAssignmentExpression(BoundAssignmentExpression&&) = default;
 	BoundAssignmentExpression& operator=(BoundAssignmentExpression&&) = default;
 
@@ -191,7 +198,10 @@ private:
 	ValueType _value;
 
 public:
-	explicit BoundLiteralExpression(const ValueType& value);
+	explicit BoundLiteralExpression(const ValueType& value)
+		: _value(value)
+	{
+	}
 	BoundLiteralExpression(BoundLiteralExpression&&) = default;
 	BoundLiteralExpression& operator=(BoundLiteralExpression&&) = default;
 
@@ -208,7 +218,10 @@ private:
 	shared_ptr<VariableSymbol> _variable;
 
 public:
-	BoundVariableExpression(const shared_ptr<VariableSymbol>& variable);
+	explicit BoundVariableExpression(const shared_ptr<VariableSymbol>& variable)
+		: _variable(variable)
+	{
+	}
 	BoundVariableExpression(BoundVariableExpression&&) = default;
 	BoundVariableExpression& operator=(BoundVariableExpression&&) = default;
 
@@ -227,7 +240,10 @@ private:
 
 public:
 	BoundCallExpression(const shared_ptr<FunctionSymbol>& function,
-						const vector<shared_ptr<BoundExpression>>& arguments);
+		const vector<shared_ptr<BoundExpression>>& arguments)
+		:_function(function), _arguments(arguments)
+	{
+	}
 	BoundCallExpression(BoundCallExpression&&) = default;
 	BoundCallExpression& operator=(BoundCallExpression&&) = default;
 
@@ -247,7 +263,10 @@ private:
 
 public:
 	BoundConversionExpression(const TypeSymbol& type,
-							  const shared_ptr<BoundExpression>& expression);
+		const shared_ptr<BoundExpression>& expression)
+		:_type(type), _expression(expression)
+	{
+	}
 	BoundConversionExpression(BoundConversionExpression&&) = default;
 	BoundConversionExpression& operator=(BoundConversionExpression&&) = default;
 
@@ -267,8 +286,11 @@ private:
 
 public:
 	BoundPostfixExpression(const shared_ptr<VariableSymbol>& variable,
-						   const BoundPostfixOperatorEnum& kind, 
-						   const shared_ptr<BoundExpression>& expression);
+		const BoundPostfixOperatorEnum& kind,
+		const shared_ptr<BoundExpression>& expression)
+		:_variable(variable), _kind(kind), _expression(expression)
+	{
+	}
 	BoundPostfixExpression(BoundPostfixExpression&&) = default;
 	BoundPostfixExpression& operator=(BoundPostfixExpression&&) = default;
 

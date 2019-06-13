@@ -233,7 +233,7 @@ public:
 		for (const auto& it : data)
 		{
 			auto sourceText = MCF::SourceText::From(it.first);
-			auto lines = sourceText.Lines();
+			auto& lines = sourceText.Lines();
 			Assert::AreEqual(it.second, lines.size());
 		}
 	}

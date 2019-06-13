@@ -4,7 +4,6 @@
 #include <cctype>
 
 #include "Diagnostic.h"
-#include "SourceText.h"
 #include "SyntaxToken.h"
 
 namespace MCF {

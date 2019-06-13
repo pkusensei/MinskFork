@@ -12,7 +12,6 @@
 #include "Lowering.h"
 #include "Parsing.h"
 #include "ReflectionHelper.h"
-#include "SourceText.h"
 
 namespace MCF {
 

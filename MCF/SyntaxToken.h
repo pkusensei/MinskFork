@@ -11,8 +11,8 @@ class SyntaxToken;
 class MCF_API SyntaxNode
 {
 private:
-	static void PrettyPrint(std::ostream& out, const SyntaxNode* node, 
-							string indent = "", bool isLast = true);
+	static void PrettyPrint(std::ostream& out, const SyntaxNode* node,
+		string indent = "", bool isLast = true);
 public:
 	virtual ~SyntaxNode() = default;
 	virtual SyntaxKind Kind() const = 0;
@@ -34,7 +34,7 @@ private:
 	ValueType _value;
 
 public:
-	SyntaxToken(const SyntaxKind& kind, size_t position, 
+	SyntaxToken(const SyntaxKind& kind, size_t position,
 				const string& text, const ValueType& value);
 
 	bool operator==(const SyntaxToken& other)const noexcept;
@@ -51,6 +51,49 @@ public:
 	bool IsMissing()const noexcept { return _text.empty(); }
 
 	SyntaxToken Clone()const;
+};
+
+template<typename T, typename = std::enable_if_t<std::is_base_of_v<SyntaxNode, T>>>
+class SeparatedSyntaxList final
+{
+private:
+	vector<unique_ptr<SyntaxNode>> _nodesAndSeparators;
+
+public:
+	SeparatedSyntaxList(vector<unique_ptr<SyntaxNode>>& list)
+		:_nodesAndSeparators(std::move(list))
+	{
+	}
+	SeparatedSyntaxList(SeparatedSyntaxList&& other) = default;
+	SeparatedSyntaxList& operator=(SeparatedSyntaxList&& other) = default;
+
+	size_t size()const noexcept
+	{
+		return (_nodesAndSeparators.size() + 1) / 2;
+	}
+
+	const T* operator[](size_t index)const
+	{
+		return dynamic_cast<const T*>(_nodesAndSeparators.at(index * 2).get());
+	}
+
+	const SyntaxToken* GetSeparator(size_t index)const
+	{
+		if (index == size() - 1) return nullptr;
+		return dynamic_cast<const SyntaxToken*>(_nodesAndSeparators.at(index * 2 + 1).get());
+	}
+
+	const vector<const SyntaxNode*> GetWithSeparators()const
+	{
+		//TODO replace with template code
+		auto result = vector<const SyntaxNode*>();
+		for (const auto& it : _nodesAndSeparators)
+			result.emplace_back(it.get());
+		return result;
+	}
+
+	decltype(auto) begin()const noexcept { return _nodesAndSeparators.begin(); }
+	decltype(auto) end()const noexcept { return _nodesAndSeparators.end(); }
 };
 
 }//MCF

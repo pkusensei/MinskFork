@@ -23,7 +23,11 @@ private:
 	void WriteType(const TypeSymbol* symbol);
 
 public:
-	SymbolPrinter(std::ostream& out);
+	SymbolPrinter(std::ostream& out)noexcept 
+		:_writer(out)
+	{
+	}
+
 	void Write(const Symbol* symbol);
 };
 

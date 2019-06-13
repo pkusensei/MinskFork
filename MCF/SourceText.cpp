@@ -3,24 +3,9 @@
 
 namespace MCF {
 
-TextSpan TextSpan::FromBounds(size_t start, size_t end)
-{
-	return TextSpan(start, end - start);
-}
-
-TextLine::TextLine(const SourceText & text, size_t start, size_t length, size_t lengthWithBreak)
-	:_text(&text), _start(start), _length(length), _lengthIncludingLineBreak(lengthWithBreak)
-{
-}
-
 string TextLine::ToString() const
 {
 	return _text->ToString(Span());
-}
-
-SourceText::SourceText(const string & text)
-	:_text(text), _lines(ParseLines(this, _text))
-{
 }
 
 void SourceText::AddLine(vector<TextLine>& result, const SourceText & sourceText,

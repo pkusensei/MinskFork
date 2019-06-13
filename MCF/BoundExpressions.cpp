@@ -6,7 +6,7 @@
 
 namespace MCF {
 
-string GetEnumText(const BoundUnaryOperatorKind & kind)
+string GetEnumText(const BoundUnaryOperatorKind& kind)
 {
 	switch (kind)
 	{
@@ -24,7 +24,7 @@ string GetEnumText(const BoundUnaryOperatorKind & kind)
 	}
 }
 
-string GetEnumText(const BoundBinaryOperatorKind & kind)
+string GetEnumText(const BoundBinaryOperatorKind& kind)
 {
 	switch (kind)
 	{
@@ -66,7 +66,7 @@ string GetEnumText(const BoundBinaryOperatorKind & kind)
 	}
 }
 
-string GetEnumText(const BoundPostfixOperatorEnum & kind)
+string GetEnumText(const BoundPostfixOperatorEnum& kind)
 {
 	switch (kind)
 	{
@@ -80,24 +80,22 @@ string GetEnumText(const BoundPostfixOperatorEnum & kind)
 }
 
 BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind,
-									   const BoundUnaryOperatorKind& kind,
-									   const TypeSymbol& operandType,
-									   const TypeSymbol& resultType)
+	const BoundUnaryOperatorKind& kind,
+	const TypeSymbol& operandType, const TypeSymbol& resultType)
 	:_syntaxKind(synKind), _kind(kind),
 	_operandType(operandType), _resultType(resultType)
 {
 }
 
 BoundUnaryOperator::BoundUnaryOperator(const enum SyntaxKind& synKind,
-									   const BoundUnaryOperatorKind& kind,
-									   const TypeSymbol& operandType)
+	const BoundUnaryOperatorKind& kind, const TypeSymbol& operandType)
 	: BoundUnaryOperator(synKind, kind, operandType, operandType)
 {
 }
 
 BoundUnaryOperator::BoundUnaryOperator()
 	: BoundUnaryOperator(SyntaxKind::BadToken, BoundUnaryOperatorKind::Identity,
-						 GetTypeSymbol(TypeEnum::Error))
+		GetTypeSymbol(TypeEnum::Error))
 {
 	_isUseful = false;
 }
@@ -118,7 +116,8 @@ const vector<BoundUnaryOperator>& BoundUnaryOperator::Operators()
 	return operators;
 }
 
-BoundUnaryOperator BoundUnaryOperator::Bind(const enum SyntaxKind& synKind, const TypeSymbol& type)
+BoundUnaryOperator BoundUnaryOperator::Bind(const enum SyntaxKind& synKind,
+	const TypeSymbol& type)
 {
 	for (const auto& op : Operators())
 	{
@@ -128,39 +127,30 @@ BoundUnaryOperator BoundUnaryOperator::Bind(const enum SyntaxKind& synKind, cons
 	return BoundUnaryOperator();
 }
 
-BoundUnaryExpression::BoundUnaryExpression(const BoundUnaryOperator & op,
-										   const shared_ptr<BoundExpression>& operand)
-	:_op(op), _operand(operand)
+BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind,
+	const BoundBinaryOperatorKind& kind,
+	const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result)
+	:_syntaxKind(synKind), _kind(kind), _leftType(left), _rightType(right),
+	_resultType(result)
 {
 }
 
 BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind,
-										 const BoundBinaryOperatorKind& kind,
-										 const TypeSymbol& left, const TypeSymbol& right,
-										 const TypeSymbol& result)
-	: _syntaxKind(synKind), _kind(kind),
-	_leftType(left), _rightType(right), _resultType(result)
-{
-}
-
-BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind,
-										 const BoundBinaryOperatorKind& kind,
-										 const TypeSymbol& operandType,
-										 const TypeSymbol& resultType)
+	const BoundBinaryOperatorKind& kind,
+	const TypeSymbol& operandType, const TypeSymbol& resultType)
 	: BoundBinaryOperator(synKind, kind, operandType, operandType, resultType)
 {
 }
 
 BoundBinaryOperator::BoundBinaryOperator(const enum SyntaxKind& synKind,
-										 const BoundBinaryOperatorKind& kind,
-										 const TypeSymbol& type)
+	const BoundBinaryOperatorKind& kind, const TypeSymbol& type)
 	: BoundBinaryOperator(synKind, kind, type, type, type)
 {
 }
 
 BoundBinaryOperator::BoundBinaryOperator()
 	: BoundBinaryOperator(SyntaxKind::BadToken, BoundBinaryOperatorKind::Addition,
-						  GetTypeSymbol(TypeEnum::Error))
+		GetTypeSymbol(TypeEnum::Error))
 {
 	_isUseful = false;
 }
@@ -226,8 +216,8 @@ const vector<BoundBinaryOperator>& BoundBinaryOperator::Operators()
 }
 
 BoundBinaryOperator BoundBinaryOperator::Bind(const enum SyntaxKind& synKind,
-											  const TypeSymbol& leftType,
-											  const TypeSymbol& rightType)
+	const TypeSymbol& leftType,
+	const TypeSymbol& rightType)
 {
 	for (const auto& op : Operators())
 	{
@@ -237,48 +227,6 @@ BoundBinaryOperator BoundBinaryOperator::Bind(const enum SyntaxKind& synKind,
 			return op;
 	}
 	return BoundBinaryOperator();
-}
-
-BoundBinaryExpression::BoundBinaryExpression(const shared_ptr<BoundExpression>& left,
-											 const BoundBinaryOperator & op,
-											 const shared_ptr<BoundExpression>& right)
-	:_left(left), _right(right), _op(op)
-{
-}
-
-BoundAssignmentExpression::BoundAssignmentExpression(const shared_ptr<VariableSymbol>& variable,
-													 const shared_ptr<BoundExpression>& expression)
-	:_variable(variable), _expression(expression)
-{
-}
-
-BoundLiteralExpression::BoundLiteralExpression(const ValueType & value)
-	: _value(value)
-{
-}
-
-BoundVariableExpression::BoundVariableExpression(const shared_ptr<VariableSymbol>& variable)
-	: _variable(variable)
-{
-}
-
-BoundCallExpression::BoundCallExpression(const shared_ptr<FunctionSymbol>& function,
-										 const vector<shared_ptr<BoundExpression>>& arguments)
-	:_function(function), _arguments(arguments)
-{
-}
-
-BoundConversionExpression::BoundConversionExpression(const TypeSymbol& type,
-													 const shared_ptr<BoundExpression>& expression)
-	:_type(type), _expression(expression)
-{
-}
-
-BoundPostfixExpression::BoundPostfixExpression(const shared_ptr<VariableSymbol>& variable,
-											   const BoundPostfixOperatorEnum& kind,
-											   const shared_ptr<BoundExpression>& expression)
-	:_variable(variable), _kind(kind), _expression(expression)
-{
 }
 
 }//MCF

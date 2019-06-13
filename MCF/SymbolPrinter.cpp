@@ -6,11 +6,6 @@
 
 namespace MCF {
 
-SymbolPrinter::SymbolPrinter(std::ostream& out)
-	:_writer(out)
-{
-}
-
 void SymbolPrinter::Write(const Symbol* symbol)
 {
 	switch (symbol->Kind())

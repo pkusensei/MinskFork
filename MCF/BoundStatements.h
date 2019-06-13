@@ -18,7 +18,10 @@ private:
 	vector<shared_ptr<BoundStatement>> _statements;
 
 public:
-	explicit BoundBlockStatement(const vector<shared_ptr<BoundStatement>>& statements);
+	explicit BoundBlockStatement(const vector<shared_ptr<BoundStatement>>& statements)
+		:_statements(statements)
+	{
+	}
 	BoundBlockStatement(BoundBlockStatement&&) = default;
 	BoundBlockStatement& operator=(BoundBlockStatement&&) = default;
 
@@ -36,7 +39,10 @@ private:
 
 public:
 	BoundVariableDeclaration(const shared_ptr<VariableSymbol>& variable,
-		const shared_ptr<BoundExpression>& initializer);
+		const shared_ptr<BoundExpression>& initializer)
+		:_variable(variable), _initializer(initializer)
+	{
+	}
 	BoundVariableDeclaration(BoundVariableDeclaration&&) = default;
 	BoundVariableDeclaration& operator=(BoundVariableDeclaration&&) = default;
 
@@ -57,7 +63,11 @@ private:
 public:
 	BoundIfStatement(const shared_ptr<BoundExpression>& condition,
 		const shared_ptr<BoundStatement>& thenStatement,
-		const shared_ptr<BoundStatement>& elseStatement);
+		const shared_ptr<BoundStatement>& elseStatement)
+		:_condition(condition), _thenStatement(thenStatement),
+		_elseStatement(elseStatement)
+	{
+	}
 	BoundIfStatement(BoundIfStatement&&) = default;
 	BoundIfStatement& operator=(BoundIfStatement&&) = default;
 
@@ -95,7 +105,11 @@ private:
 public:
 	BoundWhileStatement(const shared_ptr<BoundExpression>& condition,
 		const shared_ptr<BoundStatement>& body,
-		const BoundLabel& breakLabel, const BoundLabel& continueLabel);
+		const BoundLabel& breakLabel, const BoundLabel& continueLabel)
+		: BoundLoopStatement(breakLabel, continueLabel),
+		_condition(condition), _body(body)
+	{
+	}
 	BoundWhileStatement(BoundWhileStatement&&) = default;
 	BoundWhileStatement& operator=(BoundWhileStatement&&) = default;
 
@@ -115,7 +129,11 @@ private:
 public:
 	BoundDoWhileStatement(const shared_ptr<BoundStatement>& body,
 		const shared_ptr<BoundExpression>& condition,
-		const BoundLabel& breakLabel, const BoundLabel& continueLabel);
+		const BoundLabel& breakLabel, const BoundLabel& continueLabel)
+		: BoundLoopStatement(breakLabel, continueLabel),
+		_body(body), _condition(condition)
+	{
+	}
 	BoundDoWhileStatement(BoundDoWhileStatement&&) = default;
 	BoundDoWhileStatement& operator=(BoundDoWhileStatement&&) = default;
 
@@ -139,7 +157,13 @@ public:
 		const shared_ptr<BoundExpression>& lowerBound,
 		const shared_ptr<BoundExpression>& upperBound,
 		const shared_ptr<BoundStatement>& body,
-		const BoundLabel& breakLabel, const BoundLabel& continueLabel);
+		const BoundLabel& breakLabel, const BoundLabel& continueLabel)
+		: BoundLoopStatement(breakLabel, continueLabel),
+		_variable(variable), _lowerBound(lowerBound), _upperBound(upperBound),
+		_body(body)
+	{
+	}
+
 	BoundForStatement(BoundForStatement&&) = default;
 	BoundForStatement& operator=(BoundForStatement&&) = default;
 
@@ -158,7 +182,10 @@ private:
 	BoundLabel _label;
 
 public:
-	explicit BoundLabelStatement(const BoundLabel& label);
+	explicit BoundLabelStatement(const BoundLabel& label)
+		:_label(label)
+	{
+	}
 	BoundLabelStatement(BoundLabelStatement&&) = default;
 	BoundLabelStatement& operator=(BoundLabelStatement&&) = default;
 
@@ -174,7 +201,10 @@ private:
 	BoundLabel _label;
 
 public:
-	explicit BoundGotoStatement(const BoundLabel& label);
+	explicit BoundGotoStatement(const BoundLabel& label)
+		:_label(label)
+	{
+	}
 	BoundGotoStatement(BoundGotoStatement&&) = default;
 	BoundGotoStatement& operator=(BoundGotoStatement&&) = default;
 
@@ -193,8 +223,10 @@ private:
 
 public:
 	BoundConditionalGotoStatement(const BoundLabel& label,
-		const shared_ptr<BoundExpression>& condition,
-		bool jumpIfTrue = true);
+		const shared_ptr<BoundExpression>& condition, bool jumpIfTrue = true)
+		:_label(label), _condition(condition), _jumpIfTrue(jumpIfTrue)
+	{
+	}
 	BoundConditionalGotoStatement(BoundConditionalGotoStatement&&) = default;
 	BoundConditionalGotoStatement& operator=(BoundConditionalGotoStatement&&) = default;
 
@@ -212,7 +244,10 @@ private:
 	shared_ptr<BoundExpression> _expression;
 
 public:
-	explicit BoundReturnStatement(const shared_ptr<BoundExpression>& expression);
+	explicit BoundReturnStatement(const shared_ptr<BoundExpression>& expression)
+		:_expression(expression)
+	{
+	}
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ReturnStatement; }
 
@@ -226,7 +261,10 @@ private:
 	shared_ptr<BoundExpression> _expression;
 
 public:
-	explicit BoundExpressionStatement(const shared_ptr<BoundExpression>& expression);
+	explicit BoundExpressionStatement(const shared_ptr<BoundExpression>& expression)
+		:_expression(expression)
+	{
+	}
 	BoundExpressionStatement(BoundExpressionStatement&&) = default;
 	BoundExpressionStatement& operator=(BoundExpressionStatement&&) = default;
 
