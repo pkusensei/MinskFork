@@ -16,7 +16,7 @@ private:
 	bool _isIdentity;
 	bool _isImplicit;
 
-	Conversion(bool exists, bool isIdentity, bool isImplicit)
+	Conversion(bool exists, bool isIdentity, bool isImplicit)noexcept
 		:_exists(exists), _isIdentity(isIdentity), _isImplicit(isImplicit)
 	{
 	}

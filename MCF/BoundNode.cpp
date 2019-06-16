@@ -67,7 +67,7 @@ void BoundNode::WriteTo(std::ostream & out) const
 
 string BoundNode::ToString() const
 {
-	std::stringstream ss;
+	std::ostringstream ss;
 	WriteTo(ss);
 	return ss.str();
 }

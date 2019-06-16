@@ -17,7 +17,7 @@ void Symbol::WriteTo(std::ostream& out) const
 
 string Symbol::ToString() const
 {
-	std::stringstream ss;
+	std::ostringstream ss;
 	WriteTo(ss);
 	return ss.str();
 }
@@ -73,24 +73,6 @@ const TypeSymbol& GetTypeSymbol(const TypeEnum& kind)
 size_t ParameterHash::operator()(const ParameterSymbol& ps) const noexcept
 {
 	return std::hash<string>{}(ps.Type().Name());
-}
-
-FunctionSymbol::FunctionSymbol(const string& name, const vector<ParameterSymbol>& params,
-	const TypeSymbol& type,
-	const FunctionDeclarationSyntax* declaration)
-	: Symbol(name), _params(params), _type(type), _declaration(declaration)
-{
-}
-
-FunctionSymbol::FunctionSymbol(const string& name,
-	const vector<ParameterSymbol>& params, const TypeSymbol& type)
-	: FunctionSymbol(name, params, type, nullptr)
-{
-}
-
-FunctionSymbol::FunctionSymbol()
-	: FunctionSymbol("", vector<ParameterSymbol>(), GetTypeSymbol(TypeEnum::Error))
-{
 }
 
 size_t FunctionHash::operator()(const FunctionSymbol& fs) const noexcept
@@ -160,7 +142,7 @@ const vector<FunctionSymbol>& GetAllBuiltinFunctions()
 	return funcs;
 }
 
-TypeSymbol ValueType::Type() const
+const TypeSymbol& ValueType::Type() const
 {
 	switch (_inner.index())
 	{

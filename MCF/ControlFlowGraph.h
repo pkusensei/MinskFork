@@ -84,7 +84,11 @@ private:
 
 	ControlFlowGraph(BasicBlock* start, BasicBlock* end,
 		vector<unique_ptr<BasicBlock>>& blocks,
-		vector<unique_ptr<BasicBlockBranch>>& branches);
+		vector<unique_ptr<BasicBlockBranch>>& branches)
+		:_start(start), _end(end), _blocks(std::move(blocks)),
+		_branches(std::move(branches))
+	{
+	}
 
 public:
 	BasicBlock* Start()const noexcept { return _start; }
@@ -128,7 +132,7 @@ private:
 
 public:
 	GraphBuilder()
-		:_start(make_unique<BasicBlock>(1, true)), 
+		:_start(make_unique<BasicBlock>(1, true)),
 		_end(make_unique<BasicBlock>(0, false, true))
 	{
 	}

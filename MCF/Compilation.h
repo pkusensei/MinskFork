@@ -20,12 +20,9 @@ class BoundCallExpression;
 class BoundConversionExpression;
 class BoundPostfixExpression;
 
-class BoundStatement;
 class BoundBlockStatement;
 class BoundVariableDeclaration;
 class BoundExpressionStatement;
-class BoundGotoStatement;
-class BoundConditionalGotoStatement;
 
 class BoundGlobalScope;
 class BoundProgram;
@@ -41,7 +38,10 @@ private:
 	ValueType _value;
 
 public:
-	EvaluationResult(DiagnosticBag* diagnostics, const ValueType& value);
+	EvaluationResult(DiagnosticBag* diagnostics, const ValueType& value)
+		:_diagnostics(diagnostics), _value(value)
+	{
+	}
 	EvaluationResult(EvaluationResult&&) = default;
 	EvaluationResult& operator=(EvaluationResult&&) = default;
 

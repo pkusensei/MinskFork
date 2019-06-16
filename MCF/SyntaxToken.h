@@ -19,7 +19,7 @@ public:
 	virtual TextSpan Span()const;
 	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
 
-	SyntaxToken GetLastToken()const;
+	const SyntaxToken& GetLastToken()const;
 
 	void WriteTo(std::ostream& out)const { PrettyPrint(out, this); }
 	string ToString() const;
@@ -35,7 +35,10 @@ private:
 
 public:
 	SyntaxToken(const SyntaxKind& kind, size_t position,
-				const string& text, const ValueType& value);
+				const string& text, const ValueType& value)
+		:_kind(kind), _position(position), _text(text), _value(value)
+	{
+	}
 
 	bool operator==(const SyntaxToken& other)const noexcept;
 	bool operator!=(const SyntaxToken& other)const noexcept;
@@ -60,7 +63,7 @@ private:
 	vector<unique_ptr<SyntaxNode>> _nodesAndSeparators;
 
 public:
-	SeparatedSyntaxList(vector<unique_ptr<SyntaxNode>>& list)
+	explicit SeparatedSyntaxList(vector<unique_ptr<SyntaxNode>>& list)
 		:_nodesAndSeparators(std::move(list))
 	{
 	}
@@ -85,7 +88,6 @@ public:
 
 	const vector<const SyntaxNode*> GetWithSeparators()const
 	{
-		//TODO replace with template code
 		auto result = vector<const SyntaxNode*>();
 		for (const auto& it : _nodesAndSeparators)
 			result.emplace_back(it.get());

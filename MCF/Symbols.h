@@ -62,7 +62,7 @@ enum class TypeEnum
 class TypeSymbol final :public Symbol
 {
 private:
-	explicit TypeSymbol(const string & name)
+	explicit TypeSymbol(const string& name)
 		:Symbol(name)
 	{
 	}
@@ -86,7 +86,7 @@ private:
 	TypeSymbol _type;
 
 public:
-	VariableSymbol(const string & name, bool isReadOnly, const TypeSymbol & type)
+	VariableSymbol(const string& name, bool isReadOnly, const TypeSymbol& type)
 		:Symbol(name), _isReadOnly(isReadOnly), _type(type)
 	{
 	}
@@ -100,7 +100,7 @@ public:
 class GlobalVariableSymbol final :public VariableSymbol
 {
 public:
-	GlobalVariableSymbol(const string & name, bool isReadOnly, const TypeSymbol & type)
+	GlobalVariableSymbol(const string& name, bool isReadOnly, const TypeSymbol& type)
 		:VariableSymbol(name, isReadOnly, type)
 	{
 	}
@@ -113,7 +113,7 @@ public:
 class LocalVariableSymbol :public VariableSymbol
 {
 public:
-	LocalVariableSymbol(const string & name, bool isReadOnly, const TypeSymbol & type)
+	LocalVariableSymbol(const string& name, bool isReadOnly, const TypeSymbol& type)
 		:VariableSymbol(name, isReadOnly, type)
 	{
 	}
@@ -126,7 +126,7 @@ public:
 class ParameterSymbol final : public LocalVariableSymbol
 {
 public:
-	ParameterSymbol(const string & name, const TypeSymbol & type)
+	ParameterSymbol(const string& name, const TypeSymbol& type)
 		:LocalVariableSymbol(name, true, type)
 	{
 	}
@@ -150,10 +150,19 @@ private:
 
 public:
 	FunctionSymbol(const string& name, const vector<ParameterSymbol>& params,
-		const TypeSymbol& type, const FunctionDeclarationSyntax* declaration);
+		const TypeSymbol& type, const FunctionDeclarationSyntax* declaration)
+		:Symbol(name), _params(params), _type(type), _declaration(declaration)
+	{
+	}
 	FunctionSymbol(const string& name, const vector<ParameterSymbol>& params,
-		const TypeSymbol& type);
-	FunctionSymbol();
+		const TypeSymbol& type)
+		:FunctionSymbol(name, params, type, nullptr)
+	{
+	}
+	FunctionSymbol()
+		:FunctionSymbol("", vector<ParameterSymbol>(), GetTypeSymbol(TypeEnum::Error))
+	{
+	}
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Function; }
 	const vector<ParameterSymbol>& Parameters()const noexcept { return _params; }
@@ -192,7 +201,7 @@ public:
 	ValueType(const char* s) : _inner(string(s)) {}
 
 	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
-	TypeSymbol Type()const;
+	const TypeSymbol& Type()const;
 
 	constexpr bool operator==(const ValueType& other)const { return _inner == other._inner; }
 	constexpr bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }
@@ -206,7 +215,7 @@ public:
 		return std::get<T>(_inner);
 	}
 
-	static size_t GetValueTypeId(const TypeSymbol & inType);
+	static size_t GetValueTypeId(const TypeSymbol& inType);
 };
 
 const auto NullValue = ValueType(); // NOTE global constant

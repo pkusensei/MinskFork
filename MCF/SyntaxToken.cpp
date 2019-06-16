@@ -53,25 +53,19 @@ TextSpan SyntaxNode::Span() const
 	return TextSpan::FromBounds(first.Start(), last.End());
 }
 
-SyntaxToken SyntaxNode::GetLastToken() const
+const SyntaxToken& SyntaxNode::GetLastToken() const
 {
 	auto p = dynamic_cast<const SyntaxToken*>(this);
-	if (p) return p->Clone();
+	if (p) return *p;
 
 	return GetChildren().back()->GetLastToken();
 }
 
 string SyntaxNode::ToString() const
 {
-	std::stringstream ss;
+	std::ostringstream ss;
 	WriteTo(ss);
 	return ss.str();
-}
-
-SyntaxToken::SyntaxToken(const SyntaxKind& kind, size_t position,
-						 const string& text, const ValueType& value)
-	:_kind(kind), _position(position), _text(text), _value(value)
-{
 }
 
 bool SyntaxToken::operator==(const SyntaxToken & other) const noexcept

@@ -15,69 +15,10 @@
 
 namespace MCF {
 
-BoundScope::BoundScope(std::nullptr_t n)
-	:_parent(nullptr)
-{
-}
-
-BoundScope::BoundScope(unique_ptr<BoundScope>& parent)
-	: _parent(std::move(parent))
-{
-}
-
-bool BoundScope::TryDeclareVariable(const shared_ptr<VariableSymbol>& variable)
-{
-	return TryDeclareSymbol(variable);
-}
-
-bool BoundScope::TryDeclareFunction(const shared_ptr<FunctionSymbol>& function)
-{
-	return TryDeclareSymbol(function);
-}
-
-bool BoundScope::TryLookupVariable(const string& name, shared_ptr<VariableSymbol>& variable) const
-{
-	return TryLookupSymbol(name, variable);
-}
-
-bool BoundScope::TryLookupFunction(const string& name, shared_ptr<FunctionSymbol>& function) const
-{
-	return TryLookupSymbol(name, function);
-}
-
-const vector<shared_ptr<VariableSymbol>> BoundScope::GetDeclaredVariables() const
-{
-	return GetDeclaredSymbols<VariableSymbol>();
-}
-
-const vector<shared_ptr<FunctionSymbol>> BoundScope::GetDeclaredFunctions() const
-{
-	return GetDeclaredSymbols<FunctionSymbol>();
-}
-
 void BoundScope::ResetToParent(unique_ptr<BoundScope>& current)
 {
 	if (current->Parent() == nullptr) return;
 	current.swap(current->_parent);
-}
-
-
-BoundGlobalScope::BoundGlobalScope(const BoundGlobalScope* previous,
-	unique_ptr<DiagnosticBag>& diagnostics,
-	const vector<shared_ptr<FunctionSymbol>>& functions,
-	const vector<shared_ptr<VariableSymbol>>& variables,
-	const vector<shared_ptr<BoundStatement>>& statements)
-	:_previous(previous), _diagnostics(std::move(diagnostics)),
-	_functions(functions), _variables(variables), _statements(statements)
-{
-}
-
-BoundProgram::BoundProgram(unique_ptr<DiagnosticBag>& diagnostics,
-	FuncMap& functions,
-	unique_ptr<BoundBlockStatement>& statement)
-	: _diagnostics(std::move(diagnostics)), _functions(std::move(functions)),
-	_statement(std::move(statement))
-{
 }
 
 Binder::Binder(unique_ptr<BoundScope>& parent, const FunctionSymbol* function)
@@ -165,7 +106,6 @@ shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax* syntax)
 			if (p) return BindDoWhileStatement(p);
 			else break;
 		}
-
 		case SyntaxKind::ForStatement:
 		{
 			auto p = dynamic_cast<const ForStatementSyntax*>(syntax);

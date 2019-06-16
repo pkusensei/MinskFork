@@ -15,12 +15,6 @@
 
 namespace MCF {
 
-EvaluationResult::EvaluationResult(DiagnosticBag* diagnostics,
-	const ValueType& value)
-	:_diagnostics(diagnostics), _value(value)
-{
-}
-
 Evaluator::Evaluator(unique_ptr<BoundProgram>& program, VarMap& variables)
 	: _program(std::move(program)), _globals(&variables)
 {
@@ -357,13 +351,13 @@ void Evaluator::Assign(const shared_ptr<VariableSymbol>& variable, const ValueTy
 
 Compilation::Compilation(unique_ptr<Compilation>& previous,
 	unique_ptr<SyntaxTree>& tree)
-	: _previous(std::move(previous)), _syntaxTree(std::move(tree)),
+	:_previous(std::move(previous)), _syntaxTree(std::move(tree)),
 	_globalScope(nullptr), _diagnostics(make_unique<DiagnosticBag>())
 {
 }
 
 Compilation::Compilation(unique_ptr<SyntaxTree>& tree)
-	: _previous(nullptr), _syntaxTree(std::move(tree)),
+	:_previous(nullptr), _syntaxTree(std::move(tree)),
 	_globalScope(nullptr), _diagnostics(make_unique<DiagnosticBag>())
 {
 }

@@ -19,7 +19,7 @@ string ControlFlowGraph::BasicBlock::ToString() const
 		return "<End>";
 	else
 	{
-		auto s = std::stringstream();
+		auto s = std::ostringstream();
 		for (const auto& it : _statements)
 			it->WriteTo(s);
 		return s.str();
@@ -245,12 +245,6 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 	blocks.insert(blocks.begin(), std::move(_start));
 	blocks.emplace_back(std::move(_end));
 	return ControlFlowGraph(start, end, blocks, _branches);
-}
-
-ControlFlowGraph::ControlFlowGraph(BasicBlock* start, BasicBlock* end,
-	vector<unique_ptr<BasicBlock>>& blocks, vector<unique_ptr<BasicBlockBranch>>& branches)
-	:_start(start), _end(end), _blocks(std::move(blocks)), _branches(std::move(branches))
-{
 }
 
 void ControlFlowGraph::WriteTo(std::ostream& out) const

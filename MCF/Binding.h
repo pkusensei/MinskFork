@@ -110,19 +110,45 @@ private:
 	}
 
 public:
-	explicit BoundScope(std::nullptr_t);
-	explicit BoundScope(unique_ptr<BoundScope>& parent);
+	explicit BoundScope(std::nullptr_t)
+		:_parent(nullptr)
+	{
+	}
+	explicit BoundScope(unique_ptr<BoundScope>& parent)
+		: _parent(std::move(parent))
+	{
+	}
 
 	const BoundScope* Parent()const noexcept { return _parent.get(); }
 
-	bool TryDeclareVariable(const shared_ptr<VariableSymbol>& variable);
-	bool TryDeclareFunction(const shared_ptr<FunctionSymbol>& function);
+	bool TryDeclareVariable(const shared_ptr<VariableSymbol>& variable)
+	{
+		return TryDeclareSymbol(variable);
+	}
+	bool TryDeclareFunction(const shared_ptr<FunctionSymbol>& function)
+	{
+		return TryDeclareSymbol(function);
+	}
 
-	bool TryLookupVariable(const string& name, shared_ptr<VariableSymbol>& variable)const;
-	bool TryLookupFunction(const string& name, shared_ptr<FunctionSymbol>& function)const;
+	bool TryLookupVariable(const string& name,
+		shared_ptr<VariableSymbol>& variable)const
+	{
+		return TryLookupSymbol(name, variable);
+	}
+	bool TryLookupFunction(const string& name,
+		shared_ptr<FunctionSymbol>& function)const
+	{
+		return TryLookupSymbol(name, function);
+	}
 
-	const vector<shared_ptr<VariableSymbol>> GetDeclaredVariables()const;
-	const vector<shared_ptr<FunctionSymbol>> GetDeclaredFunctions()const;
+	const vector<shared_ptr<VariableSymbol>> GetDeclaredVariables()const
+	{
+		return GetDeclaredSymbols<VariableSymbol>();
+	}
+	const vector<shared_ptr<FunctionSymbol>> GetDeclaredFunctions()const
+	{
+		return GetDeclaredSymbols<FunctionSymbol>();
+	}
 
 	static void ResetToParent(unique_ptr<BoundScope>& current);
 };
@@ -141,7 +167,11 @@ public:
 		unique_ptr<DiagnosticBag>& diagnostics,
 		const vector<shared_ptr<FunctionSymbol>>& functions,
 		const vector<shared_ptr<VariableSymbol>>& variables,
-		const vector<shared_ptr<BoundStatement>>& statements);
+		const vector<shared_ptr<BoundStatement>>& statements)
+		:_previous(previous), _diagnostics(std::move(diagnostics)),
+		_functions(functions), _variables(variables), _statements(statements)
+	{
+	}
 
 	const BoundGlobalScope* Previous()const noexcept { return _previous; }
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
@@ -162,7 +192,12 @@ private:
 
 public:
 	BoundProgram(unique_ptr<DiagnosticBag>& diagnostics, FuncMap& functions,
-		unique_ptr<BoundBlockStatement>& statement);
+		unique_ptr<BoundBlockStatement>& statement)
+		:_diagnostics(std::move(diagnostics)), _functions(std::move(functions)),
+		_statement(std::move(statement))
+	{
+	}
+
 	BoundProgram(BoundProgram&&) = default;
 	BoundProgram& operator=(BoundProgram&&) = default;
 
