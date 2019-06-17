@@ -142,7 +142,7 @@ const vector<FunctionSymbol>& GetAllBuiltinFunctions()
 	return funcs;
 }
 
-const TypeSymbol& ValueType::Type() const
+const TypeSymbol& ValueType::Type() const noexcept
 {
 	switch (_inner.index())
 	{
@@ -234,4 +234,4 @@ std::ostream& operator<<(std::ostream& out, const ValueType& value)
 	return out;
 }
 
-}
+}//MCF

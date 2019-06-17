@@ -31,9 +31,9 @@ public:
 
 	void SetAction(const std::function<void()>& action) { _action = action; }
 
-	size_t size()const noexcept{ return _collection.size(); }
+	size_t size()const noexcept { return _collection.size(); }
 	const T& operator[](size_t index)const { return _collection.at(index); }
-	const std::vector<T>& Contents()const noexcept{ return _collection; }
+	const std::vector<T>& Contents()const noexcept { return _collection; }
 
 	template<typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T>>>
 	void Add(U&& content)
@@ -135,7 +135,7 @@ private:
 
 public:
 	SubmissionView(const std::function<void(std::string)>& lineRenderer,
-		const ObservableCollection<std::string>& document);
+		ObservableCollection<std::string>& document);
 
 	size_t CurrentLine()const { return _currentLine; }
 	void CurrentLine(const size_t value);

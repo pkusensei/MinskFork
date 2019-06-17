@@ -150,7 +150,7 @@ public:
 		return GetDeclaredSymbols<FunctionSymbol>();
 	}
 
-	static void ResetToParent(unique_ptr<BoundScope>& current);
+	static void ResetToParent(unique_ptr<BoundScope>& current)noexcept;
 };
 
 class BoundGlobalScope final
@@ -256,11 +256,11 @@ private:
 	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
 	std::optional<TypeSymbol> LookupType(const string& name)const;
 
-	static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
-	static unique_ptr<BoundScope> CreateRootScope();
+	[[nodiscard]] static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
+	[[nodiscard]] static unique_ptr<BoundScope> CreateRootScope();
 
 public:
-	explicit Binder(unique_ptr<BoundScope>& parent, const FunctionSymbol* function);
+	Binder(unique_ptr<BoundScope>& parent, const FunctionSymbol* function);
 
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
 

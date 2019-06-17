@@ -15,7 +15,7 @@
 
 namespace MCF {
 
-void BoundScope::ResetToParent(unique_ptr<BoundScope>& current)
+void BoundScope::ResetToParent(unique_ptr<BoundScope>& current)noexcept
 {
 	if (current->Parent() == nullptr) return;
 	current.swap(current->_parent);
@@ -714,6 +714,5 @@ unique_ptr<BoundProgram> Binder::BindProgram(const BoundGlobalScope* globalScope
 	auto statement = Lowerer::Lower(s);
 	return make_unique<BoundProgram>(diag, funcBodies, statement);
 }
-
 
 }//MCF

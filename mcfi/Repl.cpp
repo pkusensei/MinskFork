@@ -40,7 +40,9 @@ std::string Repl::EditSubmission()
 {
 	_done = false;
 	auto document = ObservableCollection<std::string>(std::string());
-	auto view = SubmissionView(std::bind(&Repl::RenderLine, this, std::placeholders::_1), document);
+	auto view = SubmissionView(
+		[this](const std::string& line) { this->RenderLine(line); },
+		document);
 
 	while (!_done)
 	{
@@ -287,12 +289,11 @@ void Repl::RenderLine(const std::string& line) const
 }
 
 Repl::SubmissionView::SubmissionView(const std::function<void(std::string)>& lineRenderer,
-	const ObservableCollection<std::string>& document)
+	ObservableCollection<std::string>& document)
 	:_lineRenderer(lineRenderer),
 	_submissionDocument(&document), _cursorTop(MCF::GetCursorTop())
 {
-	auto& d = std::remove_const_t<ObservableCollection<std::string>&>(document);
-	d.SetAction(std::bind(&SubmissionView::SubmissionDocumentChanged, this));
+	document.SetAction([this]() { this->SubmissionDocumentChanged(); });
 	Render();
 
 	//_lineRenderer -- Repl::RenderLine & McfRepl::RenderLine

@@ -3,11 +3,11 @@
 #include <deque>
 
 #include "SourceText.h"
-#include "Symbols.h"
 
 namespace MCF {
 
 enum class SyntaxKind;
+class TypeSymbol;
 
 class MCF_API Diagnostic final
 {
@@ -22,7 +22,7 @@ public:
 	}
 
 	const TextSpan& Span() const noexcept { return _span; }
-	string Message() const { return _message; }
+	const string& Message() const noexcept { return _message; }
 };
 
 class MCF_API DiagnosticBag final

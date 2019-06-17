@@ -94,7 +94,7 @@ public:
 	VariableSymbol& operator=(const VariableSymbol& other) = default;
 
 	bool IsReadOnly()const noexcept { return _isReadOnly; }
-	const TypeSymbol& Type()const { return _type; }
+	const TypeSymbol& Type()const noexcept { return _type; }
 };
 
 class GlobalVariableSymbol final :public VariableSymbol
@@ -166,7 +166,7 @@ public:
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Function; }
 	const vector<ParameterSymbol>& Parameters()const noexcept { return _params; }
-	const TypeSymbol& Type()const { return _type; }
+	const TypeSymbol& Type()const noexcept { return _type; }
 	const FunctionDeclarationSyntax* Declaration()const noexcept { return  _declaration; }
 
 };
@@ -201,7 +201,7 @@ public:
 	ValueType(const char* s) : _inner(string(s)) {}
 
 	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
-	const TypeSymbol& Type()const;
+	const TypeSymbol& Type()const noexcept;
 
 	constexpr bool operator==(const ValueType& other)const { return _inner == other._inner; }
 	constexpr bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }

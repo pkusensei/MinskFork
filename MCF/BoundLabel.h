@@ -16,8 +16,8 @@ public:
 	bool operator==(const BoundLabel& other) const noexcept { return _name == other._name; }
 	bool operator!=(const BoundLabel& other) const noexcept { return !(*this == other); }
 
-	string Name()const { return _name; }
-	string ToString()const { return Name(); }
+	const string& Name()const noexcept { return _name; }
+	const string& ToString()const noexcept { return Name(); }
 };
 
 struct LabelHash final

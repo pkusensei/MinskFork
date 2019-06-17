@@ -68,8 +68,8 @@ private:
 	size_t _labelCount{ 0 };
 
 	Lowerer() = default;
-	BoundLabel GenerateLabel();
-	static unique_ptr<BoundBlockStatement> Flatten(const shared_ptr<BoundStatement>& statement);
+	[[nodiscard]] BoundLabel GenerateLabel();
+	[[nodiscard]] static unique_ptr<BoundBlockStatement> Flatten(const shared_ptr<BoundStatement>& statement);
 
 protected:
 	shared_ptr<BoundStatement> RewriteIfStatement(const shared_ptr<BoundIfStatement>& node)override;

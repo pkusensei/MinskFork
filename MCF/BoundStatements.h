@@ -49,7 +49,7 @@ public:
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableDeclaration; }
 
-	const shared_ptr<VariableSymbol>& Variable()const { return _variable; }
+	const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 	const shared_ptr<BoundExpression>& Initializer()const noexcept { return _initializer; }
 };
 
@@ -92,8 +92,8 @@ protected:
 	}
 
 public:
-	const BoundLabel& BreakLabel()const { return _breakLabel; }
-	const BoundLabel& ContinueLabel()const { return _continueLabel; }
+	const BoundLabel& BreakLabel()const noexcept { return _breakLabel; }
+	const BoundLabel& ContinueLabel()const noexcept { return _continueLabel; }
 };
 
 class BoundWhileStatement final :public BoundLoopStatement
@@ -163,7 +163,6 @@ public:
 		_body(body)
 	{
 	}
-
 	BoundForStatement(BoundForStatement&&) = default;
 	BoundForStatement& operator=(BoundForStatement&&) = default;
 
@@ -192,7 +191,7 @@ public:
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LabelStatement; }
 
-	const BoundLabel& Label()const { return _label; }
+	const BoundLabel& Label()const noexcept { return _label; }
 };
 
 class BoundGotoStatement final :public BoundStatement
@@ -211,7 +210,7 @@ public:
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::GotoStatement; }
 
-	const BoundLabel& Label()const { return _label; }
+	const BoundLabel& Label()const noexcept { return _label; }
 };
 
 class BoundConditionalGotoStatement final :public BoundStatement
@@ -233,8 +232,8 @@ public:
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ConditionalGotoStatement; }
 
-	const BoundLabel& Label()const { return _label; }
-	const shared_ptr<BoundExpression>& Condition()const { return _condition; }
+	const BoundLabel& Label()const noexcept { return _label; }
+	const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
 	bool JumpIfTrue()const noexcept { return _jumpIfTrue; }
 };
 

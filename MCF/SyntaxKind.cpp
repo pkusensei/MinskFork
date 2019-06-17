@@ -164,7 +164,7 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 	}
 }
 
-SyntaxKind GetKeywordKind(const string & text) noexcept
+SyntaxKind GetKeywordKind(const string& text) noexcept
 {
 	if (text == "break")
 		return SyntaxKind::BreakKeyword;
@@ -292,21 +292,33 @@ int GetBinaryOperatorPrecedence(const SyntaxKind& kind) noexcept
 	}
 }
 
-vector<SyntaxKind> GetUnaryOperatorKinds()
+const vector<SyntaxKind>& GetUnaryOperatorKinds()
 {
-	auto result = vector<SyntaxKind>();
-	for (const auto& it : AllSyntaxKinds)
-		if (GetUnaryOperatorPrecedence(it) > 0)
-			result.emplace_back(it);
+	auto build = [kinds = AllSyntaxKinds]()
+	{
+		auto result = vector<SyntaxKind>();
+		for (const auto& it : kinds)
+			if (GetUnaryOperatorPrecedence(it) > 0)
+				result.emplace_back(it);
+		result.shrink_to_fit();
+		return result;
+	};
+	static const auto result = build();
 	return result;
 }
 
-vector<SyntaxKind> GetBinaryOperatorKinds()
+const vector<SyntaxKind>& GetBinaryOperatorKinds()
 {
-	auto result = vector<SyntaxKind>();
-	for (const auto& it : AllSyntaxKinds)
-		if (GetBinaryOperatorPrecedence(it) > 0)
-			result.emplace_back(it);
+	auto build = [kinds = AllSyntaxKinds]()
+	{
+		auto result = vector<SyntaxKind>();
+		for (const auto& it : kinds)
+			if (GetBinaryOperatorPrecedence(it) > 0)
+				result.emplace_back(it);
+		result.shrink_to_fit();
+		return result;
+	};
+	static const auto result = build();
 	return result;
 }
 

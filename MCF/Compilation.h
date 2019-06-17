@@ -46,7 +46,7 @@ public:
 	EvaluationResult& operator=(EvaluationResult&&) = default;
 
 	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics; }
-	ValueType Value()const { return _value; }
+	const ValueType& Value()const noexcept { return _value; }
 };
 
 class Evaluator final
@@ -99,7 +99,7 @@ public:
 	const SyntaxTree* Syntax()const noexcept { return _syntaxTree.get(); }
 
 	const BoundGlobalScope* GlobalScope();
-	static unique_ptr<Compilation> ContinueWith(unique_ptr<Compilation>& previous,
+	[[nodiscard]] static unique_ptr<Compilation> ContinueWith(unique_ptr<Compilation>& previous,
 		unique_ptr<SyntaxTree>& tree);
 
 	EvaluationResult Evaluate(VarMap& variables);

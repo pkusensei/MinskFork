@@ -46,7 +46,7 @@ enum class SyntaxKind
 	ContinueKeyword,
 	ElseKeyword,
 	FalseKeyword,
-	ForKeyword, 
+	ForKeyword,
 	FunctionKeyword,
 	IfKeyword,
 	LetKeyword,
@@ -95,7 +95,7 @@ SyntaxKind GetKeywordKind(const string& text) noexcept;
 MCF_API string GetText(const SyntaxKind& kind);
 MCF_API int GetUnaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
 MCF_API int GetBinaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
-MCF_API vector<SyntaxKind> GetUnaryOperatorKinds();
-MCF_API vector<SyntaxKind> GetBinaryOperatorKinds();
+MCF_API const vector<SyntaxKind>& GetUnaryOperatorKinds();
+MCF_API const vector<SyntaxKind>& GetBinaryOperatorKinds();
 
 }//MCF
