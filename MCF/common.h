@@ -7,9 +7,17 @@
 #pragma warning(disable: 4251)
 
 #ifdef MCF_EXPORTS
+#ifdef _MSC_VER
 #define MCF_API __declspec(dllexport)
+#elif defined __GNUC__
+#define MCF_API __attribute__ ((visibility("default")))
+#endif
 #else
+#ifdef _MSC_VER
 #define MCF_API __declspec(dllimport)
+#elif defined __GNUC__
+#define MCF_API __attribute__ ((visibility ("hidden")))
+#endif
 #endif
 
 namespace MCF {

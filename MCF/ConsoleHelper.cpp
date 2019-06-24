@@ -1,9 +1,11 @@
-#include "stdafx.h"
 #include "ConsoleHelper.h"
 
 #include <iostream>
-
 #include <conio.h>
+
+#ifdef _WIN32
+#include "stdafx.h"
+#endif // _WIN32
 
 namespace MCF {
 

@@ -1,7 +1,7 @@
-#include "stdafx.h"
 #include "Binding.h"
 
 #include <stack>
+#include <stdexcept>
 #include <unordered_set>
 
 #include "BoundExpressions.h"

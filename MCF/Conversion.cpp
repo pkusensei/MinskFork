@@ -1,5 +1,6 @@
-#include "stdafx.h"
 #include "Conversion.h"
+
+#include <stdexcept>
 
 #include "Symbols.h"
 

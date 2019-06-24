@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "BoundExpressions.h"
 
 #include "ReflectionHelper.h"

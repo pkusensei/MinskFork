@@ -1,5 +1,6 @@
-#include "stdafx.h"
 #include "SyntaxKind.h"
+
+#include <stdexcept>
 
 #include "EnumHelper.h"
 

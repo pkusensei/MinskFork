@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "SourceText.h"
 
 namespace MCF {

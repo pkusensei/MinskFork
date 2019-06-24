@@ -12,11 +12,3 @@
 #include <windows.h>
 
 // reference additional headers your program requires here
-
-#include <algorithm>
-#include <memory>
-#include <stack>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <unordered_map>

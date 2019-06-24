@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "BoundNodePrinter.h"
 
 #include "BoundExpressions.h"

@@ -1,7 +1,7 @@
-#include "stdafx.h"
 #include "Lowering.h"
 
 #include <stack>
+#include <stdexcept>
 
 #include "BoundExpressions.h"
 #include "BoundStatements.h"

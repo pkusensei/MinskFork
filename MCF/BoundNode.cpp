@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "BoundNode.h"
 
 #include <iostream>

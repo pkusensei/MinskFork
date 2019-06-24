@@ -1,5 +1,6 @@
-#include "stdafx.h"
 #include "Parsing.h"
+
+#include <stdexcept>
 
 #include "Diagnostic.h"
 #include "Lexer.h"

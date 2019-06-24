@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "ControlFlowGraph.h"
 
 #include <algorithm>

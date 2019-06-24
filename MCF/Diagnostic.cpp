@@ -1,7 +1,7 @@
-#include "stdafx.h"
 #include "Diagnostic.h"
 
 #include <algorithm>
+#include <stdexcept>
 
 #include "Symbols.h"
 #include "SyntaxKind.h"
