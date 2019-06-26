@@ -3,9 +3,9 @@
 
 #include <stack>
 
-#include "..\MCF\Diagnostic.h"
-#include "..\MCF\Parsing.h"
-#include "..\MCF\SourceText.h"
+#include "Diagnostic.h"
+#include "Parsing.h"
+#include "SourceText.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

@@ -4,11 +4,11 @@
 #include <algorithm>
 #include <stack>
 
-#include "..\MCF\helpers.h"
-#include "..\MCF\Compilation.h"
-#include "..\MCF\Diagnostic.h"
-#include "..\MCF\Parsing.h"
-#include "..\MCF\SourceText.h"
+#include "helpers.h"
+#include "Compilation.h"
+#include "Diagnostic.h"
+#include "Parsing.h"
+#include "SourceText.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

@@ -3,10 +3,10 @@
 
 #include <set>
 
-#include "..\MCF\Diagnostic.h"
-#include "..\MCF\helpers.h"
-#include "..\MCF\Parsing.h"
-#include "..\MCF\SourceText.h"
+#include "Diagnostic.h"
+#include "helpers.h"
+#include "Parsing.h"
+#include "SourceText.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

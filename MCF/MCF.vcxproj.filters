@@ -15,159 +15,156 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h">
+    <ClInclude Include="include\Binding.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="targetver.h">
+    <ClInclude Include="include\BoundExpressions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Diagnostic.h">
+    <ClInclude Include="include\BoundLabel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="common.h">
+    <ClInclude Include="include\BoundNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Compilation.h">
+    <ClInclude Include="include\BoundNodePrinter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SourceText.h">
+    <ClInclude Include="include\BoundStatements.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Binding.h">
+    <ClInclude Include="include\common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="helpers.h">
+    <ClInclude Include="include\Compilation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Symbols.h">
+    <ClInclude Include="include\ConsoleHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SyntaxKind.h">
+    <ClInclude Include="include\ControlFlowGraph.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BoundLabel.h">
+    <ClInclude Include="include\Conversion.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BoundNode.h">
+    <ClInclude Include="include\Diagnostic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BoundExpressions.h">
+    <ClInclude Include="include\EnumHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BoundStatements.h">
+    <ClInclude Include="include\helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ReflectionHelper.h">
+    <ClInclude Include="include\IO.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EnumHelper.h">
+    <ClInclude Include="include\Lexer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Conversion.h">
+    <ClInclude Include="include\Lowering.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SyntaxToken.h">
+    <ClInclude Include="include\Parsing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Lexer.h">
+    <ClInclude Include="include\ReflectionHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Parsing.h">
+    <ClInclude Include="include\SourceText.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IO.h">
+    <ClInclude Include="include\stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ConsoleHelper.h">
+    <ClInclude Include="include\SymbolPrinter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BoundNodePrinter.h">
+    <ClInclude Include="include\Symbols.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SymbolPrinter.h">
+    <ClInclude Include="include\SyntaxExpressions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Lowering.h">
+    <ClInclude Include="include\SyntaxKind.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ControlFlowGraph.h">
+    <ClInclude Include="include\SyntaxStatements.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SyntaxExpressions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SyntaxStatements.h">
+    <ClInclude Include="include\SyntaxToken.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
+    <ClCompile Include="src\Binding.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dllmain.cpp">
+    <ClCompile Include="src\BoundExpressions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Diagnostic.cpp">
+    <ClCompile Include="src\BoundNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Compilation.cpp">
+    <ClCompile Include="src\BoundNodePrinter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SourceText.cpp">
+    <ClCompile Include="src\Compilation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Binding.cpp">
+    <ClCompile Include="src\ConsoleHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="helpers.cpp">
+    <ClCompile Include="src\ControlFlowGraph.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Symbols.cpp">
+    <ClCompile Include="src\Conversion.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SyntaxKind.cpp">
+    <ClCompile Include="src\Diagnostic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BoundNode.cpp">
+    <ClCompile Include="src\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BoundExpressions.cpp">
+    <ClCompile Include="src\helpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Conversion.cpp">
+    <ClCompile Include="src\IO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SyntaxToken.cpp">
+    <ClCompile Include="src\Lexer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Lexer.cpp">
+    <ClCompile Include="src\Lowering.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Parsing.cpp">
+    <ClCompile Include="src\Parsing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IO.cpp">
+    <ClCompile Include="src\SourceText.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ConsoleHelper.cpp">
+    <ClCompile Include="src\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BoundNodePrinter.cpp">
+    <ClCompile Include="src\SymbolPrinter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SymbolPrinter.cpp">
+    <ClCompile Include="src\Symbols.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Lowering.cpp">
+    <ClCompile Include="src\SyntaxExpressions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ControlFlowGraph.cpp">
+    <ClCompile Include="src\SyntaxKind.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SyntaxExpressions.cpp">
+    <ClCompile Include="src\SyntaxStatements.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SyntaxStatements.cpp">
+    <ClCompile Include="src\SyntaxToken.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

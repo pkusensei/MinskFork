@@ -75,6 +75,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(ProjectDir)\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -159,64 +160,58 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Binding.h" />
-    <ClInclude Include="BoundExpressions.h" />
-    <ClInclude Include="BoundLabel.h" />
-    <ClInclude Include="BoundNode.h" />
-    <ClInclude Include="BoundNodePrinter.h" />
-    <ClInclude Include="BoundStatements.h" />
-    <ClInclude Include="common.h" />
-    <ClInclude Include="Compilation.h" />
-    <ClInclude Include="ConsoleHelper.h" />
-    <ClInclude Include="ControlFlowGraph.h" />
-    <ClInclude Include="Conversion.h" />
-    <ClInclude Include="Diagnostic.h" />
-    <ClInclude Include="EnumHelper.h" />
-    <ClInclude Include="IO.h" />
-    <ClInclude Include="Lexer.h" />
-    <ClInclude Include="Lowering.h" />
-    <ClInclude Include="Parsing.h" />
-    <ClInclude Include="ReflectionHelper.h" />
-    <ClInclude Include="helpers.h" />
-    <ClInclude Include="SourceText.h" />
-    <ClInclude Include="stdafx.h" />
-    <ClInclude Include="SymbolPrinter.h" />
-    <ClInclude Include="Symbols.h" />
-    <ClInclude Include="SyntaxExpressions.h" />
-    <ClInclude Include="SyntaxStatements.h" />
-    <ClInclude Include="SyntaxToken.h" />
-    <ClInclude Include="SyntaxKind.h" />
-    <ClInclude Include="targetver.h" />
+    <ClInclude Include="include\Binding.h" />
+    <ClInclude Include="include\BoundExpressions.h" />
+    <ClInclude Include="include\BoundLabel.h" />
+    <ClInclude Include="include\BoundNode.h" />
+    <ClInclude Include="include\BoundNodePrinter.h" />
+    <ClInclude Include="include\BoundStatements.h" />
+    <ClInclude Include="include\common.h" />
+    <ClInclude Include="include\Compilation.h" />
+    <ClInclude Include="include\ConsoleHelper.h" />
+    <ClInclude Include="include\ControlFlowGraph.h" />
+    <ClInclude Include="include\Conversion.h" />
+    <ClInclude Include="include\Diagnostic.h" />
+    <ClInclude Include="include\EnumHelper.h" />
+    <ClInclude Include="include\helpers.h" />
+    <ClInclude Include="include\IO.h" />
+    <ClInclude Include="include\Lexer.h" />
+    <ClInclude Include="include\Lowering.h" />
+    <ClInclude Include="include\Parsing.h" />
+    <ClInclude Include="include\ReflectionHelper.h" />
+    <ClInclude Include="include\SourceText.h" />
+    <ClInclude Include="include\stdafx.h" />
+    <ClInclude Include="include\SymbolPrinter.h" />
+    <ClInclude Include="include\Symbols.h" />
+    <ClInclude Include="include\SyntaxExpressions.h" />
+    <ClInclude Include="include\SyntaxKind.h" />
+    <ClInclude Include="include\SyntaxStatements.h" />
+    <ClInclude Include="include\SyntaxToken.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Binding.cpp" />
-    <ClCompile Include="BoundExpressions.cpp" />
-    <ClCompile Include="BoundNode.cpp" />
-    <ClCompile Include="BoundNodePrinter.cpp" />
-    <ClCompile Include="Compilation.cpp" />
-    <ClCompile Include="ConsoleHelper.cpp" />
-    <ClCompile Include="ControlFlowGraph.cpp" />
-    <ClCompile Include="Conversion.cpp" />
-    <ClCompile Include="Diagnostic.cpp" />
-    <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="helpers.cpp" />
-    <ClCompile Include="IO.cpp" />
-    <ClCompile Include="Lexer.cpp" />
-    <ClCompile Include="Lowering.cpp" />
-    <ClCompile Include="Parsing.cpp" />
-    <ClCompile Include="SourceText.cpp" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="SymbolPrinter.cpp" />
-    <ClCompile Include="Symbols.cpp" />
-    <ClCompile Include="SyntaxExpressions.cpp" />
-    <ClCompile Include="SyntaxStatements.cpp" />
-    <ClCompile Include="SyntaxToken.cpp" />
-    <ClCompile Include="SyntaxKind.cpp" />
+    <ClCompile Include="src\Binding.cpp" />
+    <ClCompile Include="src\BoundExpressions.cpp" />
+    <ClCompile Include="src\BoundNode.cpp" />
+    <ClCompile Include="src\BoundNodePrinter.cpp" />
+    <ClCompile Include="src\Compilation.cpp" />
+    <ClCompile Include="src\ConsoleHelper.cpp" />
+    <ClCompile Include="src\ControlFlowGraph.cpp" />
+    <ClCompile Include="src\Conversion.cpp" />
+    <ClCompile Include="src\Diagnostic.cpp" />
+    <ClCompile Include="src\dllmain.cpp" />
+    <ClCompile Include="src\helpers.cpp" />
+    <ClCompile Include="src\IO.cpp" />
+    <ClCompile Include="src\Lexer.cpp" />
+    <ClCompile Include="src\Lowering.cpp" />
+    <ClCompile Include="src\Parsing.cpp" />
+    <ClCompile Include="src\SourceText.cpp" />
+    <ClCompile Include="src\stdafx.cpp" />
+    <ClCompile Include="src\SymbolPrinter.cpp" />
+    <ClCompile Include="src\Symbols.cpp" />
+    <ClCompile Include="src\SyntaxExpressions.cpp" />
+    <ClCompile Include="src\SyntaxKind.cpp" />
+    <ClCompile Include="src\SyntaxStatements.cpp" />
+    <ClCompile Include="src\SyntaxToken.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
