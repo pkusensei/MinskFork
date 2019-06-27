@@ -356,12 +356,19 @@ Compilation::Compilation(unique_ptr<Compilation>& previous,
 }
 
 Compilation::Compilation(unique_ptr<SyntaxTree>& tree)
-	:_previous(nullptr), _syntaxTree(std::move(tree)),
+	: _previous(nullptr), _syntaxTree(std::move(tree)),
 	_globalScope(nullptr), _diagnostics(make_unique<DiagnosticBag>())
 {
 }
 
 Compilation::~Compilation() = default;
+
+Compilation::Compilation(Compilation&& other) noexcept
+	:_previous(std::move(other._previous)), _syntaxTree(std::move(other._syntaxTree)),
+	_globalScope(std::move(other._globalScope)), _diagnostics(std::move(other._diagnostics)),
+	_mtx()
+{
+}
 
 const BoundGlobalScope* Compilation::GlobalScope()
 {

@@ -92,8 +92,8 @@ public:
 	Compilation(unique_ptr<Compilation>& previous, unique_ptr<SyntaxTree>& tree);
 	explicit Compilation(unique_ptr<SyntaxTree>& tree);
 	~Compilation();
-	Compilation(Compilation&&) = default;
-	Compilation& operator=(Compilation&&) = default;
+	Compilation(Compilation&& other) noexcept;
+	Compilation& operator=(Compilation&& other) = delete;
 
 	const Compilation* Previous()const noexcept { return _previous.get(); }
 	const SyntaxTree* Syntax()const noexcept { return _syntaxTree.get(); }
@@ -104,6 +104,18 @@ public:
 
 	EvaluationResult Evaluate(VarMap& variables);
 	void EmitTree(std::ostream& out);
+
+	bool operator==(const Compilation& other)const noexcept
+	{
+		return _previous == other._previous
+			&& _syntaxTree == other._syntaxTree
+			&& _globalScope == other._globalScope
+			&& _diagnostics == other._diagnostics;
+	}
+	bool operator!=(const Compilation& other)const noexcept
+	{
+		return !(*this == other);
+	}
 };
 
 }//MCF

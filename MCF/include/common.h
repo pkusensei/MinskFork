@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+// To suppress annoying MSVC warnings about exporting classes/functions
 #pragma warning(disable: 4251)
 
 #ifdef MCF_EXPORTS

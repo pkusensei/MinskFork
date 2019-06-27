@@ -1,6 +1,5 @@
 /*
-* The purpose of this file is changed 
-* to include necessary windows header files.
+* This file is repurposed to include necessary Windows header files.
 * It might in the future serve as precompiled header.
 * 20190626
 */
