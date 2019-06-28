@@ -105,17 +105,6 @@ public:
 	EvaluationResult Evaluate(VarMap& variables);
 	void EmitTree(std::ostream& out);
 
-	bool operator==(const Compilation& other)const noexcept
-	{
-		return _previous == other._previous
-			&& _syntaxTree == other._syntaxTree
-			&& _globalScope == other._globalScope
-			&& _diagnostics == other._diagnostics;
-	}
-	bool operator!=(const Compilation& other)const noexcept
-	{
-		return !(*this == other);
-	}
 };
 
 }//MCF
