@@ -89,13 +89,13 @@ private:
 	void HandleControlEnter(ObservableCollection<std::string>* document, SubmissionView* view);
 	static void InsertLine(ObservableCollection<std::string>* document, SubmissionView* view);
 
-	void HandleLeftArrow(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleLeftArrow(SubmissionView* view);
 	void HandleRightArrow(ObservableCollection<std::string>* document, SubmissionView* view);
-	void HandleUpArrow(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleUpArrow(SubmissionView* view);
 	void HandleDownArrow(ObservableCollection<std::string>* document, SubmissionView* view);
 	void HandleBackspace(ObservableCollection<std::string>* document, SubmissionView* view);
 	void HandleDelete(ObservableCollection<std::string>* document, SubmissionView* view);
-	void HandleHome(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleHome(SubmissionView* view);
 	void HandleEnd(ObservableCollection<std::string>* document, SubmissionView* view);
 	void HandleTab(ObservableCollection<std::string>* document, SubmissionView* view);
 

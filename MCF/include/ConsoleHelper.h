@@ -26,7 +26,7 @@ enum class ConsoleColor
 MCF_API bool EnableVTMode();
 MCF_API void SetConsoleColor(const ConsoleColor& color = ConsoleColor::Gray);
 MCF_API void ResetConsoleColor();
-MCF_API void ClearConsole(char fill = ' ');
+MCF_API void ClearConsole();
 MCF_API void SetCursorVisibility(bool visible = true);
 MCF_API int GetConsoleWidth();
 MCF_API size_t GetCursorTop();

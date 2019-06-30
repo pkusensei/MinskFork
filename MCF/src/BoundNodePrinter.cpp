@@ -80,7 +80,7 @@ void BoundNodePrinter::Write(const BoundNode* node)
 		case BoundNodeKind::ErrorExpression:
 		{
 			auto p = dynamic_cast<const BoundErrorExpression*>(node);
-			if (p) WriteErrorExpression(p);
+			if (p) WriteErrorExpression();
 			break;
 		}
 		case BoundNodeKind::LiteralExpression:
@@ -293,7 +293,7 @@ void BoundNodePrinter::WriteExpressionStatement(const BoundExpressionStatement* 
 	_writer.WriteLine();
 }
 
-void BoundNodePrinter::WriteErrorExpression(const BoundErrorExpression* node)
+void BoundNodePrinter::WriteErrorExpression()
 {
 	_writer.WriteKeyword("?");
 }

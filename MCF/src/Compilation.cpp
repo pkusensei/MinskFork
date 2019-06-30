@@ -292,7 +292,7 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 	} else
 	{
 		auto locals = VarMap();
-		for (auto i = 0; i < node->Arguments().size(); ++i)
+		for (size_t i = 0; i < node->Arguments().size(); ++i)
 		{
 			auto param = node->Function()->Parameters()[i];
 			auto value = EvaluateExpression(node->Arguments()[i].get());

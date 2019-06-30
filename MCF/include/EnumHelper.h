@@ -17,7 +17,7 @@ T& operator++(T& value)
 }
 
 template<typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
-T& operator++(T& value, int c)
+T& operator++(T& value, int)
 {
 	return ++value;
 }

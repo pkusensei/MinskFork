@@ -499,7 +499,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	}
 
 	auto hasError = false;
-	for (auto i = 0; i < syntax->Arguments()->size(); ++i)
+	for (size_t i = 0; i < syntax->Arguments()->size(); ++i)
 	{
 		auto arg = boundArguments[i].get();
 		auto param = function->Parameters()[i];

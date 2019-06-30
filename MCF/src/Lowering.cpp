@@ -89,7 +89,7 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(const shared
 {
 	auto result = vector<shared_ptr<BoundStatement>>();
 	auto& statements = node->Statements();
-	for (auto i = 0; i < statements.size(); ++i)
+	for (size_t i = 0; i < statements.size(); ++i)
 	{
 		auto oldStatement = statements[i];
 		auto newStatement = RewriteStatement(oldStatement);
@@ -308,7 +308,7 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteBinaryExpression(const sha
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteCallExpression(const shared_ptr<BoundCallExpression>& node)
 {
 	auto result = vector<shared_ptr<BoundExpression>>();
-	for (auto i = 0; i < node->Arguments().size(); ++i)
+	for (size_t i = 0; i < node->Arguments().size(); ++i)
 	{
 		auto oldArg = node->Arguments()[i];
 		auto newArg = RewriteExpression(oldArg);

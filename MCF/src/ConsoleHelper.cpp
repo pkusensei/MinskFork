@@ -92,7 +92,7 @@ void ResetConsoleColor()
 	SetConsoleColor();
 }
 
-void ClearConsole(char fill)
+void ClearConsole()
 {
 	std::cout << CSI << "2J";
 	SetCursorPosition(0, 0);

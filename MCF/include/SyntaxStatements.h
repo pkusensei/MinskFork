@@ -284,8 +284,7 @@ private:
 	unique_ptr<ExpressionSyntax> _expression;
 
 public:
-	explicit ReturnStatementSyntax(const SyntaxToken& retKeyword,
-		std::nullptr_t n = nullptr)
+	explicit ReturnStatementSyntax(const SyntaxToken& retKeyword)
 		:_keyword(retKeyword), _expression(nullptr)
 	{
 	}

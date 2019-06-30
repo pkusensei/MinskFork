@@ -51,7 +51,7 @@ private:
 	void WriteConditionalGotoStatement(const BoundConditionalGotoStatement* node);
 	void WriteReturnStatement(const BoundReturnStatement* node);
 	void WriteExpressionStatement(const BoundExpressionStatement* node);
-	void WriteErrorExpression(const BoundErrorExpression* node);
+	void WriteErrorExpression();
 	void WriteLiteralExpression(const BoundLiteralExpression* node);
 	void WriteVariableExpression(const BoundVariableExpression* node);
 	void WriteAssignmentExpression(const BoundAssignmentExpression* node);

@@ -53,7 +53,7 @@ void SymbolPrinter::WriteFunction(const FunctionSymbol* symbol)
 	_writer.WriteIdentifier(symbol->Name());
 	_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
 
-	for (int i = 0; i < symbol->Parameters().size(); ++i)
+	for (size_t i = 0; i < symbol->Parameters().size(); ++i)
 	{
 		if (i > 0)
 		{

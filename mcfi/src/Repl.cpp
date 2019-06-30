@@ -70,13 +70,13 @@ void Repl::HandleKey(const MCF::KeyInfo& key,
 					HandleEnter(document, view);
 					break;
 				case MCF::KeyInputKind::LeftArrow:
-					HandleLeftArrow(document, view);
+					HandleLeftArrow(view);
 					break;
 				case MCF::KeyInputKind::RightArrow:
 					HandleRightArrow(document, view);
 					break;
 				case MCF::KeyInputKind::UpArrow:
-					HandleUpArrow(document, view);
+					HandleUpArrow(view);
 					break;
 				case MCF::KeyInputKind::DownArrow:
 					HandleDownArrow(document, view);
@@ -88,7 +88,7 @@ void Repl::HandleKey(const MCF::KeyInfo& key,
 					HandleDelete(document, view);
 					break;
 				case MCF::KeyInputKind::Home:
-					HandleHome(document, view);
+					HandleHome(view);
 					break;
 				case MCF::KeyInputKind::End:
 					HandleEnd(document, view);
@@ -151,7 +151,7 @@ void Repl::InsertLine(ObservableCollection<std::string>* document, SubmissionVie
 	view->CurrentLine(lineIndex);
 }
 
-void Repl::HandleLeftArrow(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandleLeftArrow(SubmissionView* view)
 {
 	if (view->CurrentCharacter() > 0)
 		view->CurrentCharacter(view->CurrentCharacter() - 1);
@@ -164,7 +164,7 @@ void Repl::HandleRightArrow(ObservableCollection<std::string>* document, Submiss
 		view->CurrentCharacter(view->CurrentCharacter() + 1);
 }
 
-void Repl::HandleUpArrow(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandleUpArrow(SubmissionView* view)
 {
 	if (view->CurrentLine() > 0)
 		view->CurrentLine(view->CurrentLine() - 1);
@@ -220,7 +220,7 @@ void Repl::HandleDelete(ObservableCollection<std::string>* document, SubmissionV
 	document->SetAt(lineIndex, before + after);
 }
 
-void Repl::HandleHome(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandleHome(SubmissionView* view)
 {
 	view->CurrentCharacter(0);
 }
@@ -337,7 +337,7 @@ void Repl::SubmissionView::Render()
 	if (numberOfBlankLines > 0)
 	{
 		auto blankLine = std::string(MCF::GetConsoleWidth(), ' ');
-		for (size_t i = 0; i < numberOfBlankLines; ++i)
+		for (int i = 0; i < numberOfBlankLines; ++i)
 		{
 			MCF::SetCursorPosition(0, _cursorTop + lineCount + i);
 			std::cout << blankLine << '\n';
