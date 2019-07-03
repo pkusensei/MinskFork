@@ -11,3 +11,4 @@ endif()
 
 add_subdirectory(MCF)
 add_subdirectory(mcfi)
+add_subdirectory(ctest)

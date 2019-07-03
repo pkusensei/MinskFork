@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.8)
 
 project(mcfi LANGUAGES CXX)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/${CMAKE_BUILD_TYPE})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY 
+	${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
 
 add_executable(mcfi src/mcfi.cpp
     src/Repl.cpp)
