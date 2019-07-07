@@ -8,6 +8,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
 enable_testing()
 
 add_executable(mcf_test src/test_main.cpp
+	src/Lexer_tests.cpp
 	src/Parser_tests.cpp
 	src/SourceText_tests.cpp)
 
