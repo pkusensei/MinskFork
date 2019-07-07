@@ -8,13 +8,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
 enable_testing()
 
 add_executable(mcf_test src/test_main.cpp
+	src/Evaluation_tests.cpp
 	src/Lexer_tests.cpp
 	src/Parser_tests.cpp
-	src/SourceText_tests.cpp)
+	src/SourceText_tests.cpp
+	src/AnnotatedText.cpp
+	src/AssertingHelper.cpp)
 
 target_include_directories(mcf_test 
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(mcf_test PUBLIC MCF)
+target_link_libraries(mcf_test PRIVATE MCF)
 
 add_test(test_all mcf_test)

@@ -1,36 +1,14 @@
 #include <catch.hpp>
 
-#include <stack>
-
-#include "Diagnostic.h"
 #include "Parsing.h"
-#include "SourceText.h"
 
-class AssertingHelper final
-{
-private:
-	std::vector<const MCF::SyntaxNode*> _nodes;
-	bool _hasErrors;
-	size_t _position;
-
-	bool MarkFailed()
-	{
-		_hasErrors = true;
-		return false;
-	}
-
-public:
-	explicit AssertingHelper(const MCF::SyntaxNode* node);
-	~AssertingHelper();
-	void AssertNode(MCF::SyntaxKind kind);
-	void AssertToken(MCF::SyntaxKind kind, const std::string& text);
-};
+#include "AssertingHelper.h"
 
 const MCF::ExpressionSyntax* ParseExpression(const MCF::SyntaxTree* tree);
 std::vector<std::pair<MCF::SyntaxKind, MCF::SyntaxKind>> GetBinaryOperatorPairsData();
 std::vector<std::pair<MCF::SyntaxKind, MCF::SyntaxKind>> GetUnaryOperatorPairsData();
 
-TEST_CASE("Parser honors precedences in binary expression", "[Parser]")
+TEST_CASE("Parser honors precedences in BinaryExpression", "[Parser]")
 {
 	auto data = GetBinaryOperatorPairsData();
 	for (const auto& it : data)
@@ -72,7 +50,7 @@ TEST_CASE("Parser honors precedences in binary expression", "[Parser]")
 	}
 }
 
-TEST_CASE("Parser honors precedences in uinary expression", "[Parser]")
+TEST_CASE("Parser honors precedences in UinaryExpression", "[Parser]")
 {
 	auto data = GetUnaryOperatorPairsData();
 	for (const auto& it : data)
@@ -111,7 +89,7 @@ TEST_CASE("Parser honors precedences in uinary expression", "[Parser]")
 	}
 }
 
-TEST_CASE("Parser honors precedences in postfix expression", "[Parser]")
+TEST_CASE("Parser honors precedences in PostfixExpression", "[Parser]")
 {
 	auto text = "a---b";
 	auto tree = MCF::SyntaxTree::Parse(text);
@@ -161,59 +139,4 @@ std::vector<std::pair<MCF::SyntaxKind, MCF::SyntaxKind>> GetUnaryOperatorPairsDa
 		for (const auto& binary : binaryData)
 			result.emplace_back(unary, binary);
 	return result;
-}
-
-AssertingHelper::AssertingHelper(const MCF::SyntaxNode* node)
-	:_nodes({}), _hasErrors(false), _position(0)
-{
-	auto stack = std::stack<const MCF::SyntaxNode*>();
-	stack.emplace(node);
-	while (!stack.empty())
-	{
-		auto n = stack.top();
-		_nodes.emplace_back(n);
-		stack.pop();
-		auto children = n->GetChildren();
-		for (auto it = children.rbegin(); it != children.rend(); ++it)
-			stack.emplace(*it);
-	}
-}
-
-AssertingHelper::~AssertingHelper()
-{
-	if (!_hasErrors)
-		CHECK(_position == _nodes.size());
-}
-
-void AssertingHelper::AssertNode(MCF::SyntaxKind kind)
-{
-	try
-	{
-		REQUIRE(_position < _nodes.size());
-		REQUIRE(kind == _nodes[_position]->Kind());
-		REQUIRE_FALSE(typeid(MCF::SyntaxToken) == typeid(decltype(*_nodes[_position])));
-		++_position;
-	} catch (std::exception& e)
-	{
-		if (MarkFailed())
-			throw e;
-	}
-}
-
-void AssertingHelper::AssertToken(MCF::SyntaxKind kind, const std::string& text)
-{
-	try
-	{
-		REQUIRE(_position < _nodes.size());
-		REQUIRE(kind == _nodes[_position]->Kind());
-		auto& r = *_nodes[_position];
-		REQUIRE(typeid(MCF::SyntaxToken) == typeid(r));
-		auto p = dynamic_cast<const MCF::SyntaxToken*>(_nodes[_position]);
-		REQUIRE(text == p->Text());
-		++_position;
-	} catch (std::exception& e)
-	{
-		if (MarkFailed())
-			throw e;
-	}
 }
