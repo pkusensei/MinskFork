@@ -18,6 +18,6 @@ add_executable(mcf_test src/test_main.cpp
 target_include_directories(mcf_test 
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(mcf_test PRIVATE MCF)
+target_link_libraries(mcf_test PUBLIC MCF)
 
 add_test(test_all mcf_test)

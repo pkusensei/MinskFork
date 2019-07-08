@@ -45,4 +45,4 @@ Although this fork stays as close to the original as possible, there are some de
 
 - CMake + Visual Studio + Ninja + MSBuild + ...
 
-    Ok this is more of a rant. C++ (meta)build systems are nefariously horrible compared to .NET Core CLI ( and of course [Cargo](https://github.com/rust-lang/cargo/) ). After trying CMake on and off for quite some time this is the first step to hop on the wagon ( so that clang is back now hooray! ). As of now both Visual Studio build files (MSBuild) and CMake files co-exist. The former remain necessary for tests to work until some other test framework gets in the fold. 
+    Ok this is more of a rant. C++ (meta)build systems are nefariously horrible compared to .NET Core CLI (and of course [Cargo](https://github.com/rust-lang/cargo/)). After trying CMake on and off for quite some time this is the first step to hop on the wagon (so that clang is back now hooray!). As of now both Visual Studio build files (MSBuild) and CMake files co-exist. The former remain necessary for tests to work until some other test framework gets in the fold. 
