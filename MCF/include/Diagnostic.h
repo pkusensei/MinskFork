@@ -4,6 +4,12 @@
 
 #include "SourceText.h"
 
+// To suppress annoying MSVC warnings about exporting classes/functions
+#if defined(_MSC_VER) && !defined(__clang__)
+#pragma warning(push)
+#pragma warning(disable: 4251)
+#endif // defined(_MSC_VER) && !defined(__clang__)
+
 namespace MCF {
 
 enum class SyntaxKind;
@@ -105,3 +111,8 @@ public:
 };
 
 }//MCF
+
+// To suppress annoying MSVC warnings about exporting classes/functions
+#if defined(_MSC_VER) && !defined(__clang__)
+#pragma warning(pop)
+#endif // defined(_MSC_VER) && !defined(__clang__)

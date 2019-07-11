@@ -4,12 +4,6 @@
 #include <string>
 #include <vector>
 
-#ifdef _MSC_VER
-// To suppress annoying MSVC warnings about exporting classes/functions
-#pragma warning(disable: 4251)
-
-#endif // _MSC_VER
-
 #ifdef MCF_EXPORTS
 #ifdef _MSC_VER
 #define MCF_API __declspec(dllexport)

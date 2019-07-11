@@ -3,6 +3,12 @@
 #include "Symbols.h"
 #include "SyntaxKind.h"
 
+// To suppress annoying MSVC warnings about exporting classes/functions
+#if defined(_MSC_VER) && !defined(__clang__)
+#pragma warning(push)
+#pragma warning(disable: 4251)
+#endif // defined(_MSC_VER) && !defined(__clang__)
+
 namespace MCF {
 
 class TextSpan;
@@ -99,3 +105,8 @@ public:
 };
 
 }//MCF
+
+// To suppress annoying MSVC warnings about exporting classes/functions
+#if defined(_MSC_VER) && !defined(__clang__)
+#pragma warning(pop)
+#endif // defined(_MSC_VER) && !defined(__clang__)
