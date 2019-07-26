@@ -13,7 +13,7 @@ void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node,
 							 string indent, bool isLast)
 {
 	auto isToConsole = out.rdbuf() == std::cout.rdbuf();
-	string marker = isLast ? "+--" : "---";//"©¸©¤©¤" : "©À©¤©¤";
+	string marker = isLast ? "+--" : "---";
 	out << indent;
 
 	if (isToConsole)

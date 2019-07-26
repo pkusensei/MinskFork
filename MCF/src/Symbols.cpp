@@ -191,25 +191,18 @@ IntegerType ValueType::ToInteger() const
 	}
 }
 
+template<typename... Ts> struct overloaded :Ts...{using Ts::operator()...; };
+template<typename... Ts> overloaded(Ts...)->overloaded<Ts...>;
+
 string ValueType::ToString() const
 {
-	auto id = _inner.index();
-	auto result = string();
-	switch (id)
-	{
-		case 1:
-			result = GetValue<bool>() ? "True" : "False";
-			break;
-		case 2:
-			result = std::to_string(GetValue<IntegerType>());
-			break;
-		case 3:
-			result = GetValue<string>();
-		default:
-			break;
-	}
-
-	return result;
+	using namespace std::string_literals;
+	return std::visit(overloaded{
+		[](bool arg) { return arg ? "True"s : "False"s; },
+		[](IntegerType arg) { return std::to_string(arg); },
+		[](const string& arg) { return arg; },
+		[](auto&&) { return "Null"s; }
+		}, _inner);
 }
 
 size_t ValueType::GetValueTypeId(const TypeSymbol& inType)
