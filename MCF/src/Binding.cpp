@@ -179,17 +179,13 @@ shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax
 {
 	auto condition = BindExpression(syntax->Condition(),
 		GetTypeSymbol(TypeEnum::Bool));
-	BoundLabel breakLabel;
-	BoundLabel continueLabel;
-	auto body = BindLoopBody(syntax->Body(), breakLabel, continueLabel);
+	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
 	return make_shared<BoundWhileStatement>(condition, body, breakLabel, continueLabel);
 }
 
 shared_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSyntax* syntax)
 {
-	BoundLabel breakLabel;
-	BoundLabel continueLabel;
-	auto body = BindLoopBody(syntax->Body(), breakLabel, continueLabel);
+	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
 	auto condition = BindExpression(syntax->Condition(),
 		GetTypeSymbol(TypeEnum::Bool));
 	return make_shared<BoundDoWhileStatement>(body, condition, breakLabel, continueLabel);
@@ -206,28 +202,24 @@ shared_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax* sy
 
 	auto variable = BindVariable(syntax->Identifier(), true,
 		GetTypeSymbol(TypeEnum::Int));
-	BoundLabel breakLabel;
-	BoundLabel continueLabel;
-	auto body = BindLoopBody(syntax->Body(), breakLabel, continueLabel);
+	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
 
 	BoundScope::ResetToParent(_scope);
 	return make_shared<BoundForStatement>(variable, lowerBound, upperBound,
 		body, breakLabel, continueLabel);
 }
 
-shared_ptr<BoundStatement> Binder::BindLoopBody(const StatementSyntax* syntax,
-	BoundLabel& breakLabel, BoundLabel& continueLabel)
+auto Binder::BindLoopBody(const StatementSyntax* syntax)
+->std::tuple<shared_ptr<BoundStatement>, BoundLabel, BoundLabel>
 {
 	++_labelCount;
-	auto brLabel = BoundLabel("break" + std::to_string(_labelCount));
-	breakLabel = brLabel;
-	auto conLabel = BoundLabel("continue" + std::to_string(_labelCount));
-	continueLabel = conLabel;
+	auto breakLabel = BoundLabel("break" + std::to_string(_labelCount));
+	auto continueLabel = BoundLabel("continue" + std::to_string(_labelCount));
 
-	_loopStack.emplace(brLabel, conLabel);
+	_loopStack.emplace(breakLabel, continueLabel);
 	auto boundBody = BindStatement(syntax);
 	_loopStack.pop();
-	return boundBody;
+	return std::make_tuple(boundBody, breakLabel, continueLabel);
 }
 
 shared_ptr<BoundStatement> Binder::BindBreakStatement(const BreakStatementSyntax* syntax)
@@ -380,13 +372,13 @@ shared_ptr<BoundExpression> Binder::BindNameExpression(const NameExpressionSynta
 	if (syntax->IdentifierToken().IsMissing()) // NOTE this token was injected by Parser::MatchToken
 		return make_shared<BoundErrorExpression>();
 
-	auto variable = shared_ptr<VariableSymbol>(nullptr);
-	if (!_scope->TryLookupVariable(name, variable))
+	auto opt = _scope->TryLookupVariable(name);
+	if (!opt.has_value())
 	{
 		_diagnostics->ReportUndefinedName(syntax->IdentifierToken().Span(), name);
 		return make_shared<BoundErrorExpression>();
 	}
-	return make_shared<BoundVariableExpression>(variable);
+	return make_shared<BoundVariableExpression>(opt.value());
 }
 
 shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExpressionSyntax* syntax)
@@ -394,12 +386,14 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 	auto name = syntax->IdentifierToken().Text();
 	auto boundExpression = BindExpression(syntax->Expression());
 
-	auto variable = shared_ptr<VariableSymbol>(nullptr);
-	if (!_scope->TryLookupVariable(name, variable))
+	auto opt = _scope->TryLookupVariable(name);
+	if (!opt.has_value())
 	{
 		_diagnostics->ReportUndefinedName(syntax->IdentifierToken().Span(), name);
 		return boundExpression;
 	}
+
+	auto variable = opt.value();
 	if (variable->IsReadOnly())
 		_diagnostics->ReportCannotAssign(syntax->EqualsToken().Span(), name);
 	auto convertExpression = BindConversion(syntax->Expression()->Span(),
@@ -467,14 +461,15 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 			boundArguments.emplace_back(BindExpression(p));
 	}
 
-	auto function = shared_ptr<FunctionSymbol>(nullptr);
-	if (!_scope->TryLookupFunction(syntax->Identifier().Text(), function))
+	auto opt = _scope->TryLookupFunction(syntax->Identifier().Text());
+	if (!opt.has_value())
 	{
 		_diagnostics->ReportUndefinedFunction(syntax->Identifier().Span(),
 			syntax->Identifier().Text());
 		return make_shared<BoundErrorExpression>();
 	}
 
+	auto function = opt.value();
 	if (syntax->Arguments()->size() != function->Parameters().size())
 	{
 		TextSpan span;
@@ -521,13 +516,14 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	auto name = syntax->IdentifierToken().Text();
 	auto boundExpression = BindExpression(syntax->Expression());
 
-	auto variable = shared_ptr<VariableSymbol>(nullptr);
-
-	if (!_scope->TryLookupVariable(name, variable))
+	auto opt = _scope->TryLookupVariable(name);
+	if (!opt.has_value())
 	{
 		_diagnostics->ReportUndefinedName(syntax->IdentifierToken().Span(), name);
 		return make_shared<BoundErrorExpression>();
 	}
+
+	auto variable = opt.value();
 	if (variable->IsReadOnly())
 	{
 		_diagnostics->ReportCannotAssign(syntax->Op().Span(), name);

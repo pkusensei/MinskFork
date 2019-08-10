@@ -253,16 +253,14 @@ void Lexer::ReadNumberToken()
 	auto length = _position - _start;
 	auto text = _text->ToString(_start, length);
 
-	IntegerType value;
 	try
 	{
-		value = StringToInteger(text);
+		_value = ValueType(StringToInteger(text));
+		_kind = SyntaxKind::NumberToken;
 	} catch (...)
 	{
 		_diagnostics->ReportInvalidNumber(TextSpan(_start, length), text, GetTypeSymbol(TypeEnum::Int));
 	}
-	_value = ValueType(value);
-	_kind = SyntaxKind::NumberToken;
 }
 
 void Lexer::ReadIdentifierOrKeyword()

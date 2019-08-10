@@ -81,20 +81,16 @@ private:
 	}
 
 	template<typename T, typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
-	bool TryLookupSymbol(const string& name, shared_ptr<T>& symbol)const
+	std::optional<shared_ptr<T>> TryLookupSymbol(const string& name)const
 	{
 		if (_symbols.find(name) != _symbols.end())
 		{
 			auto p = std::dynamic_pointer_cast<T>(_symbols.at(name));
-			if (p)
-			{
-				symbol = p;
-				return true;
-			}
-			return false;
+			if (p) return std::make_optional(p);
+			else return std::nullopt;
 		}
-		if (_parent == nullptr) return false;
-		return _parent->TryLookupSymbol<T>(name, symbol);
+		if (_parent == nullptr) return std::nullopt;
+		return _parent->TryLookupSymbol<T>(name);
 	}
 
 	template<typename T, typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
@@ -130,15 +126,13 @@ public:
 		return TryDeclareSymbol(function);
 	}
 
-	bool TryLookupVariable(const string& name,
-		shared_ptr<VariableSymbol>& variable)const
+	decltype(auto) TryLookupVariable(const string& name)const
 	{
-		return TryLookupSymbol(name, variable);
+		return TryLookupSymbol<VariableSymbol>(name);
 	}
-	bool TryLookupFunction(const string& name,
-		shared_ptr<FunctionSymbol>& function)const
+	decltype(auto) TryLookupFunction(const string& name)const
 	{
-		return TryLookupSymbol(name, function);
+		return TryLookupSymbol<FunctionSymbol>(name);
 	}
 
 	const vector<shared_ptr<VariableSymbol>> GetDeclaredVariables()const
@@ -225,8 +219,9 @@ private:
 	shared_ptr<BoundStatement> BindWhileStatement(const WhileStatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindDoWhileStatement(const DoWhileStatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindForStatement(const ForStatementSyntax* syntax);
-	shared_ptr<BoundStatement> BindLoopBody(const StatementSyntax* syntax,
-		BoundLabel& breakLabel, BoundLabel& continueLabel);
+	auto BindLoopBody(const StatementSyntax* syntax)
+		->std::tuple<shared_ptr<BoundStatement>, BoundLabel, BoundLabel>;
+
 	shared_ptr<BoundStatement> BindBreakStatement(const BreakStatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindContinueStatement(const ContinueStatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindReturnStatement(const ReturnStatementSyntax* syntax);

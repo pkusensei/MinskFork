@@ -547,8 +547,8 @@ vector<SyntaxToken> SyntaxTree::ParseTokens(const string& text,
 
 vector<SyntaxToken> SyntaxTree::ParseTokens(const SourceText& text)
 {
-	auto v = DiagnosticBag();
-	return ParseTokens(text, v);
+	auto _ = DiagnosticBag();
+	return ParseTokens(text, _);
 }
 
 vector<SyntaxToken> SyntaxTree::ParseTokens(const SourceText& text,
