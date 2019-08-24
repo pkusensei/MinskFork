@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.8)
 project(MCF LANGUAGES CXX)
 
 add_library(MCF SHARED src/Binding.cpp
-	src/BoundExpressions.cpp
 	src/BoundNode.cpp
 	src/BoundNodePrinter.cpp
 	src/Compilation.cpp

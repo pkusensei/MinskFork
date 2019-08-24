@@ -2,10 +2,9 @@
 
 #include "BoundNode.h"
 #include "Symbols.h"
+#include "SyntaxKind.h"
 
 namespace MCF {
-
-enum class SyntaxKind;
 
 enum class BoundUnaryOperatorKind
 {
@@ -15,7 +14,23 @@ enum class BoundUnaryOperatorKind
 	OnesComplement
 };
 
-string GetEnumText(const BoundUnaryOperatorKind& kind);
+inline string GetEnumText(const BoundUnaryOperatorKind& kind)
+{
+	switch (kind)
+	{
+		case BoundUnaryOperatorKind::Identity:
+			return "Identity";
+		case BoundUnaryOperatorKind::Negation:
+			return "Negation";
+		case BoundUnaryOperatorKind::LogicalNegation:
+			return "LogicalNegation";
+		case BoundUnaryOperatorKind::OnesComplement:
+			return "OnesComplement";
+
+		default:
+			return string();
+	}
+}
 
 enum class BoundBinaryOperatorKind
 {
@@ -37,7 +52,47 @@ enum class BoundBinaryOperatorKind
 	GreaterOrEquals
 };
 
-string GetEnumText(const BoundBinaryOperatorKind& kind);
+inline string GetEnumText(const BoundBinaryOperatorKind& kind)
+{
+	switch (kind)
+	{
+		case BoundBinaryOperatorKind::Addition:
+			return "Addition";
+		case BoundBinaryOperatorKind::Subtraction:
+			return "Subtraction";
+		case BoundBinaryOperatorKind::Multiplication:
+			return "Multiplication";
+		case BoundBinaryOperatorKind::Division:
+			return "Division";
+		case BoundBinaryOperatorKind::Modulus:
+			return "Modulus";
+		case BoundBinaryOperatorKind::LogicalAnd:
+			return "LogicalAnd";
+		case BoundBinaryOperatorKind::LogicalOr:
+			return "LogicalOr";
+		case BoundBinaryOperatorKind::BitwiseAnd:
+			return "BitwiseAnd";
+		case BoundBinaryOperatorKind::BitwiseOr:
+			return "BitwiseOr";
+		case BoundBinaryOperatorKind::BitwiseXor:
+			return "BitwiseXor";
+		case BoundBinaryOperatorKind::Equals:
+			return "Equals";
+		case BoundBinaryOperatorKind::NotEquals:
+			return "NotEquals";
+		case BoundBinaryOperatorKind::Less:
+			return "Less";
+		case BoundBinaryOperatorKind::LessOrEquals:
+			return "LessOrEquals";
+		case BoundBinaryOperatorKind::Greater:
+			return "Greater";
+		case BoundBinaryOperatorKind::GreaterOrEquals:
+			return "GreaterOrEquals";
+
+		default:
+			return string();
+	}
+}
 
 enum class BoundPostfixOperatorEnum
 {
@@ -45,7 +100,18 @@ enum class BoundPostfixOperatorEnum
 	Decrement,
 };
 
-string GetEnumText(const BoundPostfixOperatorEnum& kind);
+inline string GetEnumText(const BoundPostfixOperatorEnum& kind)
+{
+	switch (kind)
+	{
+		case BoundPostfixOperatorEnum::Increment:
+			return "Increment";
+		case BoundPostfixOperatorEnum::Decrement:
+			return "Decrement";
+		default:
+			return string();
+	}
+}
 
 class BoundExpression :public BoundNode
 {
@@ -70,13 +136,28 @@ private:
 	TypeSymbol _resultType;
 	bool _isUseful = true;
 
-	BoundUnaryOperator(const SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
-		const TypeSymbol& operandType, const TypeSymbol& resultType);
-	BoundUnaryOperator(const SyntaxKind& synKind, const BoundUnaryOperatorKind& kind,
-		const TypeSymbol& operandType);
-	BoundUnaryOperator();
+	BoundUnaryOperator(const enum SyntaxKind& synKind,
+		const BoundUnaryOperatorKind& kind,
+		const TypeSymbol& operandType, const TypeSymbol& resultType)
+		:_syntaxKind(synKind), _kind(kind),
+		_operandType(operandType), _resultType(resultType)
+	{
+	}
 
-	static const vector<BoundUnaryOperator>& Operators();
+	BoundUnaryOperator(const enum SyntaxKind& synKind,
+		const BoundUnaryOperatorKind& kind, const TypeSymbol& operandType)
+		: BoundUnaryOperator(synKind, kind, operandType, operandType)
+	{
+	}
+
+	BoundUnaryOperator()
+		: BoundUnaryOperator(SyntaxKind::BadToken, BoundUnaryOperatorKind::Identity,
+			GetTypeSymbol(TypeEnum::Error))
+	{
+		_isUseful = false;
+	}
+
+	static const vector<BoundUnaryOperator> operators;
 
 public:
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
@@ -86,7 +167,26 @@ public:
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
 	static BoundUnaryOperator Bind(const enum SyntaxKind& synKind,
-		const TypeSymbol& type);
+		const TypeSymbol& type)
+	{
+		for (const auto& op : operators)
+		{
+			if (op.SyntaxKind() == synKind && op.OperandType() == type)
+				return op;
+		}
+		return BoundUnaryOperator();
+	}
+};
+
+inline const vector<BoundUnaryOperator> BoundUnaryOperator::operators = {
+	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation,
+						GetTypeSymbol(TypeEnum::Bool)),
+	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity,
+						GetTypeSymbol(TypeEnum::Int)),
+	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation,
+						GetTypeSymbol(TypeEnum::Int)),
+	BoundUnaryOperator(SyntaxKind::TildeToken, BoundUnaryOperatorKind::OnesComplement,
+						GetTypeSymbol(TypeEnum::Int))
 };
 
 class BoundUnaryExpression final : public BoundExpression
@@ -122,15 +222,35 @@ private:
 	TypeSymbol _resultType;
 	bool _isUseful = true;
 
-	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
-		const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result);
-	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
-		const TypeSymbol& operandType, const TypeSymbol& resultType);
-	BoundBinaryOperator(const SyntaxKind& synKind, const BoundBinaryOperatorKind& kind,
-		const TypeSymbol& type);
-	BoundBinaryOperator();
+	BoundBinaryOperator(const enum SyntaxKind& synKind,
+		const BoundBinaryOperatorKind& kind,
+		const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result)
+		:_syntaxKind(synKind), _kind(kind), _leftType(left), _rightType(right),
+		_resultType(result)
+	{
+	}
 
-	static const vector<BoundBinaryOperator>& Operators();
+	BoundBinaryOperator(const enum SyntaxKind& synKind,
+		const BoundBinaryOperatorKind& kind,
+		const TypeSymbol& operandType, const TypeSymbol& resultType)
+		: BoundBinaryOperator(synKind, kind, operandType, operandType, resultType)
+	{
+	}
+
+	BoundBinaryOperator(const enum SyntaxKind& synKind,
+		const BoundBinaryOperatorKind& kind, const TypeSymbol& type)
+		: BoundBinaryOperator(synKind, kind, type, type, type)
+	{
+	}
+
+	BoundBinaryOperator()
+		: BoundBinaryOperator(SyntaxKind::BadToken, BoundBinaryOperatorKind::Addition,
+			GetTypeSymbol(TypeEnum::Error))
+	{
+		_isUseful = false;
+	}
+
+	static const vector<BoundBinaryOperator> operators;
 
 public:
 	constexpr SyntaxKind SyntaxKind()const noexcept { return _syntaxKind; }
@@ -141,7 +261,72 @@ public:
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
 	static BoundBinaryOperator Bind(const enum SyntaxKind& synKind,
-		const TypeSymbol& leftType, const TypeSymbol& rightType);
+		const TypeSymbol& leftType, const TypeSymbol& rightType)
+	{
+		for (const auto& op : operators)
+		{
+			if (op.SyntaxKind() == synKind && op.LeftType() == leftType
+				&& op.RightType() == rightType)
+				return op;
+		}
+		return BoundBinaryOperator();
+	}
+
+};
+
+inline const vector<BoundBinaryOperator> BoundBinaryOperator::operators = {
+		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
+							GetTypeSymbol(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction,
+							GetTypeSymbol(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication,
+							GetTypeSymbol(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division,
+							GetTypeSymbol(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus,
+							GetTypeSymbol(TypeEnum::Int)),
+
+		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd,
+							GetTypeSymbol(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr,
+							GetTypeSymbol(TypeEnum::Int)),
+		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor,
+							GetTypeSymbol(TypeEnum::Int)),
+
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
+							GetTypeSymbol(TypeEnum::Int), GetTypeSymbol(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
+							GetTypeSymbol(TypeEnum::Int), GetTypeSymbol(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less,
+							GetTypeSymbol(TypeEnum::Int), GetTypeSymbol(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals,
+							GetTypeSymbol(TypeEnum::Int), GetTypeSymbol(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater,
+							GetTypeSymbol(TypeEnum::Int), GetTypeSymbol(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals,
+							GetTypeSymbol(TypeEnum::Int), GetTypeSymbol(TypeEnum::Bool)),
+
+		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd,
+							GetTypeSymbol(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd,
+							GetTypeSymbol(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr,
+							GetTypeSymbol(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr,
+							GetTypeSymbol(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor,
+							GetTypeSymbol(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
+							GetTypeSymbol(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
+							GetTypeSymbol(TypeEnum::Bool)),
+
+		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
+							GetTypeSymbol(TypeEnum::String)),
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
+							GetTypeSymbol(TypeEnum::String), GetTypeSymbol(TypeEnum::Bool)),
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
+							GetTypeSymbol(TypeEnum::String), GetTypeSymbol(TypeEnum::Bool)),
 };
 
 class BoundBinaryExpression final : public BoundExpression
@@ -164,8 +349,8 @@ public:
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BinaryExpression; }
 	TypeSymbol Type() const override { return _op.Type(); }
 
-	const shared_ptr<BoundExpression> Left()const noexcept { return _left; }
-	const shared_ptr<BoundExpression> Right()const noexcept { return _right; }
+	const shared_ptr<BoundExpression>& Left()const noexcept { return _left; }
+	const shared_ptr<BoundExpression>& Right()const noexcept { return _right; }
 	const BoundBinaryOperator& Op()const noexcept { return _op; }
 };
 

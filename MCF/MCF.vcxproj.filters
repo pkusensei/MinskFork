@@ -101,9 +101,6 @@
     <ClCompile Include="src\Binding.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\BoundExpressions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\BoundNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

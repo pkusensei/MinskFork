@@ -11,7 +11,6 @@
 #include "Diagnostic.h"
 #include "Lowering.h"
 #include "Parsing.h"
-#include "ReflectionHelper.h"
 
 namespace MCF {
 
