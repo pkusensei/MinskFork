@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.8)
-
 project(tests LANGUAGES CXX)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY 
