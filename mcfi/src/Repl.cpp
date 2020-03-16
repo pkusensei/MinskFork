@@ -26,11 +26,12 @@ void Repl::Run()
 		auto text = EditSubmission();
 		if (text.empty())
 			return;
-		if (text.find(NEW_LINE) == text.npos && MCF::StringStartsWith(text, "#"))
-			EvaluateMetaCommand(text);
-		else EvaluateSubmission(text);
 
-		_submissionHistory.emplace_back(text);
+		auto& input = _submissionHistory.emplace_back(std::move(text));
+		if (input.find(NEW_LINE) == input.npos && MCF::StringStartsWith(input, "#"))
+			EvaluateMetaCommand(input);
+		else EvaluateSubmission(input);
+
 		_submissionHistoryIndex = 0;
 	}
 }
@@ -46,7 +47,7 @@ std::string Repl::EditSubmission()
 	while (!_done)
 	{
 		auto key = MCF::ReadKeyFromConsole();
-		HandleKey(key, &document, &view);
+		HandleKey(key, document, view);
 	}
 	view.CurrentLine(document.size() - 1);
 	view.CurrentCharacter(document[view.CurrentLine()].length());
@@ -55,7 +56,7 @@ std::string Repl::EditSubmission()
 }
 
 void Repl::HandleKey(const MCF::KeyInfo& key,
-	ObservableCollection<std::string>* document, SubmissionView* view)
+	Document& document, SubmissionView& view)
 {
 	if (key.IsFunctionalKey)
 	{
@@ -117,16 +118,16 @@ void Repl::HandleKey(const MCF::KeyInfo& key,
 	}
 }
 
-void Repl::HandleEscape(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandleEscape(Document& document, SubmissionView& view)
 {
-	document->Clear();
-	document->Add(std::string());
-	view->CurrentLine(0);
+	document.Clear();
+	document.Add(std::string());
+	view.CurrentLine(0);
 }
 
-void Repl::HandleEnter(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandleEnter(Document& document, SubmissionView& view)
 {
-	auto text = MCF::StringJoin(document->Contents(), NEW_LINE);
+	auto text = MCF::StringJoin(document.Contents(), NEW_LINE);
 	if (MCF::StringStartsWith(text, "#") || IsCompleteSubmission(text))
 	{
 		_done = true;
@@ -135,113 +136,113 @@ void Repl::HandleEnter(ObservableCollection<std::string>* document, SubmissionVi
 	InsertLine(document, view);
 }
 
-void Repl::HandleControlEnter(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandleControlEnter(Document& document, SubmissionView& view)
 {
 	InsertLine(document, view);
 }
 
-void Repl::InsertLine(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::InsertLine(Document& document, SubmissionView& view)
 {
-	auto remainder = (*document)[view->CurrentLine()].substr(view->CurrentCharacter());
-	document->SetAt(view->CurrentLine(), (*document)[view->CurrentLine()].substr(0, view->CurrentCharacter()));
+	auto remainder = document[view.CurrentLine()].substr(view.CurrentCharacter());
+	document.SetAt(view.CurrentLine(), document[view.CurrentLine()].substr(0, view.CurrentCharacter()));
 
-	auto lineIndex = view->CurrentLine() + 1;
-	document->Insert(lineIndex, std::string());
-	view->CurrentCharacter(0);
-	view->CurrentLine(lineIndex);
+	auto lineIndex = view.CurrentLine() + 1;
+	document.Insert(lineIndex, std::string());
+	view.CurrentCharacter(0);
+	view.CurrentLine(lineIndex);
 }
 
-void Repl::HandleLeftArrow(SubmissionView* view)
+void Repl::HandleLeftArrow(SubmissionView& view)
 {
-	if (view->CurrentCharacter() > 0)
-		view->CurrentCharacter(view->CurrentCharacter() - 1);
+	if (view.CurrentCharacter() > 0)
+		view.CurrentCharacter(view.CurrentCharacter() - 1);
 }
 
-void Repl::HandleRightArrow(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandleRightArrow(Document& document, SubmissionView& view)
 {
-	auto line = (*document)[view->CurrentLine()];
-	if (view->CurrentCharacter() <= line.length() - 1)
-		view->CurrentCharacter(view->CurrentCharacter() + 1);
+	auto line = document[view.CurrentLine()];
+	if (view.CurrentCharacter() <= line.length() - 1)
+		view.CurrentCharacter(view.CurrentCharacter() + 1);
 }
 
-void Repl::HandleUpArrow(SubmissionView* view)
+void Repl::HandleUpArrow(SubmissionView& view)
 {
-	if (view->CurrentLine() > 0)
-		view->CurrentLine(view->CurrentLine() - 1);
+	if (view.CurrentLine() > 0)
+		view.CurrentLine(view.CurrentLine() - 1);
 }
 
-void Repl::HandleDownArrow(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandleDownArrow(Document& document, SubmissionView& view)
 {
-	if (view->CurrentLine() < document->size() - 1)
-		view->CurrentLine(view->CurrentLine() + 1);
+	if (view.CurrentLine() < document.size() - 1)
+		view.CurrentLine(view.CurrentLine() + 1);
 }
 
-void Repl::HandleBackspace(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandleBackspace(Document& document, SubmissionView& view)
 {
-	auto start = view->CurrentCharacter();
+	auto start = view.CurrentCharacter();
 	if (start == 0)
 	{
-		if (view->CurrentLine() == 0)
+		if (view.CurrentLine() == 0)
 			return;
-		auto currentLine = (*document)[view->CurrentLine()];
-		auto previousLine = (*document)[view->CurrentLine() - 1];
-		document->RemoveAt(view->CurrentLine());
-		view->CurrentLine(view->CurrentLine() - 1);
-		document->SetAt(view->CurrentLine(), previousLine + currentLine);
-		view->CurrentCharacter(previousLine.length());
+		auto currentLine = document[view.CurrentLine()];
+		auto previousLine = document[view.CurrentLine() - 1];
+		document.RemoveAt(view.CurrentLine());
+		view.CurrentLine(view.CurrentLine() - 1);
+		document.SetAt(view.CurrentLine(), previousLine + currentLine);
+		view.CurrentCharacter(previousLine.length());
 	} else
 	{
-		auto lineIndex = view->CurrentLine();
-		auto line = (*document)[lineIndex];
+		auto lineIndex = view.CurrentLine();
+		auto line = document[lineIndex];
 		auto before = line.substr(0, start - 1);
 		auto after = line.substr(start);
-		document->SetAt(lineIndex, before + after);
-		view->CurrentCharacter(view->CurrentCharacter() - 1);
+		document.SetAt(lineIndex, before + after);
+		view.CurrentCharacter(view.CurrentCharacter() - 1);
 	}
 }
 
-void Repl::HandleDelete(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandleDelete(Document& document, SubmissionView& view)
 {
-	auto lineIndex = view->CurrentLine();
-	auto line = (*document)[lineIndex];
-	auto start = view->CurrentCharacter();
+	auto lineIndex = view.CurrentLine();
+	auto line = document[lineIndex];
+	auto start = view.CurrentCharacter();
 	if (start >= line.length())
 	{
-		if (view->CurrentLine() == document->size() - 1) return;
+		if (view.CurrentLine() == document.size() - 1) return;
 
-		auto nextLine = (*document)[view->CurrentLine() + 1];
-		document->SetAt(view->CurrentLine(),
-			(*document)[view->CurrentLine()] + nextLine);
-		document->RemoveAt(view->CurrentLine() + 1);
+		auto nextLine = document[view.CurrentLine() + 1];
+		document.SetAt(view.CurrentLine(),
+			document[view.CurrentLine()] + nextLine);
+		document.RemoveAt(view.CurrentLine() + 1);
 		return;
 	}
 	auto before = line.substr(0, start);
 	auto after = line.substr(start + 1);
-	document->SetAt(lineIndex, before + after);
+	document.SetAt(lineIndex, before + after);
 }
 
-void Repl::HandleHome(SubmissionView* view)
+void Repl::HandleHome(SubmissionView& view)
 {
-	view->CurrentCharacter(0);
+	view.CurrentCharacter(0);
 }
 
-void Repl::HandleEnd(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandleEnd(Document& document, SubmissionView& view)
 {
-	view->CurrentCharacter((*document)[view->CurrentLine()].length());
+	view.CurrentCharacter(document[view.CurrentLine()].length());
 }
 
-void Repl::HandleTab(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandleTab(Document& document, SubmissionView& view)
 {
 	constexpr auto tabWidth = 4;
-	auto start = view->CurrentCharacter();
+	auto start = view.CurrentCharacter();
 	auto remainingSpaces = tabWidth - start % tabWidth;
-	auto line = (*document)[view->CurrentLine()];
-	document->SetAt(view->CurrentLine(),
+	auto line = document[view.CurrentLine()];
+	document.SetAt(view.CurrentLine(),
 		line.insert(start, std::string(remainingSpaces, ' ')));
-	view->CurrentCharacter(view->CurrentCharacter() + remainingSpaces);
+	view.CurrentCharacter(view.CurrentCharacter() + remainingSpaces);
 }
 
-void Repl::HandlePageUp(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandlePageUp(Document& document, SubmissionView& view)
 {
 	--_submissionHistoryIndex;
 	if (_submissionHistoryIndex < 0)
@@ -249,7 +250,7 @@ void Repl::HandlePageUp(ObservableCollection<std::string>* document, SubmissionV
 	UpdateDocumentFromHistory(document, view);
 }
 
-void Repl::HandlePageDown(ObservableCollection<std::string>* document, SubmissionView* view)
+void Repl::HandlePageDown(Document& document, SubmissionView& view)
 {
 	++_submissionHistoryIndex;
 	if (_submissionHistoryIndex > _submissionHistory.size() - 1)
@@ -257,29 +258,29 @@ void Repl::HandlePageDown(ObservableCollection<std::string>* document, Submissio
 	UpdateDocumentFromHistory(document, view);
 }
 
-void Repl::UpdateDocumentFromHistory(ObservableCollection<std::string>* document,
-	SubmissionView* view)
+void Repl::UpdateDocumentFromHistory(Document& document,
+	SubmissionView& view)
 {
 	if (_submissionHistory.empty()) return;
 
-	document->Clear();
+	document.Clear();
 	auto historyItem = _submissionHistory[_submissionHistoryIndex];
 	auto lines = MCF::StringSplit(historyItem, NEW_LINE);
 	for (const auto& it : lines)
 	{
-		document->Add(it);
+		document.Add(it);
 	}
-	view->CurrentLine(document->size() - 1);
-	view->CurrentCharacter((*document)[view->CurrentLine()].length());
+	view.CurrentLine(document.size() - 1);
+	view.CurrentCharacter(document[view.CurrentLine()].length());
 }
 
-void Repl::HandleTyping(ObservableCollection<std::string>* document, SubmissionView* view, const std::string& text)
+void Repl::HandleTyping(Document& document, SubmissionView& view, const std::string& text)
 {
-	auto lineIndex = view->CurrentLine();
-	auto start = view->CurrentCharacter();
-	auto line = (*document)[lineIndex];
-	document->SetAt(lineIndex, line.insert(start, text));
-	view->CurrentCharacter(view->CurrentCharacter() + text.length());
+	auto lineIndex = view.CurrentLine();
+	auto start = view.CurrentCharacter();
+	auto line = document[lineIndex];
+	document.SetAt(lineIndex, line.insert(start, text));
+	view.CurrentCharacter(view.CurrentCharacter() + text.length());
 }
 
 void Repl::RenderLine(const std::string& line) const
@@ -287,10 +288,10 @@ void Repl::RenderLine(const std::string& line) const
 	std::cout << line;
 }
 
-Repl::SubmissionView::SubmissionView(const std::function<void(std::string)>& lineRenderer,
+Repl::SubmissionView::SubmissionView(const std::function<void(const std::string&)>& lineRenderer,
 	ObservableCollection<std::string>& document)
 	:_lineRenderer(lineRenderer),
-	_submissionDocument(&document), _cursorTop(MCF::GetCursorTop())
+	_submissionDocument(document), _cursorTop(MCF::GetCursorTop())
 {
 	document.SetAction([this]() { this->SubmissionDocumentChanged(); });
 	Render();
@@ -302,7 +303,7 @@ Repl::SubmissionView::SubmissionView(const std::function<void(std::string)>& lin
 	//             the function called when _submissionDocument changed
 }
 
-void Repl::EvaluateMetaCommand(const std::string& input)
+void Repl::EvaluateMetaCommand(std::string_view input)
 {
 	MCF::SetConsoleColor(MCF::ConsoleColor::Red);
 	std::cout << "Invalid command " << input << '\n';
@@ -319,7 +320,7 @@ void Repl::SubmissionView::Render()
 	MCF::SetCursorVisibility(false);
 
 	auto lineCount = 0;
-	for (const auto& line : _submissionDocument->Contents())
+	for (const auto& line : _submissionDocument.Contents())
 	{
 		MCF::SetCursorPosition(0, _cursorTop + lineCount);
 
@@ -358,8 +359,8 @@ void Repl::SubmissionView::CurrentLine(const size_t value)
 	if (_currentLine != value)
 	{
 		_currentLine = value;
-		_currentCharacter = (*_submissionDocument)[_currentLine].length() < _currentCharacter ?
-			(*_submissionDocument)[_currentLine].length() : _currentCharacter;
+		_currentCharacter = _submissionDocument[_currentLine].length() < _currentCharacter ?
+			_submissionDocument[_currentLine].length() : _currentCharacter;
 		UpdateCursorPosition();
 	}
 }
@@ -380,7 +381,7 @@ McfRepl::McfRepl()
 
 McfRepl::~McfRepl() = default;
 
-void McfRepl::RenderLine(const std::string& line) const
+void McfRepl::RenderLine(const std::string & line) const
 {
 	auto tokens = MCF::SyntaxTree::ParseTokens(line);
 	for (const auto& it : tokens)
@@ -405,7 +406,7 @@ void McfRepl::RenderLine(const std::string& line) const
 	}
 }
 
-void McfRepl::EvaluateMetaCommand(const std::string& input)
+void McfRepl::EvaluateMetaCommand(std::string_view input)
 {
 	if (input == "#showTree")
 	{
@@ -428,7 +429,7 @@ void McfRepl::EvaluateMetaCommand(const std::string& input)
 	}
 }
 
-bool McfRepl::IsCompleteSubmission(const std::string& text) const
+bool McfRepl::IsCompleteSubmission(const std::string & text) const
 {
 	if (text.empty())
 		return true;
@@ -456,7 +457,7 @@ bool McfRepl::IsCompleteSubmission(const std::string& text) const
 	return true;
 }
 
-void McfRepl::EvaluateSubmission(const std::string& text)
+void McfRepl::EvaluateSubmission(const std::string & text)
 {
 	auto syntaxTree = MCF::SyntaxTree::Parse(text);
 

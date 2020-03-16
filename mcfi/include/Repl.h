@@ -74,6 +74,9 @@ public:
 
 class Repl
 {
+
+	using Document = ObservableCollection<std::string>;
+
 private:
 	std::vector<std::string> _submissionHistory;
 	size_t _submissionHistoryIndex{ 0 };
@@ -81,34 +84,34 @@ private:
 
 	class SubmissionView;
 	std::string EditSubmission();
-	void HandleKey(const MCF::KeyInfo& key, ObservableCollection<std::string>* document,
-		SubmissionView* view);
+	void HandleKey(const MCF::KeyInfo& key, Document& document,
+		SubmissionView& view);
 
-	void HandleEscape(ObservableCollection<std::string>* document, SubmissionView* view);
-	void HandleEnter(ObservableCollection<std::string>* document, SubmissionView* view);
-	void HandleControlEnter(ObservableCollection<std::string>* document, SubmissionView* view);
-	static void InsertLine(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleEscape(Document& document, SubmissionView& view);
+	void HandleEnter(Document& document, SubmissionView& view);
+	void HandleControlEnter(Document& document, SubmissionView& view);
+	static void InsertLine(Document& document, SubmissionView& view);
 
-	void HandleLeftArrow(SubmissionView* view);
-	void HandleRightArrow(ObservableCollection<std::string>* document, SubmissionView* view);
-	void HandleUpArrow(SubmissionView* view);
-	void HandleDownArrow(ObservableCollection<std::string>* document, SubmissionView* view);
-	void HandleBackspace(ObservableCollection<std::string>* document, SubmissionView* view);
-	void HandleDelete(ObservableCollection<std::string>* document, SubmissionView* view);
-	void HandleHome(SubmissionView* view);
-	void HandleEnd(ObservableCollection<std::string>* document, SubmissionView* view);
-	void HandleTab(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandleLeftArrow(SubmissionView& view);
+	void HandleRightArrow(Document& document, SubmissionView& view);
+	void HandleUpArrow(SubmissionView& view);
+	void HandleDownArrow(Document& document, SubmissionView& view);
+	void HandleBackspace(Document& document, SubmissionView& view);
+	void HandleDelete(Document& document, SubmissionView& view);
+	void HandleHome(SubmissionView& view);
+	void HandleEnd(Document& document, SubmissionView& view);
+	void HandleTab(Document& document, SubmissionView& view);
 
-	void HandlePageUp(ObservableCollection<std::string>* document, SubmissionView* view);
-	void HandlePageDown(ObservableCollection<std::string>* document, SubmissionView* view);
-	void UpdateDocumentFromHistory(ObservableCollection<std::string>* document, SubmissionView* view);
+	void HandlePageUp(Document& document, SubmissionView& view);
+	void HandlePageDown(Document& document, SubmissionView& view);
+	void UpdateDocumentFromHistory(Document& document, SubmissionView& view);
 
-	void HandleTyping(ObservableCollection<std::string>* document, SubmissionView* view,
+	void HandleTyping(Document& document, SubmissionView& view,
 		const std::string& text);
 
 protected:
 	virtual void RenderLine(const std::string& line)const;
-	virtual void EvaluateMetaCommand(const std::string& input);
+	virtual void EvaluateMetaCommand(std::string_view input);
 	virtual bool IsCompleteSubmission(const std::string& text)const = 0;
 	virtual void EvaluateSubmission(const std::string& text) = 0;
 
@@ -123,7 +126,7 @@ class Repl::SubmissionView final
 {
 private:
 	std::function<void(const std::string&)> _lineRenderer;
-	const ObservableCollection<std::string>* _submissionDocument;
+	const ObservableCollection<std::string>& _submissionDocument;
 	const size_t _cursorTop;
 	int _renderedLineCount{ 0 };
 	size_t _currentLine{ 0 };
@@ -134,7 +137,7 @@ private:
 	void UpdateCursorPosition();
 
 public:
-	SubmissionView(const std::function<void(std::string)>& lineRenderer,
+	SubmissionView(const std::function<void(const std::string&)>& lineRenderer,
 		ObservableCollection<std::string>& document);
 
 	size_t CurrentLine()const { return _currentLine; }
@@ -154,7 +157,7 @@ private:
 protected:
 	// Inherited via Repl
 	void RenderLine(const std::string& line)const override;
-	void EvaluateMetaCommand(const std::string& input) override;
+	void EvaluateMetaCommand(std::string_view input) override;
 	bool IsCompleteSubmission(const std::string& text) const override;
 	void EvaluateSubmission(const std::string& text) override;
 

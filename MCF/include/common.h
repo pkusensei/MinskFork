@@ -32,9 +32,9 @@ using std::make_shared;
 
 using IntegerType = long; // HACK use long as interger type
 
-inline IntegerType StringToInteger(const string& s)
+inline IntegerType StringToInteger(string_view s)
 {
-	return std::stol(s);
+	return std::stol(string(s));
 }
 
 constexpr auto NEW_LINE = '\n';

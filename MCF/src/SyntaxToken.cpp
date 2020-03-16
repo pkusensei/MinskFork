@@ -9,11 +9,11 @@
 
 namespace MCF {
 
-void SyntaxNode::PrettyPrint(std::ostream & out, const SyntaxNode * node, 
-							 string indent, bool isLast)
+void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
+	string indent, bool isLast)
 {
 	auto isToConsole = out.rdbuf() == std::cout.rdbuf();
-	string marker = isLast ? "+--" : "---";
+	auto marker = isLast ? "+--" : "---";
 	out << indent;
 
 	if (isToConsole)
@@ -67,13 +67,13 @@ string SyntaxNode::ToString() const
 	return ss.str();
 }
 
-bool SyntaxToken::operator==(const SyntaxToken & other) const noexcept
+bool SyntaxToken::operator==(const SyntaxToken& other) const noexcept
 {
 	return _kind == other._kind && _position == other._position
 		&& _text == other._text && _value == other._value;
 }
 
-bool SyntaxToken::operator!=(const SyntaxToken & other) const noexcept
+bool SyntaxToken::operator!=(const SyntaxToken& other) const noexcept
 {
 	return !(*this == other);
 }

@@ -8,7 +8,7 @@
 namespace MCF {
 
 Lexer::Lexer(const SourceText& text)
-	:_text(&text), _diagnostics(make_unique<DiagnosticBag>()),
+	:_text(text), _diagnostics(make_unique<DiagnosticBag>()),
 	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(NullValue)
 {
 }
@@ -16,9 +16,9 @@ Lexer::Lexer(const SourceText& text)
 char Lexer::Peek(int offset) const
 {
 	size_t idx = _position + offset;
-	if (idx >= _text->Length())
+	if (idx >= _text.Length())
 		return '\0';
-	return (*_text)[idx];
+	return _text[idx];
 }
 
 SyntaxToken Lexer::Lex()
@@ -189,9 +189,9 @@ SyntaxToken Lexer::Lex()
 			break;
 	}
 	auto length = _position - _start;
-	auto text = string(GetText(_kind));
+	auto text = GetText(_kind);
 	if (text.empty())
-		text = _text->ToString(_start, length);
+		text = _text.ToString(_start, length);
 
 	return SyntaxToken(_kind, _start, text, _value);
 }
@@ -251,7 +251,7 @@ void Lexer::ReadNumberToken()
 	while (std::isdigit(Current()))
 		Next();
 	auto length = _position - _start;
-	auto text = _text->ToString(_start, length);
+	auto text = _text.ToString(_start, length);
 
 	try
 	{
@@ -268,7 +268,7 @@ void Lexer::ReadIdentifierOrKeyword()
 	while (std::isalpha(Current()))
 		Next();
 	auto length = _position - _start;
-	auto text = _text->ToString(_start, length);
+	auto text = _text.ToString(_start, length);
 	_kind = GetKeywordKind(text);
 }
 

@@ -56,34 +56,34 @@ public:
 
 	void AddRangeFront(DiagnosticBag& other);
 	void AddRange(DiagnosticBag& other);
-	void ReportInvalidNumber(const TextSpan& span, const string& text, const TypeSymbol& type);
+	void ReportInvalidNumber(const TextSpan& span, string_view text, const TypeSymbol& type);
 	void ReportBadCharacter(size_t position, char character);
 	void ReportUnterminatedString(const TextSpan& span);
 	void ReportUnexpectedToken(const TextSpan& span, const SyntaxKind& actualKind,
 		const SyntaxKind& expectedKind);
-	void ReportUndefinedUnaryOperator(const TextSpan& span, const string& operatorText,
+	void ReportUndefinedUnaryOperator(const TextSpan& span, string_view operatorText,
 		const TypeSymbol& operandType);
-	void ReportUndefinedBinaryOperator(const TextSpan& span, const string& operatorText,
+	void ReportUndefinedBinaryOperator(const TextSpan& span, string_view operatorText,
 		const TypeSymbol& leftType, const TypeSymbol& rightType);
-	void ReportUndefinedName(const TextSpan& span, const string& name);
-	void ReportUndefinedType(const TextSpan& span, const string& name);
+	void ReportUndefinedName(const TextSpan& span, string_view name);
+	void ReportUndefinedType(const TextSpan& span, string_view name);
 	void ReportCannotConvert(const TextSpan& span, const TypeSymbol& fromType,
 		const TypeSymbol& toType);
 	void ReportCannotConvertImplicitly(const TextSpan& span, const TypeSymbol& fromType,
 		const TypeSymbol& toType);
 	void ReportSymbolAlreadyDeclared(const TextSpan& span, string_view name);
-	void ReportCannotAssign(const TextSpan& span, const string& name);
+	void ReportCannotAssign(const TextSpan& span, string_view name);
 
-	void ReportUndefinedFunction(const TextSpan& span, const string& name);
+	void ReportUndefinedFunction(const TextSpan& span, string_view name);
 	void ReportWrongArgumentCount(const TextSpan& span, string_view name,
 		size_t expectedCount, size_t actualCount);
 	void ReportWrongArgumentType(const TextSpan& span, string_view name,
 		const TypeSymbol& expectedType, const TypeSymbol& actualType);
 	void ReportExpressionMustHaveValue(const TextSpan& span);
-	void ReportInvalidBreakOrContinue(const TextSpan& span, const string& text);
+	void ReportInvalidBreakOrContinue(const TextSpan& span, string_view text);
 
 	void ReportExpressionNotSupportPostfixOperator(const TextSpan& span,
-		const string& operatorText, const SyntaxKind& kind);
+		string_view operatorText, const SyntaxKind& kind);
 
 	void ReportAllPathsMustReturn(const TextSpan& span);
 	void ReportInvalidReturn(const TextSpan& span);
@@ -92,7 +92,7 @@ public:
 		const TypeSymbol& returnType);
 
 	void ReportVariableNotSupportPostfixOperator(const TextSpan& span,
-		const string& operatorText, const TypeSymbol& variableType);
+		string_view operatorText, const TypeSymbol& variableType);
 };
 
 class MCF_API DiagnosticBag::iterator

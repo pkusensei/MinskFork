@@ -12,7 +12,7 @@ class SyntaxToken;
 class Lexer final
 {
 private:
-	const SourceText* _text;
+	const SourceText& _text;
 	unique_ptr<DiagnosticBag> _diagnostics;
 
 	size_t _position;

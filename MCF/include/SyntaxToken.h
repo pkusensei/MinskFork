@@ -36,12 +36,12 @@ class MCF_API SyntaxToken final :public SyntaxNode
 private:
 	SyntaxKind _kind;
 	size_t _position;
-	string _text;
+	string_view _text;
 	ValueType _value;
 
 public:
 	SyntaxToken(const SyntaxKind& kind, size_t position,
-				const string& text, const ValueType& value)
+				string_view text, const ValueType& value)
 		:_kind(kind), _position(position), _text(text), _value(value)
 	{
 	}
@@ -55,7 +55,7 @@ public:
 	const vector<const SyntaxNode*> GetChildren() const override;
 
 	constexpr size_t Position() const noexcept { return _position; }
-	string Text() const { return _text; }
+	string_view Text() const { return _text; }
 	ValueType Value() const noexcept { return _value; }
 	bool IsMissing()const noexcept { return _text.empty(); }
 

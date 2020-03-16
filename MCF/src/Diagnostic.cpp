@@ -59,9 +59,9 @@ void DiagnosticBag::AddRange(DiagnosticBag& other)
 }
 
 void DiagnosticBag::ReportInvalidNumber(const TextSpan& span,
-	const string& text, const TypeSymbol& type)
+	string_view text, const TypeSymbol& type)
 {
-	auto message = "The number " + text + " is not valid " + type.ToString();
+	auto message = BuildStringFrom("The number ", text, " is not valid ", type.ToString());
 	Report(span, message);
 }
 
@@ -87,35 +87,31 @@ void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span,
 }
 
 void DiagnosticBag::ReportUndefinedUnaryOperator(const TextSpan& span,
-	const string& operatorText, const TypeSymbol& operandType)
+	string_view operatorText, const TypeSymbol& operandType)
 {
-	string message{ "Unary operator '" };
-	message += operatorText + "' is not defined for type '"
-		+ operandType.ToString() + "'.";
+	auto message = BuildStringFrom("Unary operator '", operatorText, "' is not defined for type '"
+		, operandType.ToString(), "'.");
 	Report(span, message);
 }
 
 void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan& span,
-	const string& operatorText,
+	string_view operatorText,
 	const TypeSymbol& leftType, const TypeSymbol& rightType)
 {
-	string message{ "Binary operator '" };
-	message += operatorText + "' is not defined for types '"
-		+ leftType.ToString() + "' and '" + rightType.ToString() + "'.";
+	auto message = BuildStringFrom("Binary operator '", operatorText, "' is not defined for types '"
+		, leftType.ToString(), "' and '", rightType.ToString(), "'.");
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportUndefinedName(const TextSpan& span, const string& name)
+void DiagnosticBag::ReportUndefinedName(const TextSpan& span, string_view name)
 {
-	string message{ "Variable '" };
-	message += name + "' doesn't exist.";
+	auto message = BuildStringFrom("Variable '", name, "' doesn't exist.");
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportUndefinedType(const TextSpan& span, const string& name)
+void DiagnosticBag::ReportUndefinedType(const TextSpan& span, string_view name)
 {
-	string message{ "Type '" };
-	message += name + "' doesn't exist.";
+	auto message = BuildStringFrom("Type '", name, "' doesn't exist.");
 	Report(span, message);
 }
 
@@ -142,18 +138,16 @@ void DiagnosticBag::ReportSymbolAlreadyDeclared(const TextSpan& span,
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportCannotAssign(const TextSpan& span, const string& name)
+void DiagnosticBag::ReportCannotAssign(const TextSpan& span, string_view name)
 {
-	string message("Variable '");
-	message += name + "' is read-only; cannot be assigned to.";
+	auto message = BuildStringFrom("Variable '", name, "' is read-only; cannot be assigned to.");
 	Report(span, message);
 }
 
 void DiagnosticBag::ReportUndefinedFunction(const TextSpan& span,
-	const string& name)
+	string_view name)
 {
-	string message("Function '");
-	message += name + "' doesn't exist.";
+	auto message = BuildStringFrom("Function '", name, "' doesn't exist.");
 	Report(span, message);
 }
 
@@ -180,15 +174,14 @@ void DiagnosticBag::ReportExpressionMustHaveValue(const TextSpan& span)
 }
 
 void DiagnosticBag::ReportInvalidBreakOrContinue(const TextSpan& span,
-	const string& text)
+	string_view text)
 {
-	string message("The keyword '");
-	message += text + "' can only be used inside loops.";
+	auto message = BuildStringFrom("The keyword '", text, "' can only be used inside loops.");
 	Report(span, message);
 }
 
 void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(const TextSpan& span,
-	const string& operatorText, const SyntaxKind& kind)
+	string_view operatorText, const SyntaxKind& kind)
 {
 	std::stringstream message{ "Operator '" };
 	message << operatorText << "' is not defined for expression '" << GetSyntaxKindName(kind) << "'.";
@@ -221,10 +214,9 @@ void DiagnosticBag::ReportMissingReturnExpression(const TextSpan& span, const Ty
 }
 
 void DiagnosticBag::ReportVariableNotSupportPostfixOperator(const TextSpan& span,
-	const string& operatorText, const TypeSymbol& variableType)
+	string_view operatorText, const TypeSymbol& variableType)
 {
-	string message{ "Operator '" };
-	message += operatorText + "' is not defined for type '" + variableType.ToString() + "'.";
+	auto message = BuildStringFrom("Operator '", operatorText, "' is not defined for type '", variableType.ToString(), "'.");
 	Report(span, message);
 }
 

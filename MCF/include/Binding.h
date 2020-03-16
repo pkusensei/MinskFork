@@ -81,7 +81,7 @@ private:
 	}
 
 	template<typename T, typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
-	std::optional<shared_ptr<T>> TryLookupSymbol(const string& name)const
+	std::optional<shared_ptr<T>> TryLookupSymbol(string_view name)const
 	{
 		if (_symbols.find(name) != _symbols.end())
 		{
@@ -126,11 +126,11 @@ public:
 		return TryDeclareSymbol(function);
 	}
 
-	decltype(auto) TryLookupVariable(const string& name)const
+	decltype(auto) TryLookupVariable(string_view name)const
 	{
 		return TryLookupSymbol<VariableSymbol>(name);
 	}
-	decltype(auto) TryLookupFunction(const string& name)const
+	decltype(auto) TryLookupFunction(string_view name)const
 	{
 		return TryLookupSymbol<FunctionSymbol>(name);
 	}
@@ -249,7 +249,7 @@ private:
 	shared_ptr<VariableSymbol> BindVariable(const SyntaxToken& identifier,
 		bool isReadOnly, const TypeSymbol& type);
 	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
-	std::optional<TypeSymbol> LookupType(const string& name)const;
+	std::optional<TypeSymbol> LookupType(string_view name)const;
 
 	[[nodiscard]] static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
 	[[nodiscard]] static unique_ptr<BoundScope> CreateRootScope();

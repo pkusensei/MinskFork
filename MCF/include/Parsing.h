@@ -32,8 +32,8 @@ public:
 	}
 
 	// Inherited via SyntaxNode
-	virtual SyntaxKind Kind() const override { return SyntaxKind::Parameter; }
-	virtual const vector<const SyntaxNode*> GetChildren() const override;
+	SyntaxKind Kind() const override { return SyntaxKind::Parameter; }
+	const vector<const SyntaxNode*> GetChildren() const override;
 
 	const SyntaxToken& Identifier()const noexcept { return _identifier; }
 	const TypeClauseSyntax& Type()const noexcept { return _type; }

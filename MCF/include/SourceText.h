@@ -49,22 +49,22 @@ public:
 class TextLine final
 {
 private:
-	const SourceText* _text;
-	const size_t _start;
-	const size_t _length;
-	const size_t _lengthIncludingLineBreak;
+	std::reference_wrapper<const SourceText> _text;
+	size_t _start;
+	size_t _length;
+	size_t _lengthIncludingLineBreak;
 
 public:
-	TextLine(const SourceText& text, size_t start, size_t length, 
+	TextLine(const SourceText& text, size_t start, size_t length,
 		size_t lengthWithBreak)noexcept
-		:_text(&text), _start(start), _length(length), 
+		:_text(text), _start(start), _length(length),
 		_lengthIncludingLineBreak(lengthWithBreak)
 	{
 	}
 
 	~TextLine() = default;
 
-	constexpr const SourceText* Text()const noexcept { return _text; }
+	constexpr const SourceText& Text()const noexcept { return _text; }
 	constexpr size_t Start()const noexcept { return _start; }
 	constexpr size_t Length()const noexcept { return _length; }
 	constexpr size_t End()const noexcept { return _start + _length; }
@@ -72,43 +72,43 @@ public:
 	{
 		return _lengthIncludingLineBreak;
 	}
-	TextSpan Span()const
+	constexpr TextSpan Span()const
 	{
 		return TextSpan(_start, _length);
 	}
-	TextSpan SpanIncludingLineBreak()const
+	constexpr TextSpan SpanIncludingLineBreak()const
 	{
 		return TextSpan(_start, _lengthIncludingLineBreak);
 	}
-	string ToString()const;
+	string_view ToString()const;
 
 };
 
 class MCF_API SourceText final
 {
 private:
-	const string _text;
+	string_view _text;
 	vector<TextLine> _lines;
 
 	static void AddLine(vector<TextLine>& result, const SourceText& sourceText,
 		size_t position, size_t lineStart, size_t lineBreakWidth);
-	static size_t GetLineBreakWidth(const string& text, size_t position);
-	static vector<TextLine> ParseLines(const SourceText* sourceText, const string& text);
+	static size_t GetLineBreakWidth(string_view text, size_t position);
+	static vector<TextLine> ParseLines(const SourceText& sourceText, string_view text);
 
 	explicit SourceText(const string& text)
-		:_text(text), _lines(ParseLines(this, _text))
+		:_text(text), _lines(ParseLines(*this, _text))
 	{
 	}
 
 public:
 	const vector<TextLine>& Lines()const { return _lines; }
-	size_t Length()const noexcept { return _text.length(); }
+	constexpr size_t Length()const noexcept { return _text.length(); }
 	char operator[](size_t sub) const { return _text.at(sub); }
 	size_t GetLineIndex(size_t position)const noexcept;
 
-	string ToString()const { return _text; }
-	string ToString(size_t start, size_t length)const { return _text.substr(start, length); }
-	string ToString(const TextSpan& span)const { return ToString(span.Start(), span.Length()); }
+	string_view ToString()const { return _text; }
+	string_view ToString(size_t start, size_t length)const { return _text.substr(start, length); }
+	string_view ToString(const TextSpan& span)const { return ToString(span.Start(), span.Length()); }
 
 	static SourceText From(const string& text) { return SourceText(text); }
 };

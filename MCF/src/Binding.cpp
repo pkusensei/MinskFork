@@ -613,7 +613,7 @@ std::optional<TypeSymbol> Binder::BindTypeClause(const std::optional<TypeClauseS
 	return type;
 }
 
-std::optional<TypeSymbol> Binder::LookupType(const string& name) const
+std::optional<TypeSymbol> Binder::LookupType(string_view name) const
 {
 	if (name == "bool") return GetTypeSymbol(TypeEnum::Bool);
 	else if (name == "int") return GetTypeSymbol(TypeEnum::Int);

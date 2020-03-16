@@ -28,10 +28,10 @@ string_view GetEnumText(const SymbolKind& kind);
 class MCF_API Symbol
 {
 private:
-	string _name;
+	string_view _name;
 
 protected:
-	explicit Symbol(const string& name)
+	explicit Symbol(string_view name)
 		:_name(name)
 	{
 	}
@@ -68,7 +68,7 @@ enum class TypeEnum
 class TypeSymbol final :public Symbol
 {
 private:
-	explicit TypeSymbol(const string& name)
+	explicit TypeSymbol(string_view name)
 		:Symbol(name)
 	{
 	}
@@ -92,7 +92,7 @@ private:
 	TypeSymbol _type;
 
 public:
-	VariableSymbol(const string& name, bool isReadOnly, const TypeSymbol& type)
+	VariableSymbol(string_view name, bool isReadOnly, const TypeSymbol& type)
 		:Symbol(name), _isReadOnly(isReadOnly), _type(type)
 	{
 	}
@@ -106,7 +106,7 @@ public:
 class GlobalVariableSymbol final :public VariableSymbol
 {
 public:
-	GlobalVariableSymbol(const string& name, bool isReadOnly, const TypeSymbol& type)
+	GlobalVariableSymbol(string_view name, bool isReadOnly, const TypeSymbol& type)
 		:VariableSymbol(name, isReadOnly, type)
 	{
 	}
@@ -119,7 +119,7 @@ public:
 class LocalVariableSymbol :public VariableSymbol
 {
 public:
-	LocalVariableSymbol(const string& name, bool isReadOnly, const TypeSymbol& type)
+	LocalVariableSymbol(string_view name, bool isReadOnly, const TypeSymbol& type)
 		:VariableSymbol(name, isReadOnly, type)
 	{
 	}
@@ -132,7 +132,7 @@ public:
 class ParameterSymbol final : public LocalVariableSymbol
 {
 public:
-	ParameterSymbol(const string& name, const TypeSymbol& type)
+	ParameterSymbol(string_view name, const TypeSymbol& type)
 		:LocalVariableSymbol(name, true, type)
 	{
 	}
@@ -155,12 +155,12 @@ private:
 	const FunctionDeclarationSyntax* _declaration;
 
 public:
-	FunctionSymbol(const string& name, const vector<ParameterSymbol>& params,
+	FunctionSymbol(string_view name, const vector<ParameterSymbol>& params,
 		const TypeSymbol& type, const FunctionDeclarationSyntax* declaration)
 		:Symbol(name), _params(params), _type(type), _declaration(declaration)
 	{
 	}
-	FunctionSymbol(const string& name, const vector<ParameterSymbol>& params,
+	FunctionSymbol(string_view name, const vector<ParameterSymbol>& params,
 		const TypeSymbol& type)
 		:FunctionSymbol(name, params, type, nullptr)
 	{
@@ -203,6 +203,7 @@ public:
 	constexpr ValueType(const IntegerType& value)noexcept :_inner(value) {}
 	constexpr ValueType(const int value)noexcept :_inner(static_cast<IntegerType>(value)) {}
 	constexpr ValueType(const bool value)noexcept :_inner(value) {}
+
 	constexpr ValueType(const string& s) : _inner(s) {}
 	ValueType(const char* s) : _inner(string(s)) {}
 

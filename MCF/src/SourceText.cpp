@@ -2,20 +2,20 @@
 
 namespace MCF {
 
-string TextLine::ToString() const
+string_view TextLine::ToString() const
 {
-	return _text->ToString(Span());
+	return _text.get().ToString(Span());
 }
 
-void SourceText::AddLine(vector<TextLine>& result, const SourceText & sourceText,
-						 size_t position, size_t lineStart, size_t lineBreakWidth)
+void SourceText::AddLine(vector<TextLine>& result, const SourceText& sourceText,
+	size_t position, size_t lineStart, size_t lineBreakWidth)
 {
 	auto lineLength = position - lineStart;
 	auto lineLengthWithLineBreak = lineLength + lineBreakWidth;
 	result.emplace_back(sourceText, lineStart, lineLength, lineLengthWithLineBreak);
 }
 
-size_t SourceText::GetLineBreakWidth(const string & text, size_t position)
+size_t SourceText::GetLineBreakWidth(string_view text, size_t position)
 {
 	auto character = text.at(position);
 	auto last = position + 1 >= text.length() ? '\0' : text.at(position + 1);
@@ -26,8 +26,8 @@ size_t SourceText::GetLineBreakWidth(const string & text, size_t position)
 	else return 0;
 }
 
-vector<TextLine> SourceText::ParseLines(const SourceText * sourceText, 
-										const string & text)
+vector<TextLine> SourceText::ParseLines(const SourceText& sourceText,
+	string_view text)
 {
 	auto result = vector<TextLine>();
 	size_t position = 0;
@@ -39,13 +39,13 @@ vector<TextLine> SourceText::ParseLines(const SourceText * sourceText,
 			++position;
 		else
 		{
-			AddLine(result, *sourceText, position, lineStart, lineBreakWidth);
+			AddLine(result, sourceText, position, lineStart, lineBreakWidth);
 			position += lineBreakWidth;
 			lineStart = position;
 		}
 	}
 	if (position >= lineStart)
-		AddLine(result, *sourceText, position, lineStart, 0);
+		AddLine(result, sourceText, position, lineStart, 0);
 	result.shrink_to_fit();
 	return result;
 }
