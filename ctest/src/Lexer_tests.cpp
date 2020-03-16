@@ -109,7 +109,7 @@ TEST_CASE("GetText_RoundTrip")
 {
 	for (const auto& kind : MCF::AllSyntaxKinds)
 	{
-		auto text = MCF::GetText(kind);
+		auto text = std::string(MCF::GetText(kind));
 		if (!text.empty())
 		{
 			auto tokens = MCF::SyntaxTree::ParseTokens(text);

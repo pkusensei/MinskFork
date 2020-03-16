@@ -33,7 +33,7 @@ bool Symbol::operator!=(const Symbol& other) const noexcept
 
 size_t SymbolHash::operator()(const Symbol& s) const noexcept
 {
-	return std::hash<string>{}(s.Name());
+	return std::hash<string_view>{}(s.Name());
 }
 
 size_t SymbolHash::operator()(const shared_ptr<Symbol>& s) const noexcept
@@ -71,7 +71,7 @@ const TypeSymbol& GetTypeSymbol(const TypeEnum& kind)
 
 size_t ParameterHash::operator()(const ParameterSymbol& ps) const noexcept
 {
-	return std::hash<string>{}(ps.Type().Name());
+	return std::hash<string_view>{}(ps.Type().Name());
 }
 
 size_t FunctionHash::operator()(const FunctionSymbol& fs) const noexcept
@@ -90,7 +90,7 @@ size_t FunctionHash::operator()(const shared_ptr<FunctionSymbol>& fs) const noex
 	return (*this)(*fs);
 }
 
-string GetEnumText(const SymbolKind& kind)
+string_view GetEnumText(const SymbolKind& kind)
 {
 	switch (kind)
 	{
@@ -105,7 +105,7 @@ string GetEnumText(const SymbolKind& kind)
 		case SymbolKind::Type:
 			return "Type";
 		default:
-			return string();
+			return string_view();
 	}
 }
 

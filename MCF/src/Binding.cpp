@@ -9,6 +9,7 @@
 #include "ControlFlowGraph.h"
 #include "Conversion.h"
 #include "Diagnostic.h"
+#include "helpers.h"
 #include "Lowering.h"
 #include "Parsing.h"
 
@@ -138,7 +139,7 @@ shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax* syntax)
 		default:
 			break;
 	}
-	throw std::invalid_argument("Unexpected syntax " + GetSyntaxKindName(syntax->Kind()));
+	throw std::invalid_argument(BuildStringFrom("Unexpected syntax ", GetSyntaxKindName(syntax->Kind())));
 }
 
 shared_ptr<BoundStatement> Binder::BindBlockStatement(const BlockStatementSyntax* syntax)
@@ -351,7 +352,7 @@ shared_ptr<BoundExpression> Binder::BindExpressionInternal(const ExpressionSynta
 		default:
 			break;
 	}
-	throw std::invalid_argument("Invalid expression " + GetSyntaxKindName(syntax->Kind()));
+	throw std::invalid_argument(BuildStringFrom("Invalid expression ", GetSyntaxKindName(syntax->Kind())));
 
 }
 
@@ -552,8 +553,8 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 				BoundPostfixOperatorEnum::Decrement,
 				boundExpression);
 		default:
-			throw std::invalid_argument("Unexpected operator token "
-				+ GetSyntaxKindName(syntax->Op().Kind()));
+			throw std::invalid_argument(BuildStringFrom("Unexpected operator token "
+				, GetSyntaxKindName(syntax->Op().Kind())));
 	}
 }
 

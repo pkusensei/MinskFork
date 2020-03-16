@@ -9,7 +9,7 @@ namespace MCF {
 const vector<SyntaxKind> AllSyntaxKinds
 = GetAllEnumValue<SyntaxKind>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
 
-string GetSyntaxKindName(const SyntaxKind& kind)
+string_view GetSyntaxKindName(const SyntaxKind& kind)
 {
 	switch (kind)
 	{
@@ -165,7 +165,7 @@ string GetSyntaxKindName(const SyntaxKind& kind)
 	}
 }
 
-SyntaxKind GetKeywordKind(const string& text) noexcept
+SyntaxKind GetKeywordKind(string_view text) noexcept
 {
 	if (text == "break")
 		return SyntaxKind::BreakKeyword;
@@ -198,7 +198,7 @@ SyntaxKind GetKeywordKind(const string& text) noexcept
 	else return SyntaxKind::IdentifierToken;
 }
 
-string GetText(const SyntaxKind& kind)
+string_view GetText(const SyntaxKind& kind)
 {
 	switch (kind)
 	{

@@ -311,7 +311,7 @@ void BoundNodePrinter::WriteLiteralExpression(const BoundLiteralExpression* node
 		value = '"' + value + '"';
 		_writer.WriteString(value);
 	} else
-		throw std::invalid_argument("Unexpected type " + node->Type().Name());
+		throw std::invalid_argument(BuildStringFrom("Unexpected type ", node->Type().Name()));
 }
 
 void BoundNodePrinter::WriteVariableExpression(const BoundVariableExpression* node)

@@ -71,13 +71,13 @@ public:
 		const TypeSymbol& toType);
 	void ReportCannotConvertImplicitly(const TextSpan& span, const TypeSymbol& fromType,
 		const TypeSymbol& toType);
-	void ReportSymbolAlreadyDeclared(const TextSpan& span, const string& name);
+	void ReportSymbolAlreadyDeclared(const TextSpan& span, string_view name);
 	void ReportCannotAssign(const TextSpan& span, const string& name);
 
 	void ReportUndefinedFunction(const TextSpan& span, const string& name);
-	void ReportWrongArgumentCount(const TextSpan& span, const string& name,
+	void ReportWrongArgumentCount(const TextSpan& span, string_view name,
 		size_t expectedCount, size_t actualCount);
-	void ReportWrongArgumentType(const TextSpan& span, const string& name,
+	void ReportWrongArgumentType(const TextSpan& span, string_view name,
 		const TypeSymbol& expectedType, const TypeSymbol& actualType);
 	void ReportExpressionMustHaveValue(const TextSpan& span);
 	void ReportInvalidBreakOrContinue(const TextSpan& span, const string& text);
@@ -87,7 +87,7 @@ public:
 
 	void ReportAllPathsMustReturn(const TextSpan& span);
 	void ReportInvalidReturn(const TextSpan& span);
-	void ReportInvalidReturnExpression(const TextSpan& span, const string& funcName);
+	void ReportInvalidReturnExpression(const TextSpan& span, string_view funcName);
 	void ReportMissingReturnExpression(const TextSpan& span,
 		const TypeSymbol& returnType);
 

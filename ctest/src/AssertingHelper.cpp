@@ -44,7 +44,7 @@ void AssertingHelper::AssertNode(MCF::SyntaxKind kind)
 	}
 }
 
-void AssertingHelper::AssertToken(MCF::SyntaxKind kind, const std::string& text)
+void AssertingHelper::AssertToken(MCF::SyntaxKind kind, std::string_view text)
 {
 	try
 	{

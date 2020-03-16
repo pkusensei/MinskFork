@@ -122,7 +122,7 @@ public:
 class Repl::SubmissionView final
 {
 private:
-	std::function<void(std::string)> _lineRenderer;
+	std::function<void(const std::string&)> _lineRenderer;
 	const ObservableCollection<std::string>* _submissionDocument;
 	const size_t _cursorTop;
 	int _renderedLineCount{ 0 };

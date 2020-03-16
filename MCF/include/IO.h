@@ -23,15 +23,15 @@ public:
 	explicit TextWriter(std::ostream& out = std::cout)noexcept :_out(out) {}
 	virtual ~TextWriter() = default;
 
-	virtual void Write(const string& text);
+	virtual void Write(string_view text);
 	void WriteKeyword(const SyntaxKind& kind);
-	void WriteKeyword(const string& text);
-	void WriteIdentifier(const string& text);
-	void WriteNumber(const string& text);
-	void WriteString(const string& text);
+	void WriteKeyword(string_view text);
+	void WriteIdentifier(string_view text);
+	void WriteNumber(string_view text);
+	void WriteString(string_view text);
 	void WriteSpace();
 	void WritePunctuation(const SyntaxKind& kind);
-	void WritePunctuation(const string& text);
+	void WritePunctuation(string_view text);
 	virtual void WriteLine();
 };
 
@@ -53,7 +53,7 @@ public:
 	void Indent()noexcept { ++_indentCount; }
 	void Dedent()noexcept { if (_indentCount > 0) --_indentCount; }
 
-	void Write(const string& text)override;
+	void Write(string_view text)override;
 	void WriteLine() override;
 };
 

@@ -88,11 +88,11 @@ enum class SyntaxKind
 	PostfixExpression,
 };
 
-MCF_API string GetSyntaxKindName(const SyntaxKind& kind);
+MCF_API string_view GetSyntaxKindName(const SyntaxKind& kind);
 extern "C" MCF_API const vector<SyntaxKind> AllSyntaxKinds; // NOTE global constant
 
-SyntaxKind GetKeywordKind(const string& text) noexcept;
-MCF_API string GetText(const SyntaxKind& kind);
+SyntaxKind GetKeywordKind(string_view text) noexcept;
+MCF_API string_view GetText(const SyntaxKind& kind);
 MCF_API int GetUnaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
 MCF_API int GetBinaryOperatorPrecedence(const SyntaxKind& kind)noexcept;
 MCF_API const vector<SyntaxKind>& GetUnaryOperatorKinds();

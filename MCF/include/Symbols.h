@@ -23,7 +23,7 @@ enum class SymbolKind
 	Type,
 };
 
-string GetEnumText(const SymbolKind& kind);
+string_view GetEnumText(const SymbolKind& kind);
 
 class MCF_API Symbol
 {
@@ -40,7 +40,7 @@ public:
 	virtual ~Symbol() = default;
 
 	virtual SymbolKind Kind() const noexcept = 0;
-	string Name() const { return _name; }
+	constexpr string_view Name() const { return _name; }
 	void WriteTo(std::ostream& out)const;
 	string ToString() const;
 

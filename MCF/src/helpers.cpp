@@ -6,14 +6,13 @@
 
 namespace MCF {
 
-
-bool StringStartsWith(const string& sample, const string& beginning)
+bool StringStartsWith(string_view sample, string_view beginning)
 {
 	if (sample.length() < beginning.length())return false;
 	return std::equal(beginning.begin(), beginning.end(), sample.begin());
 }
 
-bool StringEndsWith(const string& sample, const string& ending)
+bool StringEndsWith(string_view sample, string_view ending)
 {
 	if (sample.length() < ending.length()) return false;
 	return std::equal(ending.rbegin(), ending.rend(), sample.rbegin());

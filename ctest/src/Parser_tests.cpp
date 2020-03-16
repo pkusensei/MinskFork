@@ -1,5 +1,6 @@
 #include <catch.hpp>
 
+#include "helpers.h"
 #include "Parsing.h"
 
 #include "AssertingHelper.h"
@@ -17,7 +18,7 @@ TEST_CASE("Parser honors precedences in BinaryExpression", "[Parser]")
 		auto op2Precedence = MCF::GetBinaryOperatorPrecedence(it.second);
 		auto op1Text = MCF::GetText(it.first);
 		auto op2Text = MCF::GetText(it.second);
-		auto text = "a " + op1Text + " b " + op2Text + " c";
+		auto text = MCF::BuildStringFrom("a ", op1Text, " b ", op2Text, " c");
 		auto tree = MCF::SyntaxTree::Parse(text);
 		auto expression = ParseExpression(tree.get());
 		auto e = AssertingHelper(expression);
@@ -59,7 +60,7 @@ TEST_CASE("Parser honors precedences in UinaryExpression", "[Parser]")
 		auto binaryPrecedence = MCF::GetBinaryOperatorPrecedence(it.second);
 		auto unaryText = MCF::GetText(it.first);
 		auto binaryText = MCF::GetText(it.second);
-		auto text = unaryText + " a " + binaryText + " b";
+		auto text = MCF::BuildStringFrom(unaryText, " a ", binaryText, " b");
 		auto tree = MCF::SyntaxTree::Parse(text);
 		auto expression = ParseExpression(tree.get());
 		auto e = AssertingHelper(expression);

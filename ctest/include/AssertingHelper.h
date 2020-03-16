@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace MCF {
@@ -25,5 +26,5 @@ public:
 	explicit AssertingHelper(const MCF::SyntaxNode* node);
 	~AssertingHelper();
 	void AssertNode(MCF::SyntaxKind kind);
-	void AssertToken(MCF::SyntaxKind kind, const std::string& text);
+	void AssertToken(MCF::SyntaxKind kind, std::string_view text);
 };

@@ -433,7 +433,7 @@ bool McfRepl::IsCompleteSubmission(const std::string& text) const
 	if (text.empty())
 		return true;
 
-	auto stringIsBlank = [](const std::string& s)
+	auto stringIsBlank = [](const auto& s)
 	{
 		return s.empty()
 			|| std::all_of(s.begin(), s.end(), std::isspace);

@@ -65,7 +65,7 @@ class BoundConditionalGotoStatement;
 class BoundScope final
 {
 private:
-	std::unordered_map<string, shared_ptr<Symbol>> _symbols;
+	std::unordered_map<string_view, shared_ptr<Symbol>> _symbols;
 	unique_ptr<BoundScope> _parent;
 
 	template<typename T, typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>

@@ -3,6 +3,7 @@
 
 #include "Symbols.h"
 #include "SyntaxKind.h"
+#include "helpers.h"
 
 namespace MCF {
 
@@ -41,8 +42,8 @@ void SymbolPrinter::Write(const Symbol* symbol)
 			break;
 		}
 		default:
-			throw std::invalid_argument("Unexpected symbol: "
-				+ GetEnumText(symbol->Kind()));
+			throw std::invalid_argument(BuildStringFrom("Unexpected symbol: "
+				, GetEnumText(symbol->Kind())));
 	}
 }
 

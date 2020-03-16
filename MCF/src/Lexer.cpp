@@ -189,7 +189,7 @@ SyntaxToken Lexer::Lex()
 			break;
 	}
 	auto length = _position - _start;
-	auto text = GetText(_kind);
+	auto text = string(GetText(_kind));
 	if (text.empty())
 		text = _text->ToString(_start, length);
 

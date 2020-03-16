@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include "helpers.h"
 #include "Symbols.h"
 #include "SyntaxKind.h"
 
@@ -80,8 +81,8 @@ void DiagnosticBag::ReportUnterminatedString(const TextSpan& span)
 void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span,
 	const SyntaxKind& actualKind, const SyntaxKind& expectedKind)
 {
-	string message{ "Unexpected token <" };
-	message += GetSyntaxKindName(actualKind) + ">, expected <" + GetSyntaxKindName(expectedKind) + ">.";
+	auto message = BuildStringFrom("Unexpected token <", GetSyntaxKindName(actualKind),
+		">, expected <", GetSyntaxKindName(expectedKind), ">.");
 	Report(span, message);
 }
 
@@ -135,10 +136,9 @@ void DiagnosticBag::ReportCannotConvertImplicitly(const TextSpan& span,
 }
 
 void DiagnosticBag::ReportSymbolAlreadyDeclared(const TextSpan& span,
-	const string& name)
+	string_view name)
 {
-	string message("Variable '");
-	message += name + "' is already declared.";
+	auto message = BuildStringFrom("Variable '", name, "' is already declared.");
 	Report(span, message);
 }
 
@@ -158,20 +158,18 @@ void DiagnosticBag::ReportUndefinedFunction(const TextSpan& span,
 }
 
 void DiagnosticBag::ReportWrongArgumentCount(const TextSpan& span,
-	const string& name, size_t expectedCount, size_t actualCount)
+	string_view name, size_t expectedCount, size_t actualCount)
 {
-	string message("Function '");
-	message += name + "' requires " + std::to_string(expectedCount)
-		+ " arguments but was given " + std::to_string(actualCount) + ".";
+	auto message = BuildStringFrom("Function '", name, "' requires ", std::to_string(expectedCount)
+		, " arguments but was given ", std::to_string(actualCount), ".");
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportWrongArgumentType(const TextSpan& span, const string& name,
+void DiagnosticBag::ReportWrongArgumentType(const TextSpan& span, string_view name,
 	const TypeSymbol& expectedType, const TypeSymbol& actualType)
 {
-	string message("Parameter '");
-	message += name + "' requires a value of type '" + expectedType.ToString()
-		+ "' but was given '" + actualType.ToString() + "'.";
+	auto message = BuildStringFrom("Parameter '", name, "' requires a value of type '", expectedType.ToString()
+		, "' but was given '", actualType.ToString(), "'.");
 	Report(span, message);
 }
 
@@ -192,9 +190,9 @@ void DiagnosticBag::ReportInvalidBreakOrContinue(const TextSpan& span,
 void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(const TextSpan& span,
 	const string& operatorText, const SyntaxKind& kind)
 {
-	string message{ "Operator '" };
-	message += operatorText + "' is not defined for expression '" + GetSyntaxKindName(kind) + "'.";
-	Report(span, message);
+	std::stringstream message{ "Operator '" };
+	message << operatorText << "' is not defined for expression '" << GetSyntaxKindName(kind) << "'.";
+	Report(span, message.str());
 }
 
 void DiagnosticBag::ReportAllPathsMustReturn(const TextSpan& span)
@@ -209,10 +207,9 @@ void DiagnosticBag::ReportInvalidReturn(const TextSpan& span)
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportInvalidReturnExpression(const TextSpan& span, const string& funcName)
+void DiagnosticBag::ReportInvalidReturnExpression(const TextSpan& span, string_view funcName)
 {
-	string message{ "Function '" };
-	message += funcName + "' does not return a value";
+	auto message = BuildStringFrom("Function '", funcName, "' does not return a value");
 	Report(span, message);
 }
 

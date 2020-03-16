@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include "Diagnostic.h"
+#include "helpers.h"
 #include "Lexer.h"
 #include "ReflectionHelper.h"
 
@@ -403,7 +404,7 @@ unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(unique_ptr<Expressio
 	else if (ne)
 		return make_unique<PostfixExpressionSyntax>(ne->IdentifierToken(), operatorToken, expression);
 	else
-		throw std::invalid_argument("Unexpected expression " + GetSyntaxKindName(expression->Kind()));
+		throw std::invalid_argument(BuildStringFrom("Unexpected expression ", GetSyntaxKindName(expression->Kind())));
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParsePrimaryExpression()

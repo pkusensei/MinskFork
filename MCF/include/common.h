@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #ifdef MCF_EXPORTS
@@ -21,6 +22,7 @@
 namespace MCF {
 
 using std::string;
+using std::string_view;
 using std::vector;
 
 using std::unique_ptr;

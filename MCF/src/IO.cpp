@@ -17,7 +17,7 @@ void TextWriter::ResetColor()
 		ResetConsoleColor();
 }
 
-void TextWriter::Write(const string& text)
+void TextWriter::Write(string_view text)
 {
 	_out << text;
 }
@@ -32,28 +32,28 @@ void TextWriter::WriteLine()
 	_out << NEW_LINE;
 }
 
-void TextWriter::WriteKeyword(const string& text)
+void TextWriter::WriteKeyword(string_view text)
 {
 	SetForeground(ConsoleColor::Blue);
 	Write(text);
 	ResetColor();
 }
 
-void TextWriter::WriteIdentifier(const string& text)
+void TextWriter::WriteIdentifier(string_view text)
 {
 	SetForeground(ConsoleColor::DarkYellow);
 	Write(text);
 	ResetColor();
 }
 
-void TextWriter::WriteNumber(const string& text)
+void TextWriter::WriteNumber(string_view text)
 {
 	SetForeground(ConsoleColor::Cyan);
 	Write(text);
 	ResetColor();
 }
 
-void TextWriter::WriteString(const string& text)
+void TextWriter::WriteString(string_view text)
 {
 	SetForeground(ConsoleColor::Magenta);
 	Write(text);
@@ -70,7 +70,7 @@ void TextWriter::WritePunctuation(const SyntaxKind& kind)
 	WritePunctuation(GetText(kind));
 }
 
-void TextWriter::WritePunctuation(const string& text)
+void TextWriter::WritePunctuation(string_view text)
 {
 	SetForeground(ConsoleColor::DarkGray);
 	Write(text);
@@ -87,7 +87,7 @@ void IndentedTextWriter::WriteIndent()
 	}
 }
 
-void IndentedTextWriter::Write(const string& text)
+void IndentedTextWriter::Write(string_view text)
 {
 	WriteIndent();
 	TextWriter::Write(text);
