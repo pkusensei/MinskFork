@@ -29,7 +29,7 @@ std::vector<std::string> AnnotatedText::DedentLines(const std::string& text)
 	auto minIndentation = std::numeric_limits<size_t>::max();
 	for (size_t i = 0; i < lines.size(); ++i)
 	{
-		auto line = lines[i];
+		std::string_view line = lines[i];
 		if ((line = MCF::TrimString(line)).empty())
 		{
 			lines[i] = std::string();

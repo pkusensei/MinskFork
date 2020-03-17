@@ -18,25 +18,29 @@ bool StringEndsWith(string_view sample, string_view ending)
 	return std::equal(ending.rbegin(), ending.rend(), sample.rbegin());
 }
 
-string TrimString(const string& text)
+string_view TrimString(string_view text)
 {
 	return TrimStringStart(TrimStringEnd(text));
 }
 
-string TrimStringStart(const string& text)
+string_view TrimStringStart(string_view text)
 {
-	auto result = text;
-	result.erase(result.begin(), std::find_if(result.begin(), result.end(),
-		[](char ch) { return !std::isspace(ch); }));
-	return result;
+	auto it = find_if(text.cbegin(), text.cend(),
+		[](char c) { return !std::isspace(c); });
+	if (it == text.cend())
+		return string_view();
+	text.remove_prefix(it - text.cbegin());
+	return text;
 }
 
-string TrimStringEnd(const string& text)
+string_view TrimStringEnd(string_view text)
 {
-	auto result = text;
-	result.erase(std::find_if(result.rbegin(), result.rend(),
-		[](char ch) { return !std::isspace(ch); }).base(), result.end());
-	return result;
+	auto it = find_if(text.crbegin(), text.crend(),
+		[](char c) { return !std::isspace(c); });
+	if (it == text.crend())
+		return string_view();
+	text.remove_suffix(it - text.crbegin());
+	return text;
 }
 
 string StringJoin(const vector<string>& strs, const char seperator)
@@ -48,18 +52,6 @@ string StringJoin(const vector<string>& strs, const char seperator)
 	}
 	if (!result.empty())
 		result.erase(result.length() - 1);
-	return result;
-}
-
-vector<string> StringSplit(const string& s, const char delimiter)
-{
-	auto result = vector<string>();
-	auto token = string();
-	auto isstream = std::istringstream(s);
-	while (std::getline(isstream, token, delimiter))
-	{
-		result.emplace_back(token);
-	}
 	return result;
 }
 

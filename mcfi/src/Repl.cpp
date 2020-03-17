@@ -1,7 +1,5 @@
 #include "Repl.h"
 
-#include <algorithm>
-#include <cctype>
 #include <iostream>
 
 #include "helpers.h"
@@ -244,9 +242,10 @@ void Repl::HandleTab(Document& document, SubmissionView& view)
 
 void Repl::HandlePageUp(Document& document, SubmissionView& view)
 {
-	--_submissionHistoryIndex;
-	if (_submissionHistoryIndex < 0)
+	if (_submissionHistoryIndex == 0)
 		_submissionHistoryIndex = _submissionHistory.size() - 1;
+	else
+		--_submissionHistoryIndex;
 	UpdateDocumentFromHistory(document, view);
 }
 
@@ -264,11 +263,11 @@ void Repl::UpdateDocumentFromHistory(Document& document,
 	if (_submissionHistory.empty()) return;
 
 	document.Clear();
-	auto historyItem = _submissionHistory[_submissionHistoryIndex];
-	auto lines = MCF::StringSplit(historyItem, NEW_LINE);
+	auto& historyItem = _submissionHistory[_submissionHistoryIndex];
+	auto lines = MCF::StringSplit(historyItem.begin(), historyItem.end(), NEW_LINE);
 	for (const auto& it : lines)
 	{
-		document.Add(it);
+		document.Add(std::string(it));
 	}
 	view.CurrentLine(document.size() - 1);
 	view.CurrentCharacter(document[view.CurrentLine()].length());
@@ -303,7 +302,7 @@ Repl::SubmissionView::SubmissionView(const std::function<void(const std::string&
 	//             the function called when _submissionDocument changed
 }
 
-void Repl::EvaluateMetaCommand(std::string_view input)
+void Repl::EvaluateMetaCommand(const std::string& input)
 {
 	MCF::SetConsoleColor(MCF::ConsoleColor::Red);
 	std::cout << "Invalid command " << input << '\n';
@@ -406,7 +405,7 @@ void McfRepl::RenderLine(const std::string & line) const
 	}
 }
 
-void McfRepl::EvaluateMetaCommand(std::string_view input)
+void McfRepl::EvaluateMetaCommand(const std::string & input)
 {
 	if (input == "#showTree")
 	{
@@ -434,18 +433,12 @@ bool McfRepl::IsCompleteSubmission(const std::string & text) const
 	if (text.empty())
 		return true;
 
-	auto stringIsBlank = [](const auto& s)
+	auto lastTwoLinesAreBlank = [&text]()
 	{
-		return s.empty()
-			|| std::all_of(s.begin(), s.end(), std::isspace);
-	};
-
-	auto lastTwoLinesAreBlank = [&text, &stringIsBlank]()
-	{
-		auto v = MCF::StringSplit(text, NEW_LINE);
+		auto v = MCF::StringSplit(text.begin(), text.end(), NEW_LINE);
 		auto i = v.rbegin();
 		if (v.size() > 1)
-			return stringIsBlank(*i) && stringIsBlank(*++i);
+			return MCF::StringIsBlank(*i) && MCF::StringIsBlank(*++i);
 		else return false;
 	};
 

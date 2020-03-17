@@ -111,7 +111,7 @@ private:
 
 protected:
 	virtual void RenderLine(const std::string& line)const;
-	virtual void EvaluateMetaCommand(std::string_view input);
+	virtual void EvaluateMetaCommand(const std::string& input);
 	virtual bool IsCompleteSubmission(const std::string& text)const = 0;
 	virtual void EvaluateSubmission(const std::string& text) = 0;
 
@@ -157,7 +157,7 @@ private:
 protected:
 	// Inherited via Repl
 	void RenderLine(const std::string& line)const override;
-	void EvaluateMetaCommand(std::string_view input) override;
+	void EvaluateMetaCommand(const std::string& input) override;
 	bool IsCompleteSubmission(const std::string& text) const override;
 	void EvaluateSubmission(const std::string& text) override;
 

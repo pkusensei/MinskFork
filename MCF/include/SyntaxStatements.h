@@ -189,9 +189,8 @@ public:
 	DoWhileStatementSyntax(DoWhileStatementSyntax&&) = default;
 	DoWhileStatementSyntax& operator=(DoWhileStatementSyntax&&) = default;
 
-
 	// Inherited via StatementSyntax
-	virtual SyntaxKind Kind() const override { return SyntaxKind::DoWhileStatement; }
+	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::DoWhileStatement; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
 	const SyntaxToken& DoKeyword()const noexcept { return _doKeyword; }

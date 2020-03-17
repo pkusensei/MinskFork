@@ -32,7 +32,7 @@ public:
 	}
 
 	// Inherited via SyntaxNode
-	SyntaxKind Kind() const override { return SyntaxKind::Parameter; }
+	SyntaxKind Kind() const noexcept override { return SyntaxKind::Parameter; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
 	const SyntaxToken& Identifier()const noexcept { return _identifier; }
@@ -67,7 +67,7 @@ public:
 	FunctionDeclarationSyntax& operator=(FunctionDeclarationSyntax&&) = default;
 
 	// Inherited via MemberSyntax
-	SyntaxKind Kind() const override { return SyntaxKind::FunctionDeclaration; }
+	SyntaxKind Kind() const noexcept override { return SyntaxKind::FunctionDeclaration; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
 	const SyntaxToken& FunctionKeyword()const noexcept { return _funcKeyword; }
@@ -93,7 +93,7 @@ public:
 	GlobalStatementSyntax& operator=(GlobalStatementSyntax&&) = default;
 
 	// Inherited via MemberSyntax
-	SyntaxKind Kind() const override { return SyntaxKind::GlobalStatement; }
+	SyntaxKind Kind() const noexcept override { return SyntaxKind::GlobalStatement; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
 	const StatementSyntax* Statement()const noexcept { return _statement.get(); }
