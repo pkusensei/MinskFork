@@ -522,7 +522,7 @@ SyntaxTree::SyntaxTree(SyntaxTree&& other) = default;
 SyntaxTree& SyntaxTree::operator=(SyntaxTree&& other) = default;
 SyntaxTree::~SyntaxTree() = default;
 
-unique_ptr<SyntaxTree> SyntaxTree::Parse(const string& text)
+unique_ptr<SyntaxTree> SyntaxTree::Parse(string_view text)
 {
 	auto sourceText = SourceText::From(text);
 	return Parse(sourceText);
@@ -533,13 +533,13 @@ unique_ptr<SyntaxTree> SyntaxTree::Parse(const SourceText& text)
 	return make_unique<SyntaxTree>(text);
 }
 
-vector<SyntaxToken> SyntaxTree::ParseTokens(const string& text)
+vector<SyntaxToken> SyntaxTree::ParseTokens(string_view text)
 {
 	auto source = SourceText::From(text);
 	return ParseTokens(source);
 }
 
-vector<SyntaxToken> SyntaxTree::ParseTokens(const string& text,
+vector<SyntaxToken> SyntaxTree::ParseTokens(string_view text,
 	DiagnosticBag& diagnostics)
 {
 	auto source = SourceText::From(text);

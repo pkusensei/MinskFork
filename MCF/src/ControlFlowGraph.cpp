@@ -68,8 +68,8 @@ ControlFlowGraph::BasicBlockBuilder::Build(const BoundBlockStatement* block)
 				_statements.emplace_back(statement.get());
 				break;
 			default:
-				throw std::invalid_argument("Unexpected statement"
-					+ GetEnumText(statement->Kind()));
+				throw std::invalid_argument(BuildStringFrom("Unexpected statement"
+					, GetEnumText(statement->Kind())));
 		}
 	}
 	EndBlock();
@@ -219,8 +219,8 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 					break;
 				}
 				default:
-					throw std::invalid_argument("Unexpected statement: "
-						+ GetEnumText(statement->Kind()));
+					throw std::invalid_argument(BuildStringFrom("Unexpected statement: "
+						, GetEnumText(statement->Kind())));
 			}
 		}
 	}

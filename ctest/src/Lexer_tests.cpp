@@ -7,14 +7,14 @@
 #include "Parsing.h"
 #include "SourceText.h"
 
-auto GetTokens()->const std::vector<std::pair<MCF::SyntaxKind, std::string>> &;
-auto GetSeperators()->const std::vector<std::pair<MCF::SyntaxKind, std::string>> &;
-auto GetTokenData()->std::vector<std::pair<MCF::SyntaxKind, std::string>>;
+auto GetTokens()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&;
+auto GetSeperators()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&;
+auto GetTokenData()->std::vector<std::pair<MCF::SyntaxKind, std::string_view>>;
 auto GetTokenPairsData()->std::vector<
-	std::tuple<MCF::SyntaxKind, std::string, MCF::SyntaxKind, std::string>>;
+	std::tuple<MCF::SyntaxKind, std::string_view, MCF::SyntaxKind, std::string_view>>;
 auto GetTokenPairsWithSeperator()->std::vector<std::tuple<
-	MCF::SyntaxKind, std::string, MCF::SyntaxKind, std::string,
-	MCF::SyntaxKind, std::string>>;
+	MCF::SyntaxKind, std::string_view, MCF::SyntaxKind, std::string_view,
+	MCF::SyntaxKind, std::string_view>>;
 bool RequiresSeperators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind);
 
 TEST_CASE("Lexer covers all tokens", "[Lexer]")
@@ -75,7 +75,7 @@ TEST_CASE("Lexer lexes token pairs", "[Lexer]")
 	for (const auto& it : data)
 	{
 		auto [t1kind, t1text, t2kind, t2text] = it;
-		auto text = t1text + t2text;
+		auto text = MCF::BuildStringFrom(t1text, t2text);
 		auto tokens = MCF::SyntaxTree::ParseTokens(text);
 		REQUIRE(2 == tokens.size());
 
@@ -92,7 +92,7 @@ TEST_CASE("Lexer lexes token pairs with seperators", "[Lexer]")
 	for (const auto& it : data)
 	{
 		auto [t1kind, t1text, skind, stext, t2kind, t2text] = it;
-		auto text = t1text + stext + t2text;
+		auto text = MCF::BuildStringFrom(t1text, stext, t2text);
 		auto tokens = MCF::SyntaxTree::ParseTokens(text);
 		REQUIRE(3 == tokens.size());
 
@@ -109,7 +109,7 @@ TEST_CASE("GetText_RoundTrip")
 {
 	for (const auto& kind : MCF::AllSyntaxKinds)
 	{
-		auto text = std::string(MCF::GetText(kind));
+		auto text = MCF::GetText(kind);
 		if (!text.empty())
 		{
 			auto tokens = MCF::SyntaxTree::ParseTokens(text);
@@ -121,11 +121,11 @@ TEST_CASE("GetText_RoundTrip")
 	}
 }
 
-auto GetTokens()->const std::vector<std::pair<MCF::SyntaxKind, std::string>> &
+auto GetTokens()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&
 {
 	auto build = []()
 	{
-		auto result = std::vector<std::pair<MCF::SyntaxKind, std::string>>();
+		auto result = std::vector<std::pair<MCF::SyntaxKind, std::string_view>>();
 		result.reserve(100);
 		// fixed tokens
 		for (const auto& kind : MCF::AllSyntaxKinds)
@@ -149,9 +149,9 @@ auto GetTokens()->const std::vector<std::pair<MCF::SyntaxKind, std::string>> &
 	return result;
 }
 
-auto GetSeperators()->const std::vector<std::pair<MCF::SyntaxKind, std::string>> &
+auto GetSeperators()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&
 {
-	static const auto result = std::vector<std::pair<MCF::SyntaxKind, std::string>>{
+	static const auto result = std::vector<std::pair<MCF::SyntaxKind, std::string_view>>{
 		{MCF::SyntaxKind::WhitespaceToken, " "},
 		{MCF::SyntaxKind::WhitespaceToken, "  "},
 		{MCF::SyntaxKind::WhitespaceToken, "\r"},
@@ -161,7 +161,7 @@ auto GetSeperators()->const std::vector<std::pair<MCF::SyntaxKind, std::string>>
 	return result;
 }
 
-auto GetTokenData()->std::vector<std::pair<MCF::SyntaxKind, std::string>>
+auto GetTokenData()->std::vector<std::pair<MCF::SyntaxKind, std::string_view>>
 {
 	auto tokens = GetTokens();
 	auto seperators = GetSeperators();
@@ -171,11 +171,11 @@ auto GetTokenData()->std::vector<std::pair<MCF::SyntaxKind, std::string>>
 }
 
 auto GetTokenPairsData()->std::vector<std::tuple<
-	MCF::SyntaxKind, std::string, MCF::SyntaxKind, std::string>>
+	MCF::SyntaxKind, std::string_view, MCF::SyntaxKind, std::string_view>>
 {
 	auto tokens = GetTokens();
-	auto result = std::vector<std::tuple<MCF::SyntaxKind, std::string,
-		MCF::SyntaxKind, std::string>>();
+	auto result = std::vector<std::tuple<MCF::SyntaxKind, std::string_view,
+		MCF::SyntaxKind, std::string_view>>();
 	for (const auto& t1 : tokens)
 		for (const auto& t2 : tokens)
 		{
@@ -186,12 +186,12 @@ auto GetTokenPairsData()->std::vector<std::tuple<
 }
 
 auto GetTokenPairsWithSeperator()->std::vector<std::tuple<
-	MCF::SyntaxKind, std::string, MCF::SyntaxKind, std::string,
-	MCF::SyntaxKind, std::string>>
+	MCF::SyntaxKind, std::string_view, MCF::SyntaxKind, std::string_view,
+	MCF::SyntaxKind, std::string_view>>
 {
 	auto tokens = GetTokens();
-	auto result = std::vector<std::tuple<MCF::SyntaxKind, std::string,
-		MCF::SyntaxKind, std::string, MCF::SyntaxKind, std::string>>();
+	auto result = std::vector<std::tuple<MCF::SyntaxKind, std::string_view,
+		MCF::SyntaxKind, std::string_view, MCF::SyntaxKind, std::string_view>>();
 	for (const auto& t1 : tokens)
 		for (const auto& t2 : tokens)
 		{

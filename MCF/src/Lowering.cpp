@@ -5,6 +5,7 @@
 
 #include "BoundExpressions.h"
 #include "BoundStatements.h"
+#include "helpers.h"
 #include "SyntaxKind.h"
 
 namespace MCF {
@@ -82,7 +83,7 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(const shared_ptr<
 		default:
 			break;
 	}
-	throw std::invalid_argument("Unexpected node: " + GetEnumText(node->Kind()));
+	throw std::invalid_argument(BuildStringFrom("Unexpected node: ", GetEnumText(node->Kind())));
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(const shared_ptr<BoundBlockStatement>& node)
@@ -262,7 +263,7 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(const shared_pt
 		default:
 			break;
 	}
-	throw std::invalid_argument("Unexpected node: " + GetEnumText(node->Kind()));
+	throw std::invalid_argument(BuildStringFrom("Unexpected node: ", GetEnumText(node->Kind())));
 }
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteErrorExpression(const shared_ptr<BoundErrorExpression>& node)
@@ -347,7 +348,7 @@ BoundLabel Lowerer::GenerateLabel()
 {
 	++_labelCount;
 	string name("Label" + std::to_string(_labelCount));
-	return BoundLabel(name);
+	return BoundLabel(std::move(name));
 }
 
 unique_ptr<BoundBlockStatement> Lowerer::Lower(const shared_ptr<BoundStatement>& statement)

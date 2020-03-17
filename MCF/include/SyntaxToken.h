@@ -21,7 +21,7 @@ private:
 		string indent = "", bool isLast = true);
 public:
 	virtual ~SyntaxNode() = default;
-	virtual SyntaxKind Kind() const = 0;
+	virtual SyntaxKind Kind() const noexcept = 0;
 	virtual TextSpan Span()const;
 	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
 

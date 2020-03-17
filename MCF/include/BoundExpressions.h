@@ -14,7 +14,7 @@ enum class BoundUnaryOperatorKind
 	OnesComplement
 };
 
-inline string GetEnumText(const BoundUnaryOperatorKind& kind)
+inline string_view GetEnumText(const BoundUnaryOperatorKind& kind)
 {
 	switch (kind)
 	{
@@ -28,7 +28,7 @@ inline string GetEnumText(const BoundUnaryOperatorKind& kind)
 			return "OnesComplement";
 
 		default:
-			return string();
+			return string_view();
 	}
 }
 
@@ -52,7 +52,7 @@ enum class BoundBinaryOperatorKind
 	GreaterOrEquals
 };
 
-inline string GetEnumText(const BoundBinaryOperatorKind& kind)
+inline string_view GetEnumText(const BoundBinaryOperatorKind& kind)
 {
 	switch (kind)
 	{
@@ -90,7 +90,7 @@ inline string GetEnumText(const BoundBinaryOperatorKind& kind)
 			return "GreaterOrEquals";
 
 		default:
-			return string();
+			return string_view();
 	}
 }
 
@@ -100,7 +100,7 @@ enum class BoundPostfixOperatorEnum
 	Decrement,
 };
 
-inline string GetEnumText(const BoundPostfixOperatorEnum& kind)
+inline string_view GetEnumText(const BoundPostfixOperatorEnum& kind)
 {
 	switch (kind)
 	{
@@ -109,21 +109,21 @@ inline string GetEnumText(const BoundPostfixOperatorEnum& kind)
 		case BoundPostfixOperatorEnum::Decrement:
 			return "Decrement";
 		default:
-			return string();
+			return string_view();
 	}
 }
 
 class BoundExpression :public BoundNode
 {
 public:
-	virtual TypeSymbol Type() const = 0;
+	virtual const TypeSymbol& Type() const noexcept = 0;
 };
 
 class BoundErrorExpression final :public BoundExpression
 {
 public:
 	// Inherited via BoundExpression
-	TypeSymbol Type()const override { return GetTypeSymbol(TypeEnum::Error); }
+	const TypeSymbol& Type() const noexcept override { return GetTypeSymbol(TypeEnum::Error); }
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ErrorExpression; }
 };
 
@@ -206,7 +206,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::UnaryExpression; }
-	TypeSymbol Type() const override { return _op.Type(); }
+	const TypeSymbol& Type() const noexcept override { return _op.Type(); }
 
 	const BoundUnaryOperator& Op()const noexcept { return _op; }
 	const shared_ptr<BoundExpression>& Operand()const noexcept { return _operand; }
@@ -347,7 +347,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BinaryExpression; }
-	TypeSymbol Type() const override { return _op.Type(); }
+	const TypeSymbol& Type() const noexcept override { return _op.Type(); }
 
 	const shared_ptr<BoundExpression>& Left()const noexcept { return _left; }
 	const shared_ptr<BoundExpression>& Right()const noexcept { return _right; }
@@ -371,7 +371,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::AssignmentExpression; }
-	TypeSymbol Type() const override { return _expression->Type(); }
+	const TypeSymbol& Type() const noexcept override { return _expression->Type(); }
 
 	const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 	const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
@@ -392,7 +392,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LiteralExpression; }
-	TypeSymbol Type() const override { return _value.Type(); }
+	const TypeSymbol& Type() const noexcept override { return _value.Type(); }
 
 	const ValueType& Value()const noexcept { return _value; }
 };
@@ -412,7 +412,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableExpression; }
-	TypeSymbol Type() const override { return _variable->Type(); }
+	const TypeSymbol& Type() const noexcept override { return _variable->Type(); }
 
 	const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 };
@@ -434,7 +434,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::CallExpression; }
-	TypeSymbol Type() const override { return _function->Type(); }
+	const TypeSymbol& Type() const noexcept override { return _function->Type(); }
 
 	const shared_ptr<FunctionSymbol>& Function()const noexcept { return _function; }
 	const vector<shared_ptr<BoundExpression>>& Arguments()const noexcept { return _arguments; }
@@ -457,7 +457,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ConversionExpression; }
-	TypeSymbol Type() const override { return _type; }
+	const TypeSymbol& Type() const noexcept override { return _type; }
 
 	const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
 };
@@ -481,7 +481,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::PostfixExpression; }
-	TypeSymbol Type() const override { return _variable->Type(); }
+	const TypeSymbol& Type() const noexcept override { return _variable->Type(); }
 
 	const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 	BoundPostfixOperatorEnum OperatorKind()const noexcept { return _kind; }

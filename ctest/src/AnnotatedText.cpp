@@ -1,7 +1,6 @@
 #include "AnnotatedText.h"
 
 #include <algorithm>
-#include <sstream>
 #include <stack>
 
 #include "helpers.h"
@@ -27,7 +26,7 @@ std::vector<std::string> AnnotatedText::DedentLines(const std::string& text)
 				lines.emplace_back(line);
 	}
 
-	auto minIndentation = SIZE_MAX;
+	auto minIndentation = std::numeric_limits<size_t>::max();
 	for (size_t i = 0; i < lines.size(); ++i)
 	{
 		auto line = lines[i];

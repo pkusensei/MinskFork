@@ -32,13 +32,13 @@ enum class BoundNodeKind
 
 };
 
-string GetEnumText(const BoundNodeKind& kind);
+string_view GetEnumText(const BoundNodeKind& kind);
 
 class BoundNode
 {
 public:
 	virtual ~BoundNode() = default;
-	virtual BoundNodeKind Kind() const = 0;
+	virtual BoundNodeKind Kind() const noexcept = 0;
 
 	void WriteTo(std::ostream& out)const;
 	string ToString() const;

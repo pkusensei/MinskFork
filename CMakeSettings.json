@@ -15,11 +15,6 @@
           "name": "CMAKE_CXX_COMPILER",
           "value": "${env.USERPROFILE}/Documents/LLVM/bin/clang-cl.exe",
           "type": "FILEPATH"
-        },
-        {
-          "name": "CMAKE_C_COMPILER",
-          "value": "${env.USERPROFILE}/Documents/LLVM/bin/clang-cl.exe",
-          "type": "FILEPATH"
         }
       ]
     }

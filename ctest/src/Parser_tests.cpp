@@ -92,7 +92,7 @@ TEST_CASE("Parser honors precedences in UinaryExpression", "[Parser]")
 
 TEST_CASE("Parser honors precedences in PostfixExpression", "[Parser]")
 {
-	auto text = "a---b";
+	std::string text = "a---b";
 	auto tree = MCF::SyntaxTree::Parse(text);
 	auto expression = ParseExpression(tree.get());
 	auto e = AssertingHelper(expression);

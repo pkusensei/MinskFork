@@ -243,7 +243,7 @@ string_view GetText(const SyntaxKind& kind)
 		case SyntaxKind::VarKeyword: return "var";
 		case SyntaxKind::WhileKeyword: return "while";
 		case SyntaxKind::DoKeyword: return "do";
-		default: return string();
+		default: return string_view();
 	}
 }
 

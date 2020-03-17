@@ -7,7 +7,7 @@
 
 namespace MCF {
 
-string GetEnumText(const BoundNodeKind & kind)
+string_view GetEnumText(const BoundNodeKind & kind)
 {
 	switch (kind)
 	{
@@ -54,7 +54,7 @@ string GetEnumText(const BoundNodeKind & kind)
 			return "PostfixExpression";
 
 		default:
-			return string();
+			return string_view();
 	}
 }
 

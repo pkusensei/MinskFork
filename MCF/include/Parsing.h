@@ -199,10 +199,10 @@ public:
 	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
 	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics.get(); }
 
-	static unique_ptr<SyntaxTree> Parse(const string& text);
+	static unique_ptr<SyntaxTree> Parse(string_view text);
 	static unique_ptr<SyntaxTree> Parse(const SourceText& text);
-	static vector<SyntaxToken> ParseTokens(const string& text);
-	static vector<SyntaxToken> ParseTokens(const string& text, DiagnosticBag& diagnostics);
+	static vector<SyntaxToken> ParseTokens(string_view text);
+	static vector<SyntaxToken> ParseTokens(string_view text, DiagnosticBag& diagnostics);
 	static vector<SyntaxToken> ParseTokens(const SourceText& text);
 	static vector<SyntaxToken> ParseTokens(const SourceText& text, DiagnosticBag& diagnostics);
 

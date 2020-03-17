@@ -10,6 +10,7 @@
 #include "BoundStatements.h"
 #include "ControlFlowGraph.h"
 #include "Diagnostic.h"
+#include "helpers.h"
 #include "Parsing.h"
 
 namespace MCF {
@@ -89,7 +90,7 @@ ValueType Evaluator::EvaluateStatement(const BoundBlockStatement* body)
 				return _lastValue;
 			}
 			default:
-				throw std::invalid_argument("Unexpected statement " + GetEnumText(s->Kind()));
+				throw std::invalid_argument(BuildStringFrom("Unexpected statement ", GetEnumText(s->Kind())));
 		}
 	}
 	return _lastValue;
@@ -162,7 +163,7 @@ ValueType Evaluator::EvaluateExpression(const BoundExpression* node)
 		default:
 			break;
 	}
-	throw std::invalid_argument("Invalid expression " + GetEnumText(node->Kind()));
+	throw std::invalid_argument(BuildStringFrom("Invalid expression ", GetEnumText(node->Kind())));
 }
 
 ValueType Evaluator::EvaluateLiteralExpression(const BoundLiteralExpression* node)const
@@ -202,8 +203,8 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression* node)
 		case BoundUnaryOperatorKind::OnesComplement:
 			return ~operand.GetValue<IntegerType>();
 		default:
-			throw std::invalid_argument("Invalid unary operator "
-				+ GetEnumText(node->Op().Kind()));
+			throw std::invalid_argument(BuildStringFrom("Invalid unary operator "
+				, GetEnumText(node->Op().Kind())));
 	}
 }
 
@@ -255,8 +256,8 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression* node)
 			return left.GetValue<IntegerType>() >= right.GetValue<IntegerType>();
 
 		default:
-			throw std::invalid_argument("Invalid binary operator "
-				+ GetEnumText(node->Op().Kind()));
+			throw std::invalid_argument(BuildStringFrom("Invalid binary operator "
+				, GetEnumText(node->Op().Kind())));
 	}
 }
 
@@ -333,7 +334,7 @@ ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression* nod
 			Assign(node->Variable(), --result);
 			return result;
 		default:
-			throw std::invalid_argument("Unexpected postfix operator " + GetEnumText(node->OperatorKind()));
+			throw std::invalid_argument(BuildStringFrom("Unexpected postfix operator ", GetEnumText(node->OperatorKind())));
 	}
 }
 

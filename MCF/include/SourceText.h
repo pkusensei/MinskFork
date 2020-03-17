@@ -95,22 +95,22 @@ private:
 	static size_t GetLineBreakWidth(string_view text, size_t position);
 	static vector<TextLine> ParseLines(const SourceText& sourceText, string_view text);
 
-	explicit SourceText(const string& text)
+	explicit SourceText(string_view text)
 		:_text(text), _lines(ParseLines(*this, _text))
 	{
 	}
 
 public:
-	const vector<TextLine>& Lines()const { return _lines; }
+	constexpr const vector<TextLine>& Lines()const { return _lines; }
 	constexpr size_t Length()const noexcept { return _text.length(); }
-	char operator[](size_t sub) const { return _text.at(sub); }
+	constexpr char operator[](size_t sub) const { return _text.at(sub); }
 	size_t GetLineIndex(size_t position)const noexcept;
 
-	string_view ToString()const { return _text; }
-	string_view ToString(size_t start, size_t length)const { return _text.substr(start, length); }
-	string_view ToString(const TextSpan& span)const { return ToString(span.Start(), span.Length()); }
+	constexpr string_view ToString()const { return _text; }
+	constexpr string_view ToString(size_t start, size_t length)const { return _text.substr(start, length); }
+	constexpr string_view ToString(const TextSpan& span)const { return ToString(span.Start(), span.Length()); }
 
-	static SourceText From(const string& text) { return SourceText(text); }
+	static SourceText From(string_view text) { return SourceText(text); }
 };
 
 }//MCF

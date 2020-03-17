@@ -51,7 +51,7 @@ public:
 	TypeClauseSyntax& operator=(const TypeClauseSyntax&) = default;
 
 	// Inherited via SyntaxNode
-	SyntaxKind Kind() const override { return SyntaxKind::TypeClause; };
+	SyntaxKind Kind() const noexcept override { return SyntaxKind::TypeClause; };
 	const vector<const SyntaxNode*> GetChildren() const override;
 
 	const SyntaxToken& ColonToken()const noexcept { return _colonToken; }

@@ -6,13 +6,13 @@
 
 #include "AnnotatedText.h"
 
-void AssertValue(const std::string& text, const MCF::ValueType& value);
+void AssertValue(std::string_view text, const MCF::ValueType& value);
 void AssertDiagnostics(const std::string& text, const std::string& diagnosticText);
 
 TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 {
 	auto [input, expected] = GENERATE(
-		table<std::string, MCF::ValueType>({
+		table<std::string_view, MCF::ValueType>({
 		{"1", 1},
 		{ "+34", 34 },
 		{ "-42", -42 },
@@ -84,6 +84,7 @@ TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 
 		{ "{var x = 41 x++}", 42 },
 		{ "{var x = 3 x---5}", -3 },
+
 			}));
 	SECTION("One evaluation")
 	{
@@ -321,7 +322,7 @@ TEST_CASE("Evaluator reports undefined binary operation", "[Evaluator]")
 	AssertDiagnostics(text, diag);
 }
 
-void AssertValue(const std::string& text, const MCF::ValueType& value)
+void AssertValue(std::string_view text, const MCF::ValueType& value)
 {
 	auto tree = MCF::SyntaxTree::Parse(text);
 	MCF::Compilation compilation(tree);

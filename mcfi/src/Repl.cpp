@@ -27,10 +27,10 @@ void Repl::Run()
 		if (text.empty())
 			return;
 
-		auto& input = _submissionHistory.emplace_back(std::move(text));
-		if (input.find(NEW_LINE) == input.npos && MCF::StringStartsWith(input, "#"))
-			EvaluateMetaCommand(input);
-		else EvaluateSubmission(input);
+		auto& lastItem = _submissionHistory.emplace_back(std::move(text));
+		if (lastItem.find(NEW_LINE) == lastItem.npos && MCF::StringStartsWith(lastItem, "#"))
+			EvaluateMetaCommand(lastItem);
+		else EvaluateSubmission(lastItem);
 
 		_submissionHistoryIndex = 0;
 	}
@@ -459,6 +459,7 @@ bool McfRepl::IsCompleteSubmission(const std::string & text) const
 
 void McfRepl::EvaluateSubmission(const std::string & text)
 {
+	/// creates a string_view referncing to the last item in _submissionHistory
 	auto syntaxTree = MCF::SyntaxTree::Parse(text);
 
 	auto compilation = _previous == nullptr ?
