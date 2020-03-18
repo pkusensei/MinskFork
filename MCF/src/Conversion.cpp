@@ -6,7 +6,7 @@
 
 namespace MCF {
 
-Conversion Conversion::GetConversion(const ConversionEnum & kind)
+Conversion Conversion::GetConversion(ConversionEnum  kind)
 {
 	switch (kind)
 	{
@@ -23,7 +23,7 @@ Conversion Conversion::GetConversion(const ConversionEnum & kind)
 	}
 }
 
-Conversion Conversion::Classify(const TypeSymbol & from, const TypeSymbol & to)
+Conversion Conversion::Classify(const TypeSymbol& from, const TypeSymbol& to)
 {
 	if (from == to)
 		return GetConversion(ConversionEnum::Identity);

@@ -167,11 +167,11 @@ public:
 	{
 	}
 
-	const BoundGlobalScope* Previous()const noexcept { return _previous; }
+	constexpr const BoundGlobalScope* Previous()const noexcept { return _previous; }
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
-	const vector<shared_ptr<FunctionSymbol>>& Functions()const { return _functions; }
-	const vector<shared_ptr<VariableSymbol>>& Variables()const { return _variables; }
-	const vector<shared_ptr<BoundStatement>>& Statements()const noexcept { return _statements; }
+	constexpr const vector<shared_ptr<FunctionSymbol>>& Functions()const { return _functions; }
+	constexpr const vector<shared_ptr<VariableSymbol>>& Variables()const { return _variables; }
+	constexpr const vector<shared_ptr<BoundStatement>>& Statements()const noexcept { return _statements; }
 };
 
 class BoundProgram final
@@ -192,11 +192,8 @@ public:
 	{
 	}
 
-	BoundProgram(BoundProgram&&) = default;
-	BoundProgram& operator=(BoundProgram&&) = default;
-
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
-	const FuncMap& Functions()const noexcept { return _functions; }
+	constexpr const FuncMap& Functions()const noexcept { return _functions; }
 	const BoundBlockStatement* Statement()const noexcept { return _statement.get(); }
 };
 

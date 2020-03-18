@@ -21,14 +21,14 @@ private:
 	{
 	}
 
-	static Conversion GetConversion(const ConversionEnum& kind);
+	static Conversion GetConversion(ConversionEnum kind);
 
 public:
 
-	bool Exists()const noexcept { return _exists; }
-	bool IsIdentity()const noexcept { return _isIdentity; }
-	bool IsImplicit()const noexcept { return _isImplicit; }
-	bool IsExplicit()const noexcept { return _exists && !_isImplicit; }
+	constexpr bool Exists()const noexcept { return _exists; }
+	constexpr bool IsIdentity()const noexcept { return _isIdentity; }
+	constexpr bool IsImplicit()const noexcept { return _isImplicit; }
+	constexpr bool IsExplicit()const noexcept { return _exists && !_isImplicit; }
 
 	static Conversion Classify(const TypeSymbol& from, const TypeSymbol& to);
 };

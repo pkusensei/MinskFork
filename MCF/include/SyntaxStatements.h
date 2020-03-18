@@ -24,15 +24,13 @@ public:
 		_statements(std::move(statements))
 	{
 	}
-	BlockStatementSyntax(BlockStatementSyntax&&) = default;
-	BlockStatementSyntax& operator=(BlockStatementSyntax&&) = default;
 
 	// Inherited via StatementSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::BlockStatement; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& OpenBraceToken()const noexcept { return _openBraceToken; }
-	const SyntaxToken& CloseBraceToken()const noexcept { return _closeBraceToken; }
+	constexpr const SyntaxToken& OpenBraceToken()const noexcept { return _openBraceToken; }
+	constexpr const SyntaxToken& CloseBraceToken()const noexcept { return _closeBraceToken; }
 	const vector<const StatementSyntax*> Statements()const;
 };
 
@@ -47,15 +45,13 @@ public:
 		:_colonToken(colon), _identifier(identifier)
 	{
 	}
-	TypeClauseSyntax(const TypeClauseSyntax&) = default;
-	TypeClauseSyntax& operator=(const TypeClauseSyntax&) = default;
 
 	// Inherited via SyntaxNode
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::TypeClause; };
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& ColonToken()const noexcept { return _colonToken; }
-	const SyntaxToken& Identifier()const noexcept { return _identifier; }
+	constexpr const SyntaxToken& ColonToken()const noexcept { return _colonToken; }
+	constexpr const SyntaxToken& Identifier()const noexcept { return _identifier; }
 };
 
 class VariableDeclarationSyntax final : public StatementSyntax
@@ -77,17 +73,14 @@ public:
 	{
 	}
 
-	VariableDeclarationSyntax(VariableDeclarationSyntax&&) = default;
-	VariableDeclarationSyntax& operator=(VariableDeclarationSyntax&&) = default;
-
 	// Inherited via StatementSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::VariableDeclaration; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& Keyword()const noexcept { return _keyword; }
-	const SyntaxToken& Identifier()const { return _identifier; }
-	const std::optional<TypeClauseSyntax>& TypeClause()const noexcept { return _typeClause; }
-	const SyntaxToken& EqualsToken()const noexcept { return _equalsToken; }
+	constexpr const SyntaxToken& Keyword()const noexcept { return _keyword; }
+	constexpr const SyntaxToken& Identifier()const { return _identifier; }
+	constexpr const std::optional<TypeClauseSyntax>& TypeClause()const noexcept { return _typeClause; }
+	constexpr const SyntaxToken& EqualsToken()const noexcept { return _equalsToken; }
 	const ExpressionSyntax* Initializer()const noexcept { return _initializer.get(); }
 };
 
@@ -103,14 +96,12 @@ public:
 		:_elseKeyword(elseKeyword), _elseStatement(std::move(elseStatement))
 	{
 	}
-	ElseClauseSyntax(ElseClauseSyntax&&) = default;
-	ElseClauseSyntax& operator=(ElseClauseSyntax&&) = default;
 
 	// Inherited via SyntaxNode
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::ElseClause; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& ElseKeyword()const noexcept { return _elseKeyword; }
+	constexpr const SyntaxToken& ElseKeyword()const noexcept { return _elseKeyword; }
 	const StatementSyntax* ElseStatement()const noexcept { return _elseStatement.get(); }
 };
 
@@ -131,14 +122,12 @@ public:
 		_thenStatement(std::move(thenStatement)), _elseClause(std::move(elseClause))
 	{
 	}
-	IfStatementSyntax(IfStatementSyntax&&) = default;
-	IfStatementSyntax& operator=(IfStatementSyntax&&) = default;
 
 	// Inherited via StatementSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::IfStatement; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& IfKeyword()const noexcept { return _ifKeyword; }
+	constexpr const SyntaxToken& IfKeyword()const noexcept { return _ifKeyword; }
 	const ExpressionSyntax* Condition()const noexcept { return _condition.get(); }
 	const StatementSyntax* ThenStatement()const noexcept { return _thenStatement.get(); }
 	const ElseClauseSyntax* ElseClause()const noexcept { return _elseClause.get(); }
@@ -158,14 +147,12 @@ public:
 		_body(std::move(body))
 	{
 	}
-	WhileStatementSyntax(WhileStatementSyntax&&) = default;
-	WhileStatementSyntax& operator=(WhileStatementSyntax&&) = default;
 
 	// Inherited via StatementSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::WhileStatement; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& WhileKeyword()const noexcept { return _whileKeyword; }
+	constexpr const SyntaxToken& WhileKeyword()const noexcept { return _whileKeyword; }
 	const ExpressionSyntax* Condition()const noexcept { return _condition.get(); }
 	const StatementSyntax* Body()const noexcept { return _body.get(); }
 };
@@ -186,16 +173,14 @@ public:
 		_whileKeyword(whileKeyword), _condition(std::move(condition))
 	{
 	}
-	DoWhileStatementSyntax(DoWhileStatementSyntax&&) = default;
-	DoWhileStatementSyntax& operator=(DoWhileStatementSyntax&&) = default;
 
 	// Inherited via StatementSyntax
 	virtual SyntaxKind Kind() const noexcept override { return SyntaxKind::DoWhileStatement; }
 	virtual const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& DoKeyword()const noexcept { return _doKeyword; }
+	constexpr const SyntaxToken& DoKeyword()const noexcept { return _doKeyword; }
 	const StatementSyntax* Body()const noexcept { return _body.get(); }
-	const SyntaxToken& WhileKeyword()const noexcept { return _whileKeyword; }
+	constexpr const SyntaxToken& WhileKeyword()const noexcept { return _whileKeyword; }
 	const ExpressionSyntax* Condition()const noexcept { return _condition.get(); }
 };
 
@@ -220,18 +205,16 @@ public:
 		_upperBound(std::move(upperBound)), _body(std::move(body))
 	{
 	}
-	ForStatementSyntax(ForStatementSyntax&&) = default;
-	ForStatementSyntax& operator=(ForStatementSyntax&&) = default;
 
 	// Inherited via StatementSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::ForStatement; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& Keyword() const noexcept { return _keyword; }
-	const SyntaxToken& Identifier() const noexcept { return _identifier; }
-	const SyntaxToken& EqualsToken()const noexcept { return _equalsToken; }
+	constexpr const SyntaxToken& Keyword() const noexcept { return _keyword; }
+	constexpr const SyntaxToken& Identifier() const noexcept { return _identifier; }
+	constexpr const SyntaxToken& EqualsToken()const noexcept { return _equalsToken; }
 	const ExpressionSyntax* LowerBound()const noexcept { return _lowerBound.get(); }
-	const SyntaxToken& ToKeyword()const noexcept { return _toKeyword; }
+	constexpr const SyntaxToken& ToKeyword()const noexcept { return _toKeyword; }
 	const ExpressionSyntax* UpperBound()const noexcept { return _upperBound.get(); }
 	const StatementSyntax* Body()const noexcept { return _body.get(); }
 };
@@ -246,14 +229,12 @@ public:
 		:_keyword(keyword)
 	{
 	}
-	BreakStatementSyntax(BreakStatementSyntax&&) = default;
-	BreakStatementSyntax& operator=(BreakStatementSyntax&&) = default;
 
 	// Inherited via StatementSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::BreakStatement; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& Keyword()const noexcept { return _keyword; }
+	constexpr const SyntaxToken& Keyword()const noexcept { return _keyword; }
 };
 
 class ContinueStatementSyntax final :public StatementSyntax
@@ -266,14 +247,12 @@ public:
 		:_keyword(keyword)
 	{
 	}
-	ContinueStatementSyntax(ContinueStatementSyntax&&) = default;
-	ContinueStatementSyntax& operator=(ContinueStatementSyntax&&) = default;
 
 	// Inherited via StatementSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::ContinueStatement; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& Keyword()const noexcept { return _keyword; }
+	constexpr const SyntaxToken& Keyword()const noexcept { return _keyword; }
 };
 
 class ReturnStatementSyntax final :public StatementSyntax
@@ -292,14 +271,12 @@ public:
 		: _keyword(retKeyword), _expression(std::move(expression))
 	{
 	}
-	ReturnStatementSyntax(ReturnStatementSyntax&&) = default;
-	ReturnStatementSyntax& operator=(ReturnStatementSyntax&&) = default;
 
 	// Inherited via StatementSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::ReturnStatement; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& Keyword()const noexcept { return _keyword; }
+	constexpr const SyntaxToken& Keyword()const noexcept { return _keyword; }
 	const ExpressionSyntax* Expression()const noexcept { return _expression.get(); }
 };
 
@@ -309,12 +286,10 @@ private:
 	unique_ptr<ExpressionSyntax> _expression;
 
 public:
-	explicit ExpressionStatementSyntax(unique_ptr<ExpressionSyntax>& expression)
+	explicit ExpressionStatementSyntax(unique_ptr<ExpressionSyntax>& expression)noexcept
 		:_expression(std::move(expression))
 	{
 	}
-	ExpressionStatementSyntax(ExpressionStatementSyntax&&) = default;
-	ExpressionStatementSyntax& operator=(ExpressionStatementSyntax&&) = default;
 
 	// Inherited via StatementSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::ExpressionStatement; }

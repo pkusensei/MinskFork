@@ -48,11 +48,9 @@ public:
 		:_diagnostics(diagnostics), _value(value)
 	{
 	}
-	EvaluationResult(EvaluationResult&&) = default;
-	EvaluationResult& operator=(EvaluationResult&&) = default;
 
 	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics; }
-	const ValueType& Value()const noexcept { return _value; }
+	constexpr const ValueType& Value()const noexcept { return _value; }
 };
 
 class Evaluator final

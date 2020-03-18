@@ -55,9 +55,9 @@ public:
 	const vector<const SyntaxNode*> GetChildren() const override;
 
 	constexpr size_t Position() const noexcept { return _position; }
-	string_view Text() const { return _text; }
+	constexpr string_view Text() const { return _text; }
 	ValueType Value() const noexcept { return _value; }
-	bool IsMissing()const noexcept { return _text.empty(); }
+	constexpr bool IsMissing()const noexcept { return _text.empty(); }
 
 	SyntaxToken Clone()const;
 };
@@ -69,12 +69,10 @@ private:
 	vector<unique_ptr<SyntaxNode>> _nodesAndSeparators;
 
 public:
-	explicit SeparatedSyntaxList(vector<unique_ptr<SyntaxNode>>& list)
+	explicit SeparatedSyntaxList(vector<unique_ptr<SyntaxNode>>& list)noexcept
 		:_nodesAndSeparators(std::move(list))
 	{
 	}
-	SeparatedSyntaxList(SeparatedSyntaxList&& other) = default;
-	SeparatedSyntaxList& operator=(SeparatedSyntaxList&& other) = default;
 
 	size_t size()const noexcept
 	{

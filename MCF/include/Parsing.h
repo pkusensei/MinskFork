@@ -35,8 +35,8 @@ public:
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::Parameter; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& Identifier()const noexcept { return _identifier; }
-	const TypeClauseSyntax& Type()const noexcept { return _type; }
+	constexpr const SyntaxToken& Identifier()const noexcept { return _identifier; }
+	constexpr const TypeClauseSyntax& Type()const noexcept { return _type; }
 };
 
 class FunctionDeclarationSyntax :public MemberSyntax
@@ -63,19 +63,16 @@ public:
 	{
 	}
 
-	FunctionDeclarationSyntax(FunctionDeclarationSyntax&&) = default;
-	FunctionDeclarationSyntax& operator=(FunctionDeclarationSyntax&&) = default;
-
 	// Inherited via MemberSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::FunctionDeclaration; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& FunctionKeyword()const noexcept { return _funcKeyword; }
-	const SyntaxToken& Identifier()const noexcept { return _identifier; }
-	const SyntaxToken& OpenParenthesisToken()const noexcept { return _openParenthesisToken; }
-	decltype(auto) Parameters()const noexcept { return &_parameters; }
-	const SyntaxToken& CloseParenthesisToken()const noexcept { return _closeParenthesisToken; }
-	const std::optional<TypeClauseSyntax>& Type()const noexcept { return _type; }
+	constexpr const SyntaxToken& FunctionKeyword()const noexcept { return _funcKeyword; }
+	constexpr const SyntaxToken& Identifier()const noexcept { return _identifier; }
+	constexpr const SyntaxToken& OpenParenthesisToken()const noexcept { return _openParenthesisToken; }
+	constexpr decltype(auto) Parameters()const noexcept { return &_parameters; }
+	constexpr const SyntaxToken& CloseParenthesisToken()const noexcept { return _closeParenthesisToken; }
+	constexpr const std::optional<TypeClauseSyntax>& Type()const noexcept { return _type; }
 	const BlockStatementSyntax* Body()const noexcept { return _body.get(); }
 };
 
@@ -89,8 +86,6 @@ public:
 		:_statement(std::move(statement))
 	{
 	}
-	GlobalStatementSyntax(GlobalStatementSyntax&&) = default;
-	GlobalStatementSyntax& operator=(GlobalStatementSyntax&&) = default;
 
 	// Inherited via MemberSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::GlobalStatement; }
@@ -112,15 +107,12 @@ public:
 	{
 	}
 
-	CompilationUnitSyntax(CompilationUnitSyntax&&) = default;
-	CompilationUnitSyntax& operator=(CompilationUnitSyntax&&) = default;
-
 	// Inherited via SyntaxNode
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::CompilationUnit; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const vector<unique_ptr<MemberSyntax>>& Members()const noexcept { return _members; }
-	const SyntaxToken& EndOfFileToken()const noexcept { return _endOfFileToken; }
+	constexpr const vector<unique_ptr<MemberSyntax>>& Members()const noexcept { return _members; }
+	constexpr const SyntaxToken& EndOfFileToken()const noexcept { return _endOfFileToken; }
 };
 
 class Parser final
@@ -195,7 +187,7 @@ public:
 	SyntaxTree& operator=(SyntaxTree&& other);
 	~SyntaxTree();
 
-	const SourceText& Text() const { return *_text; }
+	constexpr const SourceText& Text() const { return *_text; }
 	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
 	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics.get(); }
 

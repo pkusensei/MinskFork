@@ -23,7 +23,7 @@ enum class SymbolKind
 	Type,
 };
 
-string_view GetEnumText(const SymbolKind& kind);
+string_view GetEnumText(SymbolKind kind);
 
 class MCF_API Symbol
 {
@@ -31,7 +31,7 @@ private:
 	string_view _name;
 
 protected:
-	explicit Symbol(string_view name)
+	constexpr explicit Symbol(string_view name) noexcept
 		:_name(name)
 	{
 	}
@@ -68,14 +68,12 @@ enum class TypeEnum
 class TypeSymbol final :public Symbol
 {
 private:
-	explicit TypeSymbol(string_view name)
+	constexpr explicit TypeSymbol(string_view name)noexcept
 		:Symbol(name)
 	{
 	}
 
 public:
-	TypeSymbol(const TypeSymbol& other) = default;
-	TypeSymbol& operator=(const TypeSymbol& other) = default;
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Type; }
 
@@ -92,12 +90,10 @@ private:
 	TypeSymbol _type;
 
 public:
-	VariableSymbol(string_view name, bool isReadOnly, const TypeSymbol& type)
+	constexpr VariableSymbol(string_view name, bool isReadOnly, const TypeSymbol& type) noexcept
 		:Symbol(name), _isReadOnly(isReadOnly), _type(type)
 	{
 	}
-	VariableSymbol(const VariableSymbol& other) = default;
-	VariableSymbol& operator=(const VariableSymbol& other) = default;
 
 	bool IsReadOnly()const noexcept { return _isReadOnly; }
 	const TypeSymbol& Type()const noexcept { return _type; }
@@ -106,12 +102,10 @@ public:
 class GlobalVariableSymbol final :public VariableSymbol
 {
 public:
-	GlobalVariableSymbol(string_view name, bool isReadOnly, const TypeSymbol& type)
+	constexpr GlobalVariableSymbol(string_view name, bool isReadOnly, const TypeSymbol& type)noexcept
 		:VariableSymbol(name, isReadOnly, type)
 	{
 	}
-	GlobalVariableSymbol(const GlobalVariableSymbol&) = default;
-	GlobalVariableSymbol& operator=(const GlobalVariableSymbol&) = default;
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::GlobalVariable; }
 };
@@ -119,12 +113,10 @@ public:
 class LocalVariableSymbol :public VariableSymbol
 {
 public:
-	LocalVariableSymbol(string_view name, bool isReadOnly, const TypeSymbol& type)
+	constexpr LocalVariableSymbol(string_view name, bool isReadOnly, const TypeSymbol& type)noexcept
 		:VariableSymbol(name, isReadOnly, type)
 	{
 	}
-	LocalVariableSymbol(const LocalVariableSymbol&) = default;
-	LocalVariableSymbol& operator=(const LocalVariableSymbol&) = default;
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::LocalVariable; }
 };
@@ -132,12 +124,10 @@ public:
 class ParameterSymbol final : public LocalVariableSymbol
 {
 public:
-	ParameterSymbol(string_view name, const TypeSymbol& type)
+	constexpr ParameterSymbol(string_view name, const TypeSymbol& type)noexcept
 		:LocalVariableSymbol(name, true, type)
 	{
 	}
-	ParameterSymbol(const ParameterSymbol&) = default;
-	ParameterSymbol& operator=(const ParameterSymbol&) = default;
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Parameter; }
 };

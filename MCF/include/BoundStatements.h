@@ -22,13 +22,11 @@ public:
 		:_statements(statements)
 	{
 	}
-	BoundBlockStatement(BoundBlockStatement&&) = default;
-	BoundBlockStatement& operator=(BoundBlockStatement&&) = default;
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BlockStatement; }
 
-	const vector<shared_ptr<BoundStatement>>& Statements()const noexcept { return _statements; }
+	constexpr const vector<shared_ptr<BoundStatement>>& Statements()const noexcept { return _statements; }
 };
 
 class BoundVariableDeclaration final :public BoundStatement
@@ -43,14 +41,12 @@ public:
 		:_variable(variable), _initializer(initializer)
 	{
 	}
-	BoundVariableDeclaration(BoundVariableDeclaration&&) = default;
-	BoundVariableDeclaration& operator=(BoundVariableDeclaration&&) = default;
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableDeclaration; }
 
-	const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
-	const shared_ptr<BoundExpression>& Initializer()const noexcept { return _initializer; }
+	constexpr const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
+	constexpr const shared_ptr<BoundExpression>& Initializer()const noexcept { return _initializer; }
 };
 
 class BoundIfStatement final :public BoundStatement
@@ -68,15 +64,13 @@ public:
 		_elseStatement(elseStatement)
 	{
 	}
-	BoundIfStatement(BoundIfStatement&&) = default;
-	BoundIfStatement& operator=(BoundIfStatement&&) = default;
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::IfStatement; }
 
-	const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
-	const shared_ptr<BoundStatement>& ThenStatement()const noexcept { return _thenStatement; }
-	const shared_ptr<BoundStatement>& ElseStatement()const noexcept { return _elseStatement; }
+	constexpr const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
+	constexpr const shared_ptr<BoundStatement>& ThenStatement()const noexcept { return _thenStatement; }
+	constexpr const shared_ptr<BoundStatement>& ElseStatement()const noexcept { return _elseStatement; }
 };
 
 class BoundLoopStatement :public BoundStatement
@@ -92,8 +86,8 @@ protected:
 	}
 
 public:
-	const BoundLabel& BreakLabel()const noexcept { return _breakLabel; }
-	const BoundLabel& ContinueLabel()const noexcept { return _continueLabel; }
+	constexpr const BoundLabel& BreakLabel()const noexcept { return _breakLabel; }
+	constexpr const BoundLabel& ContinueLabel()const noexcept { return _continueLabel; }
 };
 
 class BoundWhileStatement final :public BoundLoopStatement
@@ -110,14 +104,12 @@ public:
 		_condition(condition), _body(body)
 	{
 	}
-	BoundWhileStatement(BoundWhileStatement&&) = default;
-	BoundWhileStatement& operator=(BoundWhileStatement&&) = default;
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::WhileStatement; }
 
-	const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
-	const shared_ptr<BoundStatement>& Body()const noexcept { return _body; }
+	constexpr const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
+	constexpr const shared_ptr<BoundStatement>& Body()const noexcept { return _body; }
 };
 
 class BoundDoWhileStatement final :public BoundLoopStatement
@@ -134,14 +126,12 @@ public:
 		_body(body), _condition(condition)
 	{
 	}
-	BoundDoWhileStatement(BoundDoWhileStatement&&) = default;
-	BoundDoWhileStatement& operator=(BoundDoWhileStatement&&) = default;
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::DoWhileStatement; }
 
-	const shared_ptr<BoundStatement>& Body()const noexcept { return _body; }
-	const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
+	constexpr const shared_ptr<BoundStatement>& Body()const noexcept { return _body; }
+	constexpr const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
 };
 
 class BoundForStatement final :public BoundLoopStatement
@@ -163,16 +153,14 @@ public:
 		_body(body)
 	{
 	}
-	BoundForStatement(BoundForStatement&&) = default;
-	BoundForStatement& operator=(BoundForStatement&&) = default;
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ForStatement; }
 
-	const shared_ptr<VariableSymbol>& Variable()const { return _variable; }
-	const shared_ptr<BoundExpression>& LowerBound()const noexcept { return _lowerBound; }
-	const shared_ptr<BoundExpression>& UpperBound()const noexcept { return _upperBound; }
-	const shared_ptr<BoundStatement>& Body()const noexcept { return _body; }
+	constexpr const shared_ptr<VariableSymbol>& Variable()const { return _variable; }
+	constexpr const shared_ptr<BoundExpression>& LowerBound()const noexcept { return _lowerBound; }
+	constexpr const shared_ptr<BoundExpression>& UpperBound()const noexcept { return _upperBound; }
+	constexpr const shared_ptr<BoundStatement>& Body()const noexcept { return _body; }
 };
 
 class BoundLabelStatement final :public BoundStatement
@@ -185,13 +173,11 @@ public:
 		:_label(label)
 	{
 	}
-	BoundLabelStatement(BoundLabelStatement&&) = default;
-	BoundLabelStatement& operator=(BoundLabelStatement&&) = default;
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LabelStatement; }
 
-	const BoundLabel& Label()const noexcept { return _label; }
+	constexpr const BoundLabel& Label()const noexcept { return _label; }
 };
 
 class BoundGotoStatement final :public BoundStatement
@@ -204,13 +190,11 @@ public:
 		:_label(label)
 	{
 	}
-	BoundGotoStatement(BoundGotoStatement&&) = default;
-	BoundGotoStatement& operator=(BoundGotoStatement&&) = default;
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::GotoStatement; }
 
-	const BoundLabel& Label()const noexcept { return _label; }
+	constexpr const BoundLabel& Label()const noexcept { return _label; }
 };
 
 class BoundConditionalGotoStatement final :public BoundStatement
@@ -226,15 +210,13 @@ public:
 		:_label(label), _condition(condition), _jumpIfTrue(jumpIfTrue)
 	{
 	}
-	BoundConditionalGotoStatement(BoundConditionalGotoStatement&&) = default;
-	BoundConditionalGotoStatement& operator=(BoundConditionalGotoStatement&&) = default;
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ConditionalGotoStatement; }
 
-	const BoundLabel& Label()const noexcept { return _label; }
-	const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
-	bool JumpIfTrue()const noexcept { return _jumpIfTrue; }
+	constexpr const BoundLabel& Label()const noexcept { return _label; }
+	constexpr const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
+	constexpr bool JumpIfTrue()const noexcept { return _jumpIfTrue; }
 };
 
 class BoundReturnStatement final :public BoundStatement
@@ -247,6 +229,7 @@ public:
 		:_expression(expression)
 	{
 	}
+
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ReturnStatement; }
 
@@ -264,13 +247,11 @@ public:
 		:_expression(expression)
 	{
 	}
-	BoundExpressionStatement(BoundExpressionStatement&&) = default;
-	BoundExpressionStatement& operator=(BoundExpressionStatement&&) = default;
 
 	// Inherited via BoundStatement
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ExpressionStatement; }
 
-	const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
+	constexpr const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
 };
 
 }//MCF

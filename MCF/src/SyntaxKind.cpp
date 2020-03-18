@@ -9,7 +9,7 @@ namespace MCF {
 const vector<SyntaxKind> AllSyntaxKinds
 = GetAllEnumValue<SyntaxKind>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
 
-string_view GetSyntaxKindName(const SyntaxKind& kind)
+string_view GetSyntaxKindName(SyntaxKind kind)
 {
 	switch (kind)
 	{
@@ -198,7 +198,7 @@ SyntaxKind GetKeywordKind(string_view text) noexcept
 	else return SyntaxKind::IdentifierToken;
 }
 
-string_view GetText(const SyntaxKind& kind)
+string_view GetText(SyntaxKind kind)
 {
 	switch (kind)
 	{
@@ -247,7 +247,7 @@ string_view GetText(const SyntaxKind& kind)
 	}
 }
 
-int GetUnaryOperatorPrecedence(const SyntaxKind& kind) noexcept
+int GetUnaryOperatorPrecedence(SyntaxKind kind) noexcept
 {
 	switch (kind)
 	{
@@ -263,7 +263,7 @@ int GetUnaryOperatorPrecedence(const SyntaxKind& kind) noexcept
 	}
 }
 
-int GetBinaryOperatorPrecedence(const SyntaxKind& kind) noexcept
+int GetBinaryOperatorPrecedence(SyntaxKind kind) noexcept
 {
 	switch (kind)
 	{

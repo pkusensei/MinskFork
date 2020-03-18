@@ -452,7 +452,11 @@ bool McfRepl::IsCompleteSubmission(const std::string & text) const
 
 void McfRepl::EvaluateSubmission(const std::string & text)
 {
-	/// creates a string_view referncing to the last item in _submissionHistory
+	// creates a string_view referncing to the last item in _submissionHistory
+	// That was the original idea BUT
+	// _submissionHistory as a vector<T> moves/copies its content when resizing
+	// That invalidates string_view in SyntaxTree esp. when SSO kicks in
+	// At the end of the day each syntax tree keeps its own copy of input string
 	auto syntaxTree = MCF::SyntaxTree::Parse(text);
 
 	auto compilation = _previous == nullptr ?

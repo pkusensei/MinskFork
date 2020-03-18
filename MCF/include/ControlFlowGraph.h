@@ -31,22 +31,22 @@ public:
 		vector<BasicBlockBranch*> _outgoing;
 
 	public:
-		explicit BasicBlock(int id = 0, bool isStart = false, bool isEnd = false)
+		explicit BasicBlock(int id = 0, bool isStart = false, bool isEnd = false)noexcept
 			: _id(id), _isStart(isStart), _isEnd(isEnd)
 		{
 		}
 
-		int Id() const noexcept { return _id; }
-		bool IsStart()const noexcept { return _isStart; }
-		bool IsEnd()const noexcept { return _isEnd; }
+		constexpr int Id() const noexcept { return _id; }
+		constexpr bool IsStart()const noexcept { return _isStart; }
+		constexpr bool IsEnd()const noexcept { return _isEnd; }
 
-		vector<BoundStatement*>& Statements() noexcept { return _statements; }
-		vector<BasicBlockBranch*>& Incoming()noexcept { return _incoming; }
-		vector<BasicBlockBranch*>& Outgoing()noexcept { return _outgoing; }
+		constexpr vector<BoundStatement*>& Statements() noexcept { return _statements; }
+		constexpr vector<BasicBlockBranch*>& Incoming()noexcept { return _incoming; }
+		constexpr vector<BasicBlockBranch*>& Outgoing()noexcept { return _outgoing; }
 
 		string ToString()const;
-		bool operator==(const BasicBlock& other)const noexcept { return _id == other._id; }
-		bool operator!=(const BasicBlock& other)const noexcept { return !(*this == other); }
+		constexpr bool operator==(const BasicBlock& other)const noexcept { return _id == other._id; }
+		constexpr bool operator!=(const BasicBlock& other)const noexcept { return !(*this == other); }
 
 	};
 
@@ -64,16 +64,16 @@ public:
 		{
 		}
 
-		BasicBlock* From() const noexcept { return _from; }
-		BasicBlock* To() const noexcept { return _to; }
-		const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
+		constexpr BasicBlock* From() const noexcept { return _from; }
+		constexpr BasicBlock* To() const noexcept { return _to; }
+		constexpr const shared_ptr<BoundExpression>& Condition()const noexcept { return _condition; }
 
 		string ToString()const;
-		bool operator==(const BasicBlockBranch& other)const noexcept
+		constexpr bool operator==(const BasicBlockBranch& other)const noexcept
 		{
 			return _from == other._from && _to == other._to;
 		}
-		bool operator!=(const BasicBlockBranch& other)const noexcept { return !(*this == other); }
+		constexpr bool operator!=(const BasicBlockBranch& other)const noexcept { return !(*this == other); }
 
 	};
 
@@ -92,10 +92,10 @@ private:
 	}
 
 public:
-	BasicBlock* Start()const noexcept { return _start; }
-	BasicBlock* End()const noexcept { return _end; }
-	const vector<unique_ptr<BasicBlock>>& Blocks()const noexcept { return  _blocks; }
-	const vector<unique_ptr<BasicBlockBranch>>& Branches()const noexcept { return _branches; }
+	constexpr BasicBlock* Start()const noexcept { return _start; }
+	constexpr BasicBlock* End()const noexcept { return _end; }
+	constexpr const vector<unique_ptr<BasicBlock>>& Blocks()const noexcept { return  _blocks; }
+	constexpr const vector<unique_ptr<BasicBlockBranch>>& Branches()const noexcept { return _branches; }
 
 	void WriteTo(std::ostream& out)const;
 

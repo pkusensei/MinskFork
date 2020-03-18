@@ -24,7 +24,7 @@ enum class ConsoleColor
 };
 
 MCF_API bool EnableVTMode();
-MCF_API void SetConsoleColor(const ConsoleColor& color = ConsoleColor::Gray);
+MCF_API void SetConsoleColor(ConsoleColor color = ConsoleColor::Gray);
 MCF_API void ResetConsoleColor();
 MCF_API void ClearConsole();
 MCF_API void SetCursorVisibility(bool visible = true);
@@ -60,13 +60,13 @@ struct KeyInfo
 	const bool IsFunctionalKey;
 	const KeyInputKind Kind;
 
-	KeyInfo(char key, bool isFuncKey, KeyInputKind kind)
+	KeyInfo(char key, bool isFuncKey, KeyInputKind kind)noexcept
 		:Key(key), IsFunctionalKey(isFuncKey), Kind(kind)
 	{
 	}
 };
 
 MCF_API KeyInfo ReadKeyFromConsole();
-MCF_API KeyInputKind DecideKeyInputKind(const int input);
+MCF_API KeyInputKind DecideKeyInputKind(int input)noexcept;
 
 }//MCF

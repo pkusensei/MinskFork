@@ -20,7 +20,10 @@ protected:
 	void ResetColor();
 
 public:
-	explicit TextWriter(std::ostream& out = std::cout)noexcept :_out(out) {}
+	constexpr explicit TextWriter(std::ostream& out = std::cout)noexcept
+		:_out(out)
+	{
+	}
 	virtual ~TextWriter() = default;
 
 	virtual void Write(string_view text);
@@ -45,13 +48,13 @@ private:
 	void WriteIndent();
 
 public:
-	explicit IndentedTextWriter(std::ostream& out = std::cout, size_t count = 0)noexcept
+	constexpr explicit IndentedTextWriter(std::ostream& out = std::cout, size_t count = 0)noexcept
 		:TextWriter(out), _indentCount(count), _indentPending(false)
 	{
 	}
 
-	void Indent()noexcept { ++_indentCount; }
-	void Dedent()noexcept { if (_indentCount > 0) --_indentCount; }
+	constexpr void Indent()noexcept { ++_indentCount; }
+	constexpr void Dedent()noexcept { if (_indentCount > 0) --_indentCount; }
 
 	void Write(string_view text)override;
 	void WriteLine() override;

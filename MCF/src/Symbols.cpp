@@ -90,7 +90,7 @@ size_t FunctionHash::operator()(const shared_ptr<FunctionSymbol>& fs) const noex
 	return (*this)(*fs);
 }
 
-string_view GetEnumText(const SymbolKind& kind)
+string_view GetEnumText(SymbolKind kind)
 {
 	switch (kind)
 	{
@@ -184,7 +184,7 @@ IntegerType ValueType::ToInteger() const
 				return StringToInteger(GetValue<string>());
 			} catch (...)
 			{
-				[[fallthrough]] ;
+				[[fallthrough]];
 			}
 		default:
 			throw std::invalid_argument("Type cannot convert to IntegerType");

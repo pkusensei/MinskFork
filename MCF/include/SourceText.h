@@ -107,9 +107,9 @@ public:
 	size_t GetLineIndex(size_t position)const noexcept;
 
 	constexpr string_view ToString()const { return _text; }
-	string_view ToString(size_t start, size_t length)const
+	constexpr string_view ToString(size_t start, size_t length)const
 	{
-		return string_view(_text.data() + start, length);
+		return ToString().substr(start, length);
 	}
 	constexpr string_view ToString(const TextSpan& span)const
 	{

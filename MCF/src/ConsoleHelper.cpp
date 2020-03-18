@@ -39,7 +39,7 @@ bool EnableVTMode()
 	return true;
 }
 
-void SetConsoleColor(const ConsoleColor& color)
+void SetConsoleColor(ConsoleColor color)
 {
 	std::cout << CSI;
 	switch (color)
@@ -169,7 +169,7 @@ KeyInfo ReadKeyFromConsole()
 	return KeyInfo(static_cast<char>(k), isFunctionalKey, kind);
 }
 
-KeyInputKind DecideKeyInputKind(const int input)
+KeyInputKind DecideKeyInputKind(int input)noexcept
 {
 	switch (input)
 	{

@@ -22,15 +22,13 @@ public:
 		_expression(std::move(expression))
 	{
 	}
-	AssignmentExpressionSyntax(AssignmentExpressionSyntax&&) = default;
-	AssignmentExpressionSyntax& operator=(AssignmentExpressionSyntax&&) = default;
 
 	// Inherited via ExpressionSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::AssignmentExpression; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& IdentifierToken()const noexcept { return _identifierToken; }
-	const SyntaxToken& EqualsToken()const noexcept { return _equalsToken; }
+	constexpr const SyntaxToken& IdentifierToken()const noexcept { return _identifierToken; }
+	constexpr const SyntaxToken& EqualsToken()const noexcept { return _equalsToken; }
 	const ExpressionSyntax* Expression()const noexcept { return _expression.get(); }
 };
 
@@ -46,14 +44,12 @@ public:
 		:_operatorToken(operatorToken), _operand(std::move(operand))
 	{
 	}
-	UnaryExpressionSyntax(UnaryExpressionSyntax&&) = default;
-	UnaryExpressionSyntax& operator=(UnaryExpressionSyntax&&) = default;
 
 	// Inherited via ExpressionSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::UnaryExpression; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& OperatorToken()const noexcept { return _operatorToken; }
+	constexpr const SyntaxToken& OperatorToken()const noexcept { return _operatorToken; }
 	const ExpressionSyntax* Operand()const noexcept { return _operand.get(); }
 };
 
@@ -71,14 +67,12 @@ public:
 		_left(std::move(left)), _right(std::move(right))
 	{
 	}
-	BinaryExpressionSyntax(BinaryExpressionSyntax&&) = default;
-	BinaryExpressionSyntax& operator=(BinaryExpressionSyntax&&) = default;
 
 	// Inherited via ExpressionSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::BinaryExpression; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& OperatorToken()const noexcept { return _operatorToken; }
+	constexpr const SyntaxToken& OperatorToken()const noexcept { return _operatorToken; }
 	const ExpressionSyntax* Left()const noexcept { return _left.get(); }
 	const ExpressionSyntax* Right()const noexcept { return _right.get(); }
 };
@@ -97,15 +91,13 @@ public:
 		_expression(std::move(expression))
 	{
 	}
-	ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax&&) = default;
-	ParenthesizedExpressionSyntax& operator=(ParenthesizedExpressionSyntax&&) = default;
 
 	// Inherited via ExpressionSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::ParenthesizedExpression; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& OpenParenthesisToken()const noexcept { return _openParenthesisToken; }
-	const SyntaxToken& CloseParenthesisToken()const noexcept { return _closeParenthesisToken; }
+	constexpr const SyntaxToken& OpenParenthesisToken()const noexcept { return _openParenthesisToken; }
+	constexpr const SyntaxToken& CloseParenthesisToken()const noexcept { return _closeParenthesisToken; }
 	const ExpressionSyntax* Expression()const noexcept { return _expression.get(); }
 };
 
@@ -124,15 +116,13 @@ public:
 		:_literalToken(literalToken), _value(literalToken.Value())
 	{
 	}
-	LiteralExpressionSyntax(LiteralExpressionSyntax&&) = default;
-	LiteralExpressionSyntax& operator=(LiteralExpressionSyntax&&) = default;
 
 	// Inherited via ExpressionSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::LiteralExpression; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& LiteralToken()const noexcept { return _literalToken; }
-	const ValueType& Value()const noexcept { return _value; }
+	constexpr const SyntaxToken& LiteralToken()const noexcept { return _literalToken; }
+	constexpr const ValueType& Value()const noexcept { return _value; }
 };
 
 class NameExpressionSyntax final :public ExpressionSyntax
@@ -145,14 +135,12 @@ public:
 		:_identifierToken(identifier)
 	{
 	}
-	NameExpressionSyntax(NameExpressionSyntax&&) = default;
-	NameExpressionSyntax& operator=(NameExpressionSyntax&&) = default;
 
 	// Inherited via ExpressionSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::NameExpression; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& IdentifierToken()const noexcept { return _identifierToken; }
+	constexpr const SyntaxToken& IdentifierToken()const noexcept { return _identifierToken; }
 };
 
 class CallExpressionSyntax final :public ExpressionSyntax
@@ -171,17 +159,15 @@ public:
 		_arguments(std::move(arguments)), _closeParenthesisToken(close)
 	{
 	}
-	CallExpressionSyntax(CallExpressionSyntax&& other) = default;
-	CallExpressionSyntax& operator=(CallExpressionSyntax&& other) = default;
 
 	// Inherited via ExpressionSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::CallExpression; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& Identifier()const noexcept { return _identifier; }
-	const SyntaxToken& OpenParenthesisToken()const noexcept { return _openParenthesisToken; }
-	const SeparatedSyntaxList<ExpressionSyntax>* Arguments()const noexcept { return &_arguments; }
-	const SyntaxToken& CloseParenthesisToken()const noexcept { return _closeParenthesisToken; }
+	constexpr const SyntaxToken& Identifier()const noexcept { return _identifier; }
+	constexpr const SyntaxToken& OpenParenthesisToken()const noexcept { return _openParenthesisToken; }
+	constexpr const SeparatedSyntaxList<ExpressionSyntax>* Arguments()const noexcept { return &_arguments; }
+	constexpr const SyntaxToken& CloseParenthesisToken()const noexcept { return _closeParenthesisToken; }
 };
 
 class PostfixExpressionSyntax final :public ExpressionSyntax
@@ -197,15 +183,13 @@ public:
 		:_identifier(identifier), _op(op), _expression(std::move(expression))
 	{
 	}
-	PostfixExpressionSyntax(PostfixExpressionSyntax&&) = default;
-	PostfixExpressionSyntax& operator=(PostfixExpressionSyntax&&) = default;
 
 	// Inherited via ExpressionSyntax
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::PostfixExpression; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const SyntaxToken& IdentifierToken()const noexcept { return _identifier; }
-	const SyntaxToken& Op()const noexcept { return _op; }
+	constexpr const SyntaxToken& IdentifierToken()const noexcept { return _identifier; }
+	constexpr const SyntaxToken& Op()const noexcept { return _op; }
 	const ExpressionSyntax* Expression()const noexcept { return _expression.get(); }
 };
 

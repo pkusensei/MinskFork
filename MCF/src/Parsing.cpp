@@ -518,6 +518,9 @@ SyntaxTree::SyntaxTree(unique_ptr<SourceText>& text)
 	_diagnostics->AddRange(*parser.Diagnostics());
 }
 
+/// These defaulted methods stay here 
+/// so that compiler sees delcaration of SourceText & DiagnosticBag
+/// when instantiating  
 SyntaxTree::SyntaxTree(SyntaxTree&& other) = default;
 SyntaxTree& SyntaxTree::operator=(SyntaxTree&& other) = default;
 SyntaxTree::~SyntaxTree() = default;

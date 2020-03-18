@@ -27,8 +27,8 @@ public:
 	{
 	}
 
-	const TextSpan& Span() const noexcept { return _span; }
-	const string& Message() const noexcept { return _message; }
+	constexpr const TextSpan& Span() const noexcept { return _span; }
+	constexpr const string& Message() const noexcept { return _message; }
 };
 
 class MCF_API DiagnosticBag final
@@ -42,8 +42,6 @@ public:
 		:_diagnostics(std::deque<Diagnostic>())
 	{
 	}
-	DiagnosticBag(DiagnosticBag&&) = default;
-	DiagnosticBag& operator=(DiagnosticBag&&) = default;
 
 	size_t size() const noexcept { return _diagnostics.size(); }
 	bool empty()const noexcept { return _diagnostics.empty(); }
