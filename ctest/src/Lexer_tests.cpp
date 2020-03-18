@@ -46,7 +46,7 @@ TEST_CASE("Lexer lexes unterminated string", "[Lexer]")
 {
 	auto text = std::string("\"text");
 	auto diagnostics = MCF::DiagnosticBag();
-	auto tokens = MCF::SyntaxTree::ParseTokens(text, diagnostics);
+	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(text, diagnostics);
 
 	CHECK(tokens.size() == 1);
 	CHECK(MCF::SyntaxKind::StringToken == tokens[0].Kind());
@@ -62,7 +62,7 @@ TEST_CASE("Lexer lexes token", "[Lexer]")
 	auto data = GetTokenData();
 	for (const auto& it : data)
 	{
-		auto tokens = MCF::SyntaxTree::ParseTokens(it.second);
+		auto [tokens, _] = MCF::SyntaxTree::ParseTokens(it.second);
 		REQUIRE(tokens.size() == 1);
 		REQUIRE(it.first == tokens[0].Kind());
 		REQUIRE(it.second == tokens[0].Text());
@@ -76,7 +76,7 @@ TEST_CASE("Lexer lexes token pairs", "[Lexer]")
 	{
 		auto [t1kind, t1text, t2kind, t2text] = it;
 		auto text = MCF::BuildStringFrom(t1text, t2text);
-		auto tokens = MCF::SyntaxTree::ParseTokens(text);
+		auto [tokens, _] = MCF::SyntaxTree::ParseTokens(text);
 		REQUIRE(2 == tokens.size());
 
 		REQUIRE(t1kind == tokens[0].Kind());
@@ -93,7 +93,7 @@ TEST_CASE("Lexer lexes token pairs with seperators", "[Lexer]")
 	{
 		auto [t1kind, t1text, skind, stext, t2kind, t2text] = it;
 		auto text = MCF::BuildStringFrom(t1text, stext, t2text);
-		auto tokens = MCF::SyntaxTree::ParseTokens(text);
+		auto [tokens, _] = MCF::SyntaxTree::ParseTokens(text);
 		REQUIRE(3 == tokens.size());
 
 		REQUIRE(t1kind == tokens[0].Kind());
@@ -112,7 +112,7 @@ TEST_CASE("GetText_RoundTrip")
 		auto text = MCF::GetText(kind);
 		if (!text.empty())
 		{
-			auto tokens = MCF::SyntaxTree::ParseTokens(text);
+			auto [tokens, _] = MCF::SyntaxTree::ParseTokens(text);
 			REQUIRE(1 == tokens.size());
 
 			REQUIRE(kind == tokens[0].Kind());

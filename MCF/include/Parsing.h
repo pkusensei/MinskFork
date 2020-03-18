@@ -189,7 +189,7 @@ private:
 	unique_ptr<CompilationUnitSyntax> _root;
 
 public:
-	explicit SyntaxTree(const SourceText& text);
+	explicit SyntaxTree(unique_ptr<SourceText>& text);
 
 	SyntaxTree(SyntaxTree&& other);
 	SyntaxTree& operator=(SyntaxTree&& other);
@@ -200,11 +200,15 @@ public:
 	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics.get(); }
 
 	static unique_ptr<SyntaxTree> Parse(string_view text);
-	static unique_ptr<SyntaxTree> Parse(const SourceText& text);
-	static vector<SyntaxToken> ParseTokens(string_view text);
-	static vector<SyntaxToken> ParseTokens(string_view text, DiagnosticBag& diagnostics);
-	static vector<SyntaxToken> ParseTokens(const SourceText& text);
-	static vector<SyntaxToken> ParseTokens(const SourceText& text, DiagnosticBag& diagnostics);
+	static unique_ptr<SyntaxTree> Parse(unique_ptr<SourceText>& text);
+	static std::pair<vector<SyntaxToken>, unique_ptr<SourceText>>
+		ParseTokens(string_view text);
+	static std::pair<vector<SyntaxToken>, unique_ptr<SourceText>>
+		ParseTokens(string_view text, DiagnosticBag& diagnostics);
+	static std::pair<vector<SyntaxToken>, unique_ptr<SourceText>>
+		ParseTokens(unique_ptr<SourceText>& text);
+	static std::pair<vector<SyntaxToken>, unique_ptr<SourceText>>
+		ParseTokens(unique_ptr<SourceText>& text, DiagnosticBag& diagnostics);
 
 };
 

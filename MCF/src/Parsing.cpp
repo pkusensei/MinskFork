@@ -510,10 +510,10 @@ unique_ptr<CompilationUnitSyntax> Parser::ParseCompilationUnit()
 	return make_unique<CompilationUnitSyntax>(members, endOfFileToken);
 }
 
-SyntaxTree::SyntaxTree(const SourceText& text)
-	:_text(make_unique<SourceText>(text)), _diagnostics(make_unique<DiagnosticBag>())
+SyntaxTree::SyntaxTree(unique_ptr<SourceText>& text)
+	:_text(std::move(text)), _diagnostics(make_unique<DiagnosticBag>())
 {
-	auto parser = Parser(text);
+	auto parser = Parser(*_text);
 	_root = parser.ParseCompilationUnit();
 	_diagnostics->AddRange(*parser.Diagnostics());
 }
@@ -528,31 +528,31 @@ unique_ptr<SyntaxTree> SyntaxTree::Parse(string_view text)
 	return Parse(sourceText);
 }
 
-unique_ptr<SyntaxTree> SyntaxTree::Parse(const SourceText& text)
+unique_ptr<SyntaxTree> SyntaxTree::Parse(unique_ptr<SourceText>& text)
 {
 	return make_unique<SyntaxTree>(text);
 }
 
-vector<SyntaxToken> SyntaxTree::ParseTokens(string_view text)
+std::pair<vector<SyntaxToken>, unique_ptr<SourceText>> SyntaxTree::ParseTokens(string_view text)
 {
 	auto source = SourceText::From(text);
 	return ParseTokens(source);
 }
 
-vector<SyntaxToken> SyntaxTree::ParseTokens(string_view text,
+std::pair<vector<SyntaxToken>, unique_ptr<SourceText>> SyntaxTree::ParseTokens(string_view text,
 	DiagnosticBag& diagnostics)
 {
 	auto source = SourceText::From(text);
 	return ParseTokens(source, diagnostics);
 }
 
-vector<SyntaxToken> SyntaxTree::ParseTokens(const SourceText& text)
+std::pair<vector<SyntaxToken>, unique_ptr<SourceText>> SyntaxTree::ParseTokens(unique_ptr<SourceText>& text)
 {
 	auto _ = DiagnosticBag();
 	return ParseTokens(text, _);
 }
 
-vector<SyntaxToken> SyntaxTree::ParseTokens(const SourceText& text,
+std::pair<vector<SyntaxToken>, unique_ptr<SourceText>> SyntaxTree::ParseTokens(unique_ptr<SourceText>& text,
 	DiagnosticBag& diagnostics)
 {
 	auto lexTokens = [](Lexer& lexer)
@@ -568,10 +568,10 @@ vector<SyntaxToken> SyntaxTree::ParseTokens(const SourceText& text,
 		return result;
 	};
 
-	auto lexer = Lexer(text);
+	auto lexer = Lexer(*text);
 	auto result = lexTokens(lexer);
 	diagnostics.AddRange(*lexer.Diagnostics());
-	return result;
+	return { result, std::move(text) };
 }
 
 }//MCF

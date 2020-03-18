@@ -348,3 +348,4 @@ _deps
 # CMake build directories
 out/
 build/
+*.cmd

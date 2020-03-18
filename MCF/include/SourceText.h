@@ -87,7 +87,7 @@ public:
 class MCF_API SourceText final
 {
 private:
-	string_view _text;
+	string _text;
 	vector<TextLine> _lines;
 
 	static void AddLine(vector<TextLine>& result, const SourceText& sourceText,
@@ -107,10 +107,19 @@ public:
 	size_t GetLineIndex(size_t position)const noexcept;
 
 	constexpr string_view ToString()const { return _text; }
-	constexpr string_view ToString(size_t start, size_t length)const { return _text.substr(start, length); }
-	constexpr string_view ToString(const TextSpan& span)const { return ToString(span.Start(), span.Length()); }
+	string_view ToString(size_t start, size_t length)const
+	{
+		return string_view(_text.data() + start, length);
+	}
+	constexpr string_view ToString(const TextSpan& span)const
+	{
+		return ToString(span.Start(), span.Length());
+	}
 
-	static SourceText From(string_view text) { return SourceText(text); }
+	static unique_ptr<SourceText> From(string_view text)
+	{
+		return unique_ptr<SourceText>(new SourceText(text));
+	}
 };
 
 }//MCF
