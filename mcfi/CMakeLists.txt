@@ -1,9 +1,9 @@
-project(mcfi LANGUAGES CXX)
+project(mcfi)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY 
 	${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
 
-add_executable(mcfi src/mcfi.cpp
+add_executable(${PROJECT_NAME} src/mcfi.cpp
     src/Repl.cpp)
 
 target_include_directories(${PROJECT_NAME}

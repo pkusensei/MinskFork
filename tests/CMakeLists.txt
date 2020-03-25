@@ -1,4 +1,4 @@
-project(tests LANGUAGES CXX)
+project(tests)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY 
 	${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})

@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.14)
 
-project(mcf LANGUAGES CXX)
+project(mcf)
 set(CMAKE_CXX_STANDARD 17)
 
 if(MSVC)
@@ -10,5 +10,6 @@ else()
 endif()
 
 add_subdirectory(MCF)
+add_subdirectory(mcfc)
 add_subdirectory(mcfi)
-add_subdirectory(ctest)
+add_subdirectory(tests)
