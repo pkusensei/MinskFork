@@ -81,19 +81,6 @@ private:
 	}
 
 	template<typename T, typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
-	std::optional<shared_ptr<T>> TryLookupSymbol(string_view name)const
-	{
-		if (_symbols.find(name) != _symbols.end())
-		{
-			auto p = std::dynamic_pointer_cast<T>(_symbols.at(name));
-			if (p) return std::make_optional(p);
-			else return std::nullopt;
-		}
-		if (_parent == nullptr) return std::nullopt;
-		return _parent->TryLookupSymbol<T>(name);
-	}
-
-	template<typename T, typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
 	const vector<shared_ptr<T>> GetDeclaredSymbols() const
 	{
 		auto result = vector<shared_ptr<T>>();
@@ -117,6 +104,8 @@ public:
 
 	const BoundScope* Parent()const noexcept { return _parent.get(); }
 
+	std::optional<shared_ptr<Symbol>> TryLookupSymbol(string_view name)const;
+
 	bool TryDeclareVariable(const shared_ptr<VariableSymbol>& variable)
 	{
 		return TryDeclareSymbol(variable);
@@ -124,15 +113,6 @@ public:
 	bool TryDeclareFunction(const shared_ptr<FunctionSymbol>& function)
 	{
 		return TryDeclareSymbol(function);
-	}
-
-	decltype(auto) TryLookupVariable(string_view name)const
-	{
-		return TryLookupSymbol<VariableSymbol>(name);
-	}
-	decltype(auto) TryLookupFunction(string_view name)const
-	{
-		return TryLookupSymbol<FunctionSymbol>(name);
 	}
 
 	const vector<shared_ptr<VariableSymbol>> GetDeclaredVariables()const
@@ -243,8 +223,9 @@ private:
 	shared_ptr<BoundExpression> BindConversion(const TextSpan& diagnosticSpan,
 		const shared_ptr<BoundExpression>& syntax,
 		const TypeSymbol& type, bool allowExplicit = false);
-	shared_ptr<VariableSymbol> BindVariable(const SyntaxToken& identifier,
+	shared_ptr<VariableSymbol> BindVariableDeclaration(const SyntaxToken& identifier,
 		bool isReadOnly, const TypeSymbol& type);
+	std::optional<shared_ptr<VariableSymbol>> BindVariableReference(string_view name, const TextSpan& span);
 	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
 	std::optional<TypeSymbol> LookupType(string_view name)const;
 

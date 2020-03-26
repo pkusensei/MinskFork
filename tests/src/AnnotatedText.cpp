@@ -5,26 +5,19 @@
 
 #include "helpers.h"
 
-std::string AnnotatedText::Dedent(const std::string& text)
+std::string AnnotatedText::Dedent(std::string_view text)
 {
 	auto lines = DedentLines(text);
 	std::string result;
 	for (const auto& it : lines)
-		result += it + '\n';
+		result += std::string(it) + '\n';
 	result.erase(--result.end());
 	return result;
 }
 
-std::vector<std::string> AnnotatedText::DedentLines(const std::string& text)
+std::vector<std::string_view> AnnotatedText::DedentLines(std::string_view text)
 {
-	auto lines = std::vector<std::string>();
-	{
-		std::stringstream ss(text);
-		std::string line;
-		while (std::getline(ss, line))
-			if (!line.empty())
-				lines.emplace_back(line);
-	}
+	auto lines = MCF::StringSplit(text.cbegin(), text.cend(), '\n');
 
 	auto minIndentation = std::numeric_limits<size_t>::max();
 	for (size_t i = 0; i < lines.size(); ++i)
@@ -32,7 +25,7 @@ std::vector<std::string> AnnotatedText::DedentLines(const std::string& text)
 		std::string_view line = lines[i];
 		if ((line = MCF::TrimString(line)).empty())
 		{
-			lines[i] = std::string();
+			lines[i] = std::string_view();
 			continue;
 		}
 		auto indentation = line.length() - (line = MCF::TrimStringStart(line)).length();
@@ -51,11 +44,10 @@ std::vector<std::string> AnnotatedText::DedentLines(const std::string& text)
 		lines.erase(lines.begin());
 	while (!lines.empty() && lines.back().empty())
 		lines.erase(--lines.end());
-	lines.shrink_to_fit();
 	return lines;
 }
 
-AnnotatedText AnnotatedText::Parse(const std::string& input)
+AnnotatedText AnnotatedText::Parse(std::string_view input)
 {
 	auto text = Dedent(input);
 	std::string result;

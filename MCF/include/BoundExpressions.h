@@ -116,14 +116,14 @@ inline string_view GetEnumText(BoundPostfixOperatorEnum kind)
 class BoundExpression :public BoundNode
 {
 public:
-	virtual const TypeSymbol& Type() const noexcept = 0;
+	virtual TypeSymbol Type() const = 0;
 };
 
 class BoundErrorExpression final :public BoundExpression
 {
 public:
 	// Inherited via BoundExpression
-	const TypeSymbol& Type() const noexcept override { return GetTypeSymbol(TypeEnum::Error); }
+	TypeSymbol Type() const override { return GetTypeSymbol(TypeEnum::Error); }
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ErrorExpression; }
 };
 
@@ -204,7 +204,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::UnaryExpression; }
-	const TypeSymbol& Type() const noexcept override { return _op.Type(); }
+	TypeSymbol Type() const override { return _op.Type(); }
 
 	constexpr const BoundUnaryOperator& Op()const noexcept { return _op; }
 	constexpr const shared_ptr<BoundExpression>& Operand()const noexcept { return _operand; }
@@ -343,7 +343,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BinaryExpression; }
-	const TypeSymbol& Type() const noexcept override { return _op.Type(); }
+	TypeSymbol Type() const override { return _op.Type(); }
 
 	constexpr const shared_ptr<BoundExpression>& Left()const noexcept { return _left; }
 	constexpr const shared_ptr<BoundExpression>& Right()const noexcept { return _right; }
@@ -365,7 +365,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::AssignmentExpression; }
-	const TypeSymbol& Type() const noexcept override { return _expression->Type(); }
+	TypeSymbol Type() const override { return _expression->Type(); }
 
 	constexpr const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 	constexpr const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
@@ -384,7 +384,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LiteralExpression; }
-	const TypeSymbol& Type() const noexcept override { return _value.Type(); }
+	TypeSymbol Type() const override { return _value.Type(); }
 
 	constexpr const ValueType& Value()const noexcept { return _value; }
 };
@@ -402,7 +402,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableExpression; }
-	const TypeSymbol& Type() const noexcept override { return _variable->Type(); }
+	TypeSymbol Type() const override { return _variable->Type(); }
 
 	constexpr const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 };
@@ -422,7 +422,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::CallExpression; }
-	const TypeSymbol& Type() const noexcept override { return _function->Type(); }
+	TypeSymbol Type() const override { return _function->Type(); }
 
 	constexpr const shared_ptr<FunctionSymbol>& Function()const noexcept { return _function; }
 	constexpr const vector<shared_ptr<BoundExpression>>& Arguments()const noexcept { return _arguments; }
@@ -443,7 +443,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ConversionExpression; }
-	const TypeSymbol& Type() const noexcept override { return _type; }
+	TypeSymbol Type() const override { return _type; }
 
 	constexpr const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
 };
@@ -465,7 +465,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::PostfixExpression; }
-	const TypeSymbol& Type() const noexcept override { return _variable->Type(); }
+	TypeSymbol Type() const override { return _variable->Type(); }
 
 	constexpr const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 	constexpr BoundPostfixOperatorEnum OperatorKind()const noexcept { return _kind; }

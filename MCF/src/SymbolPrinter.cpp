@@ -75,7 +75,8 @@ void SymbolPrinter::WriteGlobalVariable(const GlobalVariableSymbol* symbol)
 	_writer.WriteIdentifier(symbol->Name());
 	_writer.WritePunctuation(SyntaxKind::ColonToken);
 	_writer.WriteSpace();
-	Write(&(symbol->Type()));
+	auto type = symbol->Type();
+	Write(&type);
 }
 
 void SymbolPrinter::WriteLocalVariable(const LocalVariableSymbol* symbol)
@@ -86,7 +87,8 @@ void SymbolPrinter::WriteLocalVariable(const LocalVariableSymbol* symbol)
 	_writer.WriteIdentifier(symbol->Name());
 	_writer.WritePunctuation(SyntaxKind::ColonToken);
 	_writer.WriteSpace();
-	Write(&(symbol->Type()));
+	auto type = symbol->Type();
+	Write(&type);
 }
 
 void SymbolPrinter::WriteParameter(const ParameterSymbol* symbol)
@@ -94,7 +96,8 @@ void SymbolPrinter::WriteParameter(const ParameterSymbol* symbol)
 	_writer.WriteIdentifier(symbol->Name());
 	_writer.WritePunctuation(SyntaxKind::ColonToken);
 	_writer.WriteSpace();
-	Write(&(symbol->Type()));
+	auto type = symbol->Type();
+	Write(&type);
 }
 
 void SymbolPrinter::WriteType(const TypeSymbol* symbol)

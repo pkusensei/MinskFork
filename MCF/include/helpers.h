@@ -14,7 +14,7 @@ MCF_API string_view TrimString(string_view text);
 MCF_API string_view TrimStringStart(string_view text);
 MCF_API string_view TrimStringEnd(string_view text);
 MCF_API string StringJoin(const vector<string>& strs, const char seperator = ' ');
-void StringReplaceAll(string& data, const string& from, const string& to);
+string& StringReplaceAll(string& data, string_view from, string_view to);
 
 template<typename... Args>
 string BuildStringFrom(Args&&... args)

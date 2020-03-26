@@ -55,15 +55,16 @@ string StringJoin(const vector<string>& strs, const char seperator)
 	return result;
 }
 
-void StringReplaceAll(string& data, const string& from, const string& to)
+string& StringReplaceAll(string& data, string_view from, string_view to)
 {
-	if (data.empty()) return;
+	if (data.empty()) return data;
 	auto pos = data.find(from);
 	while (pos != string::npos)
 	{
 		data.replace(pos, from.length(), to);
 		pos = data.find(from, pos + to.length());
 	}
+	return data;
 }
 
 }//MCF

@@ -7,7 +7,7 @@
 #include "AnnotatedText.h"
 
 void AssertValue(std::string_view text, const MCF::ValueType& value);
-void AssertDiagnostics(const std::string& text, const std::string& diagnosticText);
+void AssertDiagnostics(std::string_view text, std::string_view diagnosticText);
 
 TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 {
@@ -18,6 +18,7 @@ TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 		{ "-42", -42 },
 		{ "~1", -2 },
 		{ "3 + 1", 4 },
+		{ "12 - 3", 9},
 		{ "2 * 4", 8 },
 		{ "9 / 3", 3 },
 		{ "(6 + 4)", 10 },
@@ -70,7 +71,8 @@ TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 		{ "\"test\" != \"test\"", false },
 		{ "\"test\" == \"abc\"", false },
 		{ "\"test\" != \"abc\"", true },
-		{ "{var a = 10 a }", 10 },
+		{ "\"test\" + \"abc\"", "testabc"},
+		{ "{var a = 10 }", 10 },
 		{ "{var a = 10 (a * a) }", 100 },
 		{ "{var a = 0 (a = 10) * a }", 100 },
 		{ "{var a = 0 if a == 0 a = 10 a }", 10 },
@@ -81,6 +83,8 @@ TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 		{ "{var result = 0 for i = 1 to 10 { result = result + i } result }", 55 },
 		{ "{var a = 10 for i = 1 to (a = a - 1) { } a }", 9 },
 		{ "{var a = 0 do a = a + 1 while a < 10 a}", 10 },
+		{ "{ var i = 0 while i < 5 { i = i + 1 if i == 5 continue } i }", 5 },
+		{ "{ var i = 0 do { i = i + 1 if i == 5 continue } while i < 5 i }", 5 },
 
 		{ "{var x = 41 x++}", 42 },
 		{ "{var x = 3 x---5}", -3 },
@@ -94,15 +98,16 @@ TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 
 TEST_CASE("Evaluator reports redeclaration in VariableDeclaration", "[Evaluator]")
 {
-	std::string text = R"({
+	auto text = R"(
+			{
+				var x = 10
+				var y = 100
+				{
 					var x = 10
-					var y = 100
-					{
-						var x = 10
-					}
-					var [x] = 5
-				})";
-	std::string diag = R"(
+				}
+				var [x] = 5
+			})";
+	auto diag = R"(
 			Variable 'x' is already declared.
 		)";
 	AssertDiagnostics(text, diag);
@@ -110,50 +115,84 @@ TEST_CASE("Evaluator reports redeclaration in VariableDeclaration", "[Evaluator]
 
 TEST_CASE("Evaluator stops infinite loop in BlockStatement", "[Evaluator][infinite loop]")
 {
-	std::string text = R"(
+	auto text = R"(
 			{
 			[)][]
 			)";
-	std::string diag = R"(
+	auto diag = R"(
 				Unexpected token <CloseParenthesisToken>, expected <IdentifierToken>.
 				Unexpected token <EndOfFileToken>, expected <CloseBraceToken>.
 				)";
 	AssertDiagnostics(text, diag);
 }
 
-TEST_CASE("Evaluator reports function arguments missing", "[Evaluator][function]")
+TEST_CASE("Evaluator reports function arguments missing", "[Evaluator][function][call]")
 {
-	std::string text = R"(
+	auto text = R"(
 			print([)]
 			)";
 
-	std::string diag = R"(
+	auto diag = R"(
 			Function 'print' requires 1 arguments but was given 0.
 			)";
 
 	AssertDiagnostics(text, diag);
 }
 
-TEST_CASE("Evaluator reports function arguments exceeding", "[Evaluator][function]")
+TEST_CASE("Evaluator reports function arguments exceeding", "[Evaluator][function][call]")
 {
-	std::string text = R"(
+	auto text = R"(
 			print("Hello"[, " ", ", world!"])
 			)";
 
-	std::string diag = R"(
+	auto diag = R"(
 			Function 'print' requires 1 arguments but was given 3.
 			)";
 
 	AssertDiagnostics(text, diag);
 }
 
-TEST_CASE("Evaluator stops infinite loop in function arguments", "[Evaluator][function][infinite loop]")
+TEST_CASE("Evaluator reports wrong argument type", "[Evaluator][function][call]")
 {
-	std::string text = R"(
+	auto text = R"(
+            function test(n: int): bool
+            {
+                return n > 10
+            }
+            let testValue = "string"
+            test([testValue])
+			)";
+
+	auto diag = R"(
+            Parameter 'n' requires a value of type 'int' but was given 'string'.
+			)";
+
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator reports parameter already declared", "[Evaluator][function]")
+{
+	auto text = R"(
+            function sum(a: int, b: int, [a: int]): int
+            {
+                return a + b + c
+            }
+			)";
+
+	auto diag = R"(
+            A parameter with name 'a' already exists.
+			)";
+
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator stops infinite loop in function arguments", "[Evaluator][function][infinite loop][call]")
+{
+	auto text = R"(
 			print("Hi"[[=]][)]
 			)";
 
-	std::string diagnostics = R"(
+	auto diagnostics = R"(
 			Unexpected token <EqualsToken>, expected <CloseParenthesisToken>.
 			Unexpected token <EqualsToken>, expected <IdentifierToken>.
 			Unexpected token <CloseParenthesisToken>, expected <IdentifierToken>.
@@ -164,14 +203,14 @@ TEST_CASE("Evaluator stops infinite loop in function arguments", "[Evaluator][fu
 
 TEST_CASE("Evaluator stops infinite loop in function parameters", "[Evaluator][function][infinite loop]")
 {
-	std::string text = R"(
+	auto text = R"(
 			function hi(name: string[[[=]]][)]
             {
                 print("Hi " + name + "!" )
             }[]			
 			)";
 
-	std::string diagnostics = R"(
+	auto diagnostics = R"(
 			Unexpected token <EqualsToken>, expected <CloseParenthesisToken>.
             Unexpected token <EqualsToken>, expected <OpenBraceToken>.
             Unexpected token <EqualsToken>, expected <IdentifierToken>.
@@ -182,16 +221,104 @@ TEST_CASE("Evaluator stops infinite loop in function parameters", "[Evaluator][f
 	AssertDiagnostics(text, diagnostics);
 }
 
+TEST_CASE("Evaluator reports missing return in functions", "[Evaluator][function][return]")
+{
+	auto text = R"(
+			function [add](a:int, b:int):int
+			{			
+			}
+			)";
+	auto diag = R"(
+			Not all code paths return a value.
+			)";
+
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator reports function should not return", "[Evaluator][function][return]")
+{
+	auto text = R"(
+            function foo()
+            {
+                return [1]
+            }
+			)";
+	auto diag = R"(
+			Function 'foo' does not return a value.
+			)";
+
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator reports function should not return void", "[Evaluator][function][return]")
+{
+	auto text = R"(
+            function foo():int
+            {
+                [return]
+            }
+			)";
+	auto diag = R"(
+            An expression of type 'int' is expected.
+			)";
+
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator reports not all code paths return value", "[Evaluator][control flow][return]")
+{
+	auto text = R"(
+            function [foo](n: int): bool
+            {
+				if (n > 42)
+					return true
+            }
+			)";
+	auto diag = R"(
+            Not all code paths return a value.
+			)";
+
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator reports function must have a name", "[Evaluator][function]")
+{
+	auto text = R"(
+            function [(]a: int, b: int): int
+            {
+                return a + b
+            }
+			)";
+
+	auto diag = R"(
+            Unexpected token <OpenParenthesisToken>, expected <IdentifierToken>.
+			)";
+
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator reports invalid return keyword", "[Evaluator][return]")
+{
+	auto text = R"(
+            [return]
+			)";
+	auto diag = R"(
+            The keyword 'return' can only be used inside of functions.
+			)";
+
+	AssertDiagnostics(text, diag);
+}
+
 TEST_CASE("Evaluator reports CannotConvert in IfStatement", "[Evaluator][if]")
 {
-	std::string text = R"(
+	auto text = R"(
 			{
                 var x = 0
                 if [10]
 					x = 10              
             }
 			)";
-	std::string diag = R"(
+	auto diag = R"(
                 Cannot convert type 'int' to 'bool'.
 				)";
 	AssertDiagnostics(text, diag);
@@ -199,14 +326,14 @@ TEST_CASE("Evaluator reports CannotConvert in IfStatement", "[Evaluator][if]")
 
 TEST_CASE("Evaluator reports CannotConvert in WhileStatement", "[Evaluator][while]")
 {
-	std::string text = R"(
+	auto text = R"(
 			{
                 var x = 0
                 while [10]
                     x = 10              
             }
 			)";
-	std::string diag = R"(
+	auto diag = R"(
                 Cannot convert type 'int' to 'bool'.
 				)";
 	AssertDiagnostics(text, diag);
@@ -214,7 +341,7 @@ TEST_CASE("Evaluator reports CannotConvert in WhileStatement", "[Evaluator][whil
 
 TEST_CASE("Evaluator reports CannotConvert in DoWhileStatement", "[Evaluator][do][while]")
 {
-	std::string text = R"(
+	auto text = R"(
 			{
                 var x = 0
                 do
@@ -222,7 +349,7 @@ TEST_CASE("Evaluator reports CannotConvert in DoWhileStatement", "[Evaluator][do
                 while [10]
             }
 			)";
-	std::string diag = R"(
+	auto diag = R"(
 				Cannot convert type 'int' to 'bool'.
 				)";
 	AssertDiagnostics(text, diag);
@@ -230,14 +357,14 @@ TEST_CASE("Evaluator reports CannotConvert in DoWhileStatement", "[Evaluator][do
 
 TEST_CASE("Evaluator reports CannotConvert LowerBound in ForStatement", "[Evaluator][for]")
 {
-	std::string text = R"(
+	auto text = R"(
 			{
                 var result = 0
                 for i = [false] to 10
                     result = result + i              
             }
 			)";
-	std::string diag = R"(
+	auto diag = R"(
                 Cannot convert type 'bool' to 'int'.
 				)";
 	AssertDiagnostics(text, diag);
@@ -245,69 +372,158 @@ TEST_CASE("Evaluator reports CannotConvert LowerBound in ForStatement", "[Evalua
 
 TEST_CASE("Evaluator reports CannotConvert UpperBound in ForStatement", "[Evaluator][for]")
 {
-	std::string text = R"(
+	auto text = R"(
 			{
                 var result = 0
                 for i = 1 to [true]
                     result = result + i              
             }
 			)";
-	std::string diag = R"(
+	auto diag = R"(
                 Cannot convert type 'bool' to 'int'.
 				)";
 	AssertDiagnostics(text, diag);
 }
 
-TEST_CASE("Evaluator reports undefined name", "[Evaluator]")
+TEST_CASE("Evaluator reports invalid break or continue", "[Evaluator][break][return][loop]")
 {
-	std::string text = "[x] = 10";
-	std::string diag = R"(
-                Variable 'x' doesn't exist.
-				)";
+	auto [text, keyword] = GENERATE(
+		table<std::string_view, std::string_view>(
+			{
+				{ "[break]", "break" },
+				{ "[continue]", "continue" }
+			}));
+	auto diag = "The keyword '" + std::string(keyword) + "' can only be used inside of loops.";
 	AssertDiagnostics(text, diag);
 }
 
 TEST_CASE("Evaluator reports error for inserted token", "[Evaluator]")
 {
-	std::string text = "1 + []";
-	std::string diag = R"(
+	auto text = "1 + []";
+	auto diag = R"(
                 Unexpected token <EndOfFileToken>, expected <IdentifierToken>.
 				)";
 	AssertDiagnostics(text, diag);
 }
 
-TEST_CASE("Evaluator reports CannotAssign in Assignment", "[Evaluator]")
+TEST_CASE("Evaluator reports Undefined in Assignment", "[Evaluator][assignment]")
 {
-	std::string text = R"(
+	auto text = "[x] = 10";
+	auto diag = R"(
+                Variable 'x' doesn't exist.
+				)";
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator reports CannotAssign in Assignment", "[Evaluator][assignment]")
+{
+	auto text = R"(
 			{
                 let x = 10
                 x [=] 0                
             }
 			)";
-	std::string diag = R"(
+	auto diag = R"(
                 Variable 'x' is read-only; cannot be assigned to.
 				)";
 	AssertDiagnostics(text, diag);
 }
 
-TEST_CASE("Evaluator reports CannotConvert in Assignment", "[Evaluator]")
+TEST_CASE("Evaluator reports NotAVariable in Assignment", "[Evaluator][assignment]")
 {
-	std::string text = R"(
+	auto text = R"([print] = 42)";
+	auto diag = R"(
+                'print' is not a variable.
+				)";
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator reports CannotConvert in Assignment", "[Evaluator][assignment]")
+{
+	auto text = R"(
 			{
                 var x = 10
                 x = [true]               
             }
 			)";
-	std::string diag = R"(
+	auto diag = R"(
                 Cannot convert type 'bool' to 'int'.
 				)";
 	AssertDiagnostics(text, diag);
 }
 
+TEST_CASE("Evaluator reports Undefined in CallExpression", "[Evaluator][call]")
+{
+	auto text = R"([foo](42))";
+
+	auto diag = R"(
+		Function 'foo' doesn't exist.
+		)";
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator reports NotAFunction in CallExpression", "[Evaluator][call]")
+{
+	auto text = R"(
+			{
+				let foo = 42
+				[foo](42)
+			}
+			)";
+
+	auto diag = R"(
+		'foo' is not a function.
+		)";
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator reports Variable can shadow function", "[Evaluator][call]")
+{
+	auto text = R"(
+            {
+                let print = 42
+                [print]("test")
+            }
+			)";
+
+	auto diag = R"(
+			'print' is not a function.
+			)";
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator reports Expression must have value", "[Evaluator]")
+{
+	auto text = R"(
+            function foo(n: int)
+            {
+                return
+            }
+            let value = [foo(42)]
+			)";
+	auto diag = R"(
+            Expression must have a value.
+		)";
+	AssertDiagnostics(text, diag);
+}
+
+TEST_CASE("Evaluator reports bad type", "[Evaluator]")
+{
+	auto text = R"(
+            function test(n: [invalidtype])
+            {
+            }
+			)";
+	auto diag = R"(
+            Type 'invalidtype' doesn't exist.
+			)";
+	AssertDiagnostics(text, diag);
+}
+
 TEST_CASE("Evaluator reports undefined unary operation", "[Evaluator]")
 {
-	std::string text = "[+] true";
-	std::string diag = R"(
+	auto text = "[+] true";
+	auto diag = R"(
                 Unary operator '+' is not defined for type 'bool'.
 				)";
 	AssertDiagnostics(text, diag);
@@ -315,8 +531,8 @@ TEST_CASE("Evaluator reports undefined unary operation", "[Evaluator]")
 
 TEST_CASE("Evaluator reports undefined binary operation", "[Evaluator]")
 {
-	std::string text = "10 [*] false";
-	std::string diag = R"(
+	auto text = "10 [*] false";
+	auto diag = R"(
                 Binary operator '*' is not defined for types 'int' and 'bool'.
 				)";
 	AssertDiagnostics(text, diag);
@@ -333,7 +549,7 @@ void AssertValue(std::string_view text, const MCF::ValueType& value)
 	CHECK(value == result.Value());
 }
 
-void AssertDiagnostics(const std::string& text, const std::string& diagnosticText)
+void AssertDiagnostics(std::string_view text, std::string_view diagnosticText)
 {
 	auto annotatedText = AnnotatedText::Parse(text);
 	auto tree = MCF::SyntaxTree::Parse(annotatedText.Text());

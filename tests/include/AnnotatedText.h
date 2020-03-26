@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include <string_view>
 #include <vector>
 
 #include "SourceText.h"
@@ -11,16 +11,16 @@ private:
 	std::string _text;
 	std::vector<MCF::TextSpan> _spans;
 
-	static std::string Dedent(const std::string& text);
+	static std::string Dedent(std::string_view text);
 public:
-	AnnotatedText(const std::string& text, const std::vector<MCF::TextSpan>& spans)
-		:_text(text), _spans(spans)
+	AnnotatedText(std::string& text, std::vector<MCF::TextSpan>& spans)
+		:_text(std::move(text)), _spans(std::move(spans))
 	{
 	}
 
-	const std::string& Text()const { return _text; }
+	std::string_view Text()const { return _text; }
 	const std::vector<MCF::TextSpan>& Spans()const { return _spans; }
 
-	static std::vector<std::string> DedentLines(const std::string& text);
-	static AnnotatedText Parse(const std::string& input);
+	static std::vector<std::string_view> DedentLines(std::string_view text);
+	static AnnotatedText Parse(std::string_view input);
 };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <variant>
 
 #include "common.h"
@@ -87,23 +88,27 @@ class MCF_API VariableSymbol : public Symbol
 {
 private:
 	bool _isReadOnly;
-	TypeSymbol _type;
+	std::optional<TypeSymbol> _type;
 
 public:
-	constexpr VariableSymbol(string_view name, bool isReadOnly, const TypeSymbol& type) noexcept
-		:Symbol(name), _isReadOnly(isReadOnly), _type(type)
+	VariableSymbol(string_view name, bool isReadOnly, std::optional<TypeSymbol> type) noexcept
+		:Symbol(name), _isReadOnly(isReadOnly), _type(std::move(type))
 	{
 	}
 
 	bool IsReadOnly()const noexcept { return _isReadOnly; }
-	const TypeSymbol& Type()const noexcept { return _type; }
+
+	// HACK 
+	// Variable could have no TypeSymbol associated
+	// std::optional unwraps as the real TypeSymbol or Void
+	TypeSymbol Type()const { return _type.value_or(GetTypeSymbol(TypeEnum::Void)); }
 };
 
 class GlobalVariableSymbol final :public VariableSymbol
 {
 public:
-	constexpr GlobalVariableSymbol(string_view name, bool isReadOnly, const TypeSymbol& type)noexcept
-		:VariableSymbol(name, isReadOnly, type)
+	GlobalVariableSymbol(string_view name, bool isReadOnly, std::optional<TypeSymbol> type)noexcept
+		:VariableSymbol(name, isReadOnly, std::move(type))
 	{
 	}
 
@@ -113,8 +118,8 @@ public:
 class LocalVariableSymbol :public VariableSymbol
 {
 public:
-	constexpr LocalVariableSymbol(string_view name, bool isReadOnly, const TypeSymbol& type)noexcept
-		:VariableSymbol(name, isReadOnly, type)
+	LocalVariableSymbol(string_view name, bool isReadOnly, std::optional<TypeSymbol> type)noexcept
+		:VariableSymbol(name, isReadOnly, std::move(type))
 	{
 	}
 
@@ -124,8 +129,8 @@ public:
 class ParameterSymbol final : public LocalVariableSymbol
 {
 public:
-	constexpr ParameterSymbol(string_view name, const TypeSymbol& type)noexcept
-		:LocalVariableSymbol(name, true, type)
+	ParameterSymbol(string_view name, std::optional<TypeSymbol> type)noexcept
+		:LocalVariableSymbol(name, true, std::move(type))
 	{
 	}
 

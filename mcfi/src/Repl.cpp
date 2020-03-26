@@ -6,6 +6,7 @@
 #include "Compilation.h"
 #include "ConsoleHelper.h"
 #include "Diagnostic.h"
+#include "IO.h"
 #include "Parsing.h"
 #include "SourceText.h"
 
@@ -482,35 +483,8 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 		_previous = std::move(compilation);
 	} else
 	{
-		for (const auto& diag : diagnostics->SortBySpanAscending())
-		{
-			auto tree = compilation->Syntax();
-			auto lineIndex = tree->Text().GetLineIndex(diag.Span().Start());
-			auto lineNumber = lineIndex + 1;
-			auto& line = tree->Text().Lines()[lineIndex];
-			auto character = diag.Span().Start() - line.Start() + 1;
-			std::cout << '\n';
-
-			MCF::SetConsoleColor(MCF::ConsoleColor::DarkRed);
-			std::cout << "(" << lineNumber << ", " << character << ") ";
-			std::cout << diag.Message() << '\n';
-			MCF::ResetConsoleColor();
-
-			auto prefixSpan = MCF::TextSpan::FromBounds(line.Start(), diag.Span().Start());
-			auto suffixSpan = MCF::TextSpan::FromBounds(diag.Span().End(), line.End());
-
-			auto prefix = tree->Text().ToString(prefixSpan);
-			auto error = tree->Text().ToString(diag.Span());
-			auto suffix = tree->Text().ToString(suffixSpan);
-			std::cout << "    " << prefix;
-
-			MCF::SetConsoleColor(MCF::ConsoleColor::DarkRed);
-			std::cout << error;
-			MCF::ResetConsoleColor();
-
-			std::cout << suffix << '\n';
-		}
-		std::cout << '\n';
+		auto writer = MCF::IndentedTextWriter(std::cout);
+		writer.WriteDiagnostics(*diagnostics, *compilation->Syntax());
 	}
 	std::cout << '\n';
 }

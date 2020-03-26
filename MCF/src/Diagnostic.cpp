@@ -79,7 +79,7 @@ void DiagnosticBag::ReportUnterminatedString(const TextSpan& span)
 }
 
 void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span,
-	const SyntaxKind& actualKind, const SyntaxKind& expectedKind)
+	SyntaxKind actualKind, SyntaxKind expectedKind)
 {
 	auto message = BuildStringFrom("Unexpected token <", GetSyntaxKindName(actualKind),
 		">, expected <", GetSyntaxKindName(expectedKind), ">.");
@@ -95,17 +95,22 @@ void DiagnosticBag::ReportUndefinedUnaryOperator(const TextSpan& span,
 }
 
 void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan& span,
-	string_view operatorText,
-	const TypeSymbol& leftType, const TypeSymbol& rightType)
+	string_view operatorText, const TypeSymbol& leftType, const TypeSymbol& rightType)
 {
 	auto message = BuildStringFrom("Binary operator '", operatorText, "' is not defined for types '"
 		, leftType.ToString(), "' and '", rightType.ToString(), "'.");
 	Report(span, message);
 }
 
-void DiagnosticBag::ReportUndefinedName(const TextSpan& span, string_view name)
+void DiagnosticBag::ReportUndefinedVariable(const TextSpan& span, string_view name)
 {
 	auto message = BuildStringFrom("Variable '", name, "' doesn't exist.");
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportNotAVariable(const TextSpan& span, string_view name)
+{
+	auto message = BuildStringFrom('\'', name, "' is not a variable.");
 	Report(span, message);
 }
 
@@ -151,11 +156,23 @@ void DiagnosticBag::ReportUndefinedFunction(const TextSpan& span,
 	Report(span, message);
 }
 
+void DiagnosticBag::ReportNotAFunction(const TextSpan& span, string_view name)
+{
+	auto message = BuildStringFrom('\'', name, "' is not a function.");
+	Report(span, message);
+}
+
+void DiagnosticBag::ReportParameterAlreadyDeclared(const TextSpan& span, string_view name)
+{
+	auto message = BuildStringFrom("A parameter with name '", name, "' already exists.");
+	Report(span, message);
+}
+
 void DiagnosticBag::ReportWrongArgumentCount(const TextSpan& span,
 	string_view name, size_t expectedCount, size_t actualCount)
 {
 	auto message = BuildStringFrom("Function '", name, "' requires ", std::to_string(expectedCount)
-		, " arguments but was given ", std::to_string(actualCount), ".");
+		, " arguments but was given ", actualCount, ".");
 	Report(span, message);
 }
 
@@ -176,12 +193,12 @@ void DiagnosticBag::ReportExpressionMustHaveValue(const TextSpan& span)
 void DiagnosticBag::ReportInvalidBreakOrContinue(const TextSpan& span,
 	string_view text)
 {
-	auto message = BuildStringFrom("The keyword '", text, "' can only be used inside loops.");
+	auto message = BuildStringFrom("The keyword '", text, "' can only be used inside of loops.");
 	Report(span, message);
 }
 
 void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(const TextSpan& span,
-	string_view operatorText, const SyntaxKind& kind)
+	string_view operatorText, SyntaxKind kind)
 {
 	std::stringstream message{ "Operator '" };
 	message << operatorText << "' is not defined for expression '" << GetSyntaxKindName(kind) << "'.";
@@ -196,20 +213,19 @@ void DiagnosticBag::ReportAllPathsMustReturn(const TextSpan& span)
 
 void DiagnosticBag::ReportInvalidReturn(const TextSpan& span)
 {
-	string message = "The 'return' keyword can only be used inside of function";
+	string message = "The keyword 'return' can only be used inside of functions.";
 	Report(span, message);
 }
 
 void DiagnosticBag::ReportInvalidReturnExpression(const TextSpan& span, string_view funcName)
 {
-	auto message = BuildStringFrom("Function '", funcName, "' does not return a value");
+	auto message = BuildStringFrom("Function '", funcName, "' does not return a value.");
 	Report(span, message);
 }
 
 void DiagnosticBag::ReportMissingReturnExpression(const TextSpan& span, const TypeSymbol& returnType)
 {
-	string message{ "An expression of Type '" };
-	message += returnType.ToString() + "' expected";
+	auto message = BuildStringFrom("An expression of type '", returnType.ToString(), "' is expected.");
 	Report(span, message);
 }
 

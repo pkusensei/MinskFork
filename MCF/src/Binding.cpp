@@ -15,6 +15,18 @@
 
 namespace MCF {
 
+std::optional<shared_ptr<Symbol>> BoundScope::TryLookupSymbol(string_view name)const
+{
+	try
+	{
+		return _symbols.at(name);
+	} catch (const std::out_of_range&)
+	{
+		if (_parent == nullptr) return std::nullopt;
+		return _parent->TryLookupSymbol(name);
+	}
+}
+
 void BoundScope::ResetToParent(unique_ptr<BoundScope>& current)noexcept
 {
 	if (current->Parent() == nullptr) return;
@@ -37,7 +49,7 @@ Binder::Binder(unique_ptr<BoundScope>& parent, const FunctionSymbol* function)
 void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax)
 {
 	auto parameters = vector<ParameterSymbol>();
-	auto seenParamNames = std::unordered_set<string>();
+	auto seenParamNames = std::unordered_set<string_view>();
 
 	for (const auto& it : *(syntax->Parameters()))
 	{
@@ -48,12 +60,12 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax)
 			auto paramType = BindTypeClause(p->Type());
 			auto [_, success] = seenParamNames.emplace(paramName);
 
-			if (success && paramType.has_value())
+			if (success)
 			{
 				auto param = ParameterSymbol(paramName, *paramType);
 				parameters.emplace_back(param);
 			} else
-				_diagnostics->ReportSymbolAlreadyDeclared(p->Span(), paramName);
+				_diagnostics->ReportParameterAlreadyDeclared(p->Span(), paramName);
 		}
 	}
 	auto type = BindTypeClause(syntax->Type())
@@ -61,10 +73,12 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax)
 	auto function = make_shared<FunctionSymbol>(syntax->Identifier().Text(),
 		parameters, type, syntax);
 
-	if (!_scope->TryDeclareFunction(function))
+	if (!function->Declaration()->Identifier().Text().empty()
+		&& !_scope->TryDeclareFunction(function))
+	{
 		_diagnostics->ReportSymbolAlreadyDeclared(syntax->Identifier().Span(),
 			function->Name());
-
+	}
 }
 
 shared_ptr<BoundStatement> Binder::BindErrorStatement()
@@ -159,7 +173,7 @@ shared_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclara
 	auto type = BindTypeClause(syntax->TypeClause());
 	auto init = BindExpression(syntax->Initializer());
 	auto variableType = type.value_or(init->Type());
-	auto variable = BindVariable(syntax->Identifier(), readOnly, variableType);
+	auto variable = BindVariableDeclaration(syntax->Identifier(), readOnly, variableType);
 	auto convertInitializer = BindConversion(syntax->Identifier().Span(), init, variableType);
 
 	return make_shared<BoundVariableDeclaration>(variable, convertInitializer);
@@ -200,7 +214,7 @@ shared_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax* sy
 
 	_scope = make_unique<BoundScope>(_scope);
 
-	auto variable = BindVariable(syntax->Identifier(), true,
+	auto variable = BindVariableDeclaration(syntax->Identifier(), true,
 		GetTypeSymbol(TypeEnum::Int));
 	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
 
@@ -372,12 +386,9 @@ shared_ptr<BoundExpression> Binder::BindNameExpression(const NameExpressionSynta
 	if (syntax->IdentifierToken().IsMissing()) // NOTE this token was injected by Parser::MatchToken
 		return make_shared<BoundErrorExpression>();
 
-	auto opt = _scope->TryLookupVariable(name);
+	auto opt = BindVariableReference(name, syntax->IdentifierToken().Span());
 	if (!opt.has_value())
-	{
-		_diagnostics->ReportUndefinedName(syntax->IdentifierToken().Span(), name);
 		return make_shared<BoundErrorExpression>();
-	}
 	return make_shared<BoundVariableExpression>(opt.value());
 }
 
@@ -386,12 +397,9 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 	auto name = syntax->IdentifierToken().Text();
 	auto boundExpression = BindExpression(syntax->Expression());
 
-	auto opt = _scope->TryLookupVariable(name);
+	auto opt = BindVariableReference(name, syntax->IdentifierToken().Span());
 	if (!opt.has_value())
-	{
-		_diagnostics->ReportUndefinedName(syntax->IdentifierToken().Span(), name);
 		return boundExpression;
-	}
 
 	auto variable = opt.value();
 	if (variable->IsReadOnly())
@@ -461,7 +469,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 			boundArguments.emplace_back(BindExpression(p));
 	}
 
-	auto opt = _scope->TryLookupFunction(syntax->Identifier().Text());
+	auto opt = _scope->TryLookupSymbol(syntax->Identifier().Text());
 	if (!opt.has_value())
 	{
 		_diagnostics->ReportUndefinedFunction(syntax->Identifier().Span(),
@@ -469,7 +477,14 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		return make_shared<BoundErrorExpression>();
 	}
 
-	auto function = opt.value();
+	auto function = std::dynamic_pointer_cast<FunctionSymbol>(opt.value());
+	if (function == nullptr)
+	{
+		_diagnostics->ReportNotAFunction(syntax->Identifier().Span(),
+			syntax->Identifier().Text());
+		return make_shared<BoundErrorExpression>();
+	}
+
 	if (syntax->Arguments()->size() != function->Parameters().size())
 	{
 		TextSpan span;
@@ -516,12 +531,9 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	auto name = syntax->IdentifierToken().Text();
 	auto boundExpression = BindExpression(syntax->Expression());
 
-	auto opt = _scope->TryLookupVariable(name);
+	auto opt = BindVariableReference(name, syntax->IdentifierToken().Span());
 	if (!opt.has_value())
-	{
-		_diagnostics->ReportUndefinedName(syntax->IdentifierToken().Span(), name);
 		return make_shared<BoundErrorExpression>();
-	}
 
 	auto variable = opt.value();
 	if (variable->IsReadOnly())
@@ -586,7 +598,7 @@ shared_ptr<BoundExpression> Binder::BindConversion(const TextSpan& diagnosticSpa
 	return make_shared<BoundConversionExpression>(type, expression);
 }
 
-shared_ptr<VariableSymbol> Binder::BindVariable(const SyntaxToken& identifier, bool isReadOnly,
+shared_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& identifier, bool isReadOnly,
 	const TypeSymbol& type)
 {
 	auto name = identifier.Text().empty() ? "?" : identifier.Text();
@@ -600,6 +612,26 @@ shared_ptr<VariableSymbol> Binder::BindVariable(const SyntaxToken& identifier, b
 	if (declare && !_scope->TryDeclareVariable(variable))
 		_diagnostics->ReportSymbolAlreadyDeclared(identifier.Span(), name);
 	return variable;
+}
+
+std::optional<shared_ptr<VariableSymbol>> Binder::BindVariableReference(string_view name, const TextSpan& span)
+{
+	auto var = _scope->TryLookupSymbol(name).value_or(nullptr);
+	if (var == nullptr)
+	{
+		_diagnostics->ReportUndefinedVariable(span, name);
+		return std::nullopt;
+	} else
+	{
+		auto p = std::dynamic_pointer_cast<VariableSymbol>(var);
+		if (p)
+			return p;
+		else
+		{
+			_diagnostics->ReportNotAVariable(span, name);
+			return std::nullopt;
+		}
+	}
 }
 
 std::optional<TypeSymbol> Binder::BindTypeClause(const std::optional<TypeClauseSyntax>& syntax)

@@ -420,18 +420,18 @@ shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(const shared_ptr<BoundIfS
 
 shared_ptr<BoundStatement> Lowerer::RewriteWhileStatement(const shared_ptr<BoundWhileStatement>& node)
 {
-	auto checkLabel = GenerateLabel();
+	auto bodyLabel = GenerateLabel();
 
-	auto gotoCheck = make_shared<BoundGotoStatement>(checkLabel);
+	auto gotoContinue = make_shared<BoundGotoStatement>(node->ContinueLabel());
+	auto bodyLabelStatement = make_shared<BoundLabelStatement>(bodyLabel);
 	auto continueLabelStatement = make_shared<BoundLabelStatement>(node->ContinueLabel());
-	auto checkLabelStatement = make_shared<BoundLabelStatement>(checkLabel);
-	auto gotoTrue = make_shared<BoundConditionalGotoStatement>(node->ContinueLabel(),
+	auto gotoTrue = make_shared<BoundConditionalGotoStatement>(bodyLabel,
 		node->Condition());
 	auto breakLabelStatement = make_shared<BoundLabelStatement>(node->BreakLabel());
 
 	auto statements = vector<shared_ptr<BoundStatement>>{
-		gotoCheck, continueLabelStatement, node->Body(),
-		checkLabelStatement, gotoTrue, breakLabelStatement
+		gotoContinue, bodyLabelStatement, node->Body(),
+		continueLabelStatement, gotoTrue, breakLabelStatement
 	};
 
 	auto result = make_shared<BoundBlockStatement>(statements);
@@ -440,13 +440,17 @@ shared_ptr<BoundStatement> Lowerer::RewriteWhileStatement(const shared_ptr<Bound
 
 shared_ptr<BoundStatement> Lowerer::RewriteDoWhileStatement(const shared_ptr<BoundDoWhileStatement>& node)
 {
+	auto bodyLabel = GenerateLabel();
+
+	auto bodyLabelStatement = make_shared<BoundLabelStatement>(bodyLabel);
 	auto continueLabelStatement = make_shared<BoundLabelStatement>(node->ContinueLabel());
-	auto gotoTrue = make_shared<BoundConditionalGotoStatement>(node->ContinueLabel(),
+	auto gotoTrue = make_shared<BoundConditionalGotoStatement>(bodyLabel,
 		node->Condition());
 	auto breakLabelStatement = make_shared<BoundLabelStatement>(node->BreakLabel());
 
 	auto statements = vector<shared_ptr<BoundStatement>>{
-		continueLabelStatement, node->Body(), gotoTrue, breakLabelStatement
+		bodyLabelStatement, node->Body(), continueLabelStatement,
+		gotoTrue, breakLabelStatement
 	};
 	auto result = make_shared<BoundBlockStatement>(statements);
 	return RewriteStatement(result);

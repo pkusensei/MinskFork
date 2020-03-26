@@ -15,7 +15,7 @@ namespace MCF {
 enum class SyntaxKind;
 class TypeSymbol;
 
-class MCF_API Diagnostic final
+class Diagnostic final
 {
 private:
 	TextSpan _span;
@@ -57,13 +57,14 @@ public:
 	void ReportInvalidNumber(const TextSpan& span, string_view text, const TypeSymbol& type);
 	void ReportBadCharacter(size_t position, char character);
 	void ReportUnterminatedString(const TextSpan& span);
-	void ReportUnexpectedToken(const TextSpan& span, const SyntaxKind& actualKind,
-		const SyntaxKind& expectedKind);
+	void ReportUnexpectedToken(const TextSpan& span, SyntaxKind actualKind,
+		SyntaxKind expectedKind);
 	void ReportUndefinedUnaryOperator(const TextSpan& span, string_view operatorText,
 		const TypeSymbol& operandType);
 	void ReportUndefinedBinaryOperator(const TextSpan& span, string_view operatorText,
 		const TypeSymbol& leftType, const TypeSymbol& rightType);
-	void ReportUndefinedName(const TextSpan& span, string_view name);
+	void ReportUndefinedVariable(const TextSpan& span, string_view name);
+	void ReportNotAVariable(const TextSpan& span, string_view name);
 	void ReportUndefinedType(const TextSpan& span, string_view name);
 	void ReportCannotConvert(const TextSpan& span, const TypeSymbol& fromType,
 		const TypeSymbol& toType);
@@ -73,6 +74,8 @@ public:
 	void ReportCannotAssign(const TextSpan& span, string_view name);
 
 	void ReportUndefinedFunction(const TextSpan& span, string_view name);
+	void ReportNotAFunction(const TextSpan& span, string_view name);
+	void ReportParameterAlreadyDeclared(const TextSpan& span, string_view name);
 	void ReportWrongArgumentCount(const TextSpan& span, string_view name,
 		size_t expectedCount, size_t actualCount);
 	void ReportWrongArgumentType(const TextSpan& span, string_view name,
@@ -81,7 +84,7 @@ public:
 	void ReportInvalidBreakOrContinue(const TextSpan& span, string_view text);
 
 	void ReportExpressionNotSupportPostfixOperator(const TextSpan& span,
-		string_view operatorText, const SyntaxKind& kind);
+		string_view operatorText, SyntaxKind kind);
 
 	void ReportAllPathsMustReturn(const TextSpan& span);
 	void ReportInvalidReturn(const TextSpan& span);

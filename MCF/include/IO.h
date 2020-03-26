@@ -9,6 +9,9 @@ namespace MCF {
 enum class ConsoleColor;
 enum class SyntaxKind;
 
+class DiagnosticBag;
+class SyntaxTree;
+
 class TextWriter
 {
 protected:
@@ -27,6 +30,8 @@ public:
 	virtual ~TextWriter() = default;
 
 	virtual void Write(string_view text);
+	virtual void WriteLine();
+
 	void WriteKeyword(const SyntaxKind& kind);
 	void WriteKeyword(string_view text);
 	void WriteIdentifier(string_view text);
@@ -35,10 +40,10 @@ public:
 	void WriteSpace();
 	void WritePunctuation(const SyntaxKind& kind);
 	void WritePunctuation(string_view text);
-	virtual void WriteLine();
+	MCF_API void WriteDiagnostics(DiagnosticBag& diagnostics, const SyntaxTree& tree);
 };
 
-class IndentedTextWriter final :public TextWriter
+class MCF_API IndentedTextWriter final :public TextWriter
 {
 private:
 	static constexpr auto INDENT_UNIT = "    ";

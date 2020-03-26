@@ -1,7 +1,8 @@
 #include "IO.h"
 
 #include "ConsoleHelper.h"
-#include "SyntaxKind.h"
+#include "Diagnostic.h"
+#include "Parsing.h"
 
 namespace MCF {
 
@@ -75,6 +76,38 @@ void TextWriter::WritePunctuation(string_view text)
 	SetForeground(ConsoleColor::DarkGray);
 	Write(text);
 	ResetColor();
+}
+
+void TextWriter::WriteDiagnostics(DiagnosticBag& diagnostics, const SyntaxTree& tree)
+{
+	for (const auto& diag : diagnostics.SortBySpanAscending())
+	{
+		auto lineIndex = tree.Text().GetLineIndex(diag.Span().Start());
+		auto lineNumber = lineIndex + 1;
+		auto& line = tree.Text().Lines()[lineIndex];
+		auto character = diag.Span().Start() - line.Start() + 1;
+		_out << '\n';
+
+		MCF::SetConsoleColor(MCF::ConsoleColor::DarkRed);
+		_out << "(" << lineNumber << ", " << character << ") ";
+		_out << diag.Message() << '\n';
+		MCF::ResetConsoleColor();
+
+		auto prefixSpan = MCF::TextSpan::FromBounds(line.Start(), diag.Span().Start());
+		auto suffixSpan = MCF::TextSpan::FromBounds(diag.Span().End(), line.End());
+
+		auto prefix = tree.Text().ToString(prefixSpan);
+		auto error = tree.Text().ToString(diag.Span());
+		auto suffix = tree.Text().ToString(suffixSpan);
+		_out << "    " << prefix;
+
+		MCF::SetConsoleColor(MCF::ConsoleColor::DarkRed);
+		_out << error;
+		MCF::ResetConsoleColor();
+
+		_out << suffix << '\n';
+	}
+	_out << '\n';
 }
 
 void IndentedTextWriter::WriteIndent()

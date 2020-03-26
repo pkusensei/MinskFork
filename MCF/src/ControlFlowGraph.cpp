@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "BoundExpressions.h"
+#include "BoundNodePrinter.h"
 #include "BoundStatements.h"
 #include "helpers.h"
 #include "SyntaxKind.h"
@@ -19,8 +20,9 @@ string ControlFlowGraph::BasicBlock::ToString() const
 	else
 	{
 		auto s = std::ostringstream();
+		auto writer = BoundNodePrinter(s);
 		for (const auto& it : _statements)
-			it->WriteTo(s);
+			writer.Write(it);
 		return s.str();
 	}
 }
@@ -250,8 +252,11 @@ void ControlFlowGraph::WriteTo(std::ostream& out) const
 {
 	auto quote = [](string& text)
 	{
-		StringReplaceAll(text, "\"", "\"\"");
-		return '"' + text + '"';
+		auto result = string(TrimStringEnd(text));
+		StringReplaceAll(result, "\\", "\\\\");
+		StringReplaceAll(result, "\"", "\\\"");
+		StringReplaceAll(result, &NEW_LINE, "\\l");
+		return '"' + result + '"';
 	};
 
 	out << "digraph G {" << NEW_LINE;
@@ -260,9 +265,8 @@ void ControlFlowGraph::WriteTo(std::ostream& out) const
 	{
 		auto id = b->Id();
 		auto label = b->ToString();
-		StringReplaceAll(label, string(1, NEW_LINE), "\\l");
 		label = quote(label);
-		out << "    N" << id << " [label = " << label << " shape = box]" << NEW_LINE;
+		out << "    N" << id << " [label = " << label << ", shape = box]" << NEW_LINE;
 	}
 	for (const auto& b : _branches)
 	{
@@ -292,7 +296,8 @@ bool ControlFlowGraph::AllPathsReturn(const BoundBlockStatement* body)
 		if (statements.empty()) return false;
 
 		auto& lastStatement = statements.back();
-		if (lastStatement->Kind() != BoundNodeKind::ReturnStatement)
+		if (lastStatement == nullptr
+			|| lastStatement->Kind() != BoundNodeKind::ReturnStatement)
 			return false;
 	}
 	return true;

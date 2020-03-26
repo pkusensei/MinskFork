@@ -262,16 +262,20 @@ void BoundNodePrinter::WriteLabelStatement(const BoundLabelStatement* node)
 
 void BoundNodePrinter::WriteGotoStatement(const BoundGotoStatement* node)
 {
-	_writer.WriteKeyword("goto ");
+	_writer.WriteKeyword("goto");
+	_writer.WriteSpace();
 	_writer.WriteIdentifier(node->Label().Name());
 	_writer.WriteLine();
 }
 
 void BoundNodePrinter::WriteConditionalGotoStatement(const BoundConditionalGotoStatement* node)
 {
-	_writer.WriteKeyword("goto ");
+	_writer.WriteKeyword("goto");
+	_writer.WriteSpace();
 	_writer.WriteIdentifier(node->Label().Name());
-	_writer.WriteKeyword(node->JumpIfTrue() ? " if " : " unless ");
+	_writer.WriteSpace();
+	_writer.WriteKeyword(node->JumpIfTrue() ? "if" : "unless");
+	_writer.WriteSpace();
 	Write(node->Condition().get());
 	_writer.WriteLine();
 }
