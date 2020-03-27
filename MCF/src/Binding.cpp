@@ -65,7 +65,7 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax)
 				auto param = ParameterSymbol(paramName, *paramType);
 				parameters.emplace_back(param);
 			} else
-				_diagnostics->ReportParameterAlreadyDeclared(p->Span(), paramName);
+				_diagnostics->ReportParameterAlreadyDeclared(p->Location(), paramName);
 		}
 	}
 	auto type = BindTypeClause(syntax->Type())
@@ -76,7 +76,7 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax)
 	if (!function->Declaration()->Identifier().Text().empty()
 		&& !_scope->TryDeclareFunction(function))
 	{
-		_diagnostics->ReportSymbolAlreadyDeclared(syntax->Identifier().Span(),
+		_diagnostics->ReportSymbolAlreadyDeclared(syntax->Identifier().Location(),
 			function->Name());
 	}
 }
@@ -174,7 +174,7 @@ shared_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclara
 	auto init = BindExpression(syntax->Initializer());
 	auto variableType = type.value_or(init->Type());
 	auto variable = BindVariableDeclaration(syntax->Identifier(), readOnly, variableType);
-	auto convertInitializer = BindConversion(syntax->Identifier().Span(), init, variableType);
+	auto convertInitializer = BindConversion(syntax->Identifier().Location(), init, variableType);
 
 	return make_shared<BoundVariableDeclaration>(variable, convertInitializer);
 }
@@ -240,7 +240,7 @@ shared_ptr<BoundStatement> Binder::BindBreakStatement(const BreakStatementSyntax
 {
 	if (_loopStack.empty())
 	{
-		_diagnostics->ReportInvalidBreakOrContinue(syntax->Keyword().Span(),
+		_diagnostics->ReportInvalidBreakOrContinue(syntax->Keyword().Location(),
 			syntax->Keyword().Text());
 		return BindErrorStatement();
 	}
@@ -252,7 +252,7 @@ shared_ptr<BoundStatement> Binder::BindContinueStatement(const ContinueStatement
 {
 	if (_loopStack.empty())
 	{
-		_diagnostics->ReportInvalidBreakOrContinue(syntax->Keyword().Span(),
+		_diagnostics->ReportInvalidBreakOrContinue(syntax->Keyword().Location(),
 			syntax->Keyword().Text());
 		return BindErrorStatement();
 	}
@@ -266,21 +266,21 @@ shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSynt
 		nullptr : BindExpression(syntax->Expression());
 	if (_function == nullptr)
 	{
-		_diagnostics->ReportInvalidReturn(syntax->Keyword().Span());
+		_diagnostics->ReportInvalidReturn(syntax->Keyword().Location());
 	} else
 	{
 		if (_function->Type() == GetTypeSymbol(TypeEnum::Void))
 		{
 			if (expression != nullptr)
-				_diagnostics->ReportInvalidReturnExpression(syntax->Expression()->Span(),
+				_diagnostics->ReportInvalidReturnExpression(syntax->Expression()->Location(),
 					_function->Name());
 		} else
 		{
 			if (expression == nullptr)
-				_diagnostics->ReportMissingReturnExpression(syntax->Keyword().Span(),
+				_diagnostics->ReportMissingReturnExpression(syntax->Keyword().Location(),
 					_function->Type());
 			else
-				expression = BindConversion(syntax->Expression()->Span(),
+				expression = BindConversion(syntax->Expression()->Location(),
 					expression, _function->Type());
 		}
 	}
@@ -305,7 +305,7 @@ shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax* synta
 	auto result = BindExpressionInternal(syntax);
 	if (!canBeVoid && result->Type() == GetTypeSymbol(TypeEnum::Void))
 	{
-		_diagnostics->ReportExpressionMustHaveValue(syntax->Span());
+		_diagnostics->ReportExpressionMustHaveValue(syntax->Location());
 		return make_shared<BoundErrorExpression>();
 	}
 	return result;
@@ -382,11 +382,10 @@ shared_ptr<BoundExpression> Binder::BindLiteralExpression(const LiteralExpressio
 
 shared_ptr<BoundExpression> Binder::BindNameExpression(const NameExpressionSyntax* syntax)
 {
-	auto name = syntax->IdentifierToken().Text();
 	if (syntax->IdentifierToken().IsMissing()) // NOTE this token was injected by Parser::MatchToken
 		return make_shared<BoundErrorExpression>();
 
-	auto opt = BindVariableReference(name, syntax->IdentifierToken().Span());
+	auto opt = BindVariableReference(syntax->IdentifierToken());
 	if (!opt.has_value())
 		return make_shared<BoundErrorExpression>();
 	return make_shared<BoundVariableExpression>(opt.value());
@@ -397,14 +396,14 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 	auto name = syntax->IdentifierToken().Text();
 	auto boundExpression = BindExpression(syntax->Expression());
 
-	auto opt = BindVariableReference(name, syntax->IdentifierToken().Span());
+	auto opt = BindVariableReference(syntax->IdentifierToken());
 	if (!opt.has_value())
 		return boundExpression;
 
 	auto variable = opt.value();
 	if (variable->IsReadOnly())
-		_diagnostics->ReportCannotAssign(syntax->EqualsToken().Span(), name);
-	auto convertExpression = BindConversion(syntax->Expression()->Span(),
+		_diagnostics->ReportCannotAssign(syntax->EqualsToken().Location(), name);
+	auto convertExpression = BindConversion(syntax->Expression()->Location(),
 		boundExpression, variable->Type());
 	return make_shared<BoundAssignmentExpression>(variable, convertExpression);
 }
@@ -422,7 +421,7 @@ shared_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyn
 		return make_shared<BoundUnaryExpression>(boundOperator, boundOperand);
 	} else
 	{
-		_diagnostics->ReportUndefinedUnaryOperator(syntax->OperatorToken().Span(),
+		_diagnostics->ReportUndefinedUnaryOperator(syntax->OperatorToken().Location(),
 			syntax->OperatorToken().Text(),
 			boundOperand->Type());
 		return make_shared<BoundErrorExpression>();
@@ -444,7 +443,7 @@ shared_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 		return make_shared<BoundBinaryExpression>(boundLeft, boundOperator, boundRight);
 	} else
 	{
-		_diagnostics->ReportUndefinedBinaryOperator(syntax->OperatorToken().Span(),
+		_diagnostics->ReportUndefinedBinaryOperator(syntax->OperatorToken().Location(),
 			syntax->OperatorToken().Text(),
 			boundLeft->Type(), boundRight->Type());
 		return make_shared<BoundErrorExpression>();
@@ -472,7 +471,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	auto opt = _scope->TryLookupSymbol(syntax->Identifier().Text());
 	if (!opt.has_value())
 	{
-		_diagnostics->ReportUndefinedFunction(syntax->Identifier().Span(),
+		_diagnostics->ReportUndefinedFunction(syntax->Identifier().Location(),
 			syntax->Identifier().Text());
 		return make_shared<BoundErrorExpression>();
 	}
@@ -480,7 +479,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	auto function = std::dynamic_pointer_cast<FunctionSymbol>(opt.value());
 	if (function == nullptr)
 	{
-		_diagnostics->ReportNotAFunction(syntax->Identifier().Span(),
+		_diagnostics->ReportNotAFunction(syntax->Identifier().Location(),
 			syntax->Identifier().Text());
 		return make_shared<BoundErrorExpression>();
 	}
@@ -503,7 +502,9 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		{
 			span = syntax->CloseParenthesisToken().Span();
 		}
-		_diagnostics->ReportWrongArgumentCount(span, function->Name(),
+		auto location = TextLocation(syntax->SynTree().Text(), span);
+		_diagnostics->ReportWrongArgumentCount(
+			std::move(location), function->Name(),
 			function->Parameters().size(), syntax->Arguments()->size());
 		return make_shared<BoundErrorExpression>();
 	}
@@ -515,7 +516,8 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		auto param = function->Parameters()[i];
 		if (arg->Type() != param.Type())
 		{
-			_diagnostics->ReportWrongArgumentType((*syntax->Arguments())[i]->Span(),
+			_diagnostics->ReportWrongArgumentType(
+			(*syntax->Arguments())[i]->Location(),
 				param.Name(), param.Type(), arg->Type());
 			hasError = true;
 		}
@@ -531,27 +533,27 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	auto name = syntax->IdentifierToken().Text();
 	auto boundExpression = BindExpression(syntax->Expression());
 
-	auto opt = BindVariableReference(name, syntax->IdentifierToken().Span());
+	auto opt = BindVariableReference(syntax->IdentifierToken());
 	if (!opt.has_value())
 		return make_shared<BoundErrorExpression>();
 
 	auto variable = opt.value();
 	if (variable->IsReadOnly())
 	{
-		_diagnostics->ReportCannotAssign(syntax->Op().Span(), name);
+		_diagnostics->ReportCannotAssign(syntax->Op().Location(), name);
 		return make_shared<BoundErrorExpression>();
 	}
 	if (boundExpression->Type() != variable->Type())
 	{
-		_diagnostics->ReportCannotConvert(syntax->Expression()->Span(),
+		_diagnostics->ReportCannotConvert(syntax->Expression()->Location(),
 			boundExpression->Type(), variable->Type());
 		return make_shared<BoundErrorExpression>();
 	}
 	if (variable->Type() != GetTypeSymbol(TypeEnum::Int))
 	{
-		_diagnostics->ReportVariableNotSupportPostfixOperator(syntax->Expression()->Span(),
-			syntax->Op().Text(),
-			variable->Type());
+		_diagnostics->ReportVariableNotSupportPostfixOperator(
+			syntax->Expression()->Location(),
+			syntax->Op().Text(), variable->Type());
 		return make_shared<BoundErrorExpression>();
 	}
 	switch (syntax->Op().Kind())
@@ -575,10 +577,10 @@ shared_ptr<BoundExpression> Binder::BindConversion(const ExpressionSyntax* synta
 	bool allowExplicit)
 {
 	auto expression = BindExpression(syntax);
-	return BindConversion(syntax->Span(), expression, type, allowExplicit);
+	return BindConversion(syntax->Location(), expression, type, allowExplicit);
 }
 
-shared_ptr<BoundExpression> Binder::BindConversion(const TextSpan& diagnosticSpan,
+shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
 	const shared_ptr<BoundExpression>& expression,
 	const TypeSymbol& type,
 	bool allowExplicit)
@@ -588,11 +590,13 @@ shared_ptr<BoundExpression> Binder::BindConversion(const TextSpan& diagnosticSpa
 	{
 		if (expression->Type() != GetTypeSymbol(TypeEnum::Error)
 			&& type != GetTypeSymbol(TypeEnum::Error))
-			_diagnostics->ReportCannotConvert(diagnosticSpan, expression->Type(), type);
+			_diagnostics->ReportCannotConvert(
+				std::move(diagLocation), expression->Type(), type);
 		return make_shared<BoundErrorExpression>();
 	}
 	if (!allowExplicit && conversion.IsExplicit())
-		_diagnostics->ReportCannotConvertImplicitly(diagnosticSpan, expression->Type(), type);
+		_diagnostics->ReportCannotConvertImplicitly(
+			std::move(diagLocation), expression->Type(), type);
 	if (conversion.IsIdentity())
 		return expression;
 	return make_shared<BoundConversionExpression>(type, expression);
@@ -610,16 +614,17 @@ shared_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& id
 		variable = make_shared<LocalVariableSymbol>(name, isReadOnly, type);
 
 	if (declare && !_scope->TryDeclareVariable(variable))
-		_diagnostics->ReportSymbolAlreadyDeclared(identifier.Span(), name);
+		_diagnostics->ReportSymbolAlreadyDeclared(identifier.Location(), name);
 	return variable;
 }
 
-std::optional<shared_ptr<VariableSymbol>> Binder::BindVariableReference(string_view name, const TextSpan& span)
+std::optional<shared_ptr<VariableSymbol>> Binder::BindVariableReference(const SyntaxToken& identifier)
 {
+	auto name = identifier.Text();
 	auto var = _scope->TryLookupSymbol(name).value_or(nullptr);
 	if (var == nullptr)
 	{
-		_diagnostics->ReportUndefinedVariable(span, name);
+		_diagnostics->ReportUndefinedVariable(identifier.Location(), name);
 		return std::nullopt;
 	} else
 	{
@@ -628,7 +633,7 @@ std::optional<shared_ptr<VariableSymbol>> Binder::BindVariableReference(string_v
 			return p;
 		else
 		{
-			_diagnostics->ReportNotAVariable(span, name);
+			_diagnostics->ReportNotAVariable(identifier.Location(), name);
 			return std::nullopt;
 		}
 	}
@@ -640,7 +645,7 @@ std::optional<TypeSymbol> Binder::BindTypeClause(const std::optional<TypeClauseS
 
 	auto type = LookupType(syntax->Identifier().Text());
 	if (!type.has_value())
-		_diagnostics->ReportUndefinedType(syntax->Identifier().Span(),
+		_diagnostics->ReportUndefinedType(syntax->Identifier().Location(),
 			syntax->Identifier().Text());
 	return type;
 }
@@ -730,7 +735,7 @@ unique_ptr<BoundProgram> Binder::BindProgram(const BoundGlobalScope* globalScope
 				&& !ControlFlowGraph::AllPathsReturn(lowerBody.get()))
 			{
 				binder._diagnostics->ReportAllPathsMustReturn(
-					it->Declaration()->Identifier().Span());
+					it->Declaration()->Identifier().Location());
 			}
 			funcBodies.emplace(it, std::move(lowerBody));
 

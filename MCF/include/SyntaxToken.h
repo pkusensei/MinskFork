@@ -11,20 +11,33 @@
 
 namespace MCF {
 
+class TextLocation;
 class TextSpan;
 class SyntaxToken;
+class SyntaxTree;
 
 class MCF_API SyntaxNode
 {
 private:
+	std::reference_wrapper<const SyntaxTree> _tree;
+
 	static void PrettyPrint(std::ostream& out, const SyntaxNode* node,
 		string indent = "", bool isLast = true);
+
+protected:
+	explicit SyntaxNode(const SyntaxTree& tree)noexcept
+		:_tree(tree)
+	{
+	}
+
 public:
 	virtual ~SyntaxNode() = default;
 	virtual SyntaxKind Kind() const noexcept = 0;
 	virtual TextSpan Span()const;
 	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
 
+	constexpr const SyntaxTree& SynTree()const noexcept { return _tree; }
+	TextLocation Location()const;
 	const SyntaxToken& GetLastToken()const;
 
 	void WriteTo(std::ostream& out)const { PrettyPrint(out, this); }
@@ -40,9 +53,10 @@ private:
 	ValueType _value;
 
 public:
-	SyntaxToken(const SyntaxKind& kind, size_t position,
-				string_view text, const ValueType& value)
-		:_kind(kind), _position(position), _text(text), _value(value)
+	SyntaxToken(const SyntaxTree& tree, SyntaxKind kind, size_t position,
+				string_view text, ValueType value)
+		:SyntaxNode(tree), _kind(kind), _position(position),
+		_text(text), _value(std::move(value))
 	{
 	}
 

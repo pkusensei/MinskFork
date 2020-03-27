@@ -8,10 +8,12 @@ namespace MCF {
 class DiagnosticBag;
 class SourceText;
 class SyntaxToken;
+class SyntaxTree;
 
 class Lexer final
 {
 private:
+	const SyntaxTree& _tree;
 	const SourceText& _text;
 	unique_ptr<DiagnosticBag> _diagnostics;
 
@@ -31,10 +33,11 @@ private:
 	void ReadIdentifierOrKeyword();
 
 public:
-	explicit Lexer(const SourceText& text);
+	explicit Lexer(const SyntaxTree& text);
 
 	[[nodiscard]] SyntaxToken Lex();
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
+	unique_ptr<DiagnosticBag> FetchDiagnostics() noexcept { return std::move(_diagnostics); }
 };
 
 }//MCF

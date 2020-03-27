@@ -8,6 +8,11 @@ namespace MCF {
 
 class StatementSyntax :public SyntaxNode
 {
+protected:
+	explicit StatementSyntax(const SyntaxTree& tree)
+		:SyntaxNode(tree)
+	{
+	}
 };
 
 class BlockStatementSyntax final : public StatementSyntax
@@ -18,9 +23,10 @@ private:
 	vector<unique_ptr<StatementSyntax>> _statements;
 
 public:
-	BlockStatementSyntax(const SyntaxToken& open,
-		vector<unique_ptr<StatementSyntax>>& statements, const SyntaxToken& close)
-		:_openBraceToken(open), _closeBraceToken(close),
+	BlockStatementSyntax(const SyntaxTree& tree, SyntaxToken open,
+		vector<unique_ptr<StatementSyntax>> statements, SyntaxToken close)
+		:StatementSyntax(tree),
+		_openBraceToken(std::move(open)), _closeBraceToken(std::move(close)),
 		_statements(std::move(statements))
 	{
 	}
@@ -41,8 +47,10 @@ private:
 	SyntaxToken _identifier;
 
 public:
-	TypeClauseSyntax(const SyntaxToken& colon, const SyntaxToken& identifier)
-		:_colonToken(colon), _identifier(identifier)
+	TypeClauseSyntax(const SyntaxTree& tree,
+		SyntaxToken colon, SyntaxToken identifier)
+		:SyntaxNode(tree),
+		_colonToken(std::move(colon)), _identifier(std::move(identifier))
 	{
 	}
 
@@ -64,12 +72,15 @@ private:
 	unique_ptr<ExpressionSyntax> _initializer;
 
 public:
-	VariableDeclarationSyntax(const SyntaxToken& keyword, const SyntaxToken& identifier,
-		const std::optional<TypeClauseSyntax>& typeClause,
-		const SyntaxToken& equals,
-		unique_ptr<ExpressionSyntax>& initializer)
-		: _keyword(keyword), _identifier(identifier), _typeClause(typeClause),
-		_equalsToken(equals), _initializer(std::move(initializer))
+	VariableDeclarationSyntax(const SyntaxTree& tree,
+		SyntaxToken keyword, SyntaxToken identifier,
+		std::optional<TypeClauseSyntax> typeClause,
+		SyntaxToken equals,
+		unique_ptr<ExpressionSyntax> initializer)
+		:StatementSyntax(tree),
+		_keyword(std::move(keyword)), _identifier(std::move(identifier)),
+		_typeClause(std::move(typeClause)),
+		_equalsToken(std::move(equals)), _initializer(std::move(initializer))
 	{
 	}
 
@@ -91,9 +102,10 @@ private:
 	unique_ptr<StatementSyntax> _elseStatement;
 
 public:
-	ElseClauseSyntax(const SyntaxToken& elseKeyword,
-		unique_ptr<StatementSyntax>& elseStatement)
-		:_elseKeyword(elseKeyword), _elseStatement(std::move(elseStatement))
+	ElseClauseSyntax(const SyntaxTree& tree, SyntaxToken elseKeyword,
+		unique_ptr<StatementSyntax> elseStatement)
+		:SyntaxNode(tree),
+		_elseKeyword(std::move(elseKeyword)), _elseStatement(std::move(elseStatement))
 	{
 	}
 
@@ -114,11 +126,13 @@ private:
 	unique_ptr<ElseClauseSyntax> _elseClause;
 
 public:
-	IfStatementSyntax(const SyntaxToken& ifKeyword,
-		unique_ptr<ExpressionSyntax>& condition,
-		unique_ptr<StatementSyntax>& thenStatement,
-		unique_ptr<ElseClauseSyntax>& elseClause)
-		:_ifKeyword(ifKeyword), _condition(std::move(condition)),
+	IfStatementSyntax(const SyntaxTree& tree,
+		SyntaxToken ifKeyword,
+		unique_ptr<ExpressionSyntax> condition,
+		unique_ptr<StatementSyntax> thenStatement,
+		unique_ptr<ElseClauseSyntax> elseClause)
+		:StatementSyntax(tree),
+		_ifKeyword(std::move(ifKeyword)), _condition(std::move(condition)),
 		_thenStatement(std::move(thenStatement)), _elseClause(std::move(elseClause))
 	{
 	}
@@ -141,10 +155,11 @@ private:
 	unique_ptr<StatementSyntax> _body;
 
 public:
-	WhileStatementSyntax(const SyntaxToken& whileKeyword,
-		unique_ptr<ExpressionSyntax>& condition, unique_ptr<StatementSyntax>& body)
-		:_whileKeyword(whileKeyword), _condition(std::move(condition)),
-		_body(std::move(body))
+	WhileStatementSyntax(const SyntaxTree& tree, SyntaxToken whileKeyword,
+		unique_ptr<ExpressionSyntax> condition, unique_ptr<StatementSyntax> body)
+		:StatementSyntax(tree),
+		_whileKeyword(std::move(whileKeyword)),
+		_condition(std::move(condition)), _body(std::move(body))
 	{
 	}
 
@@ -166,11 +181,12 @@ private:
 	unique_ptr<ExpressionSyntax> _condition;
 
 public:
-	DoWhileStatementSyntax(const SyntaxToken& doKeyword,
-		unique_ptr<StatementSyntax>& body, const SyntaxToken& whileKeyword,
-		unique_ptr<ExpressionSyntax>& condition)
-		:_doKeyword(doKeyword), _body(std::move(body)),
-		_whileKeyword(whileKeyword), _condition(std::move(condition))
+	DoWhileStatementSyntax(const SyntaxTree& tree, SyntaxToken doKeyword,
+		unique_ptr<StatementSyntax> body, SyntaxToken whileKeyword,
+		unique_ptr<ExpressionSyntax> condition)
+		:StatementSyntax(tree),
+		_doKeyword(std::move(doKeyword)), _body(std::move(body)),
+		_whileKeyword(std::move(whileKeyword)), _condition(std::move(condition))
 	{
 	}
 
@@ -196,12 +212,15 @@ private:
 	unique_ptr<StatementSyntax> _body;
 
 public:
-	ForStatementSyntax(const SyntaxToken& keyword, const SyntaxToken& identifier,
-		const SyntaxToken& equals, unique_ptr<ExpressionSyntax>& lowerBound,
-		const SyntaxToken& toKeyword, unique_ptr<ExpressionSyntax>& upperBound,
-		unique_ptr<StatementSyntax>& body)
-		:_keyword(keyword), _identifier(identifier), _equalsToken(equals),
-		_lowerBound(std::move(lowerBound)), _toKeyword(toKeyword),
+	ForStatementSyntax(const SyntaxTree& tree,
+		SyntaxToken keyword, SyntaxToken identifier,
+		SyntaxToken equals, unique_ptr<ExpressionSyntax> lowerBound,
+		SyntaxToken toKeyword, unique_ptr<ExpressionSyntax> upperBound,
+		unique_ptr<StatementSyntax> body)
+		:StatementSyntax(tree),
+		_keyword(std::move(keyword)), _identifier(std::move(identifier)),
+		_equalsToken(std::move(equals)),
+		_lowerBound(std::move(lowerBound)), _toKeyword(std::move(toKeyword)),
 		_upperBound(std::move(upperBound)), _body(std::move(body))
 	{
 	}
@@ -225,8 +244,8 @@ private:
 	SyntaxToken _keyword;
 
 public:
-	explicit BreakStatementSyntax(const SyntaxToken& keyword)
-		:_keyword(keyword)
+	BreakStatementSyntax(const SyntaxTree& tree, SyntaxToken keyword)
+		:StatementSyntax(tree), _keyword(std::move(keyword))
 	{
 	}
 
@@ -243,8 +262,8 @@ private:
 	SyntaxToken _keyword;
 
 public:
-	explicit ContinueStatementSyntax(const SyntaxToken& keyword)
-		:_keyword(keyword)
+	ContinueStatementSyntax(const SyntaxTree& tree, SyntaxToken keyword)
+		:StatementSyntax(tree), _keyword(std::move(keyword))
 	{
 	}
 
@@ -262,13 +281,14 @@ private:
 	unique_ptr<ExpressionSyntax> _expression;
 
 public:
-	explicit ReturnStatementSyntax(const SyntaxToken& retKeyword)
-		:_keyword(retKeyword), _expression(nullptr)
+	ReturnStatementSyntax(const SyntaxTree& tree, SyntaxToken keyword,
+		unique_ptr<ExpressionSyntax> expression)
+		:StatementSyntax(tree),
+		_keyword(std::move(keyword)), _expression(std::move(expression))
 	{
 	}
-	ReturnStatementSyntax(const SyntaxToken& retKeyword,
-		unique_ptr<ExpressionSyntax>& expression)
-		: _keyword(retKeyword), _expression(std::move(expression))
+	ReturnStatementSyntax(const SyntaxTree& tree, SyntaxToken keyword)
+		:ReturnStatementSyntax(tree, std::move(keyword), nullptr)
 	{
 	}
 
@@ -286,8 +306,9 @@ private:
 	unique_ptr<ExpressionSyntax> _expression;
 
 public:
-	explicit ExpressionStatementSyntax(unique_ptr<ExpressionSyntax>& expression)noexcept
-		:_expression(std::move(expression))
+	ExpressionStatementSyntax(const SyntaxTree& tree, unique_ptr<ExpressionSyntax>& expression)noexcept
+		:StatementSyntax(tree),
+		_expression(std::move(expression))
 	{
 	}
 

@@ -484,7 +484,7 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 	} else
 	{
 		auto writer = MCF::IndentedTextWriter(std::cout);
-		writer.WriteDiagnostics(*diagnostics, *compilation->Syntax());
+		writer.WriteDiagnostics(*diagnostics);
 	}
 	std::cout << '\n';
 }

@@ -78,27 +78,48 @@ void TextWriter::WritePunctuation(string_view text)
 	ResetColor();
 }
 
-void TextWriter::WriteDiagnostics(DiagnosticBag& diagnostics, const SyntaxTree& tree)
+void TextWriter::WriteDiagnostics(DiagnosticBag& diagnostics)
 {
-	for (const auto& diag : diagnostics.SortBySpanAscending())
+	auto selector = [](const auto& a, const auto& b)
 	{
-		auto lineIndex = tree.Text().GetLineIndex(diag.Span().Start());
-		auto lineNumber = lineIndex + 1;
-		auto& line = tree.Text().Lines()[lineIndex];
-		auto character = diag.Span().Start() - line.Start() + 1;
+		if (a.Location().FileName() == b.Location().FileName())
+		{
+			if (a.Location().Span().Start() == b.Location().Span().Start())
+				return a.Location().Span().Length() < b.Location().Span().Length();
+			else
+				return a.Location().Span().Start() < b.Location().Span().Start();
+		} else
+		{
+			return a.Location().FileName() < b.Location().FileName();
+		}
+	};
+
+	for (const auto& diag : diagnostics.SortBy(selector))
+	{
+		auto text = diag.Location().Text();
+		auto fileName = diag.Location().FileName();
+		auto startLine = diag.Location().StartLine() + 1;
+		auto startCharacter = diag.Location().StartCharacter() + 1;
+		auto endLine = diag.Location().EndLine() + 1;
+		auto endCharacter = diag.Location().EndCharacter() + 1;
+
+		auto span = diag.Location().Span();
+		auto lineIndex = text.GetLineIndex(span.Start());
+		auto line = text.Lines()[lineIndex];
 		_out << '\n';
 
 		MCF::SetConsoleColor(MCF::ConsoleColor::DarkRed);
-		_out << "(" << lineNumber << ", " << character << ") ";
-		_out << diag.Message() << '\n';
+		_out << fileName << "(" << startLine << "," << startCharacter << ','
+			<< endLine << ',' << endCharacter << "): ";
+		_out << diag.ToString() << '\n';
 		MCF::ResetConsoleColor();
 
-		auto prefixSpan = MCF::TextSpan::FromBounds(line.Start(), diag.Span().Start());
-		auto suffixSpan = MCF::TextSpan::FromBounds(diag.Span().End(), line.End());
+		auto prefixSpan = MCF::TextSpan::FromBounds(line.Start(), span.Start());
+		auto suffixSpan = MCF::TextSpan::FromBounds(span.End(), line.End());
 
-		auto prefix = tree.Text().ToString(prefixSpan);
-		auto error = tree.Text().ToString(diag.Span());
-		auto suffix = tree.Text().ToString(suffixSpan);
+		auto prefix = text.ToString(prefixSpan);
+		auto error = text.ToString(span);
+		auto suffix = text.ToString(suffixSpan);
 		_out << "    " << prefix;
 
 		MCF::SetConsoleColor(MCF::ConsoleColor::DarkRed);

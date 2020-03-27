@@ -40,7 +40,7 @@ public:
 	void WriteSpace();
 	void WritePunctuation(const SyntaxKind& kind);
 	void WritePunctuation(string_view text);
-	MCF_API void WriteDiagnostics(DiagnosticBag& diagnostics, const SyntaxTree& tree);
+	MCF_API void WriteDiagnostics(DiagnosticBag& diagnostics);
 };
 
 class MCF_API IndentedTextWriter final :public TextWriter

@@ -1,6 +1,5 @@
 #include "Diagnostic.h"
 
-#include <algorithm>
 #include <stdexcept>
 
 #include "helpers.h"
@@ -9,22 +8,9 @@
 
 namespace MCF {
 
-void DiagnosticBag::Report(const TextSpan& span, const string& message)
+void DiagnosticBag::Report(TextLocation location, string message)
 {
-	_diagnostics.emplace_back(span, message);
-}
-
-const DiagnosticBag& DiagnosticBag::SortBySpanAscending()
-{
-	std::sort(_diagnostics.begin(), _diagnostics.end(),
-		[](const auto& a, const auto& b)
-		{
-			if (a.Span().Start() == b.Span().Start())
-				return a.Span().End() < b.Span().End();
-			else
-				return a.Span().Start() < b.Span().Start();
-		});
-	return *this;
+	_diagnostics.emplace_back(std::move(location), std::move(message));
 }
 
 const Diagnostic& DiagnosticBag::operator[](size_t idx) const
@@ -58,182 +44,182 @@ void DiagnosticBag::AddRange(DiagnosticBag& other)
 		make_move_iterator(other._diagnostics.end()));
 }
 
-void DiagnosticBag::ReportInvalidNumber(const TextSpan& span,
+void DiagnosticBag::ReportInvalidNumber(TextLocation location,
 	string_view text, const TypeSymbol& type)
 {
 	auto message = BuildStringFrom("The number ", text, " is not valid ", type.ToString());
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportBadCharacter(size_t position, char character)
+void DiagnosticBag::ReportBadCharacter(TextLocation location, char character)
 {
 	string message{ "Bad character in input: " };
 	message.append(&character);
-	Report(TextSpan(position, 1), message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportUnterminatedString(const TextSpan& span)
+void DiagnosticBag::ReportUnterminatedString(TextLocation location)
 {
 	string message{ "Unterminated string literal." };
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportUnexpectedToken(const TextSpan& span,
+void DiagnosticBag::ReportUnexpectedToken(TextLocation location,
 	SyntaxKind actualKind, SyntaxKind expectedKind)
 {
 	auto message = BuildStringFrom("Unexpected token <", GetSyntaxKindName(actualKind),
 		">, expected <", GetSyntaxKindName(expectedKind), ">.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportUndefinedUnaryOperator(const TextSpan& span,
+void DiagnosticBag::ReportUndefinedUnaryOperator(TextLocation location,
 	string_view operatorText, const TypeSymbol& operandType)
 {
 	auto message = BuildStringFrom("Unary operator '", operatorText, "' is not defined for type '"
 		, operandType.ToString(), "'.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportUndefinedBinaryOperator(const TextSpan& span,
+void DiagnosticBag::ReportUndefinedBinaryOperator(TextLocation location,
 	string_view operatorText, const TypeSymbol& leftType, const TypeSymbol& rightType)
 {
 	auto message = BuildStringFrom("Binary operator '", operatorText, "' is not defined for types '"
 		, leftType.ToString(), "' and '", rightType.ToString(), "'.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportUndefinedVariable(const TextSpan& span, string_view name)
+void DiagnosticBag::ReportUndefinedVariable(TextLocation location, string_view name)
 {
 	auto message = BuildStringFrom("Variable '", name, "' doesn't exist.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportNotAVariable(const TextSpan& span, string_view name)
+void DiagnosticBag::ReportNotAVariable(TextLocation location, string_view name)
 {
 	auto message = BuildStringFrom('\'', name, "' is not a variable.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportUndefinedType(const TextSpan& span, string_view name)
+void DiagnosticBag::ReportUndefinedType(TextLocation location, string_view name)
 {
 	auto message = BuildStringFrom("Type '", name, "' doesn't exist.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportCannotConvert(const TextSpan& span,
+void DiagnosticBag::ReportCannotConvert(TextLocation location,
 	const TypeSymbol& fromType, const TypeSymbol& toType)
 {
 	string message("Cannot convert type '");
 	message += fromType.ToString() + "' to '" + toType.ToString() + "'.";
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportCannotConvertImplicitly(const TextSpan& span,
+void DiagnosticBag::ReportCannotConvertImplicitly(TextLocation location,
 	const TypeSymbol& fromType, const TypeSymbol& toType)
 {
 	string message("Cannot convert type '");
 	message += fromType.ToString() + "' to '" + toType.ToString() + "' implicitly.";
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportSymbolAlreadyDeclared(const TextSpan& span,
+void DiagnosticBag::ReportSymbolAlreadyDeclared(TextLocation location,
 	string_view name)
 {
 	auto message = BuildStringFrom("Variable '", name, "' is already declared.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportCannotAssign(const TextSpan& span, string_view name)
+void DiagnosticBag::ReportCannotAssign(TextLocation location, string_view name)
 {
 	auto message = BuildStringFrom("Variable '", name, "' is read-only; cannot be assigned to.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportUndefinedFunction(const TextSpan& span,
+void DiagnosticBag::ReportUndefinedFunction(TextLocation location,
 	string_view name)
 {
 	auto message = BuildStringFrom("Function '", name, "' doesn't exist.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportNotAFunction(const TextSpan& span, string_view name)
+void DiagnosticBag::ReportNotAFunction(TextLocation location, string_view name)
 {
 	auto message = BuildStringFrom('\'', name, "' is not a function.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportParameterAlreadyDeclared(const TextSpan& span, string_view name)
+void DiagnosticBag::ReportParameterAlreadyDeclared(TextLocation location, string_view name)
 {
 	auto message = BuildStringFrom("A parameter with name '", name, "' already exists.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportWrongArgumentCount(const TextSpan& span,
+void DiagnosticBag::ReportWrongArgumentCount(TextLocation location,
 	string_view name, size_t expectedCount, size_t actualCount)
 {
 	auto message = BuildStringFrom("Function '", name, "' requires ", std::to_string(expectedCount)
 		, " arguments but was given ", actualCount, ".");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportWrongArgumentType(const TextSpan& span, string_view name,
+void DiagnosticBag::ReportWrongArgumentType(TextLocation location, string_view name,
 	const TypeSymbol& expectedType, const TypeSymbol& actualType)
 {
 	auto message = BuildStringFrom("Parameter '", name, "' requires a value of type '", expectedType.ToString()
 		, "' but was given '", actualType.ToString(), "'.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportExpressionMustHaveValue(const TextSpan& span)
+void DiagnosticBag::ReportExpressionMustHaveValue(TextLocation location)
 {
 	string message("Expression must have a value.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportInvalidBreakOrContinue(const TextSpan& span,
+void DiagnosticBag::ReportInvalidBreakOrContinue(TextLocation location,
 	string_view text)
 {
 	auto message = BuildStringFrom("The keyword '", text, "' can only be used inside of loops.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(const TextSpan& span,
+void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(TextLocation location,
 	string_view operatorText, SyntaxKind kind)
 {
-	std::stringstream message{ "Operator '" };
-	message << operatorText << "' is not defined for expression '" << GetSyntaxKindName(kind) << "'.";
-	Report(span, message.str());
+	auto message = BuildStringFrom("Operator '", operatorText, 
+		"' is not defined for expression '", GetSyntaxKindName(kind), "'.");
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportAllPathsMustReturn(const TextSpan& span)
+void DiagnosticBag::ReportAllPathsMustReturn(TextLocation location)
 {
 	string message = "Not all code paths return a value.";
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportInvalidReturn(const TextSpan& span)
+void DiagnosticBag::ReportInvalidReturn(TextLocation location)
 {
 	string message = "The keyword 'return' can only be used inside of functions.";
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportInvalidReturnExpression(const TextSpan& span, string_view funcName)
+void DiagnosticBag::ReportInvalidReturnExpression(TextLocation location, string_view funcName)
 {
 	auto message = BuildStringFrom("Function '", funcName, "' does not return a value.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportMissingReturnExpression(const TextSpan& span, const TypeSymbol& returnType)
+void DiagnosticBag::ReportMissingReturnExpression(TextLocation location, const TypeSymbol& returnType)
 {
 	auto message = BuildStringFrom("An expression of type '", returnType.ToString(), "' is expected.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportVariableNotSupportPostfixOperator(const TextSpan& span,
+void DiagnosticBag::ReportVariableNotSupportPostfixOperator(TextLocation location,
 	string_view operatorText, const TypeSymbol& variableType)
 {
 	auto message = BuildStringFrom("Operator '", operatorText, "' is not defined for type '", variableType.ToString(), "'.");
-	Report(span, message);
+	Report(std::move(location), std::move(message));
 }
 
 DiagnosticBag::iterator::iterator(size_t pos, const DiagnosticBag& bag)

@@ -3,12 +3,14 @@
 #include <cctype>
 
 #include "Diagnostic.h"
+#include "Parsing.h"
 #include "SyntaxToken.h"
 
 namespace MCF {
 
-Lexer::Lexer(const SourceText& text)
-	:_text(text), _diagnostics(make_unique<DiagnosticBag>()),
+Lexer::Lexer(const SyntaxTree& tree)
+	:_tree(tree), _text(tree.Text()),
+	_diagnostics(make_unique<DiagnosticBag>()),
 	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(NullValue)
 {
 }
@@ -183,7 +185,9 @@ SyntaxToken Lexer::Lex()
 				ReadWhiteSpace();
 			else
 			{
-				_diagnostics->ReportBadCharacter(_position, character);
+				auto span = TextSpan(_position, 1);
+				auto location = TextLocation(_text, std::move(span));
+				_diagnostics->ReportBadCharacter(std::move(location), character);
 				Next();
 			}
 			break;
@@ -193,7 +197,7 @@ SyntaxToken Lexer::Lex()
 	if (text.empty())
 		text = _text.ToString(_start, length);
 
-	return SyntaxToken(_kind, _start, text, _value);
+	return SyntaxToken(_tree, _kind, _start, text, _value);
 }
 
 void Lexer::ReadString()
@@ -210,7 +214,8 @@ void Lexer::ReadString()
 			case '\0': case '\r': case '\n':
 			{
 				auto span = TextSpan(_start, 1);
-				_diagnostics->ReportUnterminatedString(span);
+				auto location = TextLocation(_text, std::move(span));
+				_diagnostics->ReportUnterminatedString(std::move(location));
 				done = true;
 				break;
 			}
@@ -259,7 +264,9 @@ void Lexer::ReadNumberToken()
 		_kind = SyntaxKind::NumberToken;
 	} catch (...)
 	{
-		_diagnostics->ReportInvalidNumber(TextSpan(_start, length), text, GetTypeSymbol(TypeEnum::Int));
+		auto span = TextSpan(_start, length);
+		_diagnostics->ReportInvalidNumber(TextLocation(_text, std::move(span)),
+			text, GetTypeSymbol(TypeEnum::Int));
 	}
 }
 

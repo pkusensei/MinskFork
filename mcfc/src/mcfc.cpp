@@ -37,7 +37,7 @@ int main(int argc, char** argv)
 	} else
 	{
 		auto writer = MCF::IndentedTextWriter(std::cerr);
-		writer.WriteDiagnostics(*result.Diagnostics(), *compilation.Syntax());
+		writer.WriteDiagnostics(*result.Diagnostics());
 	}
 
 }

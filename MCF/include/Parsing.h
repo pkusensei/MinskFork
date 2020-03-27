@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <optional>
 
 #include "SyntaxStatements.h"
@@ -17,6 +18,11 @@ class SourceText;
 
 class MemberSyntax :public SyntaxNode
 {
+protected:
+	explicit MemberSyntax(const SyntaxTree& tree)
+		:SyntaxNode(tree)
+	{
+	}
 };
 
 class ParameterSyntax final :public SyntaxNode
@@ -26,8 +32,10 @@ private:
 	TypeClauseSyntax _type;
 
 public:
-	ParameterSyntax(const SyntaxToken& identifier, const TypeClauseSyntax& type)
-		:_identifier(identifier), _type(type)
+	ParameterSyntax(const SyntaxTree& tree,
+		SyntaxToken identifier, TypeClauseSyntax type)
+		:SyntaxNode(tree),
+		_identifier(std::move(identifier)), _type(std::move(type))
 	{
 	}
 
@@ -39,7 +47,7 @@ public:
 	constexpr const TypeClauseSyntax& Type()const noexcept { return _type; }
 };
 
-class FunctionDeclarationSyntax :public MemberSyntax
+class FunctionDeclarationSyntax final :public MemberSyntax
 {
 private:
 	SyntaxToken _funcKeyword;
@@ -51,15 +59,18 @@ private:
 	unique_ptr<BlockStatementSyntax> _body;
 
 public:
-	FunctionDeclarationSyntax(const SyntaxToken& funcKeyword, const SyntaxToken& identifier,
-		const SyntaxToken& openParenthesisToken,
-		SeparatedSyntaxList<ParameterSyntax>& params,
-		const SyntaxToken& closeParenthesisToken,
-		const std::optional<TypeClauseSyntax>& type,
-		unique_ptr<BlockStatementSyntax>& body)
-		:_funcKeyword(funcKeyword), _identifier(identifier), _openParenthesisToken(openParenthesisToken),
-		_parameters(std::move(params)), _closeParenthesisToken(closeParenthesisToken),
-		_type(type), _body(std::move(body))
+	FunctionDeclarationSyntax(const SyntaxTree& tree, SyntaxToken funcKeyword, SyntaxToken identifier,
+		SyntaxToken openParenthesisToken,
+		SeparatedSyntaxList<ParameterSyntax> params,
+		SyntaxToken closeParenthesisToken,
+		std::optional<TypeClauseSyntax> type,
+		unique_ptr<BlockStatementSyntax> body)
+		:MemberSyntax(tree),
+		_funcKeyword(std::move(funcKeyword)), _identifier(std::move(identifier)),
+		_openParenthesisToken(std::move(openParenthesisToken)),
+		_parameters(std::move(params)),
+		_closeParenthesisToken(std::move(closeParenthesisToken)),
+		_type(std::move(type)), _body(std::move(body))
 	{
 	}
 
@@ -82,8 +93,9 @@ private:
 	unique_ptr<StatementSyntax> _statement;
 
 public:
-	explicit GlobalStatementSyntax(unique_ptr<StatementSyntax>& statement)
-		:_statement(std::move(statement))
+	GlobalStatementSyntax(const SyntaxTree& tree, unique_ptr<StatementSyntax> statement)
+		:MemberSyntax(tree),
+		_statement(std::move(statement))
 	{
 	}
 
@@ -101,9 +113,10 @@ private:
 	SyntaxToken _endOfFileToken;
 
 public:
-	CompilationUnitSyntax(vector<unique_ptr<MemberSyntax>>& members,
-		const SyntaxToken& endOfFile)
-		:_members(std::move(members)), _endOfFileToken(endOfFile)
+	CompilationUnitSyntax(const SyntaxTree& tree, vector<unique_ptr<MemberSyntax>> members,
+		SyntaxToken endOfFile)
+		:SyntaxNode(tree),
+		_members(std::move(members)), _endOfFileToken(std::move(endOfFile))
 	{
 	}
 
@@ -118,7 +131,8 @@ public:
 class Parser final
 {
 private:
-	const SourceText* _text;
+	const SyntaxTree& _tree;
+	const SourceText& _text;
 	vector<SyntaxToken> _tokens;
 	size_t _position;
 	unique_ptr<DiagnosticBag> _diagnostics;
@@ -167,21 +181,36 @@ private:
 	SeparatedSyntaxList<ExpressionSyntax> ParseArguments();
 
 public:
-	explicit Parser(const SourceText& text);
+	explicit Parser(const SyntaxTree& tree);
 
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
+	unique_ptr<DiagnosticBag> FetchDiagnostics() noexcept { return std::move(_diagnostics); }
 	unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
 };
 
 class MCF_API SyntaxTree final
 {
 private:
+
 	unique_ptr<SourceText> _text;
 	unique_ptr<DiagnosticBag> _diagnostics;
 	unique_ptr<CompilationUnitSyntax> _root;
 
+	// HACK
+	// this is very hacky
+	template<typename ParseHandle,
+		typename = std::enable_if_t<std::is_invocable_v<ParseHandle, const SyntaxTree&>>>
+		SyntaxTree(unique_ptr<SourceText> text, ParseHandle handle)
+		:_text(std::move(text)), _diagnostics(nullptr)
+	{
+		auto [root, diag] = handle(*this);
+		_root = std::move(root);
+		_diagnostics = std::move(diag);
+	}
+
+	static auto ParseTree(const SyntaxTree&)->
+		std::pair<unique_ptr<CompilationUnitSyntax>, unique_ptr<DiagnosticBag>>;
 public:
-	explicit SyntaxTree(unique_ptr<SourceText>& text);
 
 	SyntaxTree(SyntaxTree&& other);
 	SyntaxTree& operator=(SyntaxTree&& other);
@@ -192,15 +221,15 @@ public:
 	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics.get(); }
 
 	static unique_ptr<SyntaxTree> Parse(string_view text);
-	static unique_ptr<SyntaxTree> Parse(unique_ptr<SourceText>& text);
-	static std::pair<vector<SyntaxToken>, unique_ptr<SourceText>>
+	static unique_ptr<SyntaxTree> Parse(unique_ptr<SourceText> text);
+	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 		ParseTokens(string_view text);
-	static std::pair<vector<SyntaxToken>, unique_ptr<SourceText>>
+	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 		ParseTokens(string_view text, DiagnosticBag& diagnostics);
-	static std::pair<vector<SyntaxToken>, unique_ptr<SourceText>>
-		ParseTokens(unique_ptr<SourceText>& text);
-	static std::pair<vector<SyntaxToken>, unique_ptr<SourceText>>
-		ParseTokens(unique_ptr<SourceText>& text, DiagnosticBag& diagnostics);
+	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
+		ParseTokens(unique_ptr<SourceText> text);
+	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
+		ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics);
 
 };
 

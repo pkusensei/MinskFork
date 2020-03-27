@@ -6,6 +6,7 @@
 
 #include "BoundNode.h"
 #include "BoundLabel.h"
+#include "SourceText.h"
 #include "Symbols.h"
 
 namespace MCF {
@@ -220,12 +221,12 @@ private:
 
 	shared_ptr<BoundExpression> BindConversion(const ExpressionSyntax* syntax,
 		const TypeSymbol& type, bool allowExplicit = false);
-	shared_ptr<BoundExpression> BindConversion(const TextSpan& diagnosticSpan,
+	shared_ptr<BoundExpression> BindConversion(TextLocation diagLocation,
 		const shared_ptr<BoundExpression>& syntax,
 		const TypeSymbol& type, bool allowExplicit = false);
 	shared_ptr<VariableSymbol> BindVariableDeclaration(const SyntaxToken& identifier,
 		bool isReadOnly, const TypeSymbol& type);
-	std::optional<shared_ptr<VariableSymbol>> BindVariableReference(string_view name, const TextSpan& span);
+	std::optional<shared_ptr<VariableSymbol>> BindVariableReference(const SyntaxToken& identifier);
 	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
 	std::optional<TypeSymbol> LookupType(string_view name)const;
 

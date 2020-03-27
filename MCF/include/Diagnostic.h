@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <deque>
 
 #include "SourceText.h"
@@ -18,24 +19,26 @@ class TypeSymbol;
 class Diagnostic final
 {
 private:
-	TextSpan _span;
+	TextLocation _location;
 	string _message;
 
 public:
-	Diagnostic(const TextSpan& span, const string& message)
-		:_span(span), _message(message)
+	Diagnostic(TextLocation location, string message)
+		:_location(std::move(location)), _message(std::move(message))
 	{
 	}
 
-	constexpr const TextSpan& Span() const noexcept { return _span; }
-	constexpr const string& Message() const noexcept { return _message; }
+	constexpr const TextLocation& Location() const noexcept { return _location; }
+	constexpr string_view Message() const { return _message; }
+
+	constexpr string_view ToString()const { return Message(); }
 };
 
 class MCF_API DiagnosticBag final
 {
 private:
 	std::deque<Diagnostic> _diagnostics;
-	void Report(const TextSpan& span, const string& message);
+	void Report(TextLocation location, string message);
 
 public:
 	DiagnosticBag()
@@ -45,7 +48,6 @@ public:
 
 	size_t size() const noexcept { return _diagnostics.size(); }
 	bool empty()const noexcept { return _diagnostics.empty(); }
-	const DiagnosticBag& SortBySpanAscending();
 
 	class iterator;
 	const Diagnostic& operator[](size_t idx) const;
@@ -54,46 +56,54 @@ public:
 
 	void AddRangeFront(DiagnosticBag& other);
 	void AddRange(DiagnosticBag& other);
-	void ReportInvalidNumber(const TextSpan& span, string_view text, const TypeSymbol& type);
-	void ReportBadCharacter(size_t position, char character);
-	void ReportUnterminatedString(const TextSpan& span);
-	void ReportUnexpectedToken(const TextSpan& span, SyntaxKind actualKind,
+	void ReportInvalidNumber(TextLocation location, string_view text, const TypeSymbol& type);
+	void ReportBadCharacter(TextLocation location, char character);
+	void ReportUnterminatedString(TextLocation location);
+	void ReportUnexpectedToken(TextLocation location, SyntaxKind actualKind,
 		SyntaxKind expectedKind);
-	void ReportUndefinedUnaryOperator(const TextSpan& span, string_view operatorText,
+	void ReportUndefinedUnaryOperator(TextLocation location, string_view operatorText,
 		const TypeSymbol& operandType);
-	void ReportUndefinedBinaryOperator(const TextSpan& span, string_view operatorText,
+	void ReportUndefinedBinaryOperator(TextLocation location, string_view operatorText,
 		const TypeSymbol& leftType, const TypeSymbol& rightType);
-	void ReportUndefinedVariable(const TextSpan& span, string_view name);
-	void ReportNotAVariable(const TextSpan& span, string_view name);
-	void ReportUndefinedType(const TextSpan& span, string_view name);
-	void ReportCannotConvert(const TextSpan& span, const TypeSymbol& fromType,
+	void ReportUndefinedVariable(TextLocation location, string_view name);
+	void ReportNotAVariable(TextLocation location, string_view name);
+	void ReportUndefinedType(TextLocation location, string_view name);
+	void ReportCannotConvert(TextLocation location, const TypeSymbol& fromType,
 		const TypeSymbol& toType);
-	void ReportCannotConvertImplicitly(const TextSpan& span, const TypeSymbol& fromType,
+	void ReportCannotConvertImplicitly(TextLocation location, const TypeSymbol& fromType,
 		const TypeSymbol& toType);
-	void ReportSymbolAlreadyDeclared(const TextSpan& span, string_view name);
-	void ReportCannotAssign(const TextSpan& span, string_view name);
+	void ReportSymbolAlreadyDeclared(TextLocation location, string_view name);
+	void ReportCannotAssign(TextLocation location, string_view name);
 
-	void ReportUndefinedFunction(const TextSpan& span, string_view name);
-	void ReportNotAFunction(const TextSpan& span, string_view name);
-	void ReportParameterAlreadyDeclared(const TextSpan& span, string_view name);
-	void ReportWrongArgumentCount(const TextSpan& span, string_view name,
+	void ReportUndefinedFunction(TextLocation location, string_view name);
+	void ReportNotAFunction(TextLocation location, string_view name);
+	void ReportParameterAlreadyDeclared(TextLocation location, string_view name);
+	void ReportWrongArgumentCount(TextLocation location, string_view name,
 		size_t expectedCount, size_t actualCount);
-	void ReportWrongArgumentType(const TextSpan& span, string_view name,
+	void ReportWrongArgumentType(TextLocation location, string_view name,
 		const TypeSymbol& expectedType, const TypeSymbol& actualType);
-	void ReportExpressionMustHaveValue(const TextSpan& span);
-	void ReportInvalidBreakOrContinue(const TextSpan& span, string_view text);
+	void ReportExpressionMustHaveValue(TextLocation location);
+	void ReportInvalidBreakOrContinue(TextLocation location, string_view text);
 
-	void ReportExpressionNotSupportPostfixOperator(const TextSpan& span,
+	void ReportExpressionNotSupportPostfixOperator(TextLocation location,
 		string_view operatorText, SyntaxKind kind);
 
-	void ReportAllPathsMustReturn(const TextSpan& span);
-	void ReportInvalidReturn(const TextSpan& span);
-	void ReportInvalidReturnExpression(const TextSpan& span, string_view funcName);
-	void ReportMissingReturnExpression(const TextSpan& span,
+	void ReportAllPathsMustReturn(TextLocation location);
+	void ReportInvalidReturn(TextLocation location);
+	void ReportInvalidReturnExpression(TextLocation location, string_view funcName);
+	void ReportMissingReturnExpression(TextLocation location,
 		const TypeSymbol& returnType);
 
-	void ReportVariableNotSupportPostfixOperator(const TextSpan& span,
+	void ReportVariableNotSupportPostfixOperator(TextLocation location,
 		string_view operatorText, const TypeSymbol& variableType);
+
+	template<typename Cond,
+		typename = std::enable_if_t<std::is_invocable_v<Cond, const Diagnostic&, const Diagnostic&>>>
+		const DiagnosticBag& SortBy(Cond&& cond)
+	{
+		std::sort(_diagnostics.begin(), _diagnostics.end(), std::forward<Cond>(cond));
+		return *this;
+	}
 };
 
 class MCF_API DiagnosticBag::iterator

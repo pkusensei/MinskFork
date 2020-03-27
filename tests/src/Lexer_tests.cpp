@@ -53,7 +53,7 @@ TEST_CASE("Lexer lexes unterminated string", "[Lexer]")
 	CHECK(text == tokens[0].Text());
 
 	CHECK(diagnostics.size() == 1);
-	CHECK(MCF::TextSpan(0, 1) == diagnostics[0].Span());
+	CHECK(MCF::TextSpan(0, 1) == diagnostics[0].Location().Span());
 	CHECK("Unterminated string literal." == diagnostics[0].Message());
 }
 

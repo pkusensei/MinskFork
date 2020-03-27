@@ -5,6 +5,7 @@
 
 #include "helpers.h"
 #include "ConsoleHelper.h"
+#include "Parsing.h"
 #include "SourceText.h"
 
 namespace MCF {
@@ -52,6 +53,11 @@ TextSpan SyntaxNode::Span() const
 	return TextSpan::FromBounds(first.Start(), last.End());
 }
 
+TextLocation SyntaxNode::Location()const
+{
+	return TextLocation(SynTree().Text(), Span());
+}
+
 const SyntaxToken& SyntaxNode::GetLastToken() const
 {
 	auto p = dynamic_cast<const SyntaxToken*>(this);
@@ -85,7 +91,7 @@ const vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 
 SyntaxToken SyntaxToken::Clone() const
 {
-	return SyntaxToken(_kind, _position, _text, _value);
+	return SyntaxToken(SynTree(), _kind, _position, _text, _value);
 }
 
 TextSpan SyntaxToken::Span() const

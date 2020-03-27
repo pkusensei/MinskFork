@@ -88,6 +88,7 @@ class MCF_API SourceText final
 {
 private:
 	string _text;
+	string _fileName;
 	vector<TextLine> _lines;
 
 	static void AddLine(vector<TextLine>& result, const SourceText& sourceText,
@@ -95,12 +96,14 @@ private:
 	static size_t GetLineBreakWidth(string_view text, size_t position);
 	static vector<TextLine> ParseLines(const SourceText& sourceText, string_view text);
 
-	explicit SourceText(string_view text)
-		:_text(text), _lines(ParseLines(*this, _text))
+	explicit SourceText(string_view text, string_view fileName = {})
+		:_text(text), _fileName(fileName)
 	{
+		_lines = ParseLines(*this, _text);
 	}
 
 public:
+	constexpr string_view FileName()const { return _fileName; }
 	constexpr const vector<TextLine>& Lines()const { return _lines; }
 	constexpr size_t Length()const noexcept { return _text.length(); }
 	constexpr char operator[](size_t sub) const { return _text.at(sub); }
@@ -116,10 +119,45 @@ public:
 		return ToString(span.Start(), span.Length());
 	}
 
-	static unique_ptr<SourceText> From(string_view text)
+	static unique_ptr<SourceText> From(string_view text, string_view fileName = {})
 	{
-		return unique_ptr<SourceText>(new SourceText(text));
+		return unique_ptr<SourceText>(new SourceText(text, fileName));
 	}
+};
+
+class TextLocation
+{
+private:
+	std::reference_wrapper<const SourceText> _text;
+	TextSpan _span;
+
+public:
+	TextLocation(const SourceText& text, TextSpan span)
+		:_text(text), _span(std::move(span))
+	{
+	}
+
+	constexpr const SourceText& Text()const noexcept { return _text; }
+	constexpr const TextSpan& Span()const noexcept { return _span; }
+
+	constexpr string_view FileName()const { return Text().FileName(); }
+	constexpr size_t StartLine()const noexcept
+	{
+		return Text().GetLineIndex(Span().Start());
+	}
+	constexpr size_t EndLine()const noexcept
+	{
+		return Text().GetLineIndex(Span().End());
+	}
+	constexpr size_t StartCharacter() const
+	{
+		return Span().Start() - Text().Lines()[StartLine()].Start();
+	}
+	constexpr size_t EndCharacter() const
+	{
+		return Span().End() - Text().Lines()[EndLine()].End();
+	}
+
 };
 
 }//MCF
