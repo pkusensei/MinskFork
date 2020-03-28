@@ -7,6 +7,8 @@
 #include "IO.h"
 #include "Parsing.h"
 
+namespace fs = std::filesystem;
+
 int main(int argc, char** argv)
 {
 	if (argc == 1)
@@ -14,19 +16,27 @@ int main(int argc, char** argv)
 		std::cerr << "usage: mcfc <source-paths>" << '\n';
 		return 0;
 	}
-	if (argc > 2)
+
+	auto trees = std::vector<std::unique_ptr<MCF::SyntaxTree>>();
+	auto hasError = false;
+
+	for (int i = 1; i < argc; ++i)
 	{
-		std::cout << "error: only one path supported right now" << '\n';
-		return 0;
+		auto file = argv[1];
+		auto path = fs::path(file);
+		if (!fs::exists(path))
+		{
+			std::cerr << "error: file '" << path << "' doesn't exist.\n";
+			hasError = true;
+			continue;
+		} else
+		{
+			auto tree = MCF::SyntaxTree::Load(path);
+			trees.push_back(std::move(tree));
+		}
 	}
 
-	auto path = argv[1];
-	auto file = std::ifstream(path);
-	auto ss = std::stringstream();
-	ss << file.rdbuf();
-
-	auto tree = MCF::SyntaxTree::Parse(ss.str());
-	auto compilation = MCF::Compilation(tree);
+	auto compilation = MCF::Compilation(std::move(trees));
 	MCF::VarMap variables;
 	auto result = compilation.Evaluate(variables);
 

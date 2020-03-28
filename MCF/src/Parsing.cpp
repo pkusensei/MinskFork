@@ -1,6 +1,7 @@
 #include "Parsing.h"
 
-#include <stdexcept>
+#include <fstream>
+//#include <stdexcept>
 
 #include "Diagnostic.h"
 #include "helpers.h"
@@ -8,6 +9,11 @@
 #include "ReflectionHelper.h"
 
 namespace MCF {
+
+const vector<const SyntaxNode*> UsingDirective::GetChildren() const
+{
+	return MakeVecOfRaw<const SyntaxNode>(_keyword, _fileName);
+}
 
 const vector<const SyntaxNode*> ParameterSyntax::GetChildren() const
 {
@@ -84,7 +90,7 @@ const SyntaxToken& Parser::NextToken()
 	return current; // NOTE to clone or not to clone
 }
 
-SyntaxToken Parser::MatchToken(const SyntaxKind& kind)
+SyntaxToken Parser::MatchToken(SyntaxKind kind)
 {
 	auto& current = Current();
 	if (current.Kind() == kind)
@@ -112,6 +118,8 @@ unique_ptr<MemberSyntax> Parser::ParseMember()
 {
 	if (Current().Kind() == SyntaxKind::FunctionKeyword)
 		return ParseFunctionDeclaration();
+	else if (Current().Kind() == SyntaxKind::UsingKeyworld)
+		return ParseUsingDirective();
 	return ParseGlobalStatement();
 }
 
@@ -166,6 +174,26 @@ unique_ptr<ParameterSyntax> Parser::ParseParameter()
 unique_ptr<MemberSyntax> Parser::ParseGlobalStatement()
 {
 	return make_unique<GlobalStatementSyntax>(_tree, ParseStatement());
+}
+
+unique_ptr<MemberSyntax> Parser::ParseUsingDirective()
+{
+	auto keyword = MatchToken(SyntaxKind::UsingKeyworld);
+	auto fileNameToken = MatchToken(SyntaxKind::StringToken);
+
+	auto filename = fileNameToken.Value().GetValue<string>();
+	auto current = _tree.Text().FilePath();
+	current.replace_filename(filename);
+	if (fs::exists(current))
+	{
+		auto tree = SyntaxTree::Load(current);
+		_usings.push_back(std::move(tree));
+	} else
+	{
+		_diagnostics->ReportSourceFileNotExist(fileNameToken.Location(), filename);
+	}
+
+	return make_unique<UsingDirective>(_tree, std::move(keyword), std::move(fileNameToken));
 }
 
 unique_ptr<StatementSyntax> Parser::ParseStatement()
@@ -529,17 +557,28 @@ SyntaxTree& SyntaxTree::operator=(SyntaxTree&& other) = default;
 SyntaxTree::~SyntaxTree() = default;
 
 auto SyntaxTree::ParseTree(const SyntaxTree& tree)->
-std::pair<unique_ptr<CompilationUnitSyntax>, unique_ptr<DiagnosticBag>>
+std::tuple<unique_ptr<CompilationUnitSyntax>, unique_ptr<DiagnosticBag>,
+	vector<unique_ptr<SyntaxTree>>>
 {
 	auto parser = Parser(tree);
 	auto root = parser.ParseCompilationUnit();
 	auto diag = parser.FetchDiagnostics();
-	return { std::move(root),std::move(diag) };
+	auto usings = parser.FetchUsings();
+	return { std::move(root),std::move(diag), std::move(usings) };
+}
+
+unique_ptr<SyntaxTree> SyntaxTree::Load(fs::path path)
+{
+	auto file = std::ifstream(path);
+	auto ss = std::stringstream();
+	ss << file.rdbuf();
+	auto sourceText = SourceText::From(ss.str(), path);
+	return Parse(std::move(sourceText));
 }
 
 unique_ptr<SyntaxTree> SyntaxTree::Parse(string_view text)
 {
-	auto sourceText = SourceText::From(text);
+	auto sourceText = SourceText::From(string(text));
 	return Parse(std::move(sourceText));
 }
 
@@ -551,14 +590,14 @@ unique_ptr<SyntaxTree> SyntaxTree::Parse(unique_ptr<SourceText> text)
 std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 SyntaxTree::ParseTokens(string_view text)
 {
-	auto source = SourceText::From(text);
+	auto source = SourceText::From(string(text));
 	return ParseTokens(std::move(source));
 }
 
 std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 SyntaxTree::ParseTokens(string_view text, DiagnosticBag& diagnostics)
 {
-	auto source = SourceText::From(text);
+	auto source = SourceText::From(string(text));
 	return ParseTokens(std::move(source), diagnostics);
 }
 
@@ -589,12 +628,30 @@ SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics)
 			}
 			tokens.push_back(std::move(token));
 		}
-		return std::make_pair(std::move(root), lexer.FetchDiagnostics());
+		return std::make_tuple(std::move(root), lexer.FetchDiagnostics(),
+			vector<unique_ptr<SyntaxTree>>());
 	};
 
 	auto tree = unique_ptr<SyntaxTree>(new SyntaxTree(std::move(text), parseTokens));
 	diagnostics.AddRange(*tree->Diagnostics());
 	return { tokens, std::move(tree) };
+}
+
+vector<unique_ptr<SyntaxTree>> SyntaxTree::Flatten(unique_ptr<SyntaxTree> tree)
+{
+
+	auto result = vector<unique_ptr<SyntaxTree>>();
+
+	for (auto& u : tree->_usings)
+	{
+		auto trees = Flatten(std::move(u));
+		result.insert(result.end(), std::make_move_iterator(trees.begin()),
+			std::make_move_iterator(trees.end()));
+	}
+
+	result.push_back(std::move(tree));
+
+	return result;
 }
 
 }//MCF

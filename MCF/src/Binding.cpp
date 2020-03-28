@@ -690,22 +690,28 @@ unique_ptr<BoundScope> Binder::CreateRootScope()
 }
 
 unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* previous,
-	const CompilationUnitSyntax* syntax)
+	const vector<const SyntaxTree*>& synTrees)
 {
 	auto parentScope = CreateParentScope(previous);
 	auto binder = Binder(parentScope, nullptr);
 	auto statements = vector<shared_ptr<BoundStatement>>();
-	for (const auto& it : syntax->Members())
+
+	for (const auto& tree : synTrees)
 	{
-		auto func = dynamic_cast<FunctionDeclarationSyntax*>(it.get());
-		auto globalStatement = dynamic_cast<GlobalStatementSyntax*>(it.get());
-		if (func)
-			binder.BindFunctionDeclaration(func);
-		if (globalStatement)
+		auto syntax = tree->Root();
+		for (const auto& it : syntax->Members())
 		{
-			statements.emplace_back(binder.BindStatement(globalStatement->Statement()));
+			auto func = dynamic_cast<FunctionDeclarationSyntax*>(it.get());
+			auto globalStatement = dynamic_cast<GlobalStatementSyntax*>(it.get());
+			if (func)
+				binder.BindFunctionDeclaration(func);
+			if (globalStatement)
+			{
+				statements.emplace_back(binder.BindStatement(globalStatement->Statement()));
+			}
 		}
 	}
+
 	auto functions = binder._scope->GetDeclaredFunctions();
 	auto variables = binder._scope->GetDeclaredVariables();
 	auto diagnostics = binder.Diagnostics();

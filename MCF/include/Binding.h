@@ -13,6 +13,7 @@ namespace MCF {
 
 class DiagnosticBag;
 class TextSpan;
+class SyntaxTree;
 
 class SyntaxToken;
 class ExpressionSyntax;
@@ -239,7 +240,7 @@ public:
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
 
 	static unique_ptr<BoundGlobalScope> BindGlobalScope(const BoundGlobalScope* previous,
-		const CompilationUnitSyntax* syntax);
+		const vector<const SyntaxTree*>& synTrees);
 	static unique_ptr<BoundProgram> BindProgram(const BoundGlobalScope* globalScope);
 };
 

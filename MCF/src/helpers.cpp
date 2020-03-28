@@ -1,7 +1,6 @@
 #include "helpers.h"
 
 #include <algorithm>
-#include <cctype>
 #include <sstream>
 
 namespace MCF {

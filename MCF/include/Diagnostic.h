@@ -96,6 +96,7 @@ public:
 
 	void ReportVariableNotSupportPostfixOperator(TextLocation location,
 		string_view operatorText, const TypeSymbol& variableType);
+	void ReportSourceFileNotExist(TextLocation, string_view fileName);
 
 	template<typename Cond,
 		typename = std::enable_if_t<std::is_invocable_v<Cond, const Diagnostic&, const Diagnostic&>>>

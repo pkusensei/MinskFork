@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cctype>
 #include <sstream>
 
 #include "common.h"
@@ -27,8 +28,9 @@ string BuildStringFrom(Args&&... args)
 template<typename T>
 bool StringIsBlank(const T& text)
 {
+	using It = decltype(text.cbegin()); // NOTE just why? 
 	return text.empty() ||
-		std::all_of(text.cbegin(), text.cend(), std::isspace);
+		std::all_of<It, int(*)(int)>(text.cbegin(), text.cend(), std::isspace);
 }
 
 template<typename It>

@@ -349,26 +349,55 @@ void Evaluator::Assign(const shared_ptr<VariableSymbol>& variable, const ValueTy
 	}
 }
 
-Compilation::Compilation(unique_ptr<Compilation>& previous,
-	unique_ptr<SyntaxTree>& tree)
-	:_previous(std::move(previous)), _syntaxTree(std::move(tree)),
+Compilation::Compilation(unique_ptr<Compilation> previous,
+	vector<unique_ptr<SyntaxTree>> trees)
+	:_previous(std::move(previous)), _syntaxTrees(),
 	_globalScope(nullptr), _diagnostics(make_unique<DiagnosticBag>())
+{
+	auto vec = vector<unique_ptr<SyntaxTree>>();
+	while (!trees.empty())
+	{
+		auto tree = std::move(trees.back());
+		trees.pop_back();
+		auto flat = SyntaxTree::Flatten(std::move(tree));
+		vec.insert(vec.end(), std::make_move_iterator(flat.begin()),
+			std::make_move_iterator(flat.end()));
+	}
+	_syntaxTrees = std::move(vec);
+}
+
+Compilation::Compilation(vector<unique_ptr<SyntaxTree>> trees)
+	: Compilation(nullptr, std::move(trees))
 {
 }
 
-Compilation::Compilation(unique_ptr<SyntaxTree>& tree)
-	: _previous(nullptr), _syntaxTree(std::move(tree)),
-	_globalScope(nullptr), _diagnostics(make_unique<DiagnosticBag>())
+Compilation::Compilation(unique_ptr<Compilation> previous, unique_ptr<SyntaxTree> tree)
+	: Compilation(std::move(previous), std::vector<unique_ptr<SyntaxTree>>{})
+{
+	auto trees = SyntaxTree::Flatten(std::move(tree));
+	_syntaxTrees = std::move(trees);
+}
+
+Compilation::Compilation(unique_ptr<SyntaxTree> tree)
+	:Compilation(nullptr, std::move(tree))
 {
 }
 
 Compilation::~Compilation() = default;
 
 Compilation::Compilation(Compilation&& other) noexcept
-	:_previous(std::move(other._previous)), _syntaxTree(std::move(other._syntaxTree)),
+	:_previous(std::move(other._previous)), _syntaxTrees(std::move(other._syntaxTrees)),
 	_globalScope(std::move(other._globalScope)), _diagnostics(std::move(other._diagnostics)),
 	_mtx()
 {
+}
+
+const vector<const SyntaxTree*> Compilation::SynTrees()const noexcept
+{
+	auto result = vector<const SyntaxTree*>();
+	std::for_each(_syntaxTrees.cbegin(), _syntaxTrees.cend(),
+		[&result](const auto& tree)mutable { result.push_back(tree.get()); });
+	return result;
 }
 
 const BoundGlobalScope* Compilation::GlobalScope()
@@ -377,9 +406,9 @@ const BoundGlobalScope* Compilation::GlobalScope()
 	{
 		unique_ptr<BoundGlobalScope> tmp{ nullptr };
 		if (_previous == nullptr)
-			tmp = Binder::BindGlobalScope(nullptr, _syntaxTree->Root());
+			tmp = Binder::BindGlobalScope(nullptr, SynTrees());
 		else
-			tmp = Binder::BindGlobalScope(_previous->GlobalScope(), _syntaxTree->Root());
+			tmp = Binder::BindGlobalScope(_previous->GlobalScope(), SynTrees());
 
 		std::unique_lock<std::mutex> lock(_mtx, std::defer_lock);
 		if (lock.try_lock() && _globalScope == nullptr)
@@ -388,10 +417,12 @@ const BoundGlobalScope* Compilation::GlobalScope()
 	return _globalScope.get();
 }
 
-unique_ptr<Compilation> Compilation::ContinueWith(unique_ptr<Compilation>& previous,
-	unique_ptr<SyntaxTree>& tree)
+unique_ptr<Compilation> Compilation::ContinueWith(unique_ptr<Compilation> previous,
+	unique_ptr<SyntaxTree> tree)
 {
-	return make_unique<Compilation>(previous, tree);
+	auto vec = vector<unique_ptr<SyntaxTree>>();
+	vec.push_back(std::move(tree));
+	return make_unique<Compilation>(std::move(previous), std::move(vec));
 }
 
 EvaluationResult Compilation::Evaluate(VarMap& variables)
@@ -411,8 +442,10 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 		}
 	};
 
-	_syntaxTree->Diagnostics()->AddRange(*(GlobalScope()->Diagnostics()));
-	_diagnostics->AddRange(*_syntaxTree->Diagnostics());
+	std::for_each(_syntaxTrees.cbegin(), _syntaxTrees.cend(),
+		[this](const auto& tree) { _diagnostics->AddRange(*tree->Diagnostics()); });
+	
+	_diagnostics->AddRange(*GlobalScope()->Diagnostics());
 
 	if (!_diagnostics->empty())
 		return EvaluationResult(_diagnostics.get(), NullValue);

@@ -33,15 +33,15 @@ DiagnosticBag::iterator DiagnosticBag::end()const
 void DiagnosticBag::AddRangeFront(DiagnosticBag& other)
 {
 	_diagnostics.insert(_diagnostics.begin(),
-		make_move_iterator(other._diagnostics.begin()),
-		make_move_iterator(other._diagnostics.end()));
+		std::make_move_iterator(other._diagnostics.begin()),
+		std::make_move_iterator(other._diagnostics.end()));
 }
 
 void DiagnosticBag::AddRange(DiagnosticBag& other)
 {
 	_diagnostics.insert(_diagnostics.end(),
-		make_move_iterator(other._diagnostics.begin()),
-		make_move_iterator(other._diagnostics.end()));
+		std::make_move_iterator(other._diagnostics.begin()),
+		std::make_move_iterator(other._diagnostics.end()));
 }
 
 void DiagnosticBag::ReportInvalidNumber(TextLocation location,
@@ -186,7 +186,7 @@ void DiagnosticBag::ReportInvalidBreakOrContinue(TextLocation location,
 void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(TextLocation location,
 	string_view operatorText, SyntaxKind kind)
 {
-	auto message = BuildStringFrom("Operator '", operatorText, 
+	auto message = BuildStringFrom("Operator '", operatorText,
 		"' is not defined for expression '", GetSyntaxKindName(kind), "'.");
 	Report(std::move(location), std::move(message));
 }
@@ -221,6 +221,13 @@ void DiagnosticBag::ReportVariableNotSupportPostfixOperator(TextLocation locatio
 	auto message = BuildStringFrom("Operator '", operatorText, "' is not defined for type '", variableType.ToString(), "'.");
 	Report(std::move(location), std::move(message));
 }
+
+void DiagnosticBag::ReportSourceFileNotExist(TextLocation location, string_view fileName)
+{
+	auto message = BuildStringFrom("File '", fileName, ", doesn't exist.");
+	Report(std::move(location), std::move(message));
+}
+
 
 DiagnosticBag::iterator::iterator(size_t pos, const DiagnosticBag& bag)
 	:_position(pos), _bag(&bag)

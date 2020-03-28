@@ -86,25 +86,28 @@ class MCF_API Compilation final
 {
 private:
 	unique_ptr<Compilation> _previous;
-	unique_ptr<SyntaxTree> _syntaxTree;
+	vector<unique_ptr<SyntaxTree>> _syntaxTrees;
 	unique_ptr<BoundGlobalScope> _globalScope;
 	unique_ptr<DiagnosticBag> _diagnostics; //NOTE one bag to rule them all
 
 	std::mutex _mtx;
 
 public:
-	Compilation(unique_ptr<Compilation>& previous, unique_ptr<SyntaxTree>& tree);
-	explicit Compilation(unique_ptr<SyntaxTree>& tree);
+	Compilation(unique_ptr<Compilation> previous, vector<unique_ptr<SyntaxTree>> trees);
+	explicit Compilation(vector<unique_ptr<SyntaxTree>> trees);
+	Compilation(unique_ptr<Compilation> previous, unique_ptr<SyntaxTree> tree);
+	explicit Compilation(unique_ptr<SyntaxTree> tree);
+
 	~Compilation();
 	Compilation(Compilation&& other) noexcept;
 	Compilation& operator=(Compilation&& other) = delete;
 
 	const Compilation* Previous()const noexcept { return _previous.get(); }
-	const SyntaxTree* Syntax()const noexcept { return _syntaxTree.get(); }
+	const vector<const SyntaxTree*> SynTrees()const noexcept;
 
 	const BoundGlobalScope* GlobalScope();
-	[[nodiscard]] static unique_ptr<Compilation> ContinueWith(unique_ptr<Compilation>& previous,
-		unique_ptr<SyntaxTree>& tree);
+	[[nodiscard]] static unique_ptr<Compilation> ContinueWith(unique_ptr<Compilation> previous,
+		unique_ptr<SyntaxTree> tree);
 
 	EvaluationResult Evaluate(VarMap& variables);
 	void EmitTree(std::ostream& out);

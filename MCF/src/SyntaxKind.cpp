@@ -108,6 +108,8 @@ string_view GetSyntaxKindName(SyntaxKind kind)
 			return "WhileKeyword";
 		case SyntaxKind::DoKeyword:
 			return "DoKeyword";
+		case SyntaxKind::UsingKeyworld:
+			return "UsingKeyword";
 
 		case SyntaxKind::CompilationUnit:
 			return "CompilationUnit";
@@ -121,6 +123,8 @@ string_view GetSyntaxKindName(SyntaxKind kind)
 			return "TypeClause";
 		case SyntaxKind::ElseClause:
 			return "ElseClause";
+		case SyntaxKind::UsingDirective:
+			return "UsingDirective";
 
 		case SyntaxKind::BlockStatement:
 			return "BlockStatement";
@@ -195,6 +199,8 @@ SyntaxKind GetKeywordKind(string_view text) noexcept
 		return SyntaxKind::WhileKeyword;
 	else if (text == "do")
 		return SyntaxKind::DoKeyword;
+	else if (text == "using")
+		return SyntaxKind::UsingKeyworld;
 	else return SyntaxKind::IdentifierToken;
 }
 
@@ -243,6 +249,7 @@ string_view GetText(SyntaxKind kind)
 		case SyntaxKind::VarKeyword: return "var";
 		case SyntaxKind::WhileKeyword: return "while";
 		case SyntaxKind::DoKeyword: return "do";
+		case SyntaxKind::UsingKeyworld: return "using";
 		default: return string_view();
 	}
 }

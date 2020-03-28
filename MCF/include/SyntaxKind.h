@@ -56,6 +56,7 @@ enum class SyntaxKind
 	VarKeyword,
 	WhileKeyword,
 	DoKeyword,
+	UsingKeyworld,
 
 	// Nodes
 	CompilationUnit,
@@ -64,6 +65,7 @@ enum class SyntaxKind
 	Parameter,
 	TypeClause,
 	ElseClause,
+	UsingDirective,
 
 	// Statements
 	BlockStatement,

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <functional>
 #include <optional>
 
@@ -13,6 +14,8 @@
 
 namespace MCF {
 
+namespace fs = std::filesystem;
+
 class DiagnosticBag;
 class SourceText;
 
@@ -23,6 +26,27 @@ protected:
 		:SyntaxNode(tree)
 	{
 	}
+};
+
+class UsingDirective final :public MemberSyntax
+{
+private:
+	SyntaxToken _keyword;
+	SyntaxToken _fileName;
+
+public:
+	UsingDirective(const SyntaxTree& tree, SyntaxToken keyword, SyntaxToken fileName)
+		:MemberSyntax(tree),
+		_keyword(std::move(keyword)), _fileName(std::move(fileName))
+	{
+	}
+
+	// Inherited via MemberSyntax
+	SyntaxKind Kind() const noexcept override { return SyntaxKind::UsingDirective; }
+	const vector<const SyntaxNode*> GetChildren() const override;
+
+	constexpr const SyntaxToken& Keyword()const noexcept { return _keyword; }
+	constexpr const SyntaxToken& FileName()const noexcept { return _fileName; }
 };
 
 class ParameterSyntax final :public SyntaxNode
@@ -137,10 +161,12 @@ private:
 	size_t _position;
 	unique_ptr<DiagnosticBag> _diagnostics;
 
+	vector<unique_ptr<SyntaxTree>> _usings;
+
 	const SyntaxToken& Peek(int offset = 0) const;
 	const SyntaxToken& Current() const;
 	const SyntaxToken& NextToken();
-	[[nodiscard]] SyntaxToken MatchToken(const SyntaxKind& kind);
+	[[nodiscard]] SyntaxToken MatchToken(SyntaxKind kind);
 
 	vector<unique_ptr<MemberSyntax>> ParseMembers();
 	unique_ptr<MemberSyntax> ParseMember();
@@ -148,6 +174,7 @@ private:
 	SeparatedSyntaxList<ParameterSyntax> ParseParameterList();
 	unique_ptr<ParameterSyntax> ParseParameter();
 	unique_ptr<MemberSyntax> ParseGlobalStatement();
+	unique_ptr<MemberSyntax> ParseUsingDirective();
 
 	unique_ptr<StatementSyntax> ParseStatement();
 	unique_ptr<BlockStatementSyntax> ParseBlockStatement();
@@ -186,6 +213,7 @@ public:
 	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
 	unique_ptr<DiagnosticBag> FetchDiagnostics() noexcept { return std::move(_diagnostics); }
 	unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
+	vector<unique_ptr<SyntaxTree>> FetchUsings()noexcept { return std::move(_usings); };
 };
 
 class MCF_API SyntaxTree final
@@ -196,6 +224,7 @@ private:
 	unique_ptr<DiagnosticBag> _diagnostics;
 	unique_ptr<CompilationUnitSyntax> _root;
 
+	vector<unique_ptr<SyntaxTree>> _usings;
 	// HACK
 	// this is very hacky
 	template<typename ParseHandle,
@@ -203,13 +232,15 @@ private:
 		SyntaxTree(unique_ptr<SourceText> text, ParseHandle handle)
 		:_text(std::move(text)), _diagnostics(nullptr)
 	{
-		auto [root, diag] = handle(*this);
+		auto [root, diag, usings] = handle(*this);
 		_root = std::move(root);
 		_diagnostics = std::move(diag);
+		_usings = std::move(usings);
 	}
 
 	static auto ParseTree(const SyntaxTree&)->
-		std::pair<unique_ptr<CompilationUnitSyntax>, unique_ptr<DiagnosticBag>>;
+		std::tuple<unique_ptr<CompilationUnitSyntax>, unique_ptr<DiagnosticBag>,
+		vector<unique_ptr<SyntaxTree>>>;
 public:
 
 	SyntaxTree(SyntaxTree&& other);
@@ -219,6 +250,8 @@ public:
 	constexpr const SourceText& Text() const { return *_text; }
 	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
 	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics.get(); }
+
+	static unique_ptr<SyntaxTree> Load(fs::path path);
 
 	static unique_ptr<SyntaxTree> Parse(string_view text);
 	static unique_ptr<SyntaxTree> Parse(unique_ptr<SourceText> text);
@@ -230,6 +263,8 @@ public:
 		ParseTokens(unique_ptr<SourceText> text);
 	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 		ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics);
+
+	static vector<unique_ptr<SyntaxTree>> Flatten(unique_ptr<SyntaxTree> tree);
 
 };
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <filesystem>
+
 #include "common.h"
 
 // To suppress annoying MSVC warnings about exporting classes/functions
@@ -9,6 +11,8 @@
 #endif // defined(_MSC_VER) && !defined(__clang__)
 
 namespace MCF {
+
+namespace fs = std::filesystem;
 
 class SourceText;
 
@@ -88,7 +92,7 @@ class MCF_API SourceText final
 {
 private:
 	string _text;
-	string _fileName;
+	fs::path _filePath;
 	vector<TextLine> _lines;
 
 	static void AddLine(vector<TextLine>& result, const SourceText& sourceText,
@@ -96,14 +100,14 @@ private:
 	static size_t GetLineBreakWidth(string_view text, size_t position);
 	static vector<TextLine> ParseLines(const SourceText& sourceText, string_view text);
 
-	explicit SourceText(string_view text, string_view fileName = {})
-		:_text(text), _fileName(fileName)
+	explicit SourceText(string text, fs::path filePath = {})
+		:_text(std::move(text)), _filePath(std::move(filePath))
 	{
 		_lines = ParseLines(*this, _text);
 	}
 
 public:
-	constexpr string_view FileName()const { return _fileName; }
+	constexpr const fs::path& FilePath()const { return _filePath; }
 	constexpr const vector<TextLine>& Lines()const { return _lines; }
 	constexpr size_t Length()const noexcept { return _text.length(); }
 	constexpr char operator[](size_t sub) const { return _text.at(sub); }
@@ -119,9 +123,9 @@ public:
 		return ToString(span.Start(), span.Length());
 	}
 
-	static unique_ptr<SourceText> From(string_view text, string_view fileName = {})
+	static unique_ptr<SourceText> From(string text, fs::path path = {})
 	{
-		return unique_ptr<SourceText>(new SourceText(text, fileName));
+		return unique_ptr<SourceText>(new SourceText(std::move(text), std::move(path)));
 	}
 };
 
@@ -140,7 +144,7 @@ public:
 	constexpr const SourceText& Text()const noexcept { return _text; }
 	constexpr const TextSpan& Span()const noexcept { return _span; }
 
-	constexpr string_view FileName()const { return Text().FileName(); }
+	constexpr const fs::path& FilePath()const { return Text().FilePath(); }
 	constexpr size_t StartLine()const noexcept
 	{
 		return Text().GetLineIndex(Span().Start());

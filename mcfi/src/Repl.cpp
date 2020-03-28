@@ -434,10 +434,11 @@ bool McfRepl::IsCompleteSubmission(const std::string & text) const
 	auto lastTwoLinesAreBlank = [&text]()
 	{
 		auto v = MCF::StringSplit(text.begin(), text.end(), NEW_LINE);
-		auto i = v.rbegin();
 		if (v.size() > 1)
+		{
+			auto i = v.crbegin();
 			return MCF::StringIsBlank(*i) && MCF::StringIsBlank(*++i);
-		else return false;
+		} else return false;
 	};
 
 	if (lastTwoLinesAreBlank()) return true;
@@ -457,11 +458,13 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 	// At the end of the day each syntax tree keeps its own copy of input string
 	auto syntaxTree = MCF::SyntaxTree::Parse(text);
 
+	auto vec = std::vector<std::unique_ptr<MCF::SyntaxTree >>();
+
 	auto compilation = _previous == nullptr ?
-		std::make_unique<MCF::Compilation>(syntaxTree)
-		: MCF::Compilation::ContinueWith(_previous, syntaxTree);
+		std::make_unique<MCF::Compilation>(std::move(syntaxTree) )
+		: MCF::Compilation::ContinueWith(std::move(_previous), std::move(syntaxTree));
 	if (_showTree)
-		compilation->Syntax()->Root()->WriteTo(std::cout);
+		compilation->SynTrees().back()->Root()->WriteTo(std::cout);
 	if (_showProgram)
 		compilation->EmitTree(std::cout);
 

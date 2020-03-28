@@ -82,7 +82,7 @@ void TextWriter::WriteDiagnostics(DiagnosticBag& diagnostics)
 {
 	auto selector = [](const auto& a, const auto& b)
 	{
-		if (a.Location().FileName() == b.Location().FileName())
+		if (a.Location().FilePath() == b.Location().FilePath())
 		{
 			if (a.Location().Span().Start() == b.Location().Span().Start())
 				return a.Location().Span().Length() < b.Location().Span().Length();
@@ -90,14 +90,14 @@ void TextWriter::WriteDiagnostics(DiagnosticBag& diagnostics)
 				return a.Location().Span().Start() < b.Location().Span().Start();
 		} else
 		{
-			return a.Location().FileName() < b.Location().FileName();
+			return a.Location().FilePath() < b.Location().FilePath();
 		}
 	};
 
 	for (const auto& diag : diagnostics.SortBy(selector))
 	{
 		auto text = diag.Location().Text();
-		auto fileName = diag.Location().FileName();
+		auto fileName = diag.Location().FilePath();
 		auto startLine = diag.Location().StartLine() + 1;
 		auto startCharacter = diag.Location().StartCharacter() + 1;
 		auto endLine = diag.Location().EndLine() + 1;
