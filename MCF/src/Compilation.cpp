@@ -16,7 +16,7 @@
 namespace MCF {
 
 Evaluator::Evaluator(unique_ptr<BoundProgram>& program, VarMap& variables)
-	: _program(std::move(program)), _globals(&variables)
+	: _program(std::move(program)), _globals(variables)
 {
 	_locals.emplace(VarMap());
 }
@@ -174,7 +174,7 @@ ValueType Evaluator::EvaluateLiteralExpression(const BoundLiteralExpression* nod
 ValueType Evaluator::EvaluateVariableExpression(const BoundVariableExpression* node)
 {
 	if (node->Variable()->Kind() == SymbolKind::GlobalVariable)
-		return _globals->at(node->Variable());
+		return _globals.at(node->Variable());
 	else
 	{
 		auto& locals = _locals.top();
@@ -341,7 +341,7 @@ ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression* nod
 void Evaluator::Assign(const shared_ptr<VariableSymbol>& variable, const ValueType& value)
 {
 	if (variable->Kind() == SymbolKind::GlobalVariable)
-		_globals->insert_or_assign(variable, value);
+		_globals.insert_or_assign(variable, value);
 	else
 	{
 		auto& locals = _locals.top();

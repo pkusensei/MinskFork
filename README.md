@@ -15,6 +15,10 @@ Although this fork stays as close to the original as possible, there are some de
 
     The lack of reflection makes writing such functions in `SyntaxNode` ~~and `BoundNode`~~ base class~~es~~ impossible. ~~C++ doesn't even have the concept of property.~~ This problem is partly alleviated by conjuring up some template functions.
 
+- Using directive
+
+    It just feels not right to automatically compile every source file in the same directory without any checks. Here a `using` keyword is added to bring other source files into the fold. In the hindsight it works like Python's `import` instead of C#'s `using`. As of now it works with [/samples/hello/helloworld.mcf](/samples/hello/helloworld.mcf) but definitely needs more testing. 
+
 - The lowering process, i.e. `BoundTreeReriter` & `Lowerer` ~~, analyzes the existing bound tree and generates a new one.~~
 
     ~~This is mainly because `BoundNode`s exposing `std::unique_ptr`s directly would break encapsulation. `std::shared_ptr`s would cause another slew of problems. The original lowering process tries its best to reduce memory allocation while this one does not. As a result, `Lowerer::Flatten` has to be a non-static member function.~~ 
@@ -37,7 +41,7 @@ Although this fork stays as close to the original as possible, there are some de
 
     Without .NET Core wrapper around system APIs, this fork relies on native win32 APIs to manipulate console color and cursor display. 
 
-- Language differences.
+- Other language differences.
 
     - `std::vector` stands in place for `IEnumerable` mostly.
     - An array of helper functions for `enum class`es etc.

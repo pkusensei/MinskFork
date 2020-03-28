@@ -57,7 +57,7 @@ class Evaluator final
 {
 private:
 	unique_ptr<BoundProgram> _program;
-	VarMap* _globals;
+	VarMap& _globals;
 	std::stack<VarMap> _locals;
 	ValueType _lastValue;
 

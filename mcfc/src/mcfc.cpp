@@ -36,6 +36,9 @@ int main(int argc, char** argv)
 		}
 	}
 
+	if (hasError)
+		return 0;
+
 	auto compilation = MCF::Compilation(std::move(trees));
 	MCF::VarMap variables;
 	auto result = compilation.Evaluate(variables);
