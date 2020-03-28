@@ -15,7 +15,7 @@ class Lexer final
 private:
 	const SyntaxTree& _tree;
 	const SourceText& _text;
-	unique_ptr<DiagnosticBag> _diagnostics;
+	DiagnosticBag& _diagnostics;
 
 	size_t _position;
 	size_t _start;
@@ -36,8 +36,7 @@ public:
 	explicit Lexer(const SyntaxTree& text);
 
 	[[nodiscard]] SyntaxToken Lex();
-	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
-	unique_ptr<DiagnosticBag> FetchDiagnostics() noexcept { return std::move(_diagnostics); }
+	const DiagnosticBag& Diagnostics()const noexcept { return _diagnostics; }
 };
 
 }//MCF

@@ -95,11 +95,7 @@ private:
 	}
 
 public:
-	explicit BoundScope(std::nullptr_t)
-		:_parent(nullptr)
-	{
-	}
-	explicit BoundScope(unique_ptr<BoundScope>& parent)
+	explicit BoundScope(unique_ptr<BoundScope> parent = nullptr)
 		: _parent(std::move(parent))
 	{
 	}
@@ -140,17 +136,18 @@ private:
 
 public:
 	BoundGlobalScope(const BoundGlobalScope* previous,
-		unique_ptr<DiagnosticBag>& diagnostics,
-		const vector<shared_ptr<FunctionSymbol>>& functions,
-		const vector<shared_ptr<VariableSymbol>>& variables,
-		const vector<shared_ptr<BoundStatement>>& statements)
+		unique_ptr<DiagnosticBag> diagnostics,
+		vector<shared_ptr<FunctionSymbol>> functions,
+		vector<shared_ptr<VariableSymbol>> variables,
+		vector<shared_ptr<BoundStatement>> statements)
 		:_previous(previous), _diagnostics(std::move(diagnostics)),
-		_functions(functions), _variables(variables), _statements(statements)
+		_functions(std::move(functions)), _variables(std::move(variables)),
+		_statements(std::move(statements))
 	{
 	}
 
 	constexpr const BoundGlobalScope* Previous()const noexcept { return _previous; }
-	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
+	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
 	constexpr const vector<shared_ptr<FunctionSymbol>>& Functions()const { return _functions; }
 	constexpr const vector<shared_ptr<VariableSymbol>>& Variables()const { return _variables; }
 	constexpr const vector<shared_ptr<BoundStatement>>& Statements()const noexcept { return _statements; }
@@ -167,14 +164,14 @@ private:
 	unique_ptr<BoundBlockStatement> _statement;
 
 public:
-	BoundProgram(unique_ptr<DiagnosticBag>& diagnostics, FuncMap& functions,
-		unique_ptr<BoundBlockStatement>& statement)
+	BoundProgram(unique_ptr<DiagnosticBag> diagnostics, FuncMap functions,
+		unique_ptr<BoundBlockStatement> statement)
 		:_diagnostics(std::move(diagnostics)), _functions(std::move(functions)),
 		_statement(std::move(statement))
 	{
 	}
 
-	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
+	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
 	constexpr const FuncMap& Functions()const noexcept { return _functions; }
 	const BoundBlockStatement* Statement()const noexcept { return _statement.get(); }
 };
@@ -207,7 +204,7 @@ private:
 	shared_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax* syntax);
 
 	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,
-		const TypeSymbol& targetType);
+		ConstTypeRef targetType);
 	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,
 		bool canBeVoid = false);
 	shared_ptr<BoundExpression> BindExpressionInternal(const ExpressionSyntax* syntax);
@@ -221,23 +218,23 @@ private:
 	shared_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax* syntax);
 
 	shared_ptr<BoundExpression> BindConversion(const ExpressionSyntax* syntax,
-		const TypeSymbol& type, bool allowExplicit = false);
-	shared_ptr<BoundExpression> BindConversion(TextLocation diagLocation,
-		const shared_ptr<BoundExpression>& syntax,
-		const TypeSymbol& type, bool allowExplicit = false);
+		ConstTypeRef type, bool allowExplicit = false);
+	shared_ptr<BoundExpression> BindConversion(
+		TextLocation diagLocation, shared_ptr<BoundExpression> syntax,
+		ConstTypeRef type, bool allowExplicit = false);
 	shared_ptr<VariableSymbol> BindVariableDeclaration(const SyntaxToken& identifier,
-		bool isReadOnly, const TypeSymbol& type);
+		bool isReadOnly, ConstTypeRef type);
 	std::optional<shared_ptr<VariableSymbol>> BindVariableReference(const SyntaxToken& identifier);
-	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
-	std::optional<TypeSymbol> LookupType(string_view name)const;
+	std::optional<ConstTypeRef> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
+	std::optional<ConstTypeRef> LookupType(string_view name)const;
 
 	[[nodiscard]] static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
 	[[nodiscard]] static unique_ptr<BoundScope> CreateRootScope();
 
 public:
-	Binder(unique_ptr<BoundScope>& parent, const FunctionSymbol* function);
+	Binder(unique_ptr<BoundScope> parent, const FunctionSymbol* function);
 
-	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
+	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
 
 	static unique_ptr<BoundGlobalScope> BindGlobalScope(const BoundGlobalScope* previous,
 		const vector<const SyntaxTree*>& synTrees);

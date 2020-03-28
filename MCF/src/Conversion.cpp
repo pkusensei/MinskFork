@@ -2,8 +2,6 @@
 
 #include <stdexcept>
 
-#include "Symbols.h"
-
 namespace MCF {
 
 Conversion Conversion::GetConversion(ConversionEnum  kind)
@@ -23,20 +21,20 @@ Conversion Conversion::GetConversion(ConversionEnum  kind)
 	}
 }
 
-Conversion Conversion::Classify(const TypeSymbol& from, const TypeSymbol& to)
+Conversion Conversion::Classify(ConstTypeRef from, ConstTypeRef to)
 {
-	if (from == to)
+	if (from.get() == to)
 		return GetConversion(ConversionEnum::Identity);
-	if (from == GetTypeSymbol(TypeEnum::Int)
-		|| from == GetTypeSymbol(TypeEnum::Bool))
+	if (from.get() == TypeSymbol::Get(TypeEnum::Int)
+		|| from.get() == TypeSymbol::Get(TypeEnum::Bool))
 	{
-		if (to == GetTypeSymbol(TypeEnum::String))
+		if (to.get() == TypeSymbol::Get(TypeEnum::String))
 			return GetConversion(ConversionEnum::Explicit);
 	}
-	if (from == GetTypeSymbol(TypeEnum::String))
+	if (from.get() == TypeSymbol::Get(TypeEnum::String))
 	{
-		if (to == GetTypeSymbol(TypeEnum::Int)
-			|| to == GetTypeSymbol(TypeEnum::Bool))
+		if (to.get() == TypeSymbol::Get(TypeEnum::Int)
+			|| to.get() == TypeSymbol::Get(TypeEnum::Bool))
 			return GetConversion(ConversionEnum::Explicit);
 	}
 	return GetConversion(ConversionEnum::None);

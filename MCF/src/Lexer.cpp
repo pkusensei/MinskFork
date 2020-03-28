@@ -10,7 +10,7 @@ namespace MCF {
 
 Lexer::Lexer(const SyntaxTree& tree)
 	:_tree(tree), _text(tree.Text()),
-	_diagnostics(make_unique<DiagnosticBag>()),
+	_diagnostics(tree.Diagnostics()),
 	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(NullValue)
 {
 }
@@ -187,7 +187,7 @@ SyntaxToken Lexer::Lex()
 			{
 				auto span = TextSpan(_position, 1);
 				auto location = TextLocation(_text, std::move(span));
-				_diagnostics->ReportBadCharacter(std::move(location), character);
+				_diagnostics.ReportBadCharacter(std::move(location), character);
 				Next();
 			}
 			break;
@@ -215,7 +215,7 @@ void Lexer::ReadString()
 			{
 				auto span = TextSpan(_start, 1);
 				auto location = TextLocation(_text, std::move(span));
-				_diagnostics->ReportUnterminatedString(std::move(location));
+				_diagnostics.ReportUnterminatedString(std::move(location));
 				done = true;
 				break;
 			}
@@ -265,8 +265,8 @@ void Lexer::ReadNumberToken()
 	} catch (...)
 	{
 		auto span = TextSpan(_start, length);
-		_diagnostics->ReportInvalidNumber(TextLocation(_text, std::move(span)),
-			text, GetTypeSymbol(TypeEnum::Int));
+		_diagnostics.ReportInvalidNumber(TextLocation(_text, std::move(span)),
+			text, TypeSymbol::Get(TypeEnum::Int));
 	}
 }
 

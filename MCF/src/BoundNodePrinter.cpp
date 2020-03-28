@@ -152,10 +152,10 @@ void BoundNodePrinter::WriteNestedExpression(int parentPrecedence,
 	auto b = dynamic_cast<const BoundBinaryExpression*>(node);
 	if (u)
 		WriteNestedExpression(parentPrecedence,
-			GetUnaryOperatorPrecedence(u->Op().SyntaxKind()), u);
+			GetUnaryOperatorPrecedence(u->Op().SynKind()), u);
 	else if (b)
 		WriteNestedExpression(parentPrecedence,
-			GetBinaryOperatorPrecedence(b->Op().SyntaxKind()), b);
+			GetBinaryOperatorPrecedence(b->Op().SynKind()), b);
 	else
 		Write(node);
 }
@@ -305,17 +305,17 @@ void BoundNodePrinter::WriteErrorExpression()
 void BoundNodePrinter::WriteLiteralExpression(const BoundLiteralExpression* node)
 {
 	auto value = node->Value().ToString();
-	if (node->Type() == GetTypeSymbol(TypeEnum::Bool))
+	if (node->Type().get() == TypeSymbol::Get(TypeEnum::Bool))
 		_writer.WriteKeyword(value);
-	else if (node->Type() == GetTypeSymbol(TypeEnum::Int))
+	else if (node->Type().get() == TypeSymbol::Get(TypeEnum::Int))
 		_writer.WriteNumber(value);
-	else if (node->Type() == GetTypeSymbol(TypeEnum::String))
+	else if (node->Type().get() == TypeSymbol::Get(TypeEnum::String))
 	{
 		StringReplaceAll(value, "\"", "\"\"");
 		value = '"' + value + '"';
 		_writer.WriteString(value);
 	} else
-		throw std::invalid_argument(BuildStringFrom("Unexpected type ", node->Type().Name()));
+		throw std::invalid_argument(BuildStringFrom("Unexpected type ", node->Type().get().Name()));
 }
 
 void BoundNodePrinter::WriteVariableExpression(const BoundVariableExpression* node)
@@ -334,17 +334,17 @@ void BoundNodePrinter::WriteAssignmentExpression(const BoundAssignmentExpression
 
 void BoundNodePrinter::WriteUnaryExpression(const BoundUnaryExpression* node)
 {
-	auto precedence = GetUnaryOperatorPrecedence(node->Op().SyntaxKind());
-	_writer.WritePunctuation(node->Op().SyntaxKind());
+	auto precedence = GetUnaryOperatorPrecedence(node->Op().SynKind());
+	_writer.WritePunctuation(node->Op().SynKind());
 	WriteNestedExpression(precedence, node->Operand().get());
 }
 
 void BoundNodePrinter::WriteBinaryExpression(const BoundBinaryExpression* node)
 {
-	auto precedence = GetBinaryOperatorPrecedence(node->Op().SyntaxKind());
+	auto precedence = GetBinaryOperatorPrecedence(node->Op().SynKind());
 	WriteNestedExpression(precedence, node->Left().get());
 	_writer.WriteSpace();
-	_writer.WritePunctuation(node->Op().SyntaxKind());
+	_writer.WritePunctuation(node->Op().SynKind());
 	_writer.WriteSpace();
 	WriteNestedExpression(precedence, node->Right().get());
 }
@@ -372,7 +372,7 @@ void BoundNodePrinter::WriteCallExpression(const BoundCallExpression* node)
 
 void BoundNodePrinter::WriteConversionExpression(const BoundConversionExpression* node)
 {
-	_writer.WriteIdentifier(node->Type().Name());
+	_writer.WriteIdentifier(node->Type().get().Name());
 	_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
 	Write(node->Expression().get());
 	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);

@@ -10,7 +10,7 @@ private:
 	string _name;
 
 public:
-	explicit BoundLabel(string&& name) :_name(std::move(name)) {}
+	explicit BoundLabel(string name) :_name(std::move(name)) {}
 	BoundLabel() :BoundLabel(string()) {}
 
 	bool operator==(const BoundLabel& other) const noexcept { return _name == other._name; }

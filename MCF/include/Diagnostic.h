@@ -51,8 +51,8 @@ public:
 
 	class iterator;
 	const Diagnostic& operator[](size_t idx) const;
-	iterator begin()const;
-	iterator end()const;
+	auto begin()const noexcept { return _diagnostics.begin(); }
+	auto end()const noexcept { return _diagnostics.end(); }
 
 	void AddRangeFront(DiagnosticBag& other);
 	void AddRange(DiagnosticBag& other);
@@ -105,21 +105,6 @@ public:
 		std::sort(_diagnostics.begin(), _diagnostics.end(), std::forward<Cond>(cond));
 		return *this;
 	}
-};
-
-class MCF_API DiagnosticBag::iterator
-{
-private:
-	size_t _position = 0;
-	const DiagnosticBag* _bag;
-public:
-	iterator(size_t pos, const DiagnosticBag& bag);
-
-	const Diagnostic& operator*() const;
-	iterator& operator++(int); //i++
-	iterator& operator++(); //++i
-	bool operator==(const iterator& other)const noexcept;
-	bool operator!=(const iterator& other)const noexcept { return !(*this == other); }
 };
 
 }//MCF

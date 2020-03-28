@@ -20,16 +20,6 @@ const Diagnostic& DiagnosticBag::operator[](size_t idx) const
 	return _diagnostics.at(idx);
 }
 
-DiagnosticBag::iterator DiagnosticBag::begin()const
-{
-	return iterator(0, *this);
-}
-
-DiagnosticBag::iterator DiagnosticBag::end()const
-{
-	return iterator(_diagnostics.size(), *this);
-}
-
 void DiagnosticBag::AddRangeFront(DiagnosticBag& other)
 {
 	_diagnostics.insert(_diagnostics.begin(),
@@ -226,34 +216,6 @@ void DiagnosticBag::ReportSourceFileNotExist(TextLocation location, string_view 
 {
 	auto message = BuildStringFrom("File '", fileName, ", doesn't exist.");
 	Report(std::move(location), std::move(message));
-}
-
-
-DiagnosticBag::iterator::iterator(size_t pos, const DiagnosticBag& bag)
-	:_position(pos), _bag(&bag)
-{
-}
-
-const Diagnostic& DiagnosticBag::iterator::operator*() const
-{
-	return (*_bag)[_position];
-}
-
-DiagnosticBag::iterator& DiagnosticBag::iterator::operator++(int)
-{
-	_position += 1;
-	return *this;
-}
-
-DiagnosticBag::iterator& DiagnosticBag::iterator::operator++()
-{
-	_position += 1;
-	return *this;
-}
-
-bool DiagnosticBag::iterator::operator==(const iterator& other) const noexcept
-{
-	return _position == other._position && _bag == other._bag;
 }
 
 }//MCF

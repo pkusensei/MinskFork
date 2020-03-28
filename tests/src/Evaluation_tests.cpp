@@ -545,7 +545,7 @@ void AssertValue(std::string_view text, const MCF::ValueType& value)
 	MCF::VarMap variables;
 	auto result = compilation.Evaluate(variables);
 
-	CHECK(result.Diagnostics()->empty());
+	CHECK(result.Diagnostics().empty());
 	CHECK(value == result.Value());
 }
 
@@ -560,12 +560,12 @@ void AssertDiagnostics(std::string_view text, std::string_view diagnosticText)
 
 	if (annotatedText.Spans().size() != expectedDiagnostoics.size())
 		throw std::invalid_argument("ERROR: Must mark as many spans as there are expected diagnostics");
-	CHECK(expectedDiagnostoics.size() == result.Diagnostics()->size());
+	CHECK(expectedDiagnostoics.size() == result.Diagnostics().size());
 
 	for (size_t i = 0; i < expectedDiagnostoics.size(); ++i)
 	{
-		CHECK(expectedDiagnostoics[i] == (*result.Diagnostics())[i].Message());
-		CHECK(annotatedText.Spans()[i] == (*result.Diagnostics())[i].Location().Span());
+		CHECK(expectedDiagnostoics[i] == (result.Diagnostics())[i].Message());
+		CHECK(annotatedText.Spans()[i] == (result.Diagnostics())[i].Location().Span());
 	}
 
 }

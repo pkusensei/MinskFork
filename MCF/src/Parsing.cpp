@@ -53,7 +53,7 @@ const vector<const SyntaxNode*> CompilationUnitSyntax::GetChildren() const
 
 Parser::Parser(const SyntaxTree& tree)
 	:_tree(tree), _text(tree.Text()), _tokens(),
-	_position(0), _diagnostics(make_unique<DiagnosticBag>())
+	_position(0), _diagnostics(tree.Diagnostics())
 {
 	auto lexer = Lexer(tree);
 	auto kind = SyntaxKind::BadToken;
@@ -67,7 +67,6 @@ Parser::Parser(const SyntaxTree& tree)
 			_tokens.emplace_back(token);
 		}
 	} while (kind != SyntaxKind::EndOfFileToken);
-	_diagnostics->AddRange(*lexer.Diagnostics());
 }
 
 const SyntaxToken& Parser::Peek(int offset) const
@@ -95,7 +94,7 @@ SyntaxToken Parser::MatchToken(SyntaxKind kind)
 	auto& current = Current();
 	if (current.Kind() == kind)
 		return NextToken().Clone();
-	_diagnostics->ReportUnexpectedToken(current.Location(), current.Kind(), kind);
+	_diagnostics.ReportUnexpectedToken(current.Location(), current.Kind(), kind);
 	return SyntaxToken(_tree, kind, current.Position(), string(), NullValue);
 }
 
@@ -190,7 +189,7 @@ unique_ptr<MemberSyntax> Parser::ParseUsingDirective()
 		_usings.push_back(std::move(tree));
 	} else
 	{
-		_diagnostics->ReportSourceFileNotExist(fileNameToken.Location(), filename);
+		_diagnostics.ReportSourceFileNotExist(fileNameToken.Location(), filename);
 	}
 
 	return make_unique<UsingDirective>(_tree, std::move(keyword), std::move(fileNameToken));
@@ -404,7 +403,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 				&& left->Kind() != SyntaxKind::PostfixExpression
 				&& left->Kind() != SyntaxKind::NameExpression)
 			{
-				_diagnostics->ReportExpressionNotSupportPostfixOperator(
+				_diagnostics.ReportExpressionNotSupportPostfixOperator(
 					Current().Location(), Current().Text(), left->Kind());
 				break;
 			}
@@ -434,13 +433,17 @@ unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(unique_ptr<Expressio
 	if (pre)
 	{
 		auto ae = dynamic_cast<const AssignmentExpressionSyntax*>(pre->Expression());
-		return make_unique<PostfixExpressionSyntax>(_tree, ae->IdentifierToken(), operatorToken, std::move(expression));
+		return make_unique<PostfixExpressionSyntax>(_tree, ae->IdentifierToken(),
+			operatorToken, std::move(expression));
 	} else if (pfe)
-		return make_unique<PostfixExpressionSyntax>(_tree, pfe->IdentifierToken(), operatorToken, std::move(expression));
+		return make_unique<PostfixExpressionSyntax>(_tree, pfe->IdentifierToken(),
+			operatorToken, std::move(expression));
 	else if (ne)
-		return make_unique<PostfixExpressionSyntax>(_tree, ne->IdentifierToken(), operatorToken, std::move(expression));
+		return make_unique<PostfixExpressionSyntax>(_tree, ne->IdentifierToken(),
+			operatorToken, std::move(expression));
 	else
-		throw std::invalid_argument(BuildStringFrom("Unexpected expression ", GetSyntaxKindName(expression->Kind())));
+		throw std::invalid_argument(BuildStringFrom("Unexpected expression ",
+			GetSyntaxKindName(expression->Kind())));
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParsePrimaryExpression()
@@ -557,14 +560,12 @@ SyntaxTree& SyntaxTree::operator=(SyntaxTree&& other) = default;
 SyntaxTree::~SyntaxTree() = default;
 
 auto SyntaxTree::ParseTree(const SyntaxTree& tree)->
-std::tuple<unique_ptr<CompilationUnitSyntax>, unique_ptr<DiagnosticBag>,
-	vector<unique_ptr<SyntaxTree>>>
+std::tuple<unique_ptr<CompilationUnitSyntax>, vector<unique_ptr<SyntaxTree>>>
 {
 	auto parser = Parser(tree);
 	auto root = parser.ParseCompilationUnit();
-	auto diag = parser.FetchDiagnostics();
 	auto usings = parser.FetchUsings();
-	return { std::move(root),std::move(diag), std::move(usings) };
+	return { std::move(root), std::move(usings) };
 }
 
 unique_ptr<SyntaxTree> SyntaxTree::Load(fs::path path)
@@ -628,12 +629,11 @@ SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics)
 			}
 			tokens.push_back(std::move(token));
 		}
-		return std::make_tuple(std::move(root), lexer.FetchDiagnostics(),
-			vector<unique_ptr<SyntaxTree>>());
+		return std::make_tuple(std::move(root), vector<unique_ptr<SyntaxTree>>());
 	};
 
 	auto tree = unique_ptr<SyntaxTree>(new SyntaxTree(std::move(text), parseTokens));
-	diagnostics.AddRange(*tree->Diagnostics());
+	diagnostics.AddRange(tree->Diagnostics());
 	return { tokens, std::move(tree) };
 }
 

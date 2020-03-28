@@ -18,8 +18,8 @@ private:
 	vector<shared_ptr<BoundStatement>> _statements;
 
 public:
-	explicit BoundBlockStatement(const vector<shared_ptr<BoundStatement>>& statements)
-		:_statements(statements)
+	explicit BoundBlockStatement(vector<shared_ptr<BoundStatement>> statements)
+		:_statements(std::move(statements))
 	{
 	}
 
@@ -36,9 +36,9 @@ private:
 	shared_ptr<BoundExpression> _initializer;
 
 public:
-	BoundVariableDeclaration(const shared_ptr<VariableSymbol>& variable,
-		const shared_ptr<BoundExpression>& initializer)
-		:_variable(variable), _initializer(initializer)
+	BoundVariableDeclaration(shared_ptr<VariableSymbol> variable,
+		shared_ptr<BoundExpression> initializer)
+		:_variable(std::move(variable)), _initializer(std::move(initializer))
 	{
 	}
 
@@ -57,11 +57,11 @@ private:
 	shared_ptr<BoundStatement> _elseStatement;
 
 public:
-	BoundIfStatement(const shared_ptr<BoundExpression>& condition,
-		const shared_ptr<BoundStatement>& thenStatement,
-		const shared_ptr<BoundStatement>& elseStatement)
-		:_condition(condition), _thenStatement(thenStatement),
-		_elseStatement(elseStatement)
+	BoundIfStatement(shared_ptr<BoundExpression> condition,
+		shared_ptr<BoundStatement> thenStatement,
+		shared_ptr<BoundStatement> elseStatement)
+		:_condition(std::move(condition)), _thenStatement(std::move(thenStatement)),
+		_elseStatement(std::move(elseStatement))
 	{
 	}
 
@@ -81,7 +81,7 @@ private:
 
 protected:
 	BoundLoopStatement(const BoundLabel& breakLabel, const BoundLabel& continueLabel)
-		:_breakLabel(breakLabel), _continueLabel(continueLabel)
+		:_breakLabel(std::move(breakLabel)), _continueLabel(std::move(continueLabel))
 	{
 	}
 
@@ -97,11 +97,11 @@ private:
 	shared_ptr<BoundStatement> _body;
 
 public:
-	BoundWhileStatement(const shared_ptr<BoundExpression>& condition,
-		const shared_ptr<BoundStatement>& body,
-		const BoundLabel& breakLabel, const BoundLabel& continueLabel)
-		: BoundLoopStatement(breakLabel, continueLabel),
-		_condition(condition), _body(body)
+	BoundWhileStatement(shared_ptr<BoundExpression> condition,
+		shared_ptr<BoundStatement> body,
+		BoundLabel breakLabel, BoundLabel continueLabel)
+		: BoundLoopStatement(std::move(breakLabel), std::move(continueLabel)),
+		_condition(std::move(condition)), _body(std::move(body))
 	{
 	}
 
@@ -119,11 +119,11 @@ private:
 	shared_ptr<BoundExpression> _condition;
 
 public:
-	BoundDoWhileStatement(const shared_ptr<BoundStatement>& body,
-		const shared_ptr<BoundExpression>& condition,
-		const BoundLabel& breakLabel, const BoundLabel& continueLabel)
-		: BoundLoopStatement(breakLabel, continueLabel),
-		_body(body), _condition(condition)
+	BoundDoWhileStatement(shared_ptr<BoundStatement> body,
+		shared_ptr<BoundExpression> condition,
+		BoundLabel breakLabel, BoundLabel continueLabel)
+		: BoundLoopStatement(std::move(breakLabel), std::move(continueLabel)),
+		_body(std::move(body)), _condition(std::move(condition))
 	{
 	}
 
@@ -143,14 +143,14 @@ private:
 	shared_ptr<BoundStatement> _body;
 
 public:
-	BoundForStatement(const shared_ptr<VariableSymbol>& variable,
-		const shared_ptr<BoundExpression>& lowerBound,
-		const shared_ptr<BoundExpression>& upperBound,
-		const shared_ptr<BoundStatement>& body,
-		const BoundLabel& breakLabel, const BoundLabel& continueLabel)
-		: BoundLoopStatement(breakLabel, continueLabel),
-		_variable(variable), _lowerBound(lowerBound), _upperBound(upperBound),
-		_body(body)
+	BoundForStatement(shared_ptr<VariableSymbol> variable,
+		shared_ptr<BoundExpression> lowerBound,
+		shared_ptr<BoundExpression> upperBound,
+		shared_ptr<BoundStatement> body,
+		BoundLabel breakLabel, BoundLabel continueLabel)
+		: BoundLoopStatement(std::move(breakLabel), std::move(continueLabel)),
+		_variable(std::move(variable)), _lowerBound(std::move(lowerBound)),
+		_upperBound(std::move(upperBound)), _body(std::move(body))
 	{
 	}
 
@@ -169,8 +169,8 @@ private:
 	BoundLabel _label;
 
 public:
-	explicit BoundLabelStatement(const BoundLabel& label)
-		:_label(label)
+	explicit BoundLabelStatement(BoundLabel label)
+		:_label(std::move(label))
 	{
 	}
 
@@ -186,8 +186,8 @@ private:
 	BoundLabel _label;
 
 public:
-	explicit BoundGotoStatement(const BoundLabel& label)
-		:_label(label)
+	explicit BoundGotoStatement(BoundLabel label)
+		:_label(std::move(label))
 	{
 	}
 
@@ -205,9 +205,10 @@ private:
 	bool _jumpIfTrue;
 
 public:
-	BoundConditionalGotoStatement(const BoundLabel& label,
-		const shared_ptr<BoundExpression>& condition, bool jumpIfTrue = true)
-		:_label(label), _condition(condition), _jumpIfTrue(jumpIfTrue)
+	BoundConditionalGotoStatement(BoundLabel label,
+		shared_ptr<BoundExpression> condition, bool jumpIfTrue = true)
+		:_label(std::move(label)), _condition(std::move(condition)),
+		_jumpIfTrue(std::move(jumpIfTrue))
 	{
 	}
 
@@ -225,8 +226,8 @@ private:
 	shared_ptr<BoundExpression> _expression;
 
 public:
-	explicit BoundReturnStatement(const shared_ptr<BoundExpression>& expression)
-		:_expression(expression)
+	explicit BoundReturnStatement(shared_ptr<BoundExpression> expression)
+		:_expression(std::move(expression))
 	{
 	}
 
@@ -243,8 +244,8 @@ private:
 	shared_ptr<BoundExpression> _expression;
 
 public:
-	explicit BoundExpressionStatement(const shared_ptr<BoundExpression>& expression)
-		:_expression(expression)
+	explicit BoundExpressionStatement(shared_ptr<BoundExpression> expression)
+		:_expression(std::move(expression))
 	{
 	}
 

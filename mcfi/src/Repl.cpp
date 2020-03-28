@@ -470,7 +470,7 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 
 	auto result = compilation->Evaluate(_variables);
 	auto diagnostics = result.Diagnostics();
-	if (diagnostics->empty())
+	if (diagnostics.empty())
 	{
 		auto value = result.Value();
 		if (value.HasValue())
@@ -484,7 +484,7 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 	} else
 	{
 		auto writer = MCF::IndentedTextWriter(std::cout);
-		writer.WriteDiagnostics(*diagnostics);
+		writer.WriteDiagnostics(diagnostics);
 	}
 	std::cout << '\n';
 }

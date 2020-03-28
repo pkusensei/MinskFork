@@ -159,7 +159,7 @@ private:
 	const SourceText& _text;
 	vector<SyntaxToken> _tokens;
 	size_t _position;
-	unique_ptr<DiagnosticBag> _diagnostics;
+	DiagnosticBag& _diagnostics;
 
 	vector<unique_ptr<SyntaxTree>> _usings;
 
@@ -210,8 +210,7 @@ private:
 public:
 	explicit Parser(const SyntaxTree& tree);
 
-	DiagnosticBag* Diagnostics()const noexcept { return _diagnostics.get(); }
-	unique_ptr<DiagnosticBag> FetchDiagnostics() noexcept { return std::move(_diagnostics); }
+	const DiagnosticBag& Diagnostics()const noexcept { return _diagnostics; }
 	unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
 	vector<unique_ptr<SyntaxTree>> FetchUsings()noexcept { return std::move(_usings); };
 };
@@ -230,17 +229,15 @@ private:
 	template<typename ParseHandle,
 		typename = std::enable_if_t<std::is_invocable_v<ParseHandle, const SyntaxTree&>>>
 		SyntaxTree(unique_ptr<SourceText> text, ParseHandle handle)
-		:_text(std::move(text)), _diagnostics(nullptr)
+		:_text(std::move(text)), _diagnostics(make_unique<DiagnosticBag>())
 	{
-		auto [root, diag, usings] = handle(*this);
+		auto [root, usings] = handle(*this);
 		_root = std::move(root);
-		_diagnostics = std::move(diag);
 		_usings = std::move(usings);
 	}
 
 	static auto ParseTree(const SyntaxTree&)->
-		std::tuple<unique_ptr<CompilationUnitSyntax>, unique_ptr<DiagnosticBag>,
-		vector<unique_ptr<SyntaxTree>>>;
+		std::tuple<unique_ptr<CompilationUnitSyntax>, vector<unique_ptr<SyntaxTree>>>;
 public:
 
 	SyntaxTree(SyntaxTree&& other);
@@ -249,7 +246,7 @@ public:
 
 	constexpr const SourceText& Text() const { return *_text; }
 	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
-	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics.get(); }
+	DiagnosticBag& Diagnostics() const noexcept { return *_diagnostics; }
 
 	static unique_ptr<SyntaxTree> Load(fs::path path);
 

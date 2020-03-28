@@ -1,8 +1,8 @@
 #pragma once
 
-namespace MCF {
+#include "Symbols.h"
 
-class TypeSymbol;
+namespace MCF {
 
 enum class ConversionEnum
 {
@@ -30,7 +30,7 @@ public:
 	constexpr bool IsImplicit()const noexcept { return _isImplicit; }
 	constexpr bool IsExplicit()const noexcept { return _exists && !_isImplicit; }
 
-	static Conversion Classify(const TypeSymbol& from, const TypeSymbol& to);
+	static Conversion Classify(ConstTypeRef from, ConstTypeRef to);
 };
 
 }//MCF

@@ -215,7 +215,7 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression* node)
 	switch (node->Op().Kind())
 	{
 		case BoundBinaryOperatorKind::Addition:
-			if (node->Type() == GetTypeSymbol(TypeEnum::Int))
+			if (node->Type().get() == TypeSymbol::Get(TypeEnum::Int))
 				return left.GetValue<IntegerType>() + right.GetValue<IntegerType>();
 			else return left.GetValue<string>() + right.GetValue<string>();
 		case BoundBinaryOperatorKind::Subtraction:
@@ -227,15 +227,15 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression* node)
 		case BoundBinaryOperatorKind::Modulus:
 			return left.GetValue<IntegerType>() % right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::BitwiseAnd:
-			if (node->Type() == GetTypeSymbol(TypeEnum::Int))
+			if (node->Type().get() == TypeSymbol::Get(TypeEnum::Int))
 				return left.GetValue<IntegerType>() & right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() & right.GetValue<bool>();
 		case BoundBinaryOperatorKind::BitwiseOr:
-			if (node->Type() == GetTypeSymbol(TypeEnum::Int))
+			if (node->Type().get() == TypeSymbol::Get(TypeEnum::Int))
 				return left.GetValue<IntegerType>() | right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() | right.GetValue<bool>();
 		case BoundBinaryOperatorKind::BitwiseXor:
-			if (node->Type() == GetTypeSymbol(TypeEnum::Int))
+			if (node->Type().get() == TypeSymbol::Get(TypeEnum::Int))
 				return left.GetValue<IntegerType>() ^ right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() ^ right.GetValue<bool>();
 		case BoundBinaryOperatorKind::LogicalAnd:
@@ -311,14 +311,14 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpression* node)
 {
 	auto value = EvaluateExpression(node->Expression().get());
-	if (node->Type() == GetTypeSymbol(TypeEnum::Bool))
+	if (node->Type().get() == TypeSymbol::Get(TypeEnum::Bool))
 		return value.ToBoolean();
-	else if (node->Type() == GetTypeSymbol(TypeEnum::Int))
+	else if (node->Type().get() == TypeSymbol::Get(TypeEnum::Int))
 		return value.ToInteger();
-	else if (node->Type() == GetTypeSymbol(TypeEnum::String))
+	else if (node->Type().get() == TypeSymbol::Get(TypeEnum::String))
 		return value.ToString();
 	else
-		throw std::invalid_argument("Unexpected type " + node->Type().ToString());
+		throw std::invalid_argument("Unexpected type " + node->Type().get().ToString());
 }
 
 ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression* node)
@@ -443,24 +443,24 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 	};
 
 	std::for_each(_syntaxTrees.cbegin(), _syntaxTrees.cend(),
-		[this](const auto& tree) { _diagnostics->AddRange(*tree->Diagnostics()); });
-	
-	_diagnostics->AddRange(*GlobalScope()->Diagnostics());
+		[this](const auto& tree) { _diagnostics->AddRange(tree->Diagnostics()); });
+
+	_diagnostics->AddRange(GlobalScope()->Diagnostics());
 
 	if (!_diagnostics->empty())
-		return EvaluationResult(_diagnostics.get(), NullValue);
+		return EvaluationResult(*_diagnostics, NullValue);
 
 	auto program = Binder::BindProgram(GlobalScope());
 	createCfgFile(*program);
-	if (!program->Diagnostics()->empty())
+	if (!program->Diagnostics().empty())
 	{
-		_diagnostics->AddRange(*program->Diagnostics());
-		return EvaluationResult(_diagnostics.get(), NullValue);
+		_diagnostics->AddRange(program->Diagnostics());
+		return EvaluationResult(*_diagnostics, NullValue);
 	}
 
 	Evaluator evaluator(program, variables);
 	auto value = evaluator.Evaluate();
-	return EvaluationResult(_diagnostics.get(), value);
+	return EvaluationResult(*_diagnostics, value);
 }
 
 void Compilation::EmitTree(std::ostream& out)

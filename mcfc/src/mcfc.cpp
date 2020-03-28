@@ -40,14 +40,14 @@ int main(int argc, char** argv)
 	MCF::VarMap variables;
 	auto result = compilation.Evaluate(variables);
 
-	if (result.Diagnostics()->empty())
+	if (result.Diagnostics().empty())
 	{
 		if (result.Value().HasValue())
 			std::cout << result.Value() << '\n';
 	} else
 	{
 		auto writer = MCF::IndentedTextWriter(std::cerr);
-		writer.WriteDiagnostics(*result.Diagnostics());
+		writer.WriteDiagnostics(result.Diagnostics());
 	}
 
 }

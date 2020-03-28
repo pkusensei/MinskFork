@@ -76,23 +76,20 @@ private:
 	}
 
 public:
-
 	SymbolKind Kind() const noexcept override { return SymbolKind::Type; }
 
-	friend const TypeSymbol& GetTypeSymbol(TypeEnum kind);
-
+	static std::reference_wrapper<const TypeSymbol> Get(TypeEnum kind);
 };
-
-const TypeSymbol& GetTypeSymbol(TypeEnum kind);
+using ConstTypeRef = std::reference_wrapper<const TypeSymbol>;
 
 class MCF_API VariableSymbol : public Symbol
 {
 private:
 	bool _isReadOnly;
-	std::optional<TypeSymbol> _type;
+	std::optional<ConstTypeRef> _type;
 
 public:
-	VariableSymbol(string_view name, bool isReadOnly, std::optional<TypeSymbol> type) noexcept
+	VariableSymbol(string_view name, bool isReadOnly, std::optional<ConstTypeRef> type) noexcept
 		:Symbol(name), _isReadOnly(isReadOnly), _type(std::move(type))
 	{
 	}
@@ -102,13 +99,13 @@ public:
 	// HACK 
 	// Variable could have no TypeSymbol associated
 	// std::optional unwraps as the real TypeSymbol or Void
-	TypeSymbol Type()const { return _type.value_or(GetTypeSymbol(TypeEnum::Void)); }
+	ConstTypeRef Type()const { return _type.value_or(TypeSymbol::Get(TypeEnum::Void)); }
 };
 
 class GlobalVariableSymbol final :public VariableSymbol
 {
 public:
-	GlobalVariableSymbol(string_view name, bool isReadOnly, std::optional<TypeSymbol> type)noexcept
+	GlobalVariableSymbol(string_view name, bool isReadOnly, std::optional<ConstTypeRef> type)noexcept
 		:VariableSymbol(name, isReadOnly, std::move(type))
 	{
 	}
@@ -119,7 +116,7 @@ public:
 class LocalVariableSymbol :public VariableSymbol
 {
 public:
-	LocalVariableSymbol(string_view name, bool isReadOnly, std::optional<TypeSymbol> type)noexcept
+	LocalVariableSymbol(string_view name, bool isReadOnly, std::optional<ConstTypeRef> type)noexcept
 		:VariableSymbol(name, isReadOnly, std::move(type))
 	{
 	}
@@ -130,7 +127,7 @@ public:
 class ParameterSymbol final : public LocalVariableSymbol
 {
 public:
-	ParameterSymbol(string_view name, std::optional<TypeSymbol> type)noexcept
+	ParameterSymbol(string_view name, std::optional<ConstTypeRef> type)noexcept
 		:LocalVariableSymbol(name, true, std::move(type))
 	{
 	}
@@ -147,29 +144,28 @@ class FunctionSymbol final :public Symbol
 {
 private:
 	vector<ParameterSymbol> _params;
-	TypeSymbol _type;
+	ConstTypeRef _type;
 	const FunctionDeclarationSyntax* _declaration;
 
 public:
-	FunctionSymbol(string_view name, const vector<ParameterSymbol>& params,
-		const TypeSymbol& type, const FunctionDeclarationSyntax* declaration)
-		:Symbol(name), _params(params), _type(type), _declaration(declaration)
+	FunctionSymbol(string_view name, vector<ParameterSymbol> params,
+		ConstTypeRef type, const FunctionDeclarationSyntax* declaration)
+		:Symbol(name), _params(std::move(params)), _type(type), _declaration(declaration)
 	{
 	}
-	FunctionSymbol(string_view name, const vector<ParameterSymbol>& params,
-		const TypeSymbol& type)
-		:FunctionSymbol(name, params, type, nullptr)
+	FunctionSymbol(string_view name, vector<ParameterSymbol> params, ConstTypeRef type)
+		:FunctionSymbol(name, std::move(params), type, nullptr)
 	{
 	}
 	FunctionSymbol()
-		:FunctionSymbol("", vector<ParameterSymbol>(), GetTypeSymbol(TypeEnum::Error))
+		:FunctionSymbol("", vector<ParameterSymbol>(), TypeSymbol::Get(TypeEnum::Error))
 	{
 	}
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Function; }
-	const vector<ParameterSymbol>& Parameters()const noexcept { return _params; }
-	const TypeSymbol& Type()const noexcept { return _type; }
-	const FunctionDeclarationSyntax* Declaration()const noexcept { return  _declaration; }
+	constexpr const vector<ParameterSymbol>& Parameters()const noexcept { return _params; }
+	ConstTypeRef Type()const noexcept { return _type; }
+	constexpr const FunctionDeclarationSyntax* Declaration()const noexcept { return  _declaration; }
 
 };
 
@@ -204,7 +200,7 @@ public:
 	ValueType(const char* s) : _inner(string(s)) {}
 
 	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
-	const TypeSymbol& Type()const noexcept;
+	ConstTypeRef Type()const noexcept;
 
 	constexpr bool operator==(const ValueType& other)const { return _inner == other._inner; }
 	constexpr bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }
@@ -217,8 +213,6 @@ public:
 	{
 		return std::get<T>(_inner);
 	}
-
-	static size_t GetValueTypeId(const TypeSymbol& inType);
 };
 
 const auto NullValue = ValueType(); // NOTE global constant

@@ -40,16 +40,16 @@ extern "C" using VarMap = std::unordered_map<shared_ptr<VariableSymbol>,
 class MCF_API EvaluationResult final
 {
 private:
-	DiagnosticBag* _diagnostics;
+	DiagnosticBag& _diagnostics;
 	ValueType _value;
 
 public:
-	EvaluationResult(DiagnosticBag* diagnostics, const ValueType& value)
-		:_diagnostics(diagnostics), _value(value)
+	EvaluationResult(DiagnosticBag& diagnostics, ValueType value)
+		:_diagnostics(diagnostics), _value(std::move(value))
 	{
 	}
 
-	DiagnosticBag* Diagnostics() const noexcept { return _diagnostics; }
+	DiagnosticBag& Diagnostics() const noexcept { return _diagnostics; }
 	constexpr const ValueType& Value()const noexcept { return _value; }
 };
 
