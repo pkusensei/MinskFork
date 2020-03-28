@@ -3,15 +3,8 @@
 #include <functional>
 #include <string>
 
-#include "Symbols.h"
-
-namespace MCF {
-class Compilation;
-struct KeyInfo;
-
-using VarMap = std::unordered_map<shared_ptr<VariableSymbol>, ValueType,
-	SymbolHash, SymbolEqual>; //HACK
-}
+#include "Compilation.h"
+#include "ConsoleHelper.h"
 
 template<typename T>
 class ObservableCollection final

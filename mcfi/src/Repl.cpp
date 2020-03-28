@@ -3,12 +3,9 @@
 #include <iostream>
 
 #include "helpers.h"
-#include "Compilation.h"
-#include "ConsoleHelper.h"
 #include "Diagnostic.h"
 #include "IO.h"
 #include "Parsing.h"
-#include "SourceText.h"
 
 constexpr auto NEW_LINE = '\r';
 

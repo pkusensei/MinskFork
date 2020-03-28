@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <optional>
 #include <variant>
 
@@ -78,11 +79,11 @@ public:
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Type; }
 
-	friend const TypeSymbol& GetTypeSymbol(const TypeEnum& kind);
+	friend const TypeSymbol& GetTypeSymbol(TypeEnum kind);
 
 };
 
-const TypeSymbol& GetTypeSymbol(const TypeEnum& kind);
+const TypeSymbol& GetTypeSymbol(TypeEnum kind);
 
 class MCF_API VariableSymbol : public Symbol
 {
@@ -183,8 +184,8 @@ enum class BuiltinFuncEnum
 	Input, Print, Rnd
 };
 
-const FunctionSymbol& GetBuiltinFunction(const BuiltinFuncEnum& kind);
-const vector<FunctionSymbol>& GetAllBuiltinFunctions();
+const FunctionSymbol& GetBuiltinFunction(BuiltinFuncEnum kind);
+const std::array<FunctionSymbol, 3>& GetAllBuiltinFunctions();
 
 class MCF_API ValueType final
 {

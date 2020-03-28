@@ -52,10 +52,10 @@ bool SymbolEqual::operator()(const shared_ptr<Symbol>& lhs,
 	return (*lhs) == (*rhs);
 }
 
-const TypeSymbol& GetTypeSymbol(const TypeEnum& kind)
+const TypeSymbol& GetTypeSymbol(TypeEnum kind)
 {
-	static const auto types = std::make_tuple(TypeSymbol("?"), TypeSymbol("bool"),
-		TypeSymbol("int"), TypeSymbol("string"), TypeSymbol("void"));
+	static const auto types = std::array{ TypeSymbol("?"), TypeSymbol("bool"),
+		TypeSymbol("int"), TypeSymbol("string"), TypeSymbol("void") };
 
 	switch (kind)
 	{
@@ -109,7 +109,7 @@ string_view GetEnumText(SymbolKind kind)
 	}
 }
 
-const FunctionSymbol& GetBuiltinFunction(const BuiltinFuncEnum& kind)
+const FunctionSymbol& GetBuiltinFunction(BuiltinFuncEnum kind)
 {
 	static const auto& funcs = GetAllBuiltinFunctions();
 
@@ -123,9 +123,9 @@ const FunctionSymbol& GetBuiltinFunction(const BuiltinFuncEnum& kind)
 	}
 }
 
-const vector<FunctionSymbol>& GetAllBuiltinFunctions()
+const std::array<FunctionSymbol, 3>& GetAllBuiltinFunctions()
 {
-	static const auto funcs = std::vector<FunctionSymbol>{
+	static const auto funcs = std::array{
 		FunctionSymbol("input",
 			vector<ParameterSymbol>(),
 			GetTypeSymbol(TypeEnum::String)),
