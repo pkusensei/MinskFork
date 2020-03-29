@@ -371,13 +371,6 @@ void Repl::SubmissionView::CurrentCharacter(const size_t value)
 	}
 }
 
-McfRepl::McfRepl()
-	:_variables()
-{
-}
-
-McfRepl::~McfRepl() = default;
-
 void McfRepl::RenderLine(const std::string & line) const
 {
 	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(line);

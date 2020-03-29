@@ -12,26 +12,26 @@ namespace MCF {
 
 const vector<const SyntaxNode*> UsingDirective::GetChildren() const
 {
-	return MakeVecOfRaw<const SyntaxNode>(_keyword, _fileName);
+	return MakeVecOfRaw<SyntaxNode>(_keyword, _fileName);
 }
 
 const vector<const SyntaxNode*> ParameterSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<const SyntaxNode>(_identifier, _type);
+	return MakeVecOfRaw<SyntaxNode>(_identifier, _type);
 }
 
 const vector<const SyntaxNode*> FunctionDeclarationSyntax::GetChildren() const
 {
-	auto result = MakeVecOfRaw<const SyntaxNode>(_funcKeyword, _identifier, _openParenthesisToken);
+	auto result = MakeVecOfRaw<SyntaxNode>(_funcKeyword, _identifier, _openParenthesisToken);
 	auto nodes = _parameters.GetWithSeparators();
 	result.insert(result.end(), nodes.begin(), nodes.end());
 	if (_type.has_value())
 	{
-		auto rest = MakeVecOfRaw<const SyntaxNode>(_closeParenthesisToken, *_type, _body);
+		auto rest = MakeVecOfRaw<SyntaxNode>(_closeParenthesisToken, *_type, _body);
 		result.insert(result.end(), rest.begin(), rest.end());
 	} else
 	{
-		auto rest = MakeVecOfRaw<const SyntaxNode>(_closeParenthesisToken, _body);
+		auto rest = MakeVecOfRaw<SyntaxNode>(_closeParenthesisToken, _body);
 		result.insert(result.end(), rest.begin(), rest.end());
 	}
 	return result;
@@ -39,14 +39,14 @@ const vector<const SyntaxNode*> FunctionDeclarationSyntax::GetChildren() const
 
 const vector<const SyntaxNode*> GlobalStatementSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<const SyntaxNode>(_statement);
+	return MakeVecOfRaw<SyntaxNode>(_statement);
 }
 
 const vector<const SyntaxNode*> CompilationUnitSyntax::GetChildren() const
 {
-	auto result = MakeVecOfRaw<const SyntaxNode, const MemberSyntax>(
+	auto result = MakeVecOfRaw<SyntaxNode, MemberSyntax>(
 		_members.begin(), _members.end());
-	auto rest = MakeVecOfRaw<const SyntaxNode>(_endOfFileToken);
+	auto rest = MakeVecOfRaw<SyntaxNode>(_endOfFileToken);
 	result.insert(result.end(), rest.begin(), rest.end());
 	return result;
 }
@@ -64,7 +64,7 @@ Parser::Parser(const SyntaxTree& tree)
 			token.Kind() != SyntaxKind::BadToken)
 		{
 			kind = token.Kind();
-			_tokens.emplace_back(token);
+			_tokens.push_back(std::move(token));
 		}
 	} while (kind != SyntaxKind::EndOfFileToken);
 }
@@ -105,7 +105,7 @@ vector<unique_ptr<MemberSyntax>> Parser::ParseMembers()
 	{
 		auto startToken = Current();
 		auto member = ParseMember();
-		members.emplace_back(std::move(member));
+		members.push_back(std::move(member));
 
 		if (Current() == startToken)
 			NextToken();
@@ -148,12 +148,12 @@ SeparatedSyntaxList<ParameterSyntax> Parser::ParseParameterList()
 		&& Current().Kind() != SyntaxKind::EndOfFileToken)
 	{
 		auto param = ParseParameter();
-		nodes.emplace_back(std::move(param));
+		nodes.push_back(std::move(param));
 
 		if (Current().Kind() == SyntaxKind::CommaToken)
 		{
 			auto comma = MatchToken(SyntaxKind::CommaToken);
-			nodes.emplace_back(make_unique<SyntaxToken>(comma));
+			nodes.push_back(make_unique<SyntaxToken>(comma));
 		} else
 		{
 			parseNextParameter = false;
@@ -233,7 +233,7 @@ unique_ptr<BlockStatementSyntax> Parser::ParseBlockStatement()
 	{
 		auto startToken = Current();
 
-		statements.emplace_back(ParseStatement());
+		statements.push_back(ParseStatement());
 
 		// Make sure ParseStatement() consumes a token or more
 		if (Current() == startToken)
@@ -523,12 +523,12 @@ SeparatedSyntaxList<ExpressionSyntax> Parser::ParseArguments()
 		&& Current().Kind() != SyntaxKind::EndOfFileToken)
 	{
 		auto expression = ParseExpression();
-		nodesAndSeparators.emplace_back(std::move(expression));
+		nodesAndSeparators.push_back(std::move(expression));
 
 		if (Current().Kind() == SyntaxKind::CommaToken)
 		{
 			auto comma = MatchToken(SyntaxKind::CommaToken);
-			nodesAndSeparators.emplace_back(make_unique<SyntaxToken>(comma));
+			nodesAndSeparators.push_back(make_unique<SyntaxToken>(comma));
 		} else
 		{
 			parseNextArgument = false;

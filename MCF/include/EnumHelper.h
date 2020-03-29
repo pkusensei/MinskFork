@@ -24,14 +24,19 @@ T& operator++(T& value, int)
 
 //collects all enum values into one vector
 template<typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
-decltype(auto) GetAllEnumValue(const T& start, const T& end)
+const auto& GetAllEnumValue(T start, T end)
 {
-	auto result = vector<T>();
-	for (auto i = start; i != end; i++)
-		result.emplace_back(i);
-	result.emplace_back(end);
-	result.shrink_to_fit();
-	return result;
+	auto build = [start, end]()
+	{
+		auto result = std::vector<T>();
+		for (auto i = start; i != end; i++)
+			result.push_back(i);
+		result.push_back(end);
+		result.shrink_to_fit();
+		return result;
+	};
+	static const auto vec = build();
+	return vec;
 }
 
 }//MCF

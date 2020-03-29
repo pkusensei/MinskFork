@@ -210,7 +210,7 @@ private:
 public:
 	explicit Parser(const SyntaxTree& tree);
 
-	const DiagnosticBag& Diagnostics()const noexcept { return _diagnostics; }
+	constexpr const DiagnosticBag& Diagnostics()const noexcept { return _diagnostics; }
 	unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
 	vector<unique_ptr<SyntaxTree>> FetchUsings()noexcept { return std::move(_usings); };
 };
@@ -242,6 +242,8 @@ public:
 
 	SyntaxTree(SyntaxTree&& other);
 	SyntaxTree& operator=(SyntaxTree&& other);
+	SyntaxTree(const SyntaxTree&) = delete;
+	SyntaxTree& operator=(const SyntaxTree&) = delete;
 	~SyntaxTree();
 
 	constexpr const SourceText& Text() const { return *_text; }

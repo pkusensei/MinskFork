@@ -162,7 +162,7 @@ shared_ptr<BoundStatement> Binder::BindBlockStatement(const BlockStatementSyntax
 	_scope = make_unique<BoundScope>(std::move(_scope));
 	auto statements = syntax->Statements();
 	for (const auto& it : statements)
-		result.emplace_back(BindStatement(it));
+		result.push_back(BindStatement(it));
 	BoundScope::ResetToParent(_scope);
 	return make_shared<BoundBlockStatement>(std::move(result));
 }
@@ -196,7 +196,8 @@ shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax
 	auto condition = BindExpression(syntax->Condition(),
 		TypeSymbol::Get(TypeEnum::Bool));
 	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
-	return make_shared<BoundWhileStatement>(condition, body, breakLabel, continueLabel);
+	return make_shared<BoundWhileStatement>(std::move(condition), body,
+		breakLabel, continueLabel);
 }
 
 shared_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSyntax* syntax)
@@ -204,7 +205,8 @@ shared_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSy
 	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
 	auto condition = BindExpression(syntax->Condition(),
 		TypeSymbol::Get(TypeEnum::Bool));
-	return make_shared<BoundDoWhileStatement>(body, condition, breakLabel, continueLabel);
+	return make_shared<BoundDoWhileStatement>(body, std::move(condition),
+		breakLabel, continueLabel);
 }
 
 shared_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax* syntax)
@@ -705,7 +707,7 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* pre
 				binder.BindFunctionDeclaration(func);
 			if (globalStatement)
 			{
-				statements.emplace_back(binder.BindStatement(globalStatement->Statement()));
+				statements.push_back(binder.BindStatement(globalStatement->Statement()));
 			}
 		}
 	}

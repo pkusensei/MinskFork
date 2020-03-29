@@ -43,7 +43,7 @@ void ControlFlowGraph::BasicBlockBuilder::EndBlock()
 		auto block = make_unique<BasicBlock>(++_blockId);
 		auto& s = block->Statements();
 		s.insert(s.end(), _statements.begin(), _statements.end());
-		_blocks.emplace_back(std::move(block));
+		_blocks.push_back(std::move(block));
 		_statements.clear();
 	}
 }
@@ -57,17 +57,17 @@ ControlFlowGraph::BasicBlockBuilder::Build(const BoundBlockStatement* block)
 		{
 			case BoundNodeKind::LabelStatement:
 				StartBlock();
-				_statements.emplace_back(statement.get());
+				_statements.push_back(statement.get());
 				break;
 			case BoundNodeKind::GotoStatement:
 			case BoundNodeKind::ConditionalGotoStatement:
 			case BoundNodeKind::ReturnStatement:
-				_statements.emplace_back(statement.get());
+				_statements.push_back(statement.get());
 				StartBlock();
 				break;
 			case BoundNodeKind::VariableDeclaration:
 			case BoundNodeKind::ExpressionStatement:
-				_statements.emplace_back(statement.get());
+				_statements.push_back(statement.get());
 				break;
 			default:
 				throw std::invalid_argument(BuildStringFrom("Unexpected statement"
@@ -98,10 +98,10 @@ void ControlFlowGraph::GraphBuilder::Connect(BasicBlock& from, BasicBlock& to,
 	}
 
 	auto branch = make_unique<BasicBlockBranch>(&from, &to, ptr);
-	_branches.emplace_back(std::move(branch));
+	_branches.push_back(std::move(branch));
 	auto& last = _branches.back();
-	from.Outgoing().emplace_back(last.get());
-	to.Incoming().emplace_back(last.get());
+	from.Outgoing().push_back(last.get());
+	to.Incoming().push_back(last.get());
 }
 
 template<typename T, typename Pred>
@@ -244,7 +244,7 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 	auto start = _start.get();
 	auto end = _end.get();
 	blocks.insert(blocks.begin(), std::move(_start));
-	blocks.emplace_back(std::move(_end));
+	blocks.push_back(std::move(_end));
 	return ControlFlowGraph(start, end, blocks, _branches);
 }
 

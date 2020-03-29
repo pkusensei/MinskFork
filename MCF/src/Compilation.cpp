@@ -15,7 +15,7 @@
 
 namespace MCF {
 
-Evaluator::Evaluator(unique_ptr<BoundProgram>& program, VarMap& variables)
+Evaluator::Evaluator(unique_ptr<BoundProgram> program, VarMap& variables)
 	: _program(std::move(program)), _globals(variables)
 {
 	_locals.emplace(VarMap());
@@ -297,9 +297,9 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 		{
 			auto param = node->Function()->Parameters()[i];
 			auto value = EvaluateExpression(node->Arguments()[i].get());
-			locals.emplace(make_shared<ParameterSymbol>(param), value);
+			locals.emplace(make_shared<ParameterSymbol>(param), std::move(value));
 		}
-		_locals.emplace(locals);
+		_locals.push(std::move(locals));
 		auto statement = _program->Functions().at(node->Function()).get();
 		auto result = EvaluateStatement(statement);
 
@@ -458,7 +458,7 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 		return EvaluationResult(*_diagnostics, NullValue);
 	}
 
-	Evaluator evaluator(program, variables);
+	Evaluator evaluator(std::move(program), variables);
 	auto value = evaluator.Evaluate();
 	return EvaluationResult(*_diagnostics, value);
 }

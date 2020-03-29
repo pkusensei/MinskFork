@@ -6,7 +6,7 @@
 
 namespace MCF {
 
-const vector<SyntaxKind> AllSyntaxKinds
+const vector<SyntaxKind>& AllSyntaxKinds
 = GetAllEnumValue<SyntaxKind>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
 
 string_view GetSyntaxKindName(SyntaxKind kind)
@@ -302,10 +302,10 @@ int GetBinaryOperatorPrecedence(SyntaxKind kind) noexcept
 
 const vector<SyntaxKind>& GetUnaryOperatorKinds()
 {
-	auto build = [kinds = AllSyntaxKinds]()
+	auto build = []()
 	{
 		auto result = vector<SyntaxKind>();
-		for (const auto& it : kinds)
+		for (const auto& it : AllSyntaxKinds)
 			if (GetUnaryOperatorPrecedence(it) > 0)
 				result.emplace_back(it);
 		result.shrink_to_fit();
@@ -317,10 +317,10 @@ const vector<SyntaxKind>& GetUnaryOperatorKinds()
 
 const vector<SyntaxKind>& GetBinaryOperatorKinds()
 {
-	auto build = [kinds = AllSyntaxKinds]()
+	auto build = []()
 	{
 		auto result = vector<SyntaxKind>();
-		for (const auto& it : kinds)
+		for (const auto& it : AllSyntaxKinds)
 			if (GetBinaryOperatorPrecedence(it) > 0)
 				result.emplace_back(it);
 		result.shrink_to_fit();

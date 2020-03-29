@@ -49,7 +49,7 @@ public:
 	{
 	}
 
-	DiagnosticBag& Diagnostics() const noexcept { return _diagnostics; }
+	constexpr DiagnosticBag& Diagnostics() const noexcept { return _diagnostics; }
 	constexpr const ValueType& Value()const noexcept { return _value; }
 };
 
@@ -78,7 +78,7 @@ private:
 	void Assign(const shared_ptr<VariableSymbol>& variable, const ValueType& value);
 
 public:
-	Evaluator(unique_ptr<BoundProgram>& program, VarMap& variables);
+	Evaluator(unique_ptr<BoundProgram> program, VarMap& variables);
 	ValueType Evaluate();
 };
 
@@ -98,9 +98,11 @@ public:
 	Compilation(unique_ptr<Compilation> previous, unique_ptr<SyntaxTree> tree);
 	explicit Compilation(unique_ptr<SyntaxTree> tree);
 
-	~Compilation();
 	Compilation(Compilation&& other) noexcept;
 	Compilation& operator=(Compilation&& other) = delete;
+	Compilation(const Compilation&) = delete;
+	Compilation& operator=(const Compilation&) = delete;
+	~Compilation();
 
 	const Compilation* Previous()const noexcept { return _previous.get(); }
 	const vector<const SyntaxTree*> SynTrees()const noexcept;

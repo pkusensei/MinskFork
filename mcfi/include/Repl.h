@@ -12,7 +12,7 @@ class ObservableCollection final
 private:
 	std::vector<T> _collection;
 	std::function<void()> _action;
-	void CollectionChanged() { _action(); }
+	void CollectionChanged() { if (_action) _action(); }
 
 public:
 	template<typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T>>>
@@ -154,7 +154,4 @@ protected:
 	bool IsCompleteSubmission(const std::string& text) const override;
 	void EvaluateSubmission(const std::string& text) override;
 
-public:
-	McfRepl();
-	~McfRepl();
 };

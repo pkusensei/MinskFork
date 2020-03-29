@@ -36,7 +36,7 @@ public:
 	explicit Lexer(const SyntaxTree& text);
 
 	[[nodiscard]] SyntaxToken Lex();
-	const DiagnosticBag& Diagnostics()const noexcept { return _diagnostics; }
+	constexpr const DiagnosticBag& Diagnostics()const noexcept { return _diagnostics; }
 };
 
 }//MCF
