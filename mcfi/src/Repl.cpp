@@ -376,7 +376,7 @@ void McfRepl::RenderLine(const std::string & line) const
 	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(line);
 	for (const auto& it : tokens)
 	{
-		auto isKeyword = MCF::StringEndsWith(MCF::GetSyntaxKindName(it.Kind()), "Keyword");
+		auto isKeyword = MCF::StringEndsWith(MCF::nameof(it.Kind()), "Keyword");
 		auto isIdentifier = it.Kind() == MCF::SyntaxKind::IdentifierToken;
 		auto isNumber = it.Kind() == MCF::SyntaxKind::NumberToken;
 		auto isString = it.Kind() == MCF::SyntaxKind::StringToken;

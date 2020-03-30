@@ -90,7 +90,7 @@ ValueType Evaluator::EvaluateStatement(const BoundBlockStatement* body)
 				return _lastValue;
 			}
 			default:
-				throw std::invalid_argument(BuildStringFrom("Unexpected statement ", GetEnumText(s->Kind())));
+				throw std::invalid_argument(BuildStringFrom("Unexpected statement ", nameof(s->Kind())));
 		}
 	}
 	return _lastValue;
@@ -163,7 +163,7 @@ ValueType Evaluator::EvaluateExpression(const BoundExpression* node)
 		default:
 			break;
 	}
-	throw std::invalid_argument(BuildStringFrom("Invalid expression ", GetEnumText(node->Kind())));
+	throw std::invalid_argument(BuildStringFrom("Invalid expression ", nameof(node->Kind())));
 }
 
 ValueType Evaluator::EvaluateLiteralExpression(const BoundLiteralExpression* node)const
@@ -204,7 +204,7 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression* node)
 			return ~operand.GetValue<IntegerType>();
 		default:
 			throw std::invalid_argument(BuildStringFrom("Invalid unary operator "
-				, GetEnumText(node->Op().Kind())));
+				, nameof(node->Op().Kind())));
 	}
 }
 
@@ -257,7 +257,7 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression* node)
 
 		default:
 			throw std::invalid_argument(BuildStringFrom("Invalid binary operator "
-				, GetEnumText(node->Op().Kind())));
+				, nameof(node->Op().Kind())));
 	}
 }
 
@@ -334,7 +334,7 @@ ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression* nod
 			Assign(node->Variable(), --result);
 			return result;
 		default:
-			throw std::invalid_argument(BuildStringFrom("Unexpected postfix operator ", GetEnumText(node->OperatorKind())));
+			throw std::invalid_argument(BuildStringFrom("Unexpected postfix operator ", nameof(node->OperatorKind())));
 	}
 }
 

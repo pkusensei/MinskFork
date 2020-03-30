@@ -93,7 +93,7 @@ size_t FunctionHash::operator()(const shared_ptr<FunctionSymbol>& fs) const noex
 	return (*this)(*fs);
 }
 
-string_view GetEnumText(SymbolKind kind)
+string_view nameof(SymbolKind kind)
 {
 	switch (kind)
 	{

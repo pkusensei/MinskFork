@@ -100,6 +100,18 @@ public:
 	{
 	}
 
+	// NOTE copy ctor vs shared_ptr? 
+	BoundScope(const BoundScope& other)
+		:_symbols(other._symbols),
+		_parent(other._parent ? make_unique<BoundScope>(*other._parent) : nullptr)
+	{
+	}
+	BoundScope& operator=(const BoundScope&) = delete;
+
+	BoundScope(BoundScope&&) = default;
+	BoundScope& operator=(BoundScope&&) = default;
+	~BoundScope() = default;
+
 	const BoundScope* Parent()const noexcept { return _parent.get(); }
 
 	std::optional<shared_ptr<Symbol>> TryLookupSymbol(string_view name)const;

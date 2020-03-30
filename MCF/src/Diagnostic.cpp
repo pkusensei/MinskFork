@@ -57,8 +57,8 @@ void DiagnosticBag::ReportUnterminatedString(TextLocation location)
 void DiagnosticBag::ReportUnexpectedToken(TextLocation location,
 	SyntaxKind actualKind, SyntaxKind expectedKind)
 {
-	auto message = BuildStringFrom("Unexpected token <", GetSyntaxKindName(actualKind),
-		">, expected <", GetSyntaxKindName(expectedKind), ">.");
+	auto message = BuildStringFrom("Unexpected token <", nameof(actualKind),
+		">, expected <", nameof(expectedKind), ">.");
 	Report(std::move(location), std::move(message));
 }
 
@@ -177,7 +177,7 @@ void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(TextLocation locat
 	string_view operatorText, SyntaxKind kind)
 {
 	auto message = BuildStringFrom("Operator '", operatorText,
-		"' is not defined for expression '", GetSyntaxKindName(kind), "'.");
+		"' is not defined for expression '", nameof(kind), "'.");
 	Report(std::move(location), std::move(message));
 }
 

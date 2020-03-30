@@ -132,7 +132,7 @@ void BoundNodePrinter::Write(const BoundNode* node)
 			break;
 		}
 		default:
-			throw std::invalid_argument(BuildStringFrom("Unexpected node ", GetEnumText(node->Kind())));
+			throw std::invalid_argument(BuildStringFrom("Unexpected node ", nameof(node->Kind())));
 	}
 }
 

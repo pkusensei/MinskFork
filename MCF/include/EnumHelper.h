@@ -23,20 +23,19 @@ T& operator++(T& value, int)
 }
 
 //collects all enum values into one vector
-template<typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+template<typename T, size_t N, typename = std::enable_if_t<std::is_enum_v<T>>>
 const auto& GetAllEnumValue(T start, T end)
 {
-	auto build = [start, end]()
+	auto build = [start, end]()constexpr
 	{
-		auto result = std::vector<T>();
-		for (auto i = start; i != end; i++)
-			result.push_back(i);
-		result.push_back(end);
-		result.shrink_to_fit();
+		auto result = std::array<T, N>();
+		for (auto [i, e] = std::make_pair(0, start); e != end; ++i, ++e)
+			result.at(i) = e;
+		result.at(N - 1) = end;
 		return result;
 	};
-	static const auto vec = build();
-	return vec;
+	static const auto enums = build();
+	return enums;
 }
 
 }//MCF

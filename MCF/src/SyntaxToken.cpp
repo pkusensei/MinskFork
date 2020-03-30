@@ -23,7 +23,7 @@ void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
 
 	if (isToConsole)
 		SetConsoleColor(dynamic_cast<const SyntaxToken*>(node) ? ConsoleColor::Blue : ConsoleColor::Cyan);
-	out << GetSyntaxKindName(node->Kind());
+	out << nameof(node->Kind());
 
 	auto token = dynamic_cast<const SyntaxToken*>(node);
 	if (token != nullptr && token->Value().HasValue())

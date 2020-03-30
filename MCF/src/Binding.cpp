@@ -153,7 +153,7 @@ shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax* syntax)
 		default:
 			break;
 	}
-	throw std::invalid_argument(BuildStringFrom("Unexpected syntax ", GetSyntaxKindName(syntax->Kind())));
+	throw std::invalid_argument(BuildStringFrom("Unexpected syntax ", nameof(syntax->Kind())));
 }
 
 shared_ptr<BoundStatement> Binder::BindBlockStatement(const BlockStatementSyntax* syntax)
@@ -372,7 +372,7 @@ shared_ptr<BoundExpression> Binder::BindExpressionInternal(const ExpressionSynta
 		default:
 			break;
 	}
-	throw std::invalid_argument(BuildStringFrom("Invalid expression ", GetSyntaxKindName(syntax->Kind())));
+	throw std::invalid_argument(BuildStringFrom("Invalid expression ", nameof(syntax->Kind())));
 
 }
 
@@ -570,7 +570,7 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 				BoundPostfixOperatorEnum::Decrement, std::move(boundExpression));
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected operator token "
-				, GetSyntaxKindName(syntax->Op().Kind())));
+				, nameof(syntax->Op().Kind())));
 	}
 }
 
@@ -733,7 +733,7 @@ unique_ptr<BoundProgram> Binder::BindProgram(const BoundGlobalScope* globalScope
 	{
 		for (const auto& it : scope->Functions())
 		{
-			auto binder = Binder(std::move(parentScope), it.get());
+			auto binder = Binder(std::make_unique<BoundScope>(*parentScope), it.get());
 			auto body = binder.BindStatement(it->Declaration()->Body());
 			auto lowerBody = Lowerer::Lower(std::move(body));
 

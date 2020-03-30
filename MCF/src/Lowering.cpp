@@ -83,7 +83,7 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(shared_ptr<BoundS
 		default:
 			break;
 	}
-	throw std::invalid_argument(BuildStringFrom("Unexpected node: ", GetEnumText(node->Kind())));
+	throw std::invalid_argument(BuildStringFrom("Unexpected node: ", nameof(node->Kind())));
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(shared_ptr<BoundBlockStatement> node)
@@ -263,7 +263,7 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(shared_ptr<Boun
 		default:
 			break;
 	}
-	throw std::invalid_argument(BuildStringFrom("Unexpected node: ", GetEnumText(node->Kind())));
+	throw std::invalid_argument(BuildStringFrom("Unexpected node: ", nameof(node->Kind())));
 }
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteErrorExpression(shared_ptr<BoundErrorExpression> node)

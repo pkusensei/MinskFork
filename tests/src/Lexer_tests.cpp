@@ -22,7 +22,7 @@ TEST_CASE("Lexer covers all tokens", "[Lexer]")
 	auto tokenKinds = std::vector<MCF::SyntaxKind>();
 	for (const auto& kind : MCF::AllSyntaxKinds)
 	{
-		auto text = MCF::GetSyntaxKindName(kind);
+		auto text = MCF::nameof(kind);
 		if (MCF::StringEndsWith(text, "Keyword") || MCF::StringEndsWith(text, "Token"))
 			tokenKinds.emplace_back(kind);
 	}
@@ -207,8 +207,8 @@ auto GetTokenPairsWithSeperator()->std::vector<std::tuple<
 
 bool RequiresSeperators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind)
 {
-	auto t1IsKeyword = MCF::StringEndsWith(MCF::GetSyntaxKindName(t1kind), "Keyword");
-	auto t2IsKeyword = MCF::StringEndsWith(MCF::GetSyntaxKindName(t2kind), "Keyword");
+	auto t1IsKeyword = MCF::StringEndsWith(MCF::nameof(t1kind), "Keyword");
+	auto t2IsKeyword = MCF::StringEndsWith(MCF::nameof(t2kind), "Keyword");
 	if (t1kind == MCF::SyntaxKind::IdentifierToken && t2kind == MCF::SyntaxKind::IdentifierToken)
 		return true;
 	if (t1IsKeyword && t2IsKeyword)

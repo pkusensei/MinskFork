@@ -43,7 +43,7 @@ void SymbolPrinter::Write(const Symbol* symbol)
 		}
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected symbol: "
-				, GetEnumText(symbol->Kind())));
+				, nameof(symbol->Kind())));
 	}
 }
 

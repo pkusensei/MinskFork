@@ -443,7 +443,7 @@ unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(unique_ptr<Expressio
 			operatorToken, std::move(expression));
 	else
 		throw std::invalid_argument(BuildStringFrom("Unexpected expression ",
-			GetSyntaxKindName(expression->Kind())));
+			nameof(expression->Kind())));
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParsePrimaryExpression()

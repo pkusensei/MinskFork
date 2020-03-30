@@ -1,15 +1,16 @@
 #include "SyntaxKind.h"
 
+#include <array>
 #include <stdexcept>
 
 #include "EnumHelper.h"
 
 namespace MCF {
 
-const vector<SyntaxKind>& AllSyntaxKinds
-= GetAllEnumValue<SyntaxKind>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
+const std::array<SyntaxKind, SYNTAXKIND_COUNT>& AllSyntaxKinds
+= GetAllEnumValue<SyntaxKind, SYNTAXKIND_COUNT>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
 
-string_view GetSyntaxKindName(SyntaxKind kind)
+string_view nameof(SyntaxKind kind)
 {
 	switch (kind)
 	{

@@ -25,7 +25,7 @@ enum class SymbolKind
 	Type,
 };
 
-string_view GetEnumText(SymbolKind kind);
+string_view nameof(SymbolKind kind);
 
 class MCF_API Symbol
 {

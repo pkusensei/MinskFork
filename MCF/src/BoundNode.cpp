@@ -7,7 +7,7 @@
 
 namespace MCF {
 
-string_view GetEnumText(const BoundNodeKind & kind)
+string_view nameof(BoundNodeKind  kind)
 {
 	switch (kind)
 	{
@@ -58,7 +58,7 @@ string_view GetEnumText(const BoundNodeKind & kind)
 	}
 }
 
-void BoundNode::WriteTo(std::ostream & out) const
+void BoundNode::WriteTo(std::ostream& out) const
 {
 	auto printer = BoundNodePrinter(out);
 	printer.Write(this);

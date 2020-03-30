@@ -14,7 +14,7 @@ enum class BoundUnaryOperatorKind
 	OnesComplement
 };
 
-inline string_view GetEnumText(BoundUnaryOperatorKind kind)
+inline string_view nameof(BoundUnaryOperatorKind kind)
 {
 	switch (kind)
 	{
@@ -52,7 +52,7 @@ enum class BoundBinaryOperatorKind
 	GreaterOrEquals
 };
 
-inline string_view GetEnumText(BoundBinaryOperatorKind kind)
+inline string_view nameof(BoundBinaryOperatorKind kind)
 {
 	switch (kind)
 	{
@@ -100,7 +100,7 @@ enum class BoundPostfixOperatorEnum
 	Decrement,
 };
 
-inline string_view GetEnumText(BoundPostfixOperatorEnum kind)
+inline string_view nameof(BoundPostfixOperatorEnum kind)
 {
 	switch (kind)
 	{

@@ -90,8 +90,12 @@ enum class SyntaxKind
 	PostfixExpression,
 };
 
-MCF_API string_view GetSyntaxKindName(SyntaxKind kind);
-extern "C" MCF_API const vector<SyntaxKind>& AllSyntaxKinds; // NOTE global constant
+constexpr size_t SYNTAXKIND_COUNT = 73;
+
+// NOTE global constant
+extern "C" MCF_API const std::array<SyntaxKind, SYNTAXKIND_COUNT> & AllSyntaxKinds;
+
+MCF_API string_view nameof(SyntaxKind kind);
 
 SyntaxKind GetKeywordKind(string_view text) noexcept;
 MCF_API string_view GetText(SyntaxKind kind);

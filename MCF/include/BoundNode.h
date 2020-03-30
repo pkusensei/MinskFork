@@ -32,7 +32,7 @@ enum class BoundNodeKind
 
 };
 
-string_view GetEnumText(const BoundNodeKind& kind);
+string_view nameof(BoundNodeKind kind);
 
 class BoundNode
 {
