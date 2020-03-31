@@ -42,18 +42,6 @@ string_view TrimStringEnd(string_view text)
 	return text;
 }
 
-string StringJoin(const vector<string>& strs, const char seperator)
-{
-	auto result = string();
-	for (const auto& it : strs)
-	{
-		result += it + seperator;
-	}
-	if (!result.empty())
-		result.erase(result.length() - 1);
-	return result;
-}
-
 string& StringReplaceAll(string& data, string_view from, string_view to)
 {
 	if (data.empty()) return data;

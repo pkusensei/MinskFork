@@ -14,7 +14,6 @@ MCF_API bool StringEndsWith(string_view sample, string_view ending);
 MCF_API string_view TrimString(string_view text);
 MCF_API string_view TrimStringStart(string_view text);
 MCF_API string_view TrimStringEnd(string_view text);
-MCF_API string StringJoin(const vector<string>& strs, const char seperator = ' ');
 string& StringReplaceAll(string& data, string_view from, string_view to);
 
 template<typename... Args>
@@ -28,14 +27,37 @@ string BuildStringFrom(Args&&... args)
 template<typename T>
 bool StringIsBlank(const T& text)
 {
-	using It = decltype(text.cbegin()); // NOTE just why? 
+	using It = decltype(text.cbegin());
+	static_assert(std::is_same_v<char,
+		typename std::iterator_traits<It>::value_type>);
+
 	return text.empty() ||
-		std::all_of<It, int(*)(int)>(text.cbegin(), text.cend(), std::isspace);
+		std::all_of<It, int(*)(int)>(text.cbegin(), text.cend(), std::isspace); // NOTE just why? 
 }
+
+template<typename It >
+string StringJoin(It begin, It end, char seperator = ' ')
+{
+	static_assert(std::is_same_v<char,
+		typename std::iterator_traits<It>::value_type::value_type>);
+
+	auto result = string();
+	for (; begin != end; ++begin)
+	{
+		result += std::string(*begin) + seperator;
+	}
+	if (!result.empty())
+		return result.erase(result.length() - 1);
+	return result;
+}
+
 
 template<typename It>
 vector<string_view> StringSplit(It begin, It end, char delimiter = ' ')
 {
+	static_assert(std::is_same_v<char,
+		typename std::iterator_traits<It>::value_type>);
+
 	auto result = vector<string_view>();
 	if (begin == end)
 		return result;

@@ -639,7 +639,6 @@ SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics)
 
 vector<unique_ptr<SyntaxTree>> SyntaxTree::Flatten(unique_ptr<SyntaxTree> tree)
 {
-
 	auto result = vector<unique_ptr<SyntaxTree>>();
 
 	for (auto& u : tree->_usings)

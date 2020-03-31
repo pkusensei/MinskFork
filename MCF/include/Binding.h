@@ -71,12 +71,12 @@ private:
 	unique_ptr<BoundScope> _parent;
 
 	template<typename T, typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
-	bool TryDeclareSymbol(const shared_ptr<T>& symbol)
+	bool TryDeclareSymbol(shared_ptr<T> symbol)
 	{
 		auto name = symbol->Name();
 		if (_symbols.find(name) == _symbols.end() && !name.empty())
 		{
-			_symbols.emplace(name, symbol);
+			_symbols.emplace(name, std::move(symbol));
 			return true;
 		}
 		return false;
@@ -86,10 +86,10 @@ private:
 	const vector<shared_ptr<T>> GetDeclaredSymbols() const
 	{
 		auto result = vector<shared_ptr<T>>();
-		for (const auto& it : _symbols)
+		for (const auto& [_, symbol] : _symbols)
 		{
-			auto p = std::dynamic_pointer_cast<T>(it.second);
-			if (p) result.emplace_back(p);
+			auto p = std::dynamic_pointer_cast<T>(symbol);
+			if (p) result.push_back(std::move(p));
 		}
 		return result;
 	}
@@ -116,13 +116,13 @@ public:
 
 	std::optional<shared_ptr<Symbol>> TryLookupSymbol(string_view name)const;
 
-	bool TryDeclareVariable(const shared_ptr<VariableSymbol>& variable)
+	bool TryDeclareVariable(shared_ptr<VariableSymbol> variable)
 	{
-		return TryDeclareSymbol(variable);
+		return TryDeclareSymbol(std::move(variable));
 	}
-	bool TryDeclareFunction(const shared_ptr<FunctionSymbol>& function)
+	bool TryDeclareFunction(shared_ptr<FunctionSymbol> function)
 	{
-		return TryDeclareSymbol(function);
+		return TryDeclareSymbol(std::move(function));
 	}
 
 	const vector<shared_ptr<VariableSymbol>> GetDeclaredVariables()const

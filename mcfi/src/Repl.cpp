@@ -48,7 +48,8 @@ std::string Repl::EditSubmission()
 	view.CurrentLine(document.size() - 1);
 	view.CurrentCharacter(document[view.CurrentLine()].length());
 	std::cout << '\n';
-	return MCF::StringJoin(document.Contents(), NEW_LINE);
+	return MCF::StringJoin(document.Contents().cbegin(),
+		document.Contents().cend(), NEW_LINE);
 }
 
 void Repl::HandleKey(const MCF::KeyInfo& key,
@@ -123,7 +124,8 @@ void Repl::HandleEscape(Document& document, SubmissionView& view)
 
 void Repl::HandleEnter(Document& document, SubmissionView& view)
 {
-	auto text = MCF::StringJoin(document.Contents(), NEW_LINE);
+	auto text = MCF::StringJoin(document.Contents().cbegin(),
+		document.Contents().cend(), NEW_LINE);
 	if (MCF::StringStartsWith(text, "#") || IsCompleteSubmission(text))
 	{
 		_done = true;
@@ -371,7 +373,7 @@ void Repl::SubmissionView::CurrentCharacter(const size_t value)
 	}
 }
 
-void McfRepl::RenderLine(const std::string & line) const
+void McfRepl::RenderLine(const std::string& line) const
 {
 	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(line);
 	for (const auto& it : tokens)
@@ -396,7 +398,7 @@ void McfRepl::RenderLine(const std::string & line) const
 	}
 }
 
-void McfRepl::EvaluateMetaCommand(const std::string & input)
+void McfRepl::EvaluateMetaCommand(const std::string& input)
 {
 	if (input == "#showTree")
 	{
@@ -419,7 +421,7 @@ void McfRepl::EvaluateMetaCommand(const std::string & input)
 	}
 }
 
-bool McfRepl::IsCompleteSubmission(const std::string & text) const
+bool McfRepl::IsCompleteSubmission(const std::string& text) const
 {
 	if (text.empty())
 		return true;
@@ -442,7 +444,7 @@ bool McfRepl::IsCompleteSubmission(const std::string & text) const
 	return true;
 }
 
-void McfRepl::EvaluateSubmission(const std::string & text)
+void McfRepl::EvaluateSubmission(const std::string& text)
 {
 	// creates a string_view referncing to the last item in _submissionHistory
 	// That was the original idea BUT
@@ -451,10 +453,8 @@ void McfRepl::EvaluateSubmission(const std::string & text)
 	// At the end of the day each syntax tree keeps its own copy of input string
 	auto syntaxTree = MCF::SyntaxTree::Parse(text);
 
-	auto vec = std::vector<std::unique_ptr<MCF::SyntaxTree >>();
-
 	auto compilation = _previous == nullptr ?
-		std::make_unique<MCF::Compilation>(std::move(syntaxTree) )
+		std::make_unique<MCF::Compilation>(std::move(syntaxTree))
 		: MCF::Compilation::ContinueWith(std::move(_previous), std::move(syntaxTree));
 	if (_showTree)
 		compilation->SynTrees().back()->Root()->WriteTo(std::cout);
