@@ -42,7 +42,7 @@ Binder::Binder(unique_ptr<BoundScope> parent, const FunctionSymbol* function)
 		for (const auto& p : function->Parameters())
 		{
 			shared_ptr<VariableSymbol> v = make_shared<ParameterSymbol>(p);
-			_scope->TryDeclareVariable(v);
+			_scope->TryDeclareVariable(std::move(v));
 		}
 }
 

@@ -20,7 +20,7 @@ template<typename... Args>
 string BuildStringFrom(Args&&... args)
 {
 	std::stringstream ss;
-	(ss << ... << args);
+	(ss << ... << std::forward<Args>(args));
 	return ss.str();
 }
 
