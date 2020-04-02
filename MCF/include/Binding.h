@@ -89,7 +89,8 @@ private:
 		for (const auto& [_, symbol] : _symbols)
 		{
 			auto p = std::dynamic_pointer_cast<T>(symbol);
-			if (p) result.push_back(std::move(p));
+			if (p)
+				result.push_back(std::move(p));
 		}
 		return result;
 	}
@@ -168,7 +169,7 @@ public:
 class BoundProgram final
 {
 public:
-	using FuncMap = std::unordered_map<shared_ptr<FunctionSymbol>, unique_ptr<BoundBlockStatement>>;
+	using FuncMap = std::unordered_map<const FunctionSymbol*, unique_ptr<BoundBlockStatement>>;
 
 private:
 	unique_ptr<DiagnosticBag> _diagnostics;

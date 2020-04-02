@@ -300,7 +300,7 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 			locals.emplace(make_shared<ParameterSymbol>(param), std::move(value));
 		}
 		_locals.push(std::move(locals));
-		auto statement = _program->Functions().at(node->Function()).get();
+		auto statement = _program->Functions().at(node->Function().get()).get();
 		auto result = EvaluateStatement(statement);
 
 		_locals.pop();
@@ -471,13 +471,16 @@ void Compilation::EmitTree(std::ostream& out)
 		program->Statement()->WriteTo(out);
 	} else
 	{
-		for (const auto& it : program->Functions())
+		for (const auto& [fs, body] : program->Functions())
 		{
 			auto& funcs = GlobalScope()->Functions();
-			if (std::find(funcs.begin(), funcs.end(), it.first) == funcs.end())
+			if (std::find_if(funcs.begin(), funcs.end(),
+				[fs = fs](const auto& it) { return it.get() == fs; }) == funcs.end())
+			{
 				continue;
-			it.first->WriteTo(out);
-			it.second->WriteTo(out);
+			}
+			fs->WriteTo(out);
+			body->WriteTo(out);
 		}
 	}
 }

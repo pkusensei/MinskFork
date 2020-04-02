@@ -522,7 +522,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		if (arg->Type().get() != param.Type())
 		{
 			_diagnostics->ReportWrongArgumentType(
-			(*syntax->Arguments())[i]->Location(),
+				(*syntax->Arguments())[i]->Location(),
 				param.Name(), param.Type(), arg->Type());
 			hasError = true;
 		}
@@ -607,7 +607,7 @@ shared_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& id
 {
 	auto name = identifier.Text().empty() ? "?" : identifier.Text();
 	auto declare = !identifier.IsMissing();
-	shared_ptr<VariableSymbol> variable;
+	shared_ptr<VariableSymbol> variable = nullptr;
 	if (_function == nullptr)
 		variable = make_shared<GlobalVariableSymbol>(name, isReadOnly, type);
 	else
@@ -743,7 +743,7 @@ unique_ptr<BoundProgram> Binder::BindProgram(const BoundGlobalScope* globalScope
 				binder._diagnostics->ReportAllPathsMustReturn(
 					it->Declaration()->Identifier().Location());
 			}
-			funcBodies.emplace(it, std::move(lowerBody));
+			funcBodies.emplace(it.get(), std::move(lowerBody));
 
 			diag->AddRange(binder.Diagnostics());
 		}
