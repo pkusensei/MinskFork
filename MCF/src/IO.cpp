@@ -8,13 +8,13 @@ namespace MCF {
 
 void TextWriter::SetForeground(const ConsoleColor& color)
 {
-	if (IsConsoleOutput())
+	if (IsConsole())
 		SetConsoleColor(color);
 }
 
 void TextWriter::ResetColor()
 {
-	if (IsConsoleOutput())
+	if (IsConsole())
 		ResetConsoleColor();
 }
 

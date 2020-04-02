@@ -714,7 +714,7 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* pre
 
 	auto functions = binder._scope->GetDeclaredFunctions();
 	auto variables = binder._scope->GetDeclaredVariables();
-	auto diagnostics = binder.Diagnostics();
+	auto& diagnostics = binder.Diagnostics();
 	if (previous != nullptr)
 		diagnostics.AddRangeFront(previous->Diagnostics());
 	return make_unique<BoundGlobalScope>(previous, std::move(binder._diagnostics),

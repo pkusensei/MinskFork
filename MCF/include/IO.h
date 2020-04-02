@@ -17,7 +17,10 @@ class TextWriter
 protected:
 	std::ostream& _out;
 
-	bool IsConsoleOutput() const { return _out.rdbuf() == std::cout.rdbuf(); }
+	bool IsConsole() const
+	{
+		return _out.rdbuf() == std::cout.rdbuf() || _out.rdbuf() == std::cerr.rdbuf();
+	}
 
 	void SetForeground(const ConsoleColor& color);
 	void ResetColor();

@@ -14,7 +14,7 @@ int main(int argc, char** argv)
 	if (argc == 1)
 	{
 		std::cerr << "usage: mcfc <source-paths>" << '\n';
-		return 0;
+		return 1;
 	}
 
 	auto trees = std::vector<std::unique_ptr<MCF::SyntaxTree>>();
@@ -37,7 +37,7 @@ int main(int argc, char** argv)
 	}
 
 	if (hasError)
-		return 0;
+		return 1;
 
 	auto compilation = MCF::Compilation(std::move(trees));
 	MCF::VarMap variables;
@@ -51,6 +51,7 @@ int main(int argc, char** argv)
 	{
 		auto writer = MCF::IndentedTextWriter(std::cerr);
 		writer.WriteDiagnostics(result.Diagnostics());
+		return 1;
 	}
-
+	return 0;
 }
