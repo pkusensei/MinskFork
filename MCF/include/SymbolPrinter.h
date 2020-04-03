@@ -14,7 +14,7 @@ class TypeSymbol;
 class SymbolPrinter
 {
 private:
-	IndentedTextWriter _writer;
+	TextWriter _writer;
 
 	void WriteFunction(const FunctionSymbol* symbol);
 	void WriteGlobalVariable(const GlobalVariableSymbol* symbol);

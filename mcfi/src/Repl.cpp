@@ -24,6 +24,7 @@ void Repl::Run()
 
 	while (true)
 	{
+		std::cout << '\n'; // HACK prevents last line displayed from being eaten
 		auto text = EditSubmission();
 		if (text.empty())
 			return;
@@ -42,7 +43,7 @@ std::string Repl::EditSubmission()
 	_done = false;
 	auto document = ObservableCollection<std::string>(std::string());
 	auto view = SubmissionView(
-		[this](const std::string& line) { this->RenderLine(line); },
+		[this](std::string_view line) { this->RenderLine(line); },
 		document);
 
 	while (!_done)
@@ -287,12 +288,12 @@ void Repl::HandleTyping(Document& document, SubmissionView& view, const std::str
 	view.CurrentCharacter(view.CurrentCharacter() + text.length());
 }
 
-void Repl::RenderLine(const std::string& line) const
+void Repl::RenderLine(std::string_view line) const
 {
 	std::cout << line;
 }
 
-std::vector<std::string> ParseArgs(const std::string& input)
+std::vector<std::string> ParseArgs(std::string_view input)
 {
 	auto args = std::vector<std::string>();
 	auto inQuotes = false;
@@ -316,20 +317,20 @@ std::vector<std::string> ParseArgs(const std::string& input)
 			if (!inQuotes)
 				commitArg();
 			else
-				arg.append(1, c);
+				arg.push_back(c);
 		} else if (c == '\"')
 		{
 			if (!inQuotes)
 				inQuotes = true;
 			else if (l == '\"')
 			{
-				arg.append(1, c);
+				arg.push_back(c);
 				++position;
 			} else
 				inQuotes = false;
 		} else
 		{
-			arg.append(1, c);
+			arg.push_back(c);
 		}
 		++position;
 	}
@@ -338,7 +339,7 @@ std::vector<std::string> ParseArgs(const std::string& input)
 	return args;
 }
 
-void Repl::EvaluateMetaCommand(const std::string& input)
+void Repl::EvaluateMetaCommand(std::string_view input)
 {
 	auto args = ParseArgs(input);
 	const auto& name = args.front();
@@ -354,9 +355,10 @@ void Repl::EvaluateMetaCommand(const std::string& input)
 	if (args.size() - 1 != command->Arity)
 	{
 		MCF::SetConsoleColor(MCF::ConsoleColor::Red);
-		std::cout << "error: invalid number of arguments; expecting exactly"
+		std::cout << "error: invalid number of arguments; expecting exactly "
 			<< command->Arity << ".\n";
 		MCF::ResetConsoleColor();
+		return;
 	}
 	auto& method = command->Method;
 	if (method.index() == 0)
@@ -386,11 +388,10 @@ void Repl::EvaluateHelp()
 		writer.WritePunctuation(it.Description);
 		writer.WriteLine();
 	}
-	writer.WriteLine(); //HACK
 }
 
 
-Repl::SubmissionView::SubmissionView(std::function<void(const std::string&)> lineRenderer,
+Repl::SubmissionView::SubmissionView(std::function<void(std::string_view)> lineRenderer,
 	ObservableCollection<std::string>& document)
 	:_lineRenderer(std::move(lineRenderer)),
 	_submissionDocument(document), _cursorTop(MCF::GetCursorTop())
@@ -480,9 +481,11 @@ McfRepl::McfRepl()
 		[this] { EvaluateShowProgram(); });
 	_metaCommands.emplace_back("reset", "Clears all previous submissions.",
 		[this] { EvaluateReset(); });
+	_metaCommands.emplace_back("dump", "Shows bound tree of a given function.",
+		[this](std::string_view name) { EvaluateDump(name); }, 1);
 }
 
-void McfRepl::RenderLine(const std::string& line) const
+void McfRepl::RenderLine(std::string_view line) const
 {
 	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(line);
 	for (const auto& it : tokens)
@@ -507,7 +510,7 @@ void McfRepl::RenderLine(const std::string& line) const
 	}
 }
 
-void McfRepl::EvaluateCls()
+void McfRepl::EvaluateCls()const
 {
 	MCF::ClearConsole();
 }
@@ -531,29 +534,30 @@ void McfRepl::EvaluateShowProgram()
 	std::cout << (_showProgram ? "Showing bound tree." : "Not showing bound tree.") << '\n';
 }
 
+void McfRepl::EvaluateDump(std::string_view name)const
+{
+	if (_previous == nullptr)
+		return;
+	auto func =
+		std::find_if(_previous->GetSymbols().cbegin(), _previous->GetSymbols().cend(),
+			[name](const auto& it)
+			{
+				return it->Kind() == MCF::SymbolKind::Function
+					&& it->Name() == name;
+			});
+	if (func == _previous->GetSymbols().cend())
+	{
+		MCF::SetConsoleColor(MCF::ConsoleColor::Red);
+		std::cout << "error: function '" << name << "' does not exist." << '\n';
+		MCF::ResetConsoleColor();
+		return;
+	}
+	_previous->EmitTree(dynamic_cast<const MCF::FunctionSymbol*>(*func), std::cout);
+}
+
 void McfRepl::ClearSubmissions() {}
 
-//
-//void McfRepl::EvaluateMetaCommand(const std::string& input)
-//{
-//	if (input == "#showTree")
-//	{
-//	} else if (input == "#showProgram")
-//	{
-//	} else if (input == "#cls")
-//	{
-//		MCF::ClearConsole();
-//	} else if (input == "#reset")
-//	{
-//		_previous = nullptr;
-//		MCF::ClearConsole();
-//	} else
-//	{
-//		Repl::EvaluateMetaCommand(input);
-//	}
-//}
-
-bool McfRepl::IsCompleteSubmission(const std::string& text) const
+bool McfRepl::IsCompleteSubmission(std::string_view text) const
 {
 	if (text.empty())
 		return true;
@@ -576,7 +580,7 @@ bool McfRepl::IsCompleteSubmission(const std::string& text) const
 	return true;
 }
 
-void McfRepl::EvaluateSubmission(const std::string& text)
+void McfRepl::EvaluateSubmission(std::string_view text)
 {
 	// creates a string_view referncing to the last item in _submissionHistory
 	// That was the original idea BUT

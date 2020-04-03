@@ -159,7 +159,9 @@ public:
 	}
 	constexpr size_t EndCharacter() const
 	{
-		return Span().End() - Text().Lines()[EndLine()].End();
+		return Span().End() > Text().Lines()[EndLine()].End() ?
+			Span().End() - Text().Lines()[EndLine()].End()
+			: 0;
 	}
 
 };

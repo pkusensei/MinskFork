@@ -161,8 +161,8 @@ public:
 
 	constexpr const BoundGlobalScope* Previous()const noexcept { return _previous; }
 	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
-	constexpr const vector<shared_ptr<FunctionSymbol>>& Functions()const { return _functions; }
-	constexpr const vector<shared_ptr<VariableSymbol>>& Variables()const { return _variables; }
+	constexpr const vector<shared_ptr<FunctionSymbol>>& Functions()const noexcept { return _functions; }
+	constexpr const vector<shared_ptr<VariableSymbol>>& Variables()const noexcept { return _variables; }
 	constexpr const vector<shared_ptr<BoundStatement>>& Statements()const noexcept { return _statements; }
 };
 

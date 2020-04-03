@@ -65,7 +65,13 @@ void SymbolPrinter::WriteFunction(const FunctionSymbol* symbol)
 	}
 
 	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
-	_writer.WriteLine();
+
+	if (symbol->Type().get() != TypeSymbol::Get(TypeEnum::Void))
+	{
+		_writer.WritePunctuation(SyntaxKind::ColonToken);
+		_writer.WriteSpace();
+		WriteType(&symbol->Type().get());
+	}
 }
 
 void SymbolPrinter::WriteGlobalVariable(const GlobalVariableSymbol* symbol)

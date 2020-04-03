@@ -104,16 +104,21 @@ public:
 	Compilation& operator=(const Compilation&) = delete;
 	~Compilation();
 
+	Compilation* Previous() noexcept { return _previous.get(); }
 	const Compilation* Previous()const noexcept { return _previous.get(); }
 	const vector<const SyntaxTree*> SynTrees()const noexcept;
 
 	const BoundGlobalScope* GlobalScope();
+	const vector<shared_ptr<FunctionSymbol>>& Functions();
+	const vector<shared_ptr<VariableSymbol>>& Variables();
+
 	[[nodiscard]] static unique_ptr<Compilation> ContinueWith(unique_ptr<Compilation> previous,
 		unique_ptr<SyntaxTree> tree);
+	const vector<const Symbol*>& GetSymbols();
 
 	EvaluationResult Evaluate(VarMap& variables);
 	void EmitTree(std::ostream& out);
-
+	void EmitTree(const FunctionSymbol* symbol, std::ostream& out);
 };
 
 }//MCF

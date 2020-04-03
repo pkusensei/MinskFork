@@ -110,12 +110,12 @@ protected:
 
 	Repl();
 
-	void EvaluateMetaCommand(const std::string& input);
+	void EvaluateMetaCommand(std::string_view input);
 	void EvaluateHelp();
 
-	virtual void RenderLine(const std::string& line)const;
-	virtual bool IsCompleteSubmission(const std::string& text)const = 0;
-	virtual void EvaluateSubmission(const std::string& text) = 0;
+	virtual void RenderLine(std::string_view line)const;
+	virtual bool IsCompleteSubmission(std::string_view text)const = 0;
+	virtual void EvaluateSubmission(std::string_view text) = 0;
 
 	void ClearHistory()noexcept { _submissionHistory.clear(); }
 
@@ -127,7 +127,7 @@ public:
 struct Repl::MetaCommand
 {
 	// HACK a big hack
-	using MethodType = std::variant<std::function<void()>, std::function<void(const std::string&)>>;
+	using MethodType = std::variant<std::function<void()>, std::function<void(std::string_view)>>;
 
 	std::string_view Name;
 	std::string_view Description;
@@ -144,7 +144,7 @@ struct Repl::MetaCommand
 class Repl::SubmissionView final
 {
 private:
-	std::function<void(const std::string&)> _lineRenderer;
+	std::function<void(std::string_view)> _lineRenderer;
 	const ObservableCollection<std::string>& _submissionDocument;
 	const size_t _cursorTop;
 	int _renderedLineCount{ 0 };
@@ -156,7 +156,7 @@ private:
 	void UpdateCursorPosition();
 
 public:
-	SubmissionView(std::function<void(const std::string&)> lineRenderer,
+	SubmissionView(std::function<void(std::string_view)> lineRenderer,
 		ObservableCollection<std::string>& document);
 
 	size_t CurrentLine()const { return _currentLine; }
@@ -173,19 +173,19 @@ private:
 	bool _showProgram{ true };
 	MCF::VarMap _variables;
 
-	void EvaluateCls();
+	void EvaluateCls()const;
 	void EvaluateReset();
 	void EvaluateShowTree();
 	void EvaluateShowProgram();
+	void EvaluateDump(std::string_view funcName)const;
 
 	void ClearSubmissions();
 
 protected:
 	// Inherited via Repl
-	void RenderLine(const std::string& line)const override;
-	//void EvaluateMetaCommand(const std::string& input) override;
-	bool IsCompleteSubmission(const std::string& text) const override;
-	void EvaluateSubmission(const std::string& text) override;
+	void RenderLine(std::string_view line)const override;
+	bool IsCompleteSubmission(std::string_view text) const override;
+	void EvaluateSubmission(std::string_view text) override;
 
 public:
 	McfRepl();

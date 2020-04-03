@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <random>
+#include <unordered_set>
 
 #include "Binding.h"
 #include "BoundLabel.h"
@@ -417,6 +418,16 @@ const BoundGlobalScope* Compilation::GlobalScope()
 	return _globalScope.get();
 }
 
+const vector<shared_ptr<FunctionSymbol>>& Compilation::Functions()
+{
+	return GlobalScope()->Functions();
+}
+
+const vector<shared_ptr<VariableSymbol>>& Compilation::Variables()
+{
+	return GlobalScope()->Variables();
+}
+
 unique_ptr<Compilation> Compilation::ContinueWith(unique_ptr<Compilation> previous,
 	unique_ptr<SyntaxTree> tree)
 {
@@ -424,6 +435,36 @@ unique_ptr<Compilation> Compilation::ContinueWith(unique_ptr<Compilation> previo
 	vec.push_back(std::move(tree));
 	return make_unique<Compilation>(std::move(previous), std::move(vec));
 }
+
+const vector<const Symbol*>& Compilation::GetSymbols()
+{
+	auto build = [](Compilation* submission)
+	{
+		auto result = vector<const Symbol*>();
+		auto seenNames = std::unordered_set<string_view>();
+		while (submission != nullptr)
+		{
+			for (const auto& func : submission->Functions())
+			{
+				auto [_, success] = seenNames.insert(func->Name());
+				if (success)
+					result.push_back(func.get());
+			}
+			for (const auto& var : submission->Variables())
+			{
+				auto [_, success] = seenNames.insert(var->Name());
+				if (success)
+					result.push_back(var.get());
+			}
+			submission = submission->Previous();
+		}
+		return result;
+	};
+
+	static const auto symbols = build(this);
+	return symbols;
+}
+
 
 EvaluationResult Compilation::Evaluate(VarMap& variables)
 {
@@ -482,6 +523,21 @@ void Compilation::EmitTree(std::ostream& out)
 			fs->WriteTo(out);
 			body->WriteTo(out);
 		}
+	}
+}
+
+void Compilation::EmitTree(const FunctionSymbol* symbol, std::ostream& out)
+{
+	auto program = Binder::BindProgram(GlobalScope());
+	try
+	{
+		auto& body = program->Functions().at(symbol);
+		symbol->WriteTo(out);
+		out << '\n';
+		body->WriteTo(out);
+	} catch (const std::out_of_range&)
+	{
+		return;
 	}
 }
 
