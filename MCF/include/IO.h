@@ -12,7 +12,7 @@ enum class SyntaxKind;
 class DiagnosticBag;
 class SyntaxTree;
 
-class TextWriter
+class MCF_API TextWriter
 {
 protected:
 	std::ostream& _out;
@@ -43,7 +43,7 @@ public:
 	void WriteSpace();
 	void WritePunctuation(const SyntaxKind& kind);
 	void WritePunctuation(string_view text);
-	MCF_API void WriteDiagnostics(DiagnosticBag& diagnostics);
+	void WriteDiagnostics(DiagnosticBag& diagnostics);
 };
 
 class MCF_API IndentedTextWriter final :public TextWriter

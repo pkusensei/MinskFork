@@ -22,7 +22,7 @@ public:
 		_collection.emplace_back(std::forward<U>(init));
 	}
 
-	void SetAction(const std::function<void()>& action) { _action = action; }
+	void SetAction(std::function<void()> action) { _action = std::move(action); }
 
 	size_t size()const noexcept { return _collection.size(); }
 	const T& operator[](size_t index)const { return _collection.at(index); }
@@ -71,11 +71,13 @@ class Repl
 	using Document = ObservableCollection<std::string>;
 
 private:
+	struct MetaCommand;
+	class SubmissionView;
+
 	std::vector<std::string> _submissionHistory;
 	size_t _submissionHistoryIndex{ 0 };
 	bool _done{ false };
 
-	class SubmissionView;
 	std::string EditSubmission();
 	void HandleKey(const MCF::KeyInfo& key, Document& document,
 		SubmissionView& view);
@@ -103,8 +105,15 @@ private:
 		const std::string& text);
 
 protected:
+
+	std::vector<MetaCommand> _metaCommands;
+
+	Repl();
+
+	void EvaluateMetaCommand(const std::string& input);
+	void EvaluateHelp();
+
 	virtual void RenderLine(const std::string& line)const;
-	virtual void EvaluateMetaCommand(const std::string& input);
 	virtual bool IsCompleteSubmission(const std::string& text)const = 0;
 	virtual void EvaluateSubmission(const std::string& text) = 0;
 
@@ -113,6 +122,23 @@ protected:
 public:
 	virtual ~Repl() = default;
 	void Run();
+};
+
+struct Repl::MetaCommand
+{
+	// HACK a big hack
+	using MethodType = std::variant<std::function<void()>, std::function<void(const std::string&)>>;
+
+	std::string_view Name;
+	std::string_view Description;
+	size_t Arity;
+	MethodType Method;
+
+	MetaCommand(std::string_view name, std::string_view description,
+		MethodType method, size_t arity = 0)
+		:Name(name), Description(description), Arity(arity), Method(std::move(method))
+	{
+	}
 };
 
 class Repl::SubmissionView final
@@ -130,7 +156,7 @@ private:
 	void UpdateCursorPosition();
 
 public:
-	SubmissionView(const std::function<void(const std::string&)>& lineRenderer,
+	SubmissionView(std::function<void(const std::string&)> lineRenderer,
 		ObservableCollection<std::string>& document);
 
 	size_t CurrentLine()const { return _currentLine; }
@@ -147,11 +173,20 @@ private:
 	bool _showProgram{ true };
 	MCF::VarMap _variables;
 
+	void EvaluateCls();
+	void EvaluateReset();
+	void EvaluateShowTree();
+	void EvaluateShowProgram();
+
+	void ClearSubmissions();
+
 protected:
 	// Inherited via Repl
 	void RenderLine(const std::string& line)const override;
-	void EvaluateMetaCommand(const std::string& input) override;
+	//void EvaluateMetaCommand(const std::string& input) override;
 	bool IsCompleteSubmission(const std::string& text) const override;
 	void EvaluateSubmission(const std::string& text) override;
 
+public:
+	McfRepl();
 };

@@ -50,7 +50,7 @@ public:
 	bool operator!=(const Symbol& other)const noexcept;
 };
 
-struct SymbolHash
+struct MCF_API SymbolHash
 {
 	size_t operator()(const Symbol& s)const noexcept;
 	size_t operator()(const shared_ptr<Symbol>& s)const noexcept;

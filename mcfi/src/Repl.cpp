@@ -9,6 +9,11 @@
 
 constexpr auto NEW_LINE = '\r';
 
+Repl::Repl()
+{
+	_metaCommands.emplace_back("help", "Shows help.", [this] { EvaluateHelp(); });
+}
+
 void Repl::Run()
 {
 	if (!MCF::EnableVTMode())
@@ -287,9 +292,107 @@ void Repl::RenderLine(const std::string& line) const
 	std::cout << line;
 }
 
-Repl::SubmissionView::SubmissionView(const std::function<void(const std::string&)>& lineRenderer,
+std::vector<std::string> ParseArgs(const std::string& input)
+{
+	auto args = std::vector<std::string>();
+	auto inQuotes = false;
+	size_t position = 1;
+
+	auto arg = std::string();
+	auto commitArg = [&args, &arg]()
+	{
+		if (!MCF::StringIsBlank(arg))
+			args.push_back(std::move(arg));
+		arg.clear();
+	};
+
+	while (position < input.length())
+	{
+		auto c = input.at(position);
+		auto l = position + 1 >= input.length() ? '\0' : input.at(position + 1);
+
+		if (std::isspace(c))
+		{
+			if (!inQuotes)
+				commitArg();
+			else
+				arg.append(1, c);
+		} else if (c == '\"')
+		{
+			if (!inQuotes)
+				inQuotes = true;
+			else if (l == '\"')
+			{
+				arg.append(1, c);
+				++position;
+			} else
+				inQuotes = false;
+		} else
+		{
+			arg.append(1, c);
+		}
+		++position;
+	}
+	commitArg();
+
+	return args;
+}
+
+void Repl::EvaluateMetaCommand(const std::string& input)
+{
+	auto args = ParseArgs(input);
+	const auto& name = args.front();
+	auto command = std::find_if(_metaCommands.cbegin(), _metaCommands.cend(),
+		[&name](const auto& it) { return name == it.Name; });
+	if (command == _metaCommands.cend())
+	{
+		MCF::SetConsoleColor(MCF::ConsoleColor::Red);
+		std::cout << "Invalid command " << input << ".\n";
+		MCF::ResetConsoleColor();
+		return;
+	}
+	if (args.size() - 1 != command->Arity)
+	{
+		MCF::SetConsoleColor(MCF::ConsoleColor::Red);
+		std::cout << "error: invalid number of arguments; expecting exactly"
+			<< command->Arity << ".\n";
+		MCF::ResetConsoleColor();
+	}
+	auto& method = command->Method;
+	if (method.index() == 0)
+		std::get_if<0>(&method)->operator()();
+	else
+		std::get_if<1>(&method)->operator()(args.at(1));
+}
+
+void Repl::EvaluateHelp()
+{
+	auto maxNameLength = std::max_element(_metaCommands.cbegin(), _metaCommands.cend(),
+		[](const auto& a, const auto& b) { return a.Name.length() < b.Name.length(); })
+		->Name.length();
+
+	std::sort(_metaCommands.begin(), _metaCommands.end(),
+		[](const auto& a, const auto& b) { return a.Name < b.Name; });
+
+	auto writer = MCF::TextWriter(std::cout);
+	for (const auto& it : _metaCommands)
+	{
+		auto paddedName = std::string(it.Name).append(maxNameLength - it.Name.length(), ' ');
+		writer.WritePunctuation("#");
+		writer.WriteIdentifier(paddedName);
+		writer.WriteSpace();
+		writer.WriteSpace();
+		writer.WriteSpace();
+		writer.WritePunctuation(it.Description);
+		writer.WriteLine();
+	}
+	writer.WriteLine(); //HACK
+}
+
+
+Repl::SubmissionView::SubmissionView(std::function<void(const std::string&)> lineRenderer,
 	ObservableCollection<std::string>& document)
-	:_lineRenderer(lineRenderer),
+	:_lineRenderer(std::move(lineRenderer)),
 	_submissionDocument(document), _cursorTop(MCF::GetCursorTop())
 {
 	document.SetAction([this]() { this->SubmissionDocumentChanged(); });
@@ -300,13 +403,6 @@ Repl::SubmissionView::SubmissionView(const std::function<void(const std::string&
 	//
 	//SubmissionView::SubmissionDocumentChanged -- ObservableCollection::_action
 	//             the function called when _submissionDocument changed
-}
-
-void Repl::EvaluateMetaCommand(const std::string& input)
-{
-	MCF::SetConsoleColor(MCF::ConsoleColor::Red);
-	std::cout << "Invalid command " << input << '\n';
-	MCF::ResetConsoleColor();
 }
 
 void Repl::SubmissionView::SubmissionDocumentChanged()
@@ -373,6 +469,19 @@ void Repl::SubmissionView::CurrentCharacter(const size_t value)
 	}
 }
 
+McfRepl::McfRepl()
+	:Repl()
+{
+	_metaCommands.emplace_back("cls", "Clears the screen.",
+		[this] { EvaluateCls(); });
+	_metaCommands.emplace_back("showTree", "Shows the parse tree.",
+		[this] { EvaluateShowTree(); });
+	_metaCommands.emplace_back("showProgram", "Shows the bound tree.",
+		[this] { EvaluateShowProgram(); });
+	_metaCommands.emplace_back("reset", "Clears all previous submissions.",
+		[this] { EvaluateReset(); });
+}
+
 void McfRepl::RenderLine(const std::string& line) const
 {
 	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(line);
@@ -398,28 +507,51 @@ void McfRepl::RenderLine(const std::string& line) const
 	}
 }
 
-void McfRepl::EvaluateMetaCommand(const std::string& input)
+void McfRepl::EvaluateCls()
 {
-	if (input == "#showTree")
-	{
-		_showTree = !_showTree;
-		std::cout << (_showTree ? "Showing parse trees." : "Not showing parse trees.") << '\n';
-	} else if (input == "#showProgram")
-	{
-		_showProgram = !_showProgram;
-		std::cout << (_showProgram ? "Showing bound tree." : "Not showing bound tree.") << '\n';
-	} else if (input == "#cls")
-	{
-		MCF::ClearConsole();
-	} else if (input == "#reset")
-	{
-		_previous = nullptr;
-		MCF::ClearConsole();
-	} else
-	{
-		Repl::EvaluateMetaCommand(input);
-	}
+	MCF::ClearConsole();
 }
+
+void McfRepl::EvaluateReset()
+{
+	_previous = nullptr;
+	_variables.clear();
+	ClearSubmissions();
+}
+
+void McfRepl::EvaluateShowTree()
+{
+	_showTree = !_showTree;
+	std::cout << (_showTree ? "Showing parse trees." : "Not showing parse trees.") << '\n';
+}
+
+void McfRepl::EvaluateShowProgram()
+{
+	_showProgram = !_showProgram;
+	std::cout << (_showProgram ? "Showing bound tree." : "Not showing bound tree.") << '\n';
+}
+
+void McfRepl::ClearSubmissions() {}
+
+//
+//void McfRepl::EvaluateMetaCommand(const std::string& input)
+//{
+//	if (input == "#showTree")
+//	{
+//	} else if (input == "#showProgram")
+//	{
+//	} else if (input == "#cls")
+//	{
+//		MCF::ClearConsole();
+//	} else if (input == "#reset")
+//	{
+//		_previous = nullptr;
+//		MCF::ClearConsole();
+//	} else
+//	{
+//		Repl::EvaluateMetaCommand(input);
+//	}
+//}
 
 bool McfRepl::IsCompleteSubmission(const std::string& text) const
 {
