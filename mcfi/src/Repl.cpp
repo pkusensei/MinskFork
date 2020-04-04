@@ -1,5 +1,6 @@
 #include "Repl.h"
 
+#include <fstream>
 #include <iostream>
 
 #include "helpers.h"
@@ -7,21 +8,45 @@
 #include "IO.h"
 #include "Parsing.h"
 
+namespace fs = std::filesystem;
+
 constexpr auto NEW_LINE = '\r';
+
+fs::path GetSubmissionDir()
+{
+	auto temp = fs::temp_directory_path();
+	temp.append("mcf").append("Submissions");
+	return temp;
+}
+
+std::vector<fs::path> GetFilesInDir(const fs::path& dir)
+{
+	auto files = std::vector<fs::path>();
+	for (const auto& p : fs::directory_iterator(dir))
+		files.push_back(p.path());
+	return files;
+}
+
+std::string ReadTextFromFile(const fs::path& path)
+{
+	auto text = std::stringstream();
+	text << std::ifstream(path).rdbuf();
+	return text.str();
+}
 
 Repl::Repl()
 {
-	_metaCommands.emplace_back("help", "Shows help.", [this] { EvaluateHelp(); });
+	if (!MCF::EnableVTMode())
+	{
+		std::cerr << "Warning: Unable to enter VT processing mode.\n";
+	}
+
+	_metaCommands.emplace_back("help", "Shows help.",
+		[this] { EvaluateHelp(); });
 }
 
 void Repl::Run()
 {
-	if (!MCF::EnableVTMode())
-	{
-		std::cout << "Unable to enter VT processing mode. Quitting.\n";
-		return;
-	}
-
 	while (true)
 	{
 		std::cout << '\n'; // HACK prevents last line displayed from being eaten
@@ -355,7 +380,7 @@ void Repl::EvaluateMetaCommand(std::string_view input)
 	if (args.size() - 1 != command->Arity)
 	{
 		MCF::SetConsoleColor(MCF::ConsoleColor::Red);
-		std::cout << "error: invalid number of arguments; expecting exactly "
+		std::cout << "ERROR: invalid number of arguments; expecting exactly "
 			<< command->Arity << ".\n";
 		MCF::ResetConsoleColor();
 		return;
@@ -475,6 +500,8 @@ McfRepl::McfRepl()
 {
 	_metaCommands.emplace_back("cls", "Clears the screen.",
 		[this] { EvaluateCls(); });
+	_metaCommands.emplace_back("ls", "Lists all symbols",
+		[this] { EvaluateLs(); });
 	_metaCommands.emplace_back("showTree", "Shows the parse tree.",
 		[this] { EvaluateShowTree(); });
 	_metaCommands.emplace_back("showProgram", "Shows the bound tree.",
@@ -483,6 +510,10 @@ McfRepl::McfRepl()
 		[this] { EvaluateReset(); });
 	_metaCommands.emplace_back("dump", "Shows bound tree of a given function.",
 		[this](std::string_view name) { EvaluateDump(name); }, 1);
+	_metaCommands.emplace_back("load", "Loads a script file",
+		[this](std::string_view path) { EvaluateLoad(path); }, 1);
+
+	LoadSubmissions();
 }
 
 void McfRepl::RenderLine(std::string_view line) const
@@ -513,6 +544,27 @@ void McfRepl::RenderLine(std::string_view line) const
 void McfRepl::EvaluateCls()const
 {
 	MCF::ClearConsole();
+}
+
+void McfRepl::EvaluateLs()
+{
+	if (_previous == nullptr)
+		return;
+	auto symbols = _previous->GetSymbols();
+	std::sort(symbols.begin(), symbols.end(),
+		[](const auto& a, const auto& b)
+		{
+			if (a->Kind() == b->Kind())
+				return a->Name() < b->Name();
+			else
+				return a->Kind() < b->Kind();
+		});
+	std::for_each(symbols.cbegin(), symbols.cend(),
+		[](const auto& it)
+		{
+			it->WriteTo(std::cout);
+			std::cout << '\n';
+		});
 }
 
 void McfRepl::EvaluateReset()
@@ -548,14 +600,69 @@ void McfRepl::EvaluateDump(std::string_view name)const
 	if (func == _previous->GetSymbols().cend())
 	{
 		MCF::SetConsoleColor(MCF::ConsoleColor::Red);
-		std::cout << "error: function '" << name << "' does not exist." << '\n';
+		std::cout << "ERROR: function '" << name << "' does not exist." << '\n';
 		MCF::ResetConsoleColor();
 		return;
 	}
 	_previous->EmitTree(dynamic_cast<const MCF::FunctionSymbol*>(*func), std::cout);
 }
 
-void McfRepl::ClearSubmissions() {}
+void McfRepl::EvaluateLoad(std::string_view path)
+{
+	auto p = fs::absolute(path);
+	if (!fs::exists(p))
+	{
+		MCF::SetConsoleColor(MCF::ConsoleColor::Red);
+		std::cout << "ERROR: file does not exist '" << p << "'.\n";
+		MCF::ResetConsoleColor();
+		return;
+	}
+	auto text = ReadTextFromFile(p);
+	EvaluateSubmission(text);
+}
+
+void McfRepl::ClearSubmissions()
+{
+	fs::remove_all(GetSubmissionDir());
+}
+
+void McfRepl::LoadSubmissions()
+{
+	auto dir = GetSubmissionDir();
+	if (!fs::exists(dir))
+		return;
+
+	auto files = GetFilesInDir(dir);
+	if (files.empty())
+		return;
+
+	MCF::SetConsoleColor(MCF::ConsoleColor::DarkGray);
+	std::cout << "Loaded " << files.size() << " submission(s).\n";
+	MCF::ResetConsoleColor();
+
+	_loadingSubmission = true;
+	for (const auto& file : files)
+	{
+		auto text = ReadTextFromFile(file);
+		EvaluateSubmission(text);
+	}
+	_loadingSubmission = false;
+}
+
+void McfRepl::SaveSubmission(std::string_view text)
+{
+	if (_loadingSubmission)
+		return;
+	auto dir = GetSubmissionDir();
+	fs::create_directories(dir);
+	auto count = GetFilesInDir(dir).size();
+	auto ss = std::stringstream();
+	ss << "submission" << std::setw(4) << std::setfill('0') << count;
+	auto name = ss.str();
+	auto path = dir.append(name);
+	auto file = std::ofstream(path);
+	file << text;
+}
 
 bool McfRepl::IsCompleteSubmission(std::string_view text) const
 {
@@ -610,6 +717,7 @@ void McfRepl::EvaluateSubmission(std::string_view text)
 		}
 
 		_previous = std::move(compilation);
+		SaveSubmission(text);
 	} else
 	{
 		auto writer = MCF::IndentedTextWriter(std::cout);

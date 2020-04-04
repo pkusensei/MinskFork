@@ -168,18 +168,24 @@ public:
 class McfRepl final :public Repl
 {
 private:
+	inline static bool _loadingSubmission;
+
 	std::unique_ptr<MCF::Compilation> _previous{ nullptr };
 	bool _showTree{ false };
-	bool _showProgram{ true };
+	bool _showProgram{ false };
 	MCF::VarMap _variables;
 
 	void EvaluateCls()const;
+	void EvaluateLs();
 	void EvaluateReset();
 	void EvaluateShowTree();
 	void EvaluateShowProgram();
 	void EvaluateDump(std::string_view funcName)const;
+	void EvaluateLoad(std::string_view);
 
 	void ClearSubmissions();
+	void LoadSubmissions();
+	void SaveSubmission(std::string_view text);
 
 protected:
 	// Inherited via Repl
