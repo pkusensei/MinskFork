@@ -183,7 +183,7 @@ private:
 	void EvaluateDump(std::string_view funcName)const;
 	void EvaluateLoad(std::string_view);
 
-	void ClearSubmissions();
+	void ClearSubmissions()const;
 	void LoadSubmissions();
 	void SaveSubmission(std::string_view text);
 

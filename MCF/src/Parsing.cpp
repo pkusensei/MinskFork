@@ -1,7 +1,6 @@
 #include "Parsing.h"
 
 #include <fstream>
-//#include <stdexcept>
 
 #include "Diagnostic.h"
 #include "helpers.h"
@@ -386,10 +385,6 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 		&& unaryOperatorPrecedence >= parentPrecedence)
 	{
 		auto operatorToken = NextToken();
-		//if (operatorToken.Kind() == SyntaxKind::PlusPlusToken || operatorToken.Kind() == SyntaxKind::MinusMinusToken)
-		//{
-		//	_diagnostics->ReportUnexpectedToken(operatorToken.Span(), operatorToken.Kind(), SyntaxKind::IdentifierToken);
-		//}
 		auto operand = ParseBinaryExpression(unaryOperatorPrecedence);
 		left = make_unique<UnaryExpressionSyntax>(
 			_tree, operatorToken, std::move(operand));
@@ -560,7 +555,7 @@ SyntaxTree& SyntaxTree::operator=(SyntaxTree&& other) = default;
 SyntaxTree::~SyntaxTree() = default;
 
 auto SyntaxTree::ParseTree(const SyntaxTree& tree)->
-std::tuple<unique_ptr<CompilationUnitSyntax>, vector<unique_ptr<SyntaxTree>>>
+std::pair<unique_ptr<CompilationUnitSyntax>, vector<unique_ptr<SyntaxTree>>>
 {
 	auto parser = Parser(tree);
 	auto root = parser.ParseCompilationUnit();
@@ -568,7 +563,7 @@ std::tuple<unique_ptr<CompilationUnitSyntax>, vector<unique_ptr<SyntaxTree>>>
 	return { std::move(root), std::move(usings) };
 }
 
-unique_ptr<SyntaxTree> SyntaxTree::Load(fs::path path)
+unique_ptr<SyntaxTree> SyntaxTree::Load(const fs::path& path)
 {
 	auto file = std::ifstream(path);
 	auto ss = std::stringstream();
@@ -614,7 +609,7 @@ SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics)
 {
 	auto tokens = vector<SyntaxToken>();
 
-	auto parseTokens = [&tokens](const SyntaxTree& tree)mutable
+	auto parseTokens = [&tokens](const SyntaxTree& tree)
 	{
 		unique_ptr<CompilationUnitSyntax> root = nullptr;
 		auto lexer = Lexer(tree);

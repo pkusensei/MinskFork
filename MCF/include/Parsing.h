@@ -224,6 +224,7 @@ private:
 	unique_ptr<CompilationUnitSyntax> _root;
 
 	vector<unique_ptr<SyntaxTree>> _usings;
+
 	// HACK
 	// this is very hacky
 	template<typename ParseHandle,
@@ -237,7 +238,7 @@ private:
 	}
 
 	static auto ParseTree(const SyntaxTree&)->
-		std::tuple<unique_ptr<CompilationUnitSyntax>, vector<unique_ptr<SyntaxTree>>>;
+		std::pair<unique_ptr<CompilationUnitSyntax>, vector<unique_ptr<SyntaxTree>>>;
 public:
 
 	SyntaxTree(SyntaxTree&& other);
@@ -250,7 +251,7 @@ public:
 	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
 	DiagnosticBag& Diagnostics() const noexcept { return *_diagnostics; }
 
-	static unique_ptr<SyntaxTree> Load(fs::path path);
+	static unique_ptr<SyntaxTree> Load(const fs::path& path);
 
 	static unique_ptr<SyntaxTree> Parse(string_view text);
 	static unique_ptr<SyntaxTree> Parse(unique_ptr<SourceText> text);

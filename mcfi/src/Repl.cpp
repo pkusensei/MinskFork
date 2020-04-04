@@ -14,6 +14,7 @@ constexpr auto NEW_LINE = '\r';
 
 fs::path GetSubmissionDir()
 {
+	/// %USERPROFILE%/AppData/Local/Temp
 	auto temp = fs::temp_directory_path();
 	temp.append("mcf").append("Submissions");
 	return temp;
@@ -621,7 +622,7 @@ void McfRepl::EvaluateLoad(std::string_view path)
 	EvaluateSubmission(text);
 }
 
-void McfRepl::ClearSubmissions()
+void McfRepl::ClearSubmissions()const
 {
 	fs::remove_all(GetSubmissionDir());
 }

@@ -397,7 +397,7 @@ const vector<const SyntaxTree*> Compilation::SynTrees()const noexcept
 {
 	auto result = vector<const SyntaxTree*>();
 	std::for_each(_syntaxTrees.cbegin(), _syntaxTrees.cend(),
-		[&result](const auto& tree)mutable { result.push_back(tree.get()); });
+		[&result](const auto& tree) { result.push_back(tree.get()); });
 	return result;
 }
 
