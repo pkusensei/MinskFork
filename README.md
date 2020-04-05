@@ -1,7 +1,7 @@
 This is a C++ fork of the [Minsk compiler](https://github.com/terrajobst/minsk). 
 
 
-### To build
+### To build and run
 
 The following should be accessible in command line by adding to path or setting environment variables.
 
@@ -9,20 +9,17 @@ The following should be accessible in command line by adding to path or setting 
     - CMake
     - Ninja (Sorry MSBuid)
 
-Then in command line:
-
-```cmd
-mkdir build && cd build
-cmake -G Ninja ..
-cmake --build .
-```
+Then execute `build.cmd` in command line.
 
 The executables can be found in `./build/Debug/` and try it out with:
 
 ```cmd
-cd Debug
+cd build/Debug
 mcfc ../../samples/hello/helloworld.mcf
 ```
+
+Or fire up VS Code from source directory, navigate to one of the source files, and `ctrl+shift+P` to run `mcfc` task. 
+
 
 ### Design Difference
 
@@ -30,7 +27,7 @@ Although this fork stays as close to the original as possible, there are some ch
 
 - Using directive
 
-    It just feels not right to automatically compile every source file in the same directory without any checks. Here a `using` keyword is added to bring other source files into the fold. As of now it works with [/samples/hello/helloworld.mcf](/samples/hello/helloworld.mcf) and [/samples/fib/test.mcf](/samples/fib/test.mcf) but definitely needs more testing. In the hindsight it works more like Python's `import` than C#'s `using`. The downside is it pollutes the current source file with every symbols from imported sources. 
+    It just feels not right to automatically compile every source file in the same directory without any checks. Here a `using` keyword is added to bring other source files into the fold. As of now it works with [/samples/hello/helloworld.mcf](/samples/hello/helloworld.mcf) and [/samples/fib/test.mcf](/samples/fib/test.mcf) but definitely needs more testing. In the hindsight it works more like Python's `import` than C#'s `using`. The downside is it pollutes the current source file with every symbol from imported sources. 
 
 - Postfix operations, i.e. `i++` & `i--`
 
@@ -39,6 +36,7 @@ Although this fork stays as close to the original as possible, there are some ch
 - Windows only.
 
     Without .NET Core wrapper around system APIs, this fork relies on native win32 APIs to manipulate console color and cursor display. 
+
 
 ### Implementation Detail
 
@@ -54,7 +52,7 @@ This section documents some interesting decisions made when forking Minsk, mostl
 
 - Code Redundancy
 
-    They are from lack of reflection in C++, e.g. in class derived from `SyntaxNode`, or property, e.g. an array of getters in nearly every class. This problem is partly alleviated by conjuring up some templates. And some `std::function` magic. 
+    Emerging from lack of reflection in C++, e.g. in class derived from `SyntaxNode`, or property, e.g. an array of getters in nearly every class. This problem is partly alleviated by conjuring up some templates. And some `std::function` magic. 
 
 - Templates vs Generics
 

@@ -114,7 +114,7 @@ public:
 
 	[[nodiscard]] static unique_ptr<Compilation> ContinueWith(unique_ptr<Compilation> previous,
 		unique_ptr<SyntaxTree> tree);
-	const vector<const Symbol*>& GetSymbols();
+	const vector<const Symbol*> GetSymbols();
 
 	EvaluationResult Evaluate(VarMap& variables);
 	void EmitTree(std::ostream& out);

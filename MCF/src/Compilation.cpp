@@ -436,33 +436,28 @@ unique_ptr<Compilation> Compilation::ContinueWith(unique_ptr<Compilation> previo
 	return make_unique<Compilation>(std::move(previous), std::move(vec));
 }
 
-const vector<const Symbol*>& Compilation::GetSymbols()
+const vector<const Symbol*> Compilation::GetSymbols()
 {
-	auto build = [](Compilation* submission)
+	auto submission = this;
+	auto result = vector<const Symbol*>();
+	auto seenNames = std::unordered_set<string_view>();
+	while (submission != nullptr)
 	{
-		auto result = vector<const Symbol*>();
-		auto seenNames = std::unordered_set<string_view>();
-		while (submission != nullptr)
+		for (const auto& func : submission->Functions())
 		{
-			for (const auto& func : submission->Functions())
-			{
-				auto [_, success] = seenNames.insert(func->Name());
-				if (success)
-					result.push_back(func.get());
-			}
-			for (const auto& var : submission->Variables())
-			{
-				auto [_, success] = seenNames.insert(var->Name());
-				if (success)
-					result.push_back(var.get());
-			}
-			submission = submission->Previous();
+			auto [_, success] = seenNames.insert(func->Name());
+			if (success)
+				result.push_back(func.get());
 		}
-		return result;
-	};
-
-	static const auto symbols = build(this);
-	return symbols;
+		for (const auto& var : submission->Variables())
+		{
+			auto [_, success] = seenNames.insert(var->Name());
+			if (success)
+				result.push_back(var.get());
+		}
+		submission = submission->Previous();
+	}
+	return result;
 }
 
 
