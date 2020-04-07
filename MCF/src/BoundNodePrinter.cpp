@@ -13,122 +13,123 @@ void BoundNodePrinter::Write(const BoundNode* node)
 	{
 		case BoundNodeKind::BlockStatement:
 		{
-			auto p = dynamic_cast<const BoundBlockStatement*>(node);
-			if (p) WriteBlockStatement(p);
+			auto p = static_cast<const BoundBlockStatement*>(node);
+			WriteBlockStatement(p);
 			break;
 		}
 		case BoundNodeKind::VariableDeclaration:
 		{
-			auto p = dynamic_cast<const BoundVariableDeclaration*>(node);
-			if (p) WriteVariableDeclaration(p);
+			auto p = static_cast<const BoundVariableDeclaration*>(node);
+			WriteVariableDeclaration(p);
 			break;
 		}
 		case BoundNodeKind::IfStatement:
 		{
-			auto p = dynamic_cast<const BoundIfStatement*>(node);
-			if (p) WriteIfStatement(p);
+			auto p = static_cast<const BoundIfStatement*>(node);
+			WriteIfStatement(p);
 			break;
 		}
 		case BoundNodeKind::WhileStatement:
 		{
-			auto p = dynamic_cast<const BoundWhileStatement*>(node);
-			if (p) WriteWhileStatement(p);
+			auto p = static_cast<const BoundWhileStatement*>(node);
+			WriteWhileStatement(p);
 			break;
 		}
 		case BoundNodeKind::DoWhileStatement:
 		{
-			auto p = dynamic_cast<const BoundDoWhileStatement*>(node);
-			if (p) WriteDoWhileStatement(p);
+			auto p = static_cast<const BoundDoWhileStatement*>(node);
+			WriteDoWhileStatement(p);
 			break;
 		}
 		case BoundNodeKind::ForStatement:
 		{
-			auto p = dynamic_cast<const BoundForStatement*>(node);
-			if (p) WriteForStatement(p);
+			auto p = static_cast<const BoundForStatement*>(node);
+			WriteForStatement(p);
 			break;
 		}
 		case BoundNodeKind::LabelStatement:
 		{
-			auto p = dynamic_cast<const BoundLabelStatement*>(node);
-			if (p) WriteLabelStatement(p);
+			auto p = static_cast<const BoundLabelStatement*>(node);
+			WriteLabelStatement(p);
 			break;
 		}
 		case BoundNodeKind::GotoStatement:
 		{
-			auto p = dynamic_cast<const BoundGotoStatement*>(node);
-			if (p) WriteGotoStatement(p);
+			auto p = static_cast<const BoundGotoStatement*>(node);
+			WriteGotoStatement(p);
 			break;
 		}
 		case BoundNodeKind::ConditionalGotoStatement:
 		{
-			auto p = dynamic_cast<const BoundConditionalGotoStatement*>(node);
-			if (p) WriteConditionalGotoStatement(p);
+			auto p = static_cast<const BoundConditionalGotoStatement*>(node);
+			WriteConditionalGotoStatement(p);
 			break;
 		}
 		case BoundNodeKind::ReturnStatement:
 		{
-			auto p = dynamic_cast<const BoundReturnStatement*>(node);
-			if (p) WriteReturnStatement(p);
+			auto p = static_cast<const BoundReturnStatement*>(node);
+			WriteReturnStatement(p);
 			break;
 		}
 		case BoundNodeKind::ExpressionStatement:
 		{
-			auto p = dynamic_cast<const BoundExpressionStatement*>(node);
-			if (p) WriteExpressionStatement(p);
+			auto p = static_cast<const BoundExpressionStatement*>(node);
+			WriteExpressionStatement(p);
 			break;
 		}
 		case BoundNodeKind::ErrorExpression:
 		{
-			auto p = dynamic_cast<const BoundErrorExpression*>(node);
-			if (p) WriteErrorExpression();
+			auto p = static_cast<const BoundErrorExpression*>(node);
+			static_cast<void>(p);
+			WriteErrorExpression();
 			break;
 		}
 		case BoundNodeKind::LiteralExpression:
 		{
-			auto p = dynamic_cast<const BoundLiteralExpression*>(node);
-			if (p) WriteLiteralExpression(p);
+			auto p = static_cast<const BoundLiteralExpression*>(node);
+			WriteLiteralExpression(p);
 			break;
 		}
 		case BoundNodeKind::VariableExpression:
 		{
-			auto p = dynamic_cast<const BoundVariableExpression*>(node);
-			if (p) WriteVariableExpression(p);
+			auto p = static_cast<const BoundVariableExpression*>(node);
+			WriteVariableExpression(p);
 			break;
 		}
 		case BoundNodeKind::AssignmentExpression:
 		{
-			auto p = dynamic_cast<const BoundAssignmentExpression*>(node);
-			if (p) WriteAssignmentExpression(p);
+			auto p = static_cast<const BoundAssignmentExpression*>(node);
+			WriteAssignmentExpression(p);
 			break;
 		}
 		case BoundNodeKind::UnaryExpression:
 		{
-			auto p = dynamic_cast<const BoundUnaryExpression*>(node);
-			if (p) WriteUnaryExpression(p);
+			auto p = static_cast<const BoundUnaryExpression*>(node);
+			WriteUnaryExpression(p);
 			break;
 		}
 		case BoundNodeKind::BinaryExpression:
 		{
-			auto p = dynamic_cast<const BoundBinaryExpression*>(node);
-			if (p) WriteBinaryExpression(p);
+			auto p = static_cast<const BoundBinaryExpression*>(node);
+			WriteBinaryExpression(p);
 			break;
 		}
 		case BoundNodeKind::CallExpression:
 		{
-			auto p = dynamic_cast<const BoundCallExpression*>(node);
-			if (p) WriteCallExpression(p);
+			auto p = static_cast<const BoundCallExpression*>(node);
+			WriteCallExpression(p);
 			break;
 		}
 		case BoundNodeKind::ConversionExpression:
 		{
-			auto p = dynamic_cast<const BoundConversionExpression*>(node);
-			if (p) WriteConversionExpression(p);
+			auto p = static_cast<const BoundConversionExpression*>(node);
+			WriteConversionExpression(p);
 			break;
 		}
 		case BoundNodeKind::PostfixExpression:
 		{
-			auto p = dynamic_cast<const BoundPostfixExpression*>(node);
-			if (p) WritePosifixExpression(p);
+			auto p = static_cast<const BoundPostfixExpression*>(node);
+			WritePosifixExpression(p);
 			break;
 		}
 		default:
@@ -138,8 +139,7 @@ void BoundNodePrinter::Write(const BoundNode* node)
 
 void BoundNodePrinter::WriteNestedStatement(const BoundStatement* node)
 {
-	auto p = dynamic_cast<const BoundBlockStatement*>(node);
-	auto needsIndentation = p == nullptr;
+	auto needsIndentation = node->Kind() == BoundNodeKind::BlockStatement;
 	if (needsIndentation) _writer.Indent();
 	Write(node);
 	if (needsIndentation) _writer.Dedent();
@@ -148,15 +148,17 @@ void BoundNodePrinter::WriteNestedStatement(const BoundStatement* node)
 void BoundNodePrinter::WriteNestedExpression(int parentPrecedence,
 	const BoundExpression* node)
 {
-	auto u = dynamic_cast<const BoundUnaryExpression*>(node);
-	auto b = dynamic_cast<const BoundBinaryExpression*>(node);
-	if (u)
+	if (node->Kind() == BoundNodeKind::UnaryExpression)
+	{
+		auto u = static_cast<const BoundUnaryExpression*>(node);
 		WriteNestedExpression(parentPrecedence,
 			GetUnaryOperatorPrecedence(u->Op().SynKind()), u);
-	else if (b)
+	} else if (node->Kind() == BoundNodeKind::BinaryExpression)
+	{
+		auto b = static_cast<const BoundBinaryExpression*>(node);
 		WriteNestedExpression(parentPrecedence,
 			GetBinaryOperatorPrecedence(b->Op().SynKind()), b);
-	else
+	} else
 		Write(node);
 }
 

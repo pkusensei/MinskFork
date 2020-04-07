@@ -53,9 +53,9 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax)
 
 	for (const auto& it : *(syntax->Parameters()))
 	{
-		auto p = dynamic_cast<ParameterSyntax*>(it.get());
-		if (p)
+		if (it->Kind()==SyntaxKind::Parameter)
 		{
+			auto p = static_cast<ParameterSyntax*>(it.get());
 			auto paramName = p->Identifier().Text();
 			auto paramType = BindTypeClause(p->Type());
 			auto [_, success] = seenParamNames.emplace(paramName);
@@ -92,63 +92,53 @@ shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax* syntax)
 	{
 		case SyntaxKind::BlockStatement:
 		{
-			auto p = dynamic_cast<const BlockStatementSyntax*>(syntax);
-			if (p) return BindBlockStatement(p);
-			else break;
+			auto p = static_cast<const BlockStatementSyntax*>(syntax);
+			return BindBlockStatement(p);
 		}
 		case SyntaxKind::VariableDeclaration:
 		{
-			auto p = dynamic_cast<const VariableDeclarationSyntax*>(syntax);
-			if (p) return BindVariableDeclaration(p);
-			else break;
+			auto p = static_cast<const VariableDeclarationSyntax*>(syntax);
+			return BindVariableDeclaration(p);
 		}
 		case SyntaxKind::IfStatement:
 		{
-			auto p = dynamic_cast<const IfStatementSyntax*>(syntax);
-			if (p) return BindIfStatement(p);
-			else break;
+			auto p = static_cast<const IfStatementSyntax*>(syntax);
+			return BindIfStatement(p);
 		}
 		case SyntaxKind::WhileStatement:
 		{
-			auto p = dynamic_cast<const WhileStatementSyntax*>(syntax);
-			if (p) return BindWhileStatement(p);
-			else break;
+			auto p = static_cast<const WhileStatementSyntax*>(syntax);
+			return BindWhileStatement(p);
 		}
 		case SyntaxKind::DoWhileStatement:
 		{
-			auto p = dynamic_cast<const DoWhileStatementSyntax*>(syntax);
-			if (p) return BindDoWhileStatement(p);
-			else break;
+			auto p = static_cast<const DoWhileStatementSyntax*>(syntax);
+			return BindDoWhileStatement(p);
 		}
 		case SyntaxKind::ForStatement:
 		{
-			auto p = dynamic_cast<const ForStatementSyntax*>(syntax);
-			if (p) return BindForStatement(p);
-			else break;
+			auto p = static_cast<const ForStatementSyntax*>(syntax);
+			return BindForStatement(p);
 		}
 		case SyntaxKind::BreakStatement:
 		{
-			auto p = dynamic_cast<const BreakStatementSyntax*>(syntax);
-			if (p) return BindBreakStatement(p);
-			else break;
+			auto p = static_cast<const BreakStatementSyntax*>(syntax);
+			return BindBreakStatement(p);
 		}
 		case SyntaxKind::ContinueStatement:
 		{
-			auto p = dynamic_cast<const ContinueStatementSyntax*>(syntax);
-			if (p) return BindContinueStatement(p);
-			else break;
+			auto p = static_cast<const ContinueStatementSyntax*>(syntax);
+			return BindContinueStatement(p);
 		}
 		case SyntaxKind::ReturnStatement:
 		{
-			auto p = dynamic_cast<const ReturnStatementSyntax*>(syntax);
-			if (p) return BindReturnStatement(p);
-			else break;
+			auto p = static_cast<const ReturnStatementSyntax*>(syntax);
+			return BindReturnStatement(p);
 		}
 		case SyntaxKind::ExpressionStatement:
 		{
-			auto p = dynamic_cast<const ExpressionStatementSyntax*>(syntax);
-			if (p) return BindExpressionStatement(p);
-			else break;
+			auto p = static_cast<const ExpressionStatementSyntax*>(syntax);
+			return BindExpressionStatement(p);
 		}
 		default:
 			break;
@@ -323,51 +313,43 @@ shared_ptr<BoundExpression> Binder::BindExpressionInternal(const ExpressionSynta
 	{
 		case SyntaxKind::ParenthesizedExpression:
 		{
-			auto p = dynamic_cast<const ParenthesizedExpressionSyntax*>(syntax);
-			if (p) return BindParenthesizedExpression(p);
-			else break;
+			auto p = static_cast<const ParenthesizedExpressionSyntax*>(syntax);
+			return BindParenthesizedExpression(p);
 		}
 		case SyntaxKind::LiteralExpression:
 		{
-			auto p = dynamic_cast<const LiteralExpressionSyntax*>(syntax);
-			if (p) return BindLiteralExpression(p);
-			else break;
+			auto p = static_cast<const LiteralExpressionSyntax*>(syntax);
+			return BindLiteralExpression(p);
 		}
 		case SyntaxKind::NameExpression:
 		{
-			auto p = dynamic_cast<const NameExpressionSyntax*>(syntax);
-			if (p) return BindNameExpression(p);
-			else break;
+			auto p = static_cast<const NameExpressionSyntax*>(syntax);
+			return BindNameExpression(p);
 		}
 		case SyntaxKind::AssignmentExpression:
 		{
-			auto p = dynamic_cast<const AssignmentExpressionSyntax*>(syntax);
-			if (p) return BindAssignmentExpression(p);
-			else break;
+			auto p = static_cast<const AssignmentExpressionSyntax*>(syntax);
+			return BindAssignmentExpression(p);
 		}
 		case SyntaxKind::UnaryExpression:
 		{
-			auto p = dynamic_cast<const UnaryExpressionSyntax*>(syntax);
-			if (p) return BindUnaryExpression(p);
-			else break;
+			auto p = static_cast<const UnaryExpressionSyntax*>(syntax);
+			return BindUnaryExpression(p);
 		}
 		case SyntaxKind::BinaryExpression:
 		{
-			auto p = dynamic_cast<const BinaryExpressionSyntax*>(syntax);
-			if (p) return BindBinaryExpression(p);
-			else break;
+			auto p = static_cast<const BinaryExpressionSyntax*>(syntax);
+			return BindBinaryExpression(p);
 		}
 		case SyntaxKind::CallExpression:
 		{
-			auto p = dynamic_cast<const CallExpressionSyntax*>(syntax);
-			if (p) return BindCallExpression(p);
-			else break;
+			auto p = static_cast<const CallExpressionSyntax*>(syntax);
+			return BindCallExpression(p);
 		}
 		case SyntaxKind::PostfixExpression:
 		{
-			auto p = dynamic_cast<const PostfixExpressionSyntax*>(syntax);
-			if (p) return BindPostfixExpression(p);
-			else break;
+			auto p = static_cast<const PostfixExpressionSyntax*>(syntax);
+			return BindPostfixExpression(p);
 		}
 		default:
 			break;
@@ -701,12 +683,14 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* pre
 		auto syntax = tree->Root();
 		for (const auto& it : syntax->Members())
 		{
-			auto func = dynamic_cast<FunctionDeclarationSyntax*>(it.get());
-			auto globalStatement = dynamic_cast<GlobalStatementSyntax*>(it.get());
-			if (func)
-				binder.BindFunctionDeclaration(func);
-			if (globalStatement)
+			if (it->Kind() == SyntaxKind::FunctionDeclaration)
 			{
+				auto func = static_cast<FunctionDeclarationSyntax*>(it.get());
+				binder.BindFunctionDeclaration(func);
+			}
+			if (it->Kind() == SyntaxKind::GlobalStatement)
+			{
+				auto globalStatement = static_cast<GlobalStatementSyntax*>(it.get());
 				statements.push_back(binder.BindStatement(globalStatement->Statement()));
 			}
 		}

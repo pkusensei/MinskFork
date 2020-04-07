@@ -13,32 +13,32 @@ void SymbolPrinter::Write(const Symbol* symbol)
 	{
 		case SymbolKind::Function:
 		{
-			auto p = dynamic_cast<const FunctionSymbol*>(symbol);
-			if (p) WriteFunction(p);
+			auto p = static_cast<const FunctionSymbol*>(symbol);
+			WriteFunction(p);
 			break;
 		}
 		case SymbolKind::GlobalVariable:
 		{
-			auto p = dynamic_cast<const GlobalVariableSymbol*> (symbol);
-			if (p) WriteGlobalVariable(p);
+			auto p = static_cast<const GlobalVariableSymbol*>(symbol);
+			WriteGlobalVariable(p);
 			break;
 		}
 		case SymbolKind::LocalVariable:
 		{
-			auto p = dynamic_cast<const LocalVariableSymbol*>(symbol);
-			if (p) WriteLocalVariable(p);
+			auto p = static_cast<const LocalVariableSymbol*>(symbol);
+			WriteLocalVariable(p);
 			break;
 		}
 		case SymbolKind::Parameter:
 		{
-			auto p = dynamic_cast<const ParameterSymbol*>(symbol);
-			if (p) WriteParameter(p);
+			auto p = static_cast<const ParameterSymbol*>(symbol);
+			WriteParameter(p);
 			break;
 		}
 		case SymbolKind::Type:
 		{
-			auto p = dynamic_cast<const TypeSymbol*>(symbol);
-			if (p) WriteType(p);
+			auto p = static_cast<const TypeSymbol*>(symbol);
+			WriteType(p);
 			break;
 		}
 		default:

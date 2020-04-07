@@ -33,9 +33,12 @@ ValueType Evaluator::EvaluateStatement(const BoundBlockStatement* body)
 	auto statements = body->Statements();
 	for (size_t i = 0; i < statements.size(); ++i)
 	{
-		auto p = dynamic_cast<const BoundLabelStatement*>(statements.at(i).get());
-		if (p)
+		auto ptr = statements.at(i).get();
+		if (ptr->Kind() == BoundNodeKind::LabelStatement)
+		{
+			auto p = static_cast<const BoundLabelStatement*>(ptr);
 			labelToIndex.emplace(p->Label(), i + 1);
+		}
 	}
 
 	size_t index = 0;
@@ -46,38 +49,32 @@ ValueType Evaluator::EvaluateStatement(const BoundBlockStatement* body)
 		{
 			case BoundNodeKind::VariableDeclaration:
 			{
-				auto p = dynamic_cast<const BoundVariableDeclaration*>(s);
-				if (p)
-					EvaluateVariableDeclaration(p);
+				auto p = static_cast<const BoundVariableDeclaration*>(s);
+				EvaluateVariableDeclaration(p);
 				++index;
 				break;
 			}
 			case BoundNodeKind::ExpressionStatement:
 			{
-				auto p = dynamic_cast<const BoundExpressionStatement*>(s);
-				if (p)
-					EvaluateExpressionStatement(p);
+				auto p = static_cast<const BoundExpressionStatement*>(s);
+				EvaluateExpressionStatement(p);
 				++index;
 				break;
 			}
 			case BoundNodeKind::GotoStatement:
 			{
-				auto gs = dynamic_cast<const BoundGotoStatement*>(s);
-				if (gs)
-					index = labelToIndex.at(gs->Label());
+				auto gs = static_cast<const BoundGotoStatement*>(s);
+				index = labelToIndex.at(gs->Label());
 				break;
 			}
 			case BoundNodeKind::ConditionalGotoStatement:
 			{
-				auto cgs = dynamic_cast<const BoundConditionalGotoStatement*>(s);
-				if (cgs)
-				{
-					auto condition =
-						EvaluateExpression(cgs->Condition().get()).GetValue<bool>();
-					if (condition == cgs->JumpIfTrue())
-						index = labelToIndex.at(cgs->Label());
-					else ++index;
-				}
+				auto cgs = static_cast<const BoundConditionalGotoStatement*>(s);
+				auto condition =
+					EvaluateExpression(cgs->Condition().get()).GetValue<bool>();
+				if (condition == cgs->JumpIfTrue())
+					index = labelToIndex.at(cgs->Label());
+				else ++index;
 				break;
 			}
 			case BoundNodeKind::LabelStatement:
@@ -85,7 +82,7 @@ ValueType Evaluator::EvaluateStatement(const BoundBlockStatement* body)
 				break;
 			case BoundNodeKind::ReturnStatement:
 			{
-				auto rs = dynamic_cast<const BoundReturnStatement*>(s);
+				auto rs = static_cast<const BoundReturnStatement*>(s);
 				_lastValue = rs->Expression() == nullptr ?
 					NullValue : EvaluateExpression(rs->Expression().get());
 				return _lastValue;
@@ -115,56 +112,48 @@ ValueType Evaluator::EvaluateExpression(const BoundExpression* node)
 	{
 		case BoundNodeKind::LiteralExpression:
 		{
-			auto p = dynamic_cast<const BoundLiteralExpression*>(node);
-			if (p) return EvaluateLiteralExpression(p);
-			else break;
+			auto p = static_cast<const BoundLiteralExpression*>(node);
+			return EvaluateLiteralExpression(p);
 		}
 		case BoundNodeKind::VariableExpression:
 		{
-			auto p = dynamic_cast<const BoundVariableExpression*>(node);
-			if (p) return EvaluateVariableExpression(p);
-			else break;
+			auto p = static_cast<const BoundVariableExpression*>(node);
+			return EvaluateVariableExpression(p);
 		}
 		case BoundNodeKind::AssignmentExpression:
 		{
-			auto p = dynamic_cast<const BoundAssignmentExpression*>(node);
-			if (p) return EvaluateAssignmentExpression(p);
-			else break;
+			auto p = static_cast<const BoundAssignmentExpression*>(node);
+			return EvaluateAssignmentExpression(p);
 		}
 		case BoundNodeKind::UnaryExpression:
 		{
-			auto p = dynamic_cast<const BoundUnaryExpression*>(node);
-			if (p) return EvaluateUnaryExpression(p);
-			else break;
+			auto p = static_cast<const BoundUnaryExpression*>(node);
+			return EvaluateUnaryExpression(p);
 		}
 		case BoundNodeKind::BinaryExpression:
 		{
-			auto p = dynamic_cast<const BoundBinaryExpression*>(node);
-			if (p) return EvaluateBinaryExpression(p);
-			else break;
+			auto p = static_cast<const BoundBinaryExpression*>(node);
+			return EvaluateBinaryExpression(p);
 		}
 		case BoundNodeKind::CallExpression:
 		{
-			auto p = dynamic_cast<const BoundCallExpression*>(node);
-			if (p) return EvaluateCallExpression(p);
-			else break;
+			auto p = static_cast<const BoundCallExpression*>(node);
+			return EvaluateCallExpression(p);
 		}
 		case BoundNodeKind::ConversionExpression:
 		{
-			auto p = dynamic_cast<const BoundConversionExpression*>(node);
-			if (p) return EvaluateConversionExpression(p);
-			else break;
+			auto p = static_cast<const BoundConversionExpression*>(node);
+			return EvaluateConversionExpression(p);
 		}
 		case BoundNodeKind::PostfixExpression:
 		{
-			auto p = dynamic_cast<const BoundPostfixExpression*>(node);
-			if (p) return EvaluatePostfixExpression(p);
-			else break;
+			auto p = static_cast<const BoundPostfixExpression*>(node);
+			return EvaluatePostfixExpression(p);
 		}
 		default:
 			break;
 	}
-	throw std::invalid_argument(BuildStringFrom("Invalid expression ", nameof(node->Kind())));
+	throw std::invalid_argument(BuildStringFrom("Invalid expression: ", nameof(node->Kind())));
 }
 
 ValueType Evaluator::EvaluateLiteralExpression(const BoundLiteralExpression* node)const

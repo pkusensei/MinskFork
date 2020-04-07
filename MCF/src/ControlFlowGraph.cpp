@@ -137,11 +137,11 @@ void ControlFlowGraph::GraphBuilder::RemoveBlock(vector<unique_ptr<BasicBlock>>&
 shared_ptr<BoundExpression> ControlFlowGraph::GraphBuilder::Negate(
 	const shared_ptr<BoundExpression>& condition) const
 {
-	auto p = dynamic_cast<BoundLiteralExpression*>(condition.get());
-	if (p)
+	if (condition->Kind() == BoundNodeKind::LiteralExpression)
 	{
 		try
 		{
+			auto p = static_cast<const BoundLiteralExpression*>(condition.get());
 			auto value = p->Value().ToBoolean();
 			return make_shared<BoundLiteralExpression>(!value);
 		} catch (...)
@@ -166,9 +166,11 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 		for (const auto& statement : block->Statements())
 		{
 			_blockFromStatement.emplace(statement, block.get());
-			auto p = dynamic_cast<BoundLabelStatement*>(statement);
-			if (p)
+			if (statement->Kind() == BoundNodeKind::LabelStatement)
+			{
+				auto p = static_cast<BoundLabelStatement*>(statement);
 				_blockFromLabel.emplace(p->Label(), block.get());
+			}
 		}
 	}
 
@@ -184,29 +186,23 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 			{
 				case BoundNodeKind::GotoStatement:
 				{
-					auto gs = dynamic_cast<BoundGotoStatement*>(statement);
-					if (gs)
-					{
-						auto& toBlock = _blockFromLabel.at(gs->Label());
-						Connect(*current, *toBlock);
-					}
+					auto gs = static_cast<BoundGotoStatement*>(statement);
+					auto& toBlock = _blockFromLabel.at(gs->Label());
+					Connect(*current, *toBlock);
 					break;
 				}
 				case BoundNodeKind::ConditionalGotoStatement:
 				{
-					auto cgs = dynamic_cast<BoundConditionalGotoStatement*>(statement);
-					if (cgs)
-					{
-						auto& thenBlock = _blockFromLabel.at(cgs->Label());
-						auto& elseBlock = next;
-						auto negatedCondition = Negate(cgs->Condition());
-						auto thenCondition = cgs->JumpIfTrue() ?
-							cgs->Condition() : negatedCondition;
-						auto elseCondition = cgs->JumpIfTrue() ?
-							negatedCondition : cgs->Condition();
-						Connect(*current, *thenBlock, thenCondition);
-						Connect(*current, *elseBlock, elseCondition);
-					}
+					auto cgs = static_cast<BoundConditionalGotoStatement*>(statement);
+					auto& thenBlock = _blockFromLabel.at(cgs->Label());
+					auto& elseBlock = next;
+					auto negatedCondition = Negate(cgs->Condition());
+					auto thenCondition = cgs->JumpIfTrue() ?
+						cgs->Condition() : negatedCondition;
+					auto elseCondition = cgs->JumpIfTrue() ?
+						negatedCondition : cgs->Condition();
+					Connect(*current, *thenBlock, thenCondition);
+					Connect(*current, *elseBlock, elseCondition);
 					break;
 				}
 				case BoundNodeKind::ReturnStatement:

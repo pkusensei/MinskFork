@@ -95,13 +95,13 @@ public:
 
 	const T* operator[](size_t index)const
 	{
-		return dynamic_cast<const T*>(_nodesAndSeparators.at(index * 2).get());
+		return static_cast<const T*>(_nodesAndSeparators.at(index * 2).get());
 	}
 
 	const SyntaxToken* GetSeparator(size_t index)const
 	{
 		if (index == size() - 1) return nullptr;
-		return dynamic_cast<const SyntaxToken*>(_nodesAndSeparators.at(index * 2 + 1).get());
+		return static_cast<const SyntaxToken*>(_nodesAndSeparators.at(index * 2 + 1).get());
 	}
 
 	const vector<const SyntaxNode*> GetWithSeparators()const

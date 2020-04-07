@@ -194,7 +194,7 @@ private:
 	unique_ptr<ExpressionSyntax> ParseExpression();
 	unique_ptr<ExpressionSyntax> ParseAssignmentExpression();
 	unique_ptr<ExpressionSyntax> ParseBinaryExpression(int parentPrecedence = 0);
-	unique_ptr<ExpressionSyntax> ParsePostfixExpression(unique_ptr<ExpressionSyntax>& expression);
+	unique_ptr<ExpressionSyntax> ParsePostfixExpression(unique_ptr<ExpressionSyntax> expression);
 
 	unique_ptr<ExpressionSyntax> ParsePrimaryExpression();
 	unique_ptr<ExpressionSyntax> ParseParenthesizedExpression();

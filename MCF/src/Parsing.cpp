@@ -402,7 +402,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 					Current().Location(), Current().Text(), left->Kind());
 				break;
 			}
-			left = ParsePostfixExpression(left);
+			left = ParsePostfixExpression(std::move(left));
 		}
 	}
 
@@ -419,24 +419,26 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 	return left;
 }
 
-unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(unique_ptr<ExpressionSyntax>& expression)
+unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(unique_ptr<ExpressionSyntax> expression)
 {
 	auto operatorToken = NextToken();
-	auto pre = dynamic_cast<ParenthesizedExpressionSyntax*>(expression.get());
-	auto pfe = dynamic_cast<PostfixExpressionSyntax*>(expression.get());
-	auto ne = dynamic_cast<NameExpressionSyntax*>(expression.get());
-	if (pre)
+	if (expression->Kind() == SyntaxKind::ParenthesizedExpression)
 	{
-		auto ae = dynamic_cast<const AssignmentExpressionSyntax*>(pre->Expression());
+		auto pre = static_cast<ParenthesizedExpressionSyntax*>(expression.get());
+		auto ae = static_cast<const AssignmentExpressionSyntax*>(pre->Expression());
 		return make_unique<PostfixExpressionSyntax>(_tree, ae->IdentifierToken(),
 			operatorToken, std::move(expression));
-	} else if (pfe)
+	} else if (expression->Kind() == SyntaxKind::PostfixExpression)
+	{
+		auto pfe = static_cast<PostfixExpressionSyntax*>(expression.get());
 		return make_unique<PostfixExpressionSyntax>(_tree, pfe->IdentifierToken(),
 			operatorToken, std::move(expression));
-	else if (ne)
+	} else if (expression->Kind() == SyntaxKind::NameExpression)
+	{
+		auto ne = static_cast<NameExpressionSyntax*>(expression.get());
 		return make_unique<PostfixExpressionSyntax>(_tree, ne->IdentifierToken(),
 			operatorToken, std::move(expression));
-	else
+	} else
 		throw std::invalid_argument(BuildStringFrom("Unexpected expression ",
 			nameof(expression->Kind())));
 }
