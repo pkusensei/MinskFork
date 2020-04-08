@@ -28,6 +28,7 @@ MCF_API void SetConsoleColor(ConsoleColor color = ConsoleColor::Gray);
 MCF_API void ResetConsoleColor();
 MCF_API void ClearConsole();
 MCF_API void SetCursorVisibility(bool visible = true);
+MCF_API int GetConsoleHeight();
 MCF_API int GetConsoleWidth();
 MCF_API size_t GetCursorTop();
 MCF_API void SetCursorPosition(size_t x, size_t y);

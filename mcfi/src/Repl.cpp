@@ -444,6 +444,13 @@ void Repl::SubmissionView::Render()
 	auto lineCount = 0;
 	for (const auto& line : _submissionDocument.Contents())
 	{
+		if (_cursorTop + lineCount >= static_cast<size_t>(MCF::GetConsoleHeight()))
+		{
+			MCF::SetCursorPosition(0, MCF::GetConsoleHeight() - 1);
+			std::cout << '\n';
+			if (_cursorTop > 0)
+				--_cursorTop;
+		}
 		MCF::SetCursorPosition(0, _cursorTop + lineCount);
 
 		MCF::SetConsoleColor(MCF::ConsoleColor::Green);
@@ -453,7 +460,7 @@ void Repl::SubmissionView::Render()
 		MCF::ResetConsoleColor();
 
 		_lineRenderer(line);
-		std::cout << std::string(MCF::GetConsoleWidth() - line.length(), ' ') << '\n';
+		std::cout << std::string(MCF::GetConsoleWidth() - line.length() - 2, ' ');
 		++lineCount;
 	}
 	auto numberOfBlankLines = _renderedLineCount - lineCount;

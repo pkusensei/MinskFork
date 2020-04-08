@@ -146,7 +146,7 @@ class Repl::SubmissionView final
 private:
 	std::function<void(std::string_view)> _lineRenderer;
 	const ObservableCollection<std::string>& _submissionDocument;
-	const size_t _cursorTop;
+	size_t _cursorTop;
 	int _renderedLineCount{ 0 };
 	size_t _currentLine{ 0 };
 	size_t _currentCharacter{ 0 };

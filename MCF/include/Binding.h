@@ -172,18 +172,24 @@ public:
 	using FuncMap = std::unordered_map<const FunctionSymbol*, unique_ptr<BoundBlockStatement>>;
 
 private:
+	unique_ptr<BoundProgram> _previous;
 	unique_ptr<DiagnosticBag> _diagnostics;
 	FuncMap _functions;
 	unique_ptr<BoundBlockStatement> _statement;
 
 public:
-	BoundProgram(unique_ptr<DiagnosticBag> diagnostics, FuncMap functions,
+	BoundProgram(unique_ptr<BoundProgram> previous,
+		unique_ptr<DiagnosticBag> diagnostics,
+		FuncMap functions,
 		unique_ptr<BoundBlockStatement> statement)
-		:_diagnostics(std::move(diagnostics)), _functions(std::move(functions)),
+		:_previous(std::move(previous)),
+		_diagnostics(std::move(diagnostics)),
+		_functions(std::move(functions)),
 		_statement(std::move(statement))
 	{
 	}
 
+	const BoundProgram* Previous()const noexcept { return _previous.get(); }
 	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
 	constexpr const FuncMap& Functions()const noexcept { return _functions; }
 	const BoundBlockStatement* Statement()const noexcept { return _statement.get(); }
@@ -251,7 +257,8 @@ public:
 
 	static unique_ptr<BoundGlobalScope> BindGlobalScope(const BoundGlobalScope* previous,
 		const vector<const SyntaxTree*>& synTrees);
-	static unique_ptr<BoundProgram> BindProgram(const BoundGlobalScope* globalScope);
+	static unique_ptr<BoundProgram> BindProgram(unique_ptr<BoundProgram> preious,
+		const BoundGlobalScope* globalScope);
 };
 
 }//MCF

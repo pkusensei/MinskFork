@@ -20,6 +20,14 @@ Evaluator::Evaluator(unique_ptr<BoundProgram> program, VarMap& variables)
 	: _program(std::move(program)), _globals(variables)
 {
 	_locals.emplace(VarMap());
+
+	const auto* current = _program.get();
+	while (current != nullptr)
+	{
+		for (const auto& [key, value] : current->Functions())
+			_functions.emplace(key, value.get());
+		current = current->Previous();
+	}
 }
 
 ValueType Evaluator::Evaluate()
@@ -449,6 +457,11 @@ const vector<const Symbol*> Compilation::GetSymbols()
 	return result;
 }
 
+unique_ptr<BoundProgram> Compilation::GetProgram()
+{
+	auto previous = Previous() ? Previous()->GetProgram() : nullptr;
+	return Binder::BindProgram(std::move(previous), GlobalScope());
+}
 
 EvaluationResult Compilation::Evaluate(VarMap& variables)
 {
@@ -475,7 +488,7 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 	if (!_diagnostics->empty())
 		return EvaluationResult(*_diagnostics, NullValue);
 
-	auto program = Binder::BindProgram(GlobalScope());
+	auto program = GetProgram();
 	createCfgFile(*program);
 	if (!program->Diagnostics().empty())
 	{
@@ -490,7 +503,7 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 
 void Compilation::EmitTree(std::ostream& out)
 {
-	auto program = Binder::BindProgram(GlobalScope());
+	auto program = GetProgram();
 	if (!program->Statement()->Statements().empty())
 	{
 		program->Statement()->WriteTo(out);
@@ -512,7 +525,7 @@ void Compilation::EmitTree(std::ostream& out)
 
 void Compilation::EmitTree(const FunctionSymbol* symbol, std::ostream& out)
 {
-	auto program = Binder::BindProgram(GlobalScope());
+	auto program = GetProgram();
 	try
 	{
 		auto& body = program->Functions().at(symbol);

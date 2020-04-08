@@ -110,6 +110,13 @@ void SetCursorVisibility(bool visible)
 	//SetConsoleCursorInfo(hStdout, &info);
 }
 
+int GetConsoleHeight()
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbiInfo);
+	return static_cast<int>(csbiInfo.dwSize.Y);
+}
+
 int GetConsoleWidth()
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;

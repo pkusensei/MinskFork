@@ -34,8 +34,7 @@ class BoundGlobalScope;
 class BoundProgram;
 class SyntaxTree;
 
-extern "C" using VarMap = std::unordered_map<shared_ptr<VariableSymbol>,
-	ValueType, SymbolHash, SymbolEqual>;
+extern "C" using VarMap = std::unordered_map<shared_ptr<VariableSymbol>, ValueType, SymbolHash, SymbolEqual>;
 
 class MCF_API EvaluationResult final
 {
@@ -55,9 +54,12 @@ public:
 
 class Evaluator final
 {
+	using FuncMap = std::unordered_map<const FunctionSymbol*, const BoundBlockStatement*>;
+
 private:
 	unique_ptr<BoundProgram> _program;
 	VarMap& _globals;
+	FuncMap _functions;
 	std::stack<VarMap> _locals;
 	ValueType _lastValue;
 
@@ -91,6 +93,8 @@ private:
 	unique_ptr<DiagnosticBag> _diagnostics; //NOTE one bag to rule them all
 
 	std::mutex _mtx;
+
+	unique_ptr<BoundProgram> GetProgram();
 
 public:
 	Compilation(unique_ptr<Compilation> previous, vector<unique_ptr<SyntaxTree>> trees);

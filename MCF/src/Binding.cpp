@@ -703,38 +703,35 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* pre
 		std::move(functions), std::move(variables), std::move(statements));
 }
 
-unique_ptr<BoundProgram> Binder::BindProgram(const BoundGlobalScope* globalScope)
+unique_ptr<BoundProgram> Binder::BindProgram(unique_ptr<BoundProgram> previous,
+	const BoundGlobalScope* globalScope)
 {
 	auto parentScope = CreateParentScope(globalScope);
 
 	auto funcBodies = BoundProgram::FuncMap();
 	auto diag = make_unique<DiagnosticBag>();
 
-	auto scope = globalScope;
-	while (scope != nullptr)
+	for (const auto& it : globalScope->Functions())
 	{
-		for (const auto& it : scope->Functions())
+		auto binder = Binder(std::make_unique<BoundScope>(*parentScope), it.get());
+		auto body = binder.BindStatement(it->Declaration()->Body());
+		auto lowerBody = Lowerer::Lower(std::move(body));
+
+		if (it->Type().get() != TypeSymbol::Get(TypeEnum::Void)
+			&& !ControlFlowGraph::AllPathsReturn(lowerBody.get()))
 		{
-			auto binder = Binder(std::make_unique<BoundScope>(*parentScope), it.get());
-			auto body = binder.BindStatement(it->Declaration()->Body());
-			auto lowerBody = Lowerer::Lower(std::move(body));
-
-			if (it->Type().get() != TypeSymbol::Get(TypeEnum::Void)
-				&& !ControlFlowGraph::AllPathsReturn(lowerBody.get()))
-			{
-				binder._diagnostics->ReportAllPathsMustReturn(
-					it->Declaration()->Identifier().Location());
-			}
-			funcBodies.emplace(it.get(), std::move(lowerBody));
-
-			diag->AddRange(binder.Diagnostics());
+			binder._diagnostics->ReportAllPathsMustReturn(
+				it->Declaration()->Identifier().Location());
 		}
-		scope = scope->Previous();
+		funcBodies.emplace(it.get(), std::move(lowerBody));
+
+		diag->AddRange(binder.Diagnostics());
 	}
+
 	auto s = make_shared<BoundBlockStatement>(globalScope->Statements());
 	auto statement = Lowerer::Lower(std::move(s));
-	return make_unique<BoundProgram>(std::move(diag), std::move(funcBodies),
-		std::move(statement));
+	return make_unique<BoundProgram>(std::move(previous), std::move(diag),
+		std::move(funcBodies), std::move(statement));
 }
 
 }//MCF
