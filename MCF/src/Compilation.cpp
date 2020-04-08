@@ -106,7 +106,7 @@ void Evaluator::EvaluateVariableDeclaration(const BoundVariableDeclaration* node
 {
 	auto value = EvaluateExpression(node->Initializer().get());
 	_lastValue = value;
-	Assign(node->Variable(), value);
+	Assign(node->Variable().get(), value);
 }
 
 void Evaluator::EvaluateExpressionStatement(const BoundExpressionStatement* node)
@@ -172,18 +172,18 @@ ValueType Evaluator::EvaluateLiteralExpression(const BoundLiteralExpression* nod
 ValueType Evaluator::EvaluateVariableExpression(const BoundVariableExpression* node)
 {
 	if (node->Variable()->Kind() == SymbolKind::GlobalVariable)
-		return _globals.at(node->Variable());
+		return _globals.at(node->Variable().get());
 	else
 	{
 		auto& locals = _locals.top();
-		return locals.at(node->Variable());
+		return locals.at(node->Variable().get());
 	}
 }
 
 ValueType Evaluator::EvaluateAssignmentExpression(const BoundAssignmentExpression* node)
 {
 	auto value = EvaluateExpression(node->Expression().get());
-	Assign(node->Variable(), value);
+	Assign(node->Variable().get(), value);
 	return value;
 }
 
@@ -293,9 +293,9 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 		auto locals = VarMap();
 		for (size_t i = 0; i < node->Arguments().size(); ++i)
 		{
-			auto param = node->Function()->Parameters()[i];
+			auto& param = node->Function()->Parameters()[i];
 			auto value = EvaluateExpression(node->Arguments()[i].get());
-			locals.emplace(make_shared<ParameterSymbol>(param), std::move(value));
+			locals.emplace(&param, std::move(value));
 		}
 		_locals.push(std::move(locals));
 		auto statement = _program->Functions().at(node->Function().get()).get();
@@ -326,17 +326,17 @@ ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression* nod
 	switch (node->OperatorKind())
 	{
 		case BoundPostfixOperatorEnum::Increment:
-			Assign(node->Variable(), ++result);
+			Assign(node->Variable().get(), ++result);
 			return result;
 		case BoundPostfixOperatorEnum::Decrement:
-			Assign(node->Variable(), --result);
+			Assign(node->Variable().get(), --result);
 			return result;
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected postfix operator ", nameof(node->OperatorKind())));
 	}
 }
 
-void Evaluator::Assign(const shared_ptr<VariableSymbol>& variable, const ValueType& value)
+void Evaluator::Assign(const VariableSymbol* variable, const ValueType& value)
 {
 	if (variable->Kind() == SymbolKind::GlobalVariable)
 		_globals.insert_or_assign(variable, value);

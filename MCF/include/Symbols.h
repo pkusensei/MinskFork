@@ -53,13 +53,15 @@ public:
 struct MCF_API SymbolHash
 {
 	size_t operator()(const Symbol& s)const noexcept;
+	size_t operator()(const Symbol* s)const noexcept;
 	size_t operator()(const shared_ptr<Symbol>& s)const noexcept;
 };
 
 struct SymbolEqual
 {
-	bool operator()(const Symbol& lhs, const Symbol& rhs) const;
-	bool operator()(const shared_ptr<Symbol>& lhs, const shared_ptr<Symbol>& rhs)const;
+	bool operator()(const Symbol& lhs, const Symbol& rhs) const noexcept;
+	bool operator()(const Symbol* lhs, const Symbol* rhs) const noexcept;
+	bool operator()(const shared_ptr<Symbol>& lhs, const shared_ptr<Symbol>& rhs)const noexcept;
 };
 
 enum class TypeEnum

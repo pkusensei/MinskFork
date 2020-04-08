@@ -36,18 +36,28 @@ size_t SymbolHash::operator()(const Symbol& s) const noexcept
 	return std::hash<string_view>{}(s.Name());
 }
 
+size_t SymbolHash::operator()(const Symbol* s)const noexcept
+{
+	return std::hash<string_view>{}(s->Name());
+}
+
 size_t SymbolHash::operator()(const shared_ptr<Symbol>& s) const noexcept
 {
 	return SymbolHash{}(*s);
 }
 
-bool SymbolEqual::operator()(const Symbol& lhs, const Symbol& rhs) const
+bool SymbolEqual::operator()(const Symbol& lhs, const Symbol& rhs) const noexcept
 {
 	return lhs == rhs;
 }
 
+bool SymbolEqual::operator()(const Symbol* lhs, const Symbol* rhs) const noexcept
+{
+	return (*lhs) == (*rhs);
+}
+
 bool SymbolEqual::operator()(const shared_ptr<Symbol>& lhs,
-	const shared_ptr<Symbol>& rhs) const
+	const shared_ptr<Symbol>& rhs) const noexcept
 {
 	return (*lhs) == (*rhs);
 }

@@ -34,7 +34,8 @@ class BoundGlobalScope;
 class BoundProgram;
 class SyntaxTree;
 
-extern "C" using VarMap = std::unordered_map<shared_ptr<VariableSymbol>, ValueType, SymbolHash, SymbolEqual>;
+extern "C" using VarMap = std::unordered_map<const VariableSymbol*, ValueType,
+	SymbolHash, SymbolEqual>;
 
 class MCF_API EvaluationResult final
 {
@@ -77,7 +78,7 @@ private:
 	ValueType EvaluateConversionExpression(const BoundConversionExpression* node);
 	ValueType EvaluatePostfixExpression(const BoundPostfixExpression* node);
 
-	void Assign(const shared_ptr<VariableSymbol>& variable, const ValueType& value);
+	void Assign(const VariableSymbol* variable, const ValueType& value);
 
 public:
 	Evaluator(unique_ptr<BoundProgram> program, VarMap& variables);
