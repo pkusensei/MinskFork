@@ -112,8 +112,82 @@ public:
 		return result;
 	}
 
-	decltype(auto) begin()const noexcept { return _nodesAndSeparators.begin(); }
-	decltype(auto) end()const noexcept { return _nodesAndSeparators.end(); }
+	class iter
+	{
+	public:
+		using container = vector<unique_ptr<SyntaxNode>>;
+		using traits = std::iterator_traits<container::const_iterator>;
+
+		using value_type = traits::value_type;
+		using difference_type = traits::difference_type;
+		using reference = traits::reference;
+		using pointer = traits::pointer;
+		using iterator_category = traits::iterator_category;
+
+	private:
+		pointer _begin;
+		difference_type _pos;
+
+	public:
+		explicit iter(pointer begin, difference_type pos = 0) noexcept
+			:_begin(begin), _pos(pos)
+		{
+		}
+
+		reference operator*()const noexcept { return *(_begin + _pos); }
+		pointer operator->()const noexcept { return _begin + _pos; }
+		bool operator==(const iter& other)const noexcept
+		{
+			return _pos == other._pos && _begin == other._begin;
+		}
+		bool operator!=(const iter& other)const noexcept
+		{
+			return !(*this == other);
+		}
+		iter& operator+=(const difference_type& n)noexcept
+		{
+			_pos += 2 * n;
+			return *this;
+		}
+		iter& operator-=(const difference_type& n)noexcept
+		{
+			_pos -= 2 * n;
+			return *this;
+		}
+		iter& operator++()noexcept
+		{
+			_pos += 2;
+			return *this;
+		}
+		iter operator++(int)noexcept
+		{
+			iter tmp = *this;
+			_pos += 2;
+			return tmp;
+		}
+		iter& operator--()noexcept
+		{
+			_pos -= 2;
+			return *this;
+		}
+		iter operator--(int)noexcept
+		{
+			iter tmp = *this;
+			_pos -= 2;
+			return tmp;
+		}
+
+	};
+
+	iter begin()const noexcept
+	{
+		return iter(_nodesAndSeparators.data());
+	}
+
+	iter end()const noexcept
+	{
+		return iter(_nodesAndSeparators.data(), 2 * size());
+	}
 };
 
 }//MCF

@@ -53,7 +53,7 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax)
 
 	for (const auto& it : *(syntax->Parameters()))
 	{
-		if (it->Kind()==SyntaxKind::Parameter)
+		if (it->Kind() == SyntaxKind::Parameter)
 		{
 			auto p = static_cast<ParameterSyntax*>(it.get());
 			auto paramName = p->Identifier().Text();
@@ -449,10 +449,8 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	auto boundArguments = vector<shared_ptr<BoundExpression>>();
 	for (const auto& arg : *(syntax->Arguments()))
 	{
-		//NOTE here the difference comes from generics vs C++ template
-		auto p = dynamic_cast<ExpressionSyntax*>(arg.get());
-		if (p)
-			boundArguments.push_back(BindExpression(p));
+		auto p = static_cast<ExpressionSyntax*>(arg.get());
+		boundArguments.push_back(BindExpression(p));
 	}
 
 	auto opt = _scope->TryLookupSymbol(syntax->Identifier().Text());
