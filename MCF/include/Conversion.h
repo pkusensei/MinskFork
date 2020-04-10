@@ -9,6 +9,6 @@ enum class ConversionEnum
 	None, Identity, Implicit, Explicit
 };
 
-ConversionEnum Classify(ConstTypeRef from, ConstTypeRef to);
+ConversionEnum Classify(const TypeSymbol& from, const TypeSymbol& to);
 
 }//MCF

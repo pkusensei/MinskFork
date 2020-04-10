@@ -239,7 +239,7 @@ private:
 	shared_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax* syntax);
 
 	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,
-		ConstTypeRef targetType);
+		const TypeSymbol& targetType);
 	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,
 		bool canBeVoid = false);
 	shared_ptr<BoundExpression> BindExpressionInternal(const ExpressionSyntax* syntax);
@@ -253,15 +253,15 @@ private:
 	shared_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax* syntax);
 
 	shared_ptr<BoundExpression> BindConversion(const ExpressionSyntax* syntax,
-		ConstTypeRef type, bool allowExplicit = false);
+		const TypeSymbol& type, bool allowExplicit = false);
 	shared_ptr<BoundExpression> BindConversion(
 		TextLocation diagLocation, shared_ptr<BoundExpression> syntax,
-		ConstTypeRef type, bool allowExplicit = false);
+		const TypeSymbol& type, bool allowExplicit = false);
 	shared_ptr<VariableSymbol> BindVariableDeclaration(const SyntaxToken& identifier,
-		bool isReadOnly, ConstTypeRef type);
+		bool isReadOnly, const TypeSymbol& type);
 	std::optional<shared_ptr<VariableSymbol>> BindVariableReference(const SyntaxToken& identifier);
-	std::optional<ConstTypeRef> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
-	std::optional<ConstTypeRef> LookupType(string_view name)const;
+	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
+	std::optional<TypeSymbol> LookupType(string_view name)const;
 
 	[[nodiscard]] static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
 	[[nodiscard]] static unique_ptr<BoundScope> CreateRootScope();

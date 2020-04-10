@@ -414,6 +414,8 @@ void Repl::EvaluateHelp()
 			auto paddedName = std::string(it.Name).append(maxNameLength - it.Name.length(), ' ');
 			writer.WritePunctuation("#");
 			writer.WriteIdentifier(paddedName);
+			writer.WriteSpace();
+			writer.WriteSpace();
 		} else
 		{
 			writer.WritePunctuation("#");
@@ -423,8 +425,6 @@ void Repl::EvaluateHelp()
 			writer.WriteIdentifier("symbol");
 			writer.WritePunctuation(">");
 		}
-		writer.WriteSpace();
-		writer.WriteSpace();
 		writer.WriteSpace();
 		writer.WritePunctuation(it.Description);
 		writer.WriteLine();
@@ -612,22 +612,22 @@ void McfRepl::EvaluateShowProgram()
 void McfRepl::EvaluateDump(std::string_view name)const
 {
 	auto compilation = _previous ? _previous.get() : emptyCompilation.get();
-
+	auto symbols = compilation->GetSymbols();
 	auto func =
-		std::find_if(compilation->GetSymbols().cbegin(), compilation->GetSymbols().cend(),
+		std::find_if(symbols.cbegin(), symbols.cend(),
 			[name](const auto& it)
 			{
 				return it->Kind() == MCF::SymbolKind::Function
 					&& it->Name() == name;
 			});
-	if (func == _previous->GetSymbols().cend())
+	if (func == symbols.cend())
 	{
 		MCF::SetConsoleColor(MCF::ConsoleColor::Red);
 		std::cout << "ERROR: function '" << name << "' does not exist." << '\n';
 		MCF::ResetConsoleColor();
 		return;
 	}
-	_previous->EmitTree(dynamic_cast<const MCF::FunctionSymbol*>(*func), std::cout);
+	_previous->EmitTree(static_cast<const MCF::FunctionSymbol*>(*func), std::cout);
 }
 
 void McfRepl::EvaluateLoad(std::string_view path)
@@ -745,4 +745,5 @@ void McfRepl::EvaluateSubmission(std::string_view text)
 		auto writer = MCF::IndentedTextWriter(std::cout);
 		writer.WriteDiagnostics(diagnostics);
 	}
+	std::cout << '\n';
 }

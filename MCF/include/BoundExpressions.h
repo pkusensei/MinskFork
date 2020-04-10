@@ -116,14 +116,14 @@ inline string_view nameof(BoundPostfixOperatorEnum kind)
 class BoundExpression :public BoundNode
 {
 public:
-	virtual ConstTypeRef Type() const = 0;
+	virtual TypeSymbol Type() const = 0;
 };
 
 class BoundErrorExpression final :public BoundExpression
 {
 public:
 	// Inherited via BoundExpression
-	ConstTypeRef Type() const override { return TypeSymbol::Get(TypeEnum::Error); }
+	TypeSymbol Type() const override { return TypeSymbol(TypeEnum::Error); }
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ErrorExpression; }
 };
 
@@ -132,26 +132,26 @@ class BoundUnaryOperator final
 private:
 	SyntaxKind _syntaxKind;
 	BoundUnaryOperatorKind _kind;
-	ConstTypeRef _operandType;
-	ConstTypeRef _resultType;
+	TypeSymbol _operandType;
+	TypeSymbol _resultType;
 	bool _isUseful = true;
 
 	BoundUnaryOperator(SyntaxKind synKind, BoundUnaryOperatorKind kind,
-		ConstTypeRef operandType, ConstTypeRef resultType)
+		const TypeSymbol& operandType, const TypeSymbol& resultType)
 		:_syntaxKind(synKind), _kind(kind),
 		_operandType(operandType), _resultType(resultType)
 	{
 	}
 
 	BoundUnaryOperator(SyntaxKind synKind,
-		BoundUnaryOperatorKind kind, ConstTypeRef operandType)
+		BoundUnaryOperatorKind kind, const TypeSymbol& operandType)
 		: BoundUnaryOperator(synKind, kind, operandType, operandType)
 	{
 	}
 
 	BoundUnaryOperator()
 		: BoundUnaryOperator(SyntaxKind::BadToken, BoundUnaryOperatorKind::Identity,
-			TypeSymbol::Get(TypeEnum::Error))
+			TypeSymbol(TypeEnum::Error))
 	{
 		_isUseful = false;
 	}
@@ -161,16 +161,16 @@ private:
 public:
 	constexpr SyntaxKind SynKind()const noexcept { return _syntaxKind; }
 	constexpr BoundUnaryOperatorKind Kind()const noexcept { return _kind; }
-	ConstTypeRef OperandType()const { return _operandType; }
-	ConstTypeRef Type()const { return _resultType; }
+	constexpr const TypeSymbol& OperandType()const { return _operandType; }
+	constexpr const TypeSymbol& Type()const { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
 	static BoundUnaryOperator Bind(SyntaxKind synKind,
-		ConstTypeRef type)
+		const TypeSymbol& type)
 	{
 		for (const auto& op : operators)
 		{
-			if (op.SynKind() == synKind && op.OperandType().get() == type.get())
+			if (op.SynKind() == synKind && op.OperandType() == type)
 				return op;
 		}
 		return BoundUnaryOperator();
@@ -179,13 +179,13 @@ public:
 
 inline const std::array<BoundUnaryOperator, 4> BoundUnaryOperator::operators = {
 	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation,
-						TypeSymbol::Get(TypeEnum::Bool)),
+						TypeSymbol(TypeEnum::Bool)),
 	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity,
-						TypeSymbol::Get(TypeEnum::Int)),
+						TypeSymbol(TypeEnum::Int)),
 	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation,
-						TypeSymbol::Get(TypeEnum::Int)),
+						TypeSymbol(TypeEnum::Int)),
 	BoundUnaryOperator(SyntaxKind::TildeToken, BoundUnaryOperatorKind::OnesComplement,
-						TypeSymbol::Get(TypeEnum::Int))
+						TypeSymbol(TypeEnum::Int))
 };
 
 class BoundUnaryExpression final : public BoundExpression
@@ -203,7 +203,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::UnaryExpression; }
-	ConstTypeRef Type() const  override { return _op.Type(); }
+	TypeSymbol Type() const  override { return _op.Type(); }
 
 	constexpr const BoundUnaryOperator& Op()const noexcept { return _op; }
 	constexpr const shared_ptr<BoundExpression>& Operand()const noexcept { return _operand; }
@@ -214,33 +214,33 @@ class BoundBinaryOperator final
 private:
 	SyntaxKind _syntaxKind;
 	BoundBinaryOperatorKind _kind;
-	ConstTypeRef _leftType;
-	ConstTypeRef _rightType;
-	ConstTypeRef _resultType;
+	TypeSymbol _leftType;
+	TypeSymbol _rightType;
+	TypeSymbol _resultType;
 	bool _isUseful = true;
 
 	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind,
-		ConstTypeRef left, ConstTypeRef right, ConstTypeRef result)
+		const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result)
 		:_syntaxKind(synKind), _kind(kind), _leftType(left), _rightType(right),
 		_resultType(result)
 	{
 	}
 
 	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind,
-		ConstTypeRef operandType, ConstTypeRef resultType)
+		const TypeSymbol& operandType, const TypeSymbol& resultType)
 		: BoundBinaryOperator(synKind, kind, operandType, operandType, resultType)
 	{
 	}
 
 	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind,
-		ConstTypeRef type)
+		const TypeSymbol& type)
 		: BoundBinaryOperator(synKind, kind, type, type, type)
 	{
 	}
 
 	BoundBinaryOperator()
 		: BoundBinaryOperator(SyntaxKind::BadToken, BoundBinaryOperatorKind::Addition,
-			TypeSymbol::Get(TypeEnum::Error))
+			TypeSymbol(TypeEnum::Error))
 	{
 		_isUseful = false;
 	}
@@ -250,18 +250,18 @@ private:
 public:
 	constexpr SyntaxKind SynKind()const noexcept { return _syntaxKind; }
 	constexpr BoundBinaryOperatorKind Kind()const noexcept { return _kind; }
-	ConstTypeRef LeftType()const noexcept { return _leftType; }
-	ConstTypeRef RightType()const noexcept { return _rightType; }
-	ConstTypeRef Type()const noexcept { return _resultType; }
+	constexpr const TypeSymbol& LeftType()const noexcept { return _leftType; }
+	constexpr const TypeSymbol& RightType()const noexcept { return _rightType; }
+	constexpr const TypeSymbol& Type()const noexcept { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
 	static BoundBinaryOperator Bind(SyntaxKind synKind,
-		ConstTypeRef leftType, ConstTypeRef rightType)
+		const TypeSymbol& leftType, const TypeSymbol& rightType)
 	{
 		for (const auto& op : operators)
 		{
-			if (op.SynKind() == synKind && op.LeftType().get() == leftType.get()
-				&& op.RightType().get() == rightType.get())
+			if (op.SynKind() == synKind && op.LeftType() == leftType
+				&& op.RightType() == rightType)
 				return op;
 		}
 		return BoundBinaryOperator();
@@ -271,57 +271,57 @@ public:
 
 inline const std::array<BoundBinaryOperator, 24> BoundBinaryOperator::operators = {
 		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
-							TypeSymbol::Get(TypeEnum::Int)),
+							TypeSymbol(TypeEnum::Int)),
 		BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction,
-							TypeSymbol::Get(TypeEnum::Int)),
+							TypeSymbol(TypeEnum::Int)),
 		BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication,
-							TypeSymbol::Get(TypeEnum::Int)),
+							TypeSymbol(TypeEnum::Int)),
 		BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division,
-							TypeSymbol::Get(TypeEnum::Int)),
+							TypeSymbol(TypeEnum::Int)),
 		BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus,
-							TypeSymbol::Get(TypeEnum::Int)),
+							TypeSymbol(TypeEnum::Int)),
 
 		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd,
-							TypeSymbol::Get(TypeEnum::Int)),
+							TypeSymbol(TypeEnum::Int)),
 		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr,
-							TypeSymbol::Get(TypeEnum::Int)),
+							TypeSymbol(TypeEnum::Int)),
 		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor,
-							TypeSymbol::Get(TypeEnum::Int)),
+							TypeSymbol(TypeEnum::Int)),
 
 		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TypeSymbol::Get(TypeEnum::Int), TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Int), TypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TypeSymbol::Get(TypeEnum::Int), TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Int), TypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less,
-							TypeSymbol::Get(TypeEnum::Int), TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Int), TypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals,
-							TypeSymbol::Get(TypeEnum::Int), TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Int), TypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater,
-							TypeSymbol::Get(TypeEnum::Int), TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Int), TypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals,
-							TypeSymbol::Get(TypeEnum::Int), TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Int), TypeSymbol(TypeEnum::Bool)),
 
 		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd,
-							TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd,
-							TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr,
-							TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr,
-							TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor,
-							TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::Bool)),
 
 		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
-							TypeSymbol::Get(TypeEnum::String)),
+							TypeSymbol(TypeEnum::String)),
 		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TypeSymbol::Get(TypeEnum::String), TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::String), TypeSymbol(TypeEnum::Bool)),
 		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TypeSymbol::Get(TypeEnum::String), TypeSymbol::Get(TypeEnum::Bool)),
+							TypeSymbol(TypeEnum::String), TypeSymbol(TypeEnum::Bool)),
 };
 
 class BoundBinaryExpression final : public BoundExpression
@@ -340,7 +340,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BinaryExpression; }
-	ConstTypeRef Type() const  override { return _op.Type(); }
+	TypeSymbol Type() const  override { return _op.Type(); }
 
 	constexpr const shared_ptr<BoundExpression>& Left()const noexcept { return _left; }
 	constexpr const shared_ptr<BoundExpression>& Right()const noexcept { return _right; }
@@ -362,7 +362,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::AssignmentExpression; }
-	ConstTypeRef Type() const  override { return _expression->Type(); }
+	TypeSymbol Type() const  override { return _expression->Type(); }
 
 	constexpr const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 	constexpr const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
@@ -381,7 +381,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LiteralExpression; }
-	ConstTypeRef Type() const  override { return _value.Type(); }
+	TypeSymbol Type() const  override { return _value.Type(); }
 
 	constexpr const ValueType& Value()const noexcept { return _value; }
 };
@@ -399,7 +399,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableExpression; }
-	ConstTypeRef Type() const override { return _variable->Type(); }
+	TypeSymbol Type() const override { return _variable->Type(); }
 
 	constexpr const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 };
@@ -419,7 +419,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::CallExpression; }
-	ConstTypeRef Type() const override { return _function->Type(); }
+	TypeSymbol Type() const override { return _function->Type(); }
 
 	constexpr const shared_ptr<FunctionSymbol>& Function()const noexcept { return _function; }
 	constexpr const vector<shared_ptr<BoundExpression>>& Arguments()const noexcept { return _arguments; }
@@ -428,11 +428,11 @@ public:
 class BoundConversionExpression final :public BoundExpression
 {
 private:
-	ConstTypeRef _type;
+	TypeSymbol _type;
 	shared_ptr<BoundExpression> _expression;
 
 public:
-	BoundConversionExpression(ConstTypeRef type,
+	BoundConversionExpression(const TypeSymbol& type,
 		shared_ptr<BoundExpression> expression)
 		:_type(type), _expression(std::move(expression))
 	{
@@ -440,7 +440,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ConversionExpression; }
-	ConstTypeRef Type() const override { return _type; }
+	TypeSymbol Type() const override { return _type; }
 
 	constexpr const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
 };
@@ -462,7 +462,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::PostfixExpression; }
-	ConstTypeRef Type() const override { return _variable->Type(); }
+	TypeSymbol Type() const override { return _variable->Type(); }
 
 	constexpr const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 	constexpr BoundPostfixOperatorEnum OperatorKind()const noexcept { return _kind; }

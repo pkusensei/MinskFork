@@ -307,17 +307,17 @@ void BoundNodePrinter::WriteErrorExpression()
 void BoundNodePrinter::WriteLiteralExpression(const BoundLiteralExpression* node)
 {
 	auto value = node->Value().ToString();
-	if (node->Type().get() == TypeSymbol::Get(TypeEnum::Bool))
+	if (node->Type() == TypeSymbol(TypeEnum::Bool))
 		_writer.WriteKeyword(value);
-	else if (node->Type().get() == TypeSymbol::Get(TypeEnum::Int))
+	else if (node->Type() == TypeSymbol(TypeEnum::Int))
 		_writer.WriteNumber(value);
-	else if (node->Type().get() == TypeSymbol::Get(TypeEnum::String))
+	else if (node->Type() == TypeSymbol(TypeEnum::String))
 	{
 		StringReplaceAll(value, "\"", "\"\"");
 		value = '"' + value + '"';
 		_writer.WriteString(value);
 	} else
-		throw std::invalid_argument(BuildStringFrom("Unexpected type ", node->Type().get().Name()));
+		throw std::invalid_argument(BuildStringFrom("Unexpected type ", node->Type().Name()));
 }
 
 void BoundNodePrinter::WriteVariableExpression(const BoundVariableExpression* node)
@@ -374,7 +374,7 @@ void BoundNodePrinter::WriteCallExpression(const BoundCallExpression* node)
 
 void BoundNodePrinter::WriteConversionExpression(const BoundConversionExpression* node)
 {
-	_writer.WriteIdentifier(node->Type().get().Name());
+	_writer.WriteIdentifier(node->Type().Name());
 	_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
 	Write(node->Expression().get());
 	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);

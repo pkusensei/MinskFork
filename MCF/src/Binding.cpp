@@ -70,7 +70,7 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax)
 		}
 	}
 	auto type = BindTypeClause(syntax->Type())
-		.value_or(TypeSymbol::Get(TypeEnum::Void));
+		.value_or(TypeSymbol(TypeEnum::Void));
 	auto function = make_shared<FunctionSymbol>(syntax->Identifier().Text(),
 		std::move(parameters), type, syntax);
 
@@ -195,7 +195,7 @@ shared_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclara
 
 shared_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax* syntax)
 {
-	auto condition = BindExpression(syntax->Condition(), TypeSymbol::Get(TypeEnum::Bool));
+	auto condition = BindExpression(syntax->Condition(), TypeSymbol(TypeEnum::Bool));
 	auto thenStatement = BindStatement(syntax->ThenStatement());
 	auto elseStatement =
 		syntax->ElseClause() == nullptr ?
@@ -207,7 +207,7 @@ shared_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax* synt
 shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax* syntax)
 {
 	auto condition = BindExpression(syntax->Condition(),
-		TypeSymbol::Get(TypeEnum::Bool));
+		TypeSymbol(TypeEnum::Bool));
 	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
 	return make_shared<BoundWhileStatement>(std::move(condition), body,
 		breakLabel, continueLabel);
@@ -217,7 +217,7 @@ shared_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSy
 {
 	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
 	auto condition = BindExpression(syntax->Condition(),
-		TypeSymbol::Get(TypeEnum::Bool));
+		TypeSymbol(TypeEnum::Bool));
 	return make_shared<BoundDoWhileStatement>(body, std::move(condition),
 		breakLabel, continueLabel);
 }
@@ -225,14 +225,14 @@ shared_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSy
 shared_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax* syntax)
 {
 	auto lowerBound = BindExpression(syntax->LowerBound(),
-		TypeSymbol::Get(TypeEnum::Int));
+		TypeSymbol(TypeEnum::Int));
 	auto upperBound = BindExpression(syntax->UpperBound(),
-		TypeSymbol::Get(TypeEnum::Int));
+		TypeSymbol(TypeEnum::Int));
 
 	_scope = make_unique<BoundScope>(std::move(_scope));
 
 	auto variable = BindVariableDeclaration(syntax->Identifier(), true,
-		TypeSymbol::Get(TypeEnum::Int));
+		TypeSymbol(TypeEnum::Int));
 	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
 
 	BoundScope::ResetToParent(_scope);
@@ -294,7 +294,7 @@ shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSynt
 				_function->Name());
 	} else
 	{
-		if (_function->Type().get() == TypeSymbol::Get(TypeEnum::Void))
+		if (_function->Type() == TypeSymbol(TypeEnum::Void))
 		{
 			if (expression != nullptr)
 				_diagnostics->ReportInvalidReturnExpression(syntax->Expression()->Location(),
@@ -319,7 +319,7 @@ shared_ptr<BoundStatement> Binder::BindExpressionStatement(const ExpressionState
 }
 
 shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax* syntax,
-	ConstTypeRef targetType)
+	const TypeSymbol& targetType)
 {
 	return BindConversion(syntax, targetType);
 }
@@ -328,7 +328,7 @@ shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax* synta
 	bool canBeVoid)
 {
 	auto result = BindExpressionInternal(syntax);
-	if (!canBeVoid && result->Type().get() == TypeSymbol::Get(TypeEnum::Void))
+	if (!canBeVoid && result->Type() == TypeSymbol(TypeEnum::Void))
 	{
 		_diagnostics->ReportExpressionMustHaveValue(syntax->Location());
 		return make_shared<BoundErrorExpression>();
@@ -428,7 +428,7 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 shared_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyntax* syntax)
 {
 	auto boundOperand = BindExpression(syntax->Operand());
-	if (boundOperand->Type().get() == TypeSymbol::Get(TypeEnum::Error))
+	if (boundOperand->Type() == TypeSymbol(TypeEnum::Error))
 		return make_shared<BoundErrorExpression>();
 
 	auto boundOperator = BoundUnaryOperator::Bind(syntax->OperatorToken().Kind(),
@@ -448,8 +448,8 @@ shared_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 {
 	auto boundLeft = BindExpression(syntax->Left());
 	auto boundRight = BindExpression(syntax->Right());
-	if (boundLeft->Type().get() == TypeSymbol::Get(TypeEnum::Error)
-		|| boundRight->Type().get() == TypeSymbol::Get(TypeEnum::Error))
+	if (boundLeft->Type() == TypeSymbol(TypeEnum::Error)
+		|| boundRight->Type() == TypeSymbol(TypeEnum::Error))
 		return make_shared<BoundErrorExpression>();
 
 	auto boundOperator = BoundBinaryOperator::Bind(syntax->OperatorToken().Kind(),
@@ -549,13 +549,13 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 		_diagnostics->ReportCannotAssign(syntax->Op().Location(), name);
 		return make_shared<BoundErrorExpression>();
 	}
-	if (boundExpression->Type().get() != variable->Type())
+	if (boundExpression->Type() != variable->Type())
 	{
 		_diagnostics->ReportCannotConvert(syntax->Expression()->Location(),
 			boundExpression->Type(), variable->Type());
 		return make_shared<BoundErrorExpression>();
 	}
-	if (variable->Type().get() != TypeSymbol::Get(TypeEnum::Int))
+	if (variable->Type() != TypeSymbol(TypeEnum::Int))
 	{
 		_diagnostics->ReportVariableNotSupportPostfixOperator(
 			syntax->Expression()->Location(), syntax->Op().Text(), variable->Type());
@@ -576,21 +576,20 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 }
 
 shared_ptr<BoundExpression> Binder::BindConversion(const ExpressionSyntax* syntax,
-	ConstTypeRef type,
-	bool allowExplicit)
+	const TypeSymbol& type, bool allowExplicit)
 {
 	auto expression = BindExpression(syntax);
 	return BindConversion(syntax->Location(), std::move(expression), type, allowExplicit);
 }
 
 shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
-	shared_ptr<BoundExpression> expression, ConstTypeRef type, bool allowExplicit)
+	shared_ptr<BoundExpression> expression, const TypeSymbol& type, bool allowExplicit)
 {
 	auto conversion = Classify(expression->Type(), type);
 	if (conversion == ConversionEnum::None)
 	{
-		if (expression->Type().get() != TypeSymbol::Get(TypeEnum::Error)
-			&& type.get() != TypeSymbol::Get(TypeEnum::Error))
+		if (expression->Type() != TypeSymbol(TypeEnum::Error)
+			&& type != TypeSymbol(TypeEnum::Error))
 			_diagnostics->ReportCannotConvert(
 				std::move(diagLocation), expression->Type(), type);
 		return make_shared<BoundErrorExpression>();
@@ -604,7 +603,7 @@ shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
 }
 
 shared_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& identifier, bool isReadOnly,
-	ConstTypeRef type)
+	const TypeSymbol& type)
 {
 	auto name = identifier.Text().empty() ? "?" : identifier.Text();
 	auto declare = !identifier.IsMissing();
@@ -640,7 +639,7 @@ std::optional<shared_ptr<VariableSymbol>> Binder::BindVariableReference(const Sy
 	}
 }
 
-std::optional<ConstTypeRef> Binder::BindTypeClause(const std::optional<TypeClauseSyntax>& syntax)
+std::optional<TypeSymbol> Binder::BindTypeClause(const std::optional<TypeClauseSyntax>& syntax)
 {
 	if (!syntax.has_value()) return std::nullopt;
 
@@ -651,12 +650,12 @@ std::optional<ConstTypeRef> Binder::BindTypeClause(const std::optional<TypeClaus
 	return type;
 }
 
-std::optional<ConstTypeRef> Binder::LookupType(string_view name) const
+std::optional<TypeSymbol> Binder::LookupType(string_view name) const
 {
-	if (name == "bool") return TypeSymbol::Get(TypeEnum::Bool);
-	else if (name == "any") return TypeSymbol::Get(TypeEnum::Any);
-	else if (name == "int") return TypeSymbol::Get(TypeEnum::Int);
-	else if (name == "string") return TypeSymbol::Get(TypeEnum::String);
+	if (name == "bool") return TypeSymbol(TypeEnum::Bool);
+	else if (name == "any") return TypeSymbol(TypeEnum::Any);
+	else if (name == "int") return TypeSymbol(TypeEnum::Int);
+	else if (name == "string") return TypeSymbol(TypeEnum::String);
 	else return std::nullopt;
 }
 
@@ -742,7 +741,7 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 		if (!globalStmts.empty())
 		{
 			scriptFunc = make_unique<FunctionSymbol>("$eval", vector<ParameterSymbol>(),
-				TypeSymbol::Get(TypeEnum::Void), nullptr);
+				TypeSymbol(TypeEnum::Void), nullptr);
 		}
 	} else
 	{
@@ -750,7 +749,7 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 			[](const auto& it) { return it->Name() == "main"; });
 		if (it != functions.cend())
 		{
-			if ((*it)->Type().get() != TypeSymbol::Get(TypeEnum::Void)
+			if ((*it)->Type() != TypeSymbol(TypeEnum::Void)
 				|| !(*it)->Parameters().empty())
 				binder._diagnostics->ReportMainMustHaveCorrectSignature(
 					(*it)->Declaration()->Identifier().Location()
@@ -772,7 +771,7 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 			} else
 			{
 				mainFunc = make_unique<FunctionSymbol>("main", vector<ParameterSymbol>(),
-					TypeSymbol::Get(TypeEnum::Void), nullptr);
+					TypeSymbol(TypeEnum::Void), nullptr);
 			}
 		}
 	}
@@ -803,7 +802,7 @@ unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
 		auto body = binder.BindStatement(it->Declaration()->Body());
 		auto lowerBody = Lowerer::Lower(std::move(body));
 
-		if (it->Type().get() != TypeSymbol::Get(TypeEnum::Void)
+		if (it->Type() != TypeSymbol(TypeEnum::Void)
 			&& !ControlFlowGraph::AllPathsReturn(lowerBody.get()))
 		{
 			binder._diagnostics->ReportAllPathsMustReturn(
@@ -828,7 +827,7 @@ unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
 			&& statements.at(0)->Kind() == BoundNodeKind::ExpressionStatement)
 		{
 			auto es = static_cast<BoundExpressionStatement*>(statements.at(0).get());
-			if (es->Expression()->Type().get() != TypeSymbol::Get(TypeEnum::Void))
+			if (es->Expression()->Type() != TypeSymbol(TypeEnum::Void))
 			{
 				statements.at(0) = make_shared<BoundReturnStatement>(es->Expression());
 			}

@@ -266,7 +266,7 @@ void Lexer::ReadNumberToken()
 	{
 		auto span = TextSpan(_start, length);
 		_diagnostics.ReportInvalidNumber(TextLocation(_text, std::move(span)),
-			text, TypeSymbol::Get(TypeEnum::Int));
+			text, TypeSymbol(TypeEnum::Int));
 	}
 }
 

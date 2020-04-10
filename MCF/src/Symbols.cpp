@@ -21,23 +21,22 @@ string Symbol::ToString() const
 	return ss.str();
 }
 
-std::reference_wrapper<const TypeSymbol> TypeSymbol::Get(TypeEnum kind)
+string_view TypeSymbol::nameof(TypeEnum kind)
 {
-	static const auto error = TypeSymbol("?");
-	static const auto any_ = TypeSymbol("any");
-	static const auto bool_ = TypeSymbol("bool");
-	static const auto int_ = TypeSymbol("int");
-	static const auto string_ = TypeSymbol("string");
-	static const auto void_ = TypeSymbol("void");
-
 	switch (kind)
 	{
-		case TypeEnum::Error: return error;
-		case TypeEnum::Any: return any_;
-		case TypeEnum::Bool: return bool_;
-		case TypeEnum::Int: return int_;
-		case TypeEnum::String: return string_;
-		case TypeEnum::Void: return void_;
+		case MCF::TypeEnum::Error:
+			return "?";
+		case MCF::TypeEnum::Any:
+			return "any";
+		case MCF::TypeEnum::Bool:
+			return "bool";
+		case MCF::TypeEnum::Int:
+			return "int";
+		case MCF::TypeEnum::String:
+			return "string";
+		case MCF::TypeEnum::Void:
+			return "void";
 		default:
 			throw std::invalid_argument("Unexpected TypeEnum value.");
 	}
@@ -45,7 +44,7 @@ std::reference_wrapper<const TypeSymbol> TypeSymbol::Get(TypeEnum kind)
 
 size_t ParameterHash::operator()(const ParameterSymbol& ps) const noexcept
 {
-	return std::hash<string_view>{}(ps.Type().get().Name());
+	return std::hash<string_view>{}(ps.Type().Name());
 }
 
 size_t FunctionHash::operator()(const FunctionSymbol& fs) const noexcept
@@ -102,32 +101,32 @@ const std::array<FunctionSymbol, 3>& GetAllBuiltinFunctions()
 	static const auto funcs = std::array{
 		FunctionSymbol("input",
 			vector<ParameterSymbol>(),
-			TypeSymbol::Get(TypeEnum::String)),
+			TypeSymbol(TypeEnum::String)),
 		FunctionSymbol("print",
 			vector<ParameterSymbol>{ParameterSymbol("text",
-				TypeSymbol::Get(TypeEnum::String))},
-			TypeSymbol::Get(TypeEnum::Void)),
+				TypeSymbol(TypeEnum::String))},
+			TypeSymbol(TypeEnum::Void)),
 		FunctionSymbol("rnd",
 			vector<ParameterSymbol>{ParameterSymbol("max",
-				TypeSymbol::Get(TypeEnum::Int))},
-			TypeSymbol::Get(TypeEnum::Int))
+				TypeSymbol(TypeEnum::Int))},
+			TypeSymbol(TypeEnum::Int))
 	};
 	return funcs;
 }
 
-ConstTypeRef ValueType::Type() const noexcept
+TypeSymbol ValueType::Type() const
 {
 	switch (_inner.index())
 	{
 		case 1:
-			return TypeSymbol::Get(TypeEnum::Bool);
+			return TypeSymbol(TypeEnum::Bool);
 		case 2:
-			return TypeSymbol::Get(TypeEnum::Int);
+			return TypeSymbol(TypeEnum::Int);
 		case 3:
-			return TypeSymbol::Get(TypeEnum::String);
+			return TypeSymbol(TypeEnum::String);
 		case 0:
 		default:
-			return TypeSymbol::Get(TypeEnum::Error);
+			return TypeSymbol(TypeEnum::Error);
 	}
 }
 

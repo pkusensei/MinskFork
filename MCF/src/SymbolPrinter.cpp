@@ -66,11 +66,11 @@ void SymbolPrinter::WriteFunction(const FunctionSymbol* symbol)
 
 	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
 
-	if (symbol->Type().get() != TypeSymbol::Get(TypeEnum::Void))
+	if (symbol->Type() != TypeSymbol(TypeEnum::Void))
 	{
 		_writer.WritePunctuation(SyntaxKind::ColonToken);
 		_writer.WriteSpace();
-		WriteType(&symbol->Type().get());
+		WriteType(&symbol->Type());
 	}
 }
 
@@ -82,7 +82,7 @@ void SymbolPrinter::WriteGlobalVariable(const GlobalVariableSymbol* symbol)
 	_writer.WritePunctuation(SyntaxKind::ColonToken);
 	_writer.WriteSpace();
 	auto type = symbol->Type();
-	Write(&type.get());
+	Write(&type);
 }
 
 void SymbolPrinter::WriteLocalVariable(const LocalVariableSymbol* symbol)
@@ -94,7 +94,7 @@ void SymbolPrinter::WriteLocalVariable(const LocalVariableSymbol* symbol)
 	_writer.WritePunctuation(SyntaxKind::ColonToken);
 	_writer.WriteSpace();
 	auto type = symbol->Type();
-	Write(&type.get());
+	Write(&type);
 }
 
 void SymbolPrinter::WriteParameter(const ParameterSymbol* symbol)
@@ -103,7 +103,7 @@ void SymbolPrinter::WriteParameter(const ParameterSymbol* symbol)
 	_writer.WritePunctuation(SyntaxKind::ColonToken);
 	_writer.WriteSpace();
 	auto type = symbol->Type();
-	Write(&type.get());
+	Write(&type);
 }
 
 void SymbolPrinter::WriteType(const TypeSymbol* symbol)

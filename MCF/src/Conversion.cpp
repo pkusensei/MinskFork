@@ -4,30 +4,30 @@
 
 namespace MCF {
 
-ConversionEnum Classify(ConstTypeRef from, ConstTypeRef to)
+ConversionEnum Classify(const TypeSymbol& from, const TypeSymbol& to)
 {
-	if (from.get() == to)
+	if (from == to)
 		return ConversionEnum::Identity;
-	if (from.get() != TypeSymbol::Get(TypeEnum::Void)
-		&& to.get() == TypeSymbol::Get(TypeEnum::Any))
+	if (from != TypeSymbol(TypeEnum::Void)
+		&& to == TypeSymbol(TypeEnum::Any))
 	{
 		return ConversionEnum::Implicit;
 	}
-	if (from.get() == TypeSymbol::Get(TypeEnum::Any)
-		&& to.get() != TypeSymbol::Get(TypeEnum::Void))
+	if (from == TypeSymbol(TypeEnum::Any)
+		&& to != TypeSymbol(TypeEnum::Void))
 	{
 		return ConversionEnum::Explicit;
 	}
-	if (from.get() == TypeSymbol::Get(TypeEnum::Int)
-		|| from.get() == TypeSymbol::Get(TypeEnum::Bool))
+	if (from == TypeSymbol(TypeEnum::Int)
+		|| from == TypeSymbol(TypeEnum::Bool))
 	{
-		if (to.get() == TypeSymbol::Get(TypeEnum::String))
+		if (to == TypeSymbol(TypeEnum::String))
 			return ConversionEnum::Explicit;
 	}
-	if (from.get() == TypeSymbol::Get(TypeEnum::String))
+	if (from == TypeSymbol(TypeEnum::String))
 	{
-		if (to.get() == TypeSymbol::Get(TypeEnum::Int)
-			|| to.get() == TypeSymbol::Get(TypeEnum::Bool))
+		if (to == TypeSymbol(TypeEnum::Int)
+			|| to == TypeSymbol(TypeEnum::Bool))
 			return ConversionEnum::Explicit;
 	}
 	return ConversionEnum::None;

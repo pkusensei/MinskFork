@@ -150,7 +150,7 @@ shared_ptr<BoundExpression> ControlFlowGraph::GraphBuilder::Negate(
 		}
 	}
 
-	auto op = BoundUnaryOperator::Bind(SyntaxKind::BangToken, TypeSymbol::Get(TypeEnum::Bool));
+	auto op = BoundUnaryOperator::Bind(SyntaxKind::BangToken, TypeSymbol(TypeEnum::Bool));
 	return make_shared<BoundUnaryExpression>(op, condition);
 }
 

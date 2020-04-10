@@ -100,38 +100,39 @@ private:
 	{
 	}
 
-public:
-	SymbolKind Kind() const noexcept override { return SymbolKind::Type; }
+	static string_view nameof(TypeEnum);
 
-	static std::reference_wrapper<const TypeSymbol> Get(TypeEnum kind);
+public:
+	explicit TypeSymbol(TypeEnum kind)
+		:Symbol(nameof(kind))
+	{
+	}
+
+	SymbolKind Kind() const noexcept override { return SymbolKind::Type; }
 };
-using ConstTypeRef = std::reference_wrapper<const TypeSymbol>;
 
 class MCF_API VariableSymbol : public Symbol
 {
 private:
 	bool _isReadOnly;
-	std::optional<ConstTypeRef> _type;
+	TypeSymbol _type;
 
 public:
-	VariableSymbol(string_view name, bool isReadOnly, std::optional<ConstTypeRef> type) noexcept
-		:Symbol(name), _isReadOnly(isReadOnly), _type(std::move(type))
+	VariableSymbol(string_view name, bool isReadOnly, TypeSymbol type) noexcept
+		:Symbol(name), _isReadOnly(isReadOnly), _type(type)
 	{
 	}
 
 	bool IsReadOnly()const noexcept { return _isReadOnly; }
 
-	// HACK 
-	// Variable could have no TypeSymbol associated
-	// std::optional unwraps as the real TypeSymbol or Void
-	ConstTypeRef Type()const { return _type.value_or(TypeSymbol::Get(TypeEnum::Void)); }
+	constexpr const TypeSymbol& Type()const { return _type; }
 };
 
 class GlobalVariableSymbol final :public VariableSymbol
 {
 public:
-	GlobalVariableSymbol(string_view name, bool isReadOnly, std::optional<ConstTypeRef> type)noexcept
-		:VariableSymbol(name, isReadOnly, std::move(type))
+	GlobalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type)noexcept
+		:VariableSymbol(name, isReadOnly, type)
 	{
 	}
 
@@ -141,8 +142,8 @@ public:
 class LocalVariableSymbol :public VariableSymbol
 {
 public:
-	LocalVariableSymbol(string_view name, bool isReadOnly, std::optional<ConstTypeRef> type)noexcept
-		:VariableSymbol(name, isReadOnly, std::move(type))
+	LocalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type)noexcept
+		:VariableSymbol(name, isReadOnly, type)
 	{
 	}
 
@@ -152,8 +153,8 @@ public:
 class ParameterSymbol final : public LocalVariableSymbol
 {
 public:
-	ParameterSymbol(string_view name, std::optional<ConstTypeRef> type)noexcept
-		:LocalVariableSymbol(name, true, std::move(type))
+	ParameterSymbol(string_view name, TypeSymbol type)noexcept
+		:LocalVariableSymbol(name, true, type)
 	{
 	}
 
@@ -169,27 +170,27 @@ class FunctionSymbol final :public Symbol
 {
 private:
 	vector<ParameterSymbol> _params;
-	ConstTypeRef _type;
+	TypeSymbol _type;
 	const FunctionDeclarationSyntax* _declaration;
 
 public:
 	FunctionSymbol(string_view name, vector<ParameterSymbol> params,
-		ConstTypeRef type, const FunctionDeclarationSyntax* declaration)
+		TypeSymbol type, const FunctionDeclarationSyntax* declaration)
 		:Symbol(name), _params(std::move(params)), _type(type), _declaration(declaration)
 	{
 	}
-	FunctionSymbol(string_view name, vector<ParameterSymbol> params, ConstTypeRef type)
+	FunctionSymbol(string_view name, vector<ParameterSymbol> params, TypeSymbol type)
 		:FunctionSymbol(name, std::move(params), type, nullptr)
 	{
 	}
 	FunctionSymbol()
-		:FunctionSymbol("", vector<ParameterSymbol>(), TypeSymbol::Get(TypeEnum::Error))
+		:FunctionSymbol("", vector<ParameterSymbol>(), TypeSymbol(TypeEnum::Error))
 	{
 	}
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Function; }
 	constexpr const vector<ParameterSymbol>& Parameters()const noexcept { return _params; }
-	ConstTypeRef Type()const noexcept { return _type; }
+	constexpr const TypeSymbol& Type()const noexcept { return _type; }
 	constexpr const FunctionDeclarationSyntax* Declaration()const noexcept { return  _declaration; }
 
 };
@@ -225,7 +226,7 @@ public:
 	ValueType(const char* s) : _inner(string(s)) {}
 
 	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
-	ConstTypeRef Type()const noexcept;
+	TypeSymbol Type()const;
 
 	constexpr bool operator==(const ValueType& other)const { return _inner == other._inner; }
 	constexpr bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }
