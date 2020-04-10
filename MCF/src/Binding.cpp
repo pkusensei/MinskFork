@@ -741,7 +741,7 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 		if (!globalStmts.empty())
 		{
 			scriptFunc = make_unique<FunctionSymbol>("$eval", vector<ParameterSymbol>(),
-				TypeSymbol(TypeEnum::Void), nullptr);
+				TypeSymbol(TypeEnum::Any), nullptr);
 		}
 	} else
 	{

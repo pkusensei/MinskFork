@@ -22,7 +22,7 @@ string ControlFlowGraph::BasicBlock::ToString() const
 		auto s = std::ostringstream();
 		auto writer = BoundNodePrinter(s);
 		for (const auto& it : _statements)
-			writer.Write(it);
+			writer.Write(*it);
 		return s.str();
 	}
 }

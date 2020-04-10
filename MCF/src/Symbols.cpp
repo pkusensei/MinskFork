@@ -11,7 +11,7 @@ namespace MCF {
 void Symbol::WriteTo(std::ostream& out) const
 {
 	auto printer = SymbolPrinter(out);
-	printer.Write(this);
+	printer.Write(*this);
 }
 
 string Symbol::ToString() const
@@ -40,27 +40,6 @@ string_view TypeSymbol::nameof(TypeEnum kind)
 		default:
 			throw std::invalid_argument("Unexpected TypeEnum value.");
 	}
-}
-
-size_t ParameterHash::operator()(const ParameterSymbol& ps) const noexcept
-{
-	return std::hash<string_view>{}(ps.Type().Name());
-}
-
-size_t FunctionHash::operator()(const FunctionSymbol& fs) const noexcept
-{
-	auto result = SymbolHash{}(fs);
-	for (const auto& it : fs.Parameters())
-	{
-		auto h = ParameterHash{}(it);
-		result = result ^ (h << 1);
-	}
-	return result;
-}
-
-size_t FunctionHash::operator()(const shared_ptr<FunctionSymbol>& fs) const noexcept
-{
-	return (*this)(*fs);
 }
 
 string_view nameof(SymbolKind kind)

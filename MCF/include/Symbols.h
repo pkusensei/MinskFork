@@ -161,11 +161,6 @@ public:
 	SymbolKind Kind() const noexcept override { return SymbolKind::Parameter; }
 };
 
-struct ParameterHash final
-{
-	size_t operator()(const ParameterSymbol& ps)const noexcept;
-};
-
 class FunctionSymbol final :public Symbol
 {
 private:
@@ -193,12 +188,6 @@ public:
 	constexpr const TypeSymbol& Type()const noexcept { return _type; }
 	constexpr const FunctionDeclarationSyntax* Declaration()const noexcept { return  _declaration; }
 
-};
-
-struct FunctionHash final
-{
-	size_t operator()(const FunctionSymbol& fs)const noexcept;
-	size_t operator()(const shared_ptr<FunctionSymbol>& fs)const noexcept;
 };
 
 enum class BuiltinFuncEnum
