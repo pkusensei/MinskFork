@@ -143,6 +143,8 @@ class BoundGlobalScope final
 private:
 	const BoundGlobalScope* _previous;
 	unique_ptr<DiagnosticBag> _diagnostics;
+	unique_ptr<FunctionSymbol> _main;
+	unique_ptr<FunctionSymbol> _script;
 	vector<shared_ptr<FunctionSymbol>> _functions;
 	vector<shared_ptr<VariableSymbol>> _variables;
 	vector<shared_ptr<BoundStatement>> _statements;
@@ -150,10 +152,14 @@ private:
 public:
 	BoundGlobalScope(const BoundGlobalScope* previous,
 		unique_ptr<DiagnosticBag> diagnostics,
+		unique_ptr<FunctionSymbol> mainFunc,
+		unique_ptr<FunctionSymbol> scriptFunc,
 		vector<shared_ptr<FunctionSymbol>> functions,
 		vector<shared_ptr<VariableSymbol>> variables,
 		vector<shared_ptr<BoundStatement>> statements)
 		:_previous(previous), _diagnostics(std::move(diagnostics)),
+		_main(std::move(mainFunc)),
+		_script(std::move(scriptFunc)),
 		_functions(std::move(functions)), _variables(std::move(variables)),
 		_statements(std::move(statements))
 	{
@@ -161,6 +167,8 @@ public:
 
 	constexpr const BoundGlobalScope* Previous()const noexcept { return _previous; }
 	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
+	const FunctionSymbol* MainFunc()const noexcept { return _main.get(); }
+	const FunctionSymbol* ScriptFunc()const noexcept { return _script.get(); }
 	constexpr const vector<shared_ptr<FunctionSymbol>>& Functions()const noexcept { return _functions; }
 	constexpr const vector<shared_ptr<VariableSymbol>>& Variables()const noexcept { return _variables; }
 	constexpr const vector<shared_ptr<BoundStatement>>& Statements()const noexcept { return _statements; }
@@ -169,45 +177,53 @@ public:
 class BoundProgram final
 {
 public:
-	using FuncMap = std::unordered_map<const FunctionSymbol*, unique_ptr<BoundBlockStatement>>;
+	using FuncMap = std::unordered_map<const FunctionSymbol*, unique_ptr<BoundBlockStatement>,
+		SymbolHash, SymbolEqual>;
 
 private:
 	unique_ptr<BoundProgram> _previous;
 	unique_ptr<DiagnosticBag> _diagnostics;
+	const FunctionSymbol* _main;
+	const FunctionSymbol* _script;
 	FuncMap _functions;
-	unique_ptr<BoundBlockStatement> _statement;
 
 public:
 	BoundProgram(unique_ptr<BoundProgram> previous,
 		unique_ptr<DiagnosticBag> diagnostics,
-		FuncMap functions,
-		unique_ptr<BoundBlockStatement> statement)
+		const FunctionSymbol* mainFunc,
+		const FunctionSymbol* scriptFunc,
+		FuncMap functions)
 		:_previous(std::move(previous)),
 		_diagnostics(std::move(diagnostics)),
-		_functions(std::move(functions)),
-		_statement(std::move(statement))
+		_main(mainFunc),
+		_script(scriptFunc),
+		_functions(std::move(functions))
 	{
 	}
 
 	const BoundProgram* Previous()const noexcept { return _previous.get(); }
 	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
+	constexpr const FunctionSymbol* MainFunc()const noexcept { return _main; }
+	constexpr const FunctionSymbol* ScriptFunc()const noexcept { return _script; }
 	constexpr const FuncMap& Functions()const noexcept { return _functions; }
-	const BoundBlockStatement* Statement()const noexcept { return _statement.get(); }
 };
 
 class Binder final
 {
 private:
 	unique_ptr<DiagnosticBag> _diagnostics;
-	unique_ptr<BoundScope> _scope;
+	const bool _isScript;
 	const FunctionSymbol* _function;
+	unique_ptr<BoundScope> _scope;
 	std::stack<std::pair<BoundLabel, BoundLabel>> _loopStack; //break-continue pair
 	size_t _labelCount;
 
 	void BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax);
 
 	shared_ptr<BoundStatement> BindErrorStatement();
-	shared_ptr<BoundStatement> BindStatement(const StatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindGlobalStatement(const StatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindStatement(const StatementSyntax* syntax, bool isGlobal = false);
+	shared_ptr<BoundStatement> BindStatementInternal(const StatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindBlockStatement(const BlockStatementSyntax* syntax);
 	shared_ptr<BoundStatement> BindVariableDeclaration(const VariableDeclarationSyntax* syntax);
 	shared_ptr<BoundStatement> BindIfStatement(const IfStatementSyntax* syntax);
@@ -251,13 +267,15 @@ private:
 	[[nodiscard]] static unique_ptr<BoundScope> CreateRootScope();
 
 public:
-	Binder(unique_ptr<BoundScope> parent, const FunctionSymbol* function);
+	Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbol* function);
 
 	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
 
-	static unique_ptr<BoundGlobalScope> BindGlobalScope(const BoundGlobalScope* previous,
+	static unique_ptr<BoundGlobalScope> BindGlobalScope(bool isScript,
+		const BoundGlobalScope* previous,
 		const vector<const SyntaxTree*>& synTrees);
-	static unique_ptr<BoundProgram> BindProgram(unique_ptr<BoundProgram> preious,
+	static unique_ptr<BoundProgram> BindProgram(bool isScript,
+		unique_ptr<BoundProgram> preious,
 		const BoundGlobalScope* globalScope);
 };
 

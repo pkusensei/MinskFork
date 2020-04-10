@@ -12,7 +12,7 @@ template<typename Base, typename Derived,
 	typename = std::enable_if_t<std::is_base_of_v<Base, Derived>>>
 	decltype(auto) MakeVecOfRaw(const unique_ptr<Derived>& ptr)
 {
-	return vector<const Base*>{ptr.get()};
+	return ptr == nullptr ? vector<const Base*>() : vector<const Base*>{ ptr.get() };
 }
 
 template<typename Base, typename Derived,

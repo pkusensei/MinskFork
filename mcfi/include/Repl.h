@@ -168,8 +168,10 @@ public:
 class McfRepl final :public Repl
 {
 private:
-	inline static bool _loadingSubmission;
 
+	 static const std::unique_ptr<MCF::Compilation> emptyCompilation;
+
+	bool _loadingSubmission;
 	std::unique_ptr<MCF::Compilation> _previous{ nullptr };
 	bool _showTree{ false };
 	bool _showProgram{ false };

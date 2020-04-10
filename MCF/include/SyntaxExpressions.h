@@ -190,7 +190,7 @@ public:
 
 	constexpr const SyntaxToken& Identifier()const noexcept { return _identifier; }
 	constexpr const SyntaxToken& OpenParenthesisToken()const noexcept { return _openParenthesisToken; }
-	constexpr const SeparatedSyntaxList<ExpressionSyntax>* Arguments()const noexcept { return &_arguments; }
+	constexpr const SeparatedSyntaxList<ExpressionSyntax>& Arguments()const noexcept { return _arguments; }
 	constexpr const SyntaxToken& CloseParenthesisToken()const noexcept { return _closeParenthesisToken; }
 };
 

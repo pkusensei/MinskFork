@@ -21,50 +21,10 @@ string Symbol::ToString() const
 	return ss.str();
 }
 
-bool Symbol::operator==(const Symbol& other) const noexcept
-{
-	return Name() == other.Name();
-}
-
-bool Symbol::operator!=(const Symbol& other) const noexcept
-{
-	return !(*this == other);
-}
-
-size_t SymbolHash::operator()(const Symbol& s) const noexcept
-{
-	return std::hash<string_view>{}(s.Name());
-}
-
-size_t SymbolHash::operator()(const Symbol* s)const noexcept
-{
-	return std::hash<string_view>{}(s->Name());
-}
-
-size_t SymbolHash::operator()(const shared_ptr<Symbol>& s) const noexcept
-{
-	return SymbolHash{}(*s);
-}
-
-bool SymbolEqual::operator()(const Symbol& lhs, const Symbol& rhs) const noexcept
-{
-	return lhs == rhs;
-}
-
-bool SymbolEqual::operator()(const Symbol* lhs, const Symbol* rhs) const noexcept
-{
-	return (*lhs) == (*rhs);
-}
-
-bool SymbolEqual::operator()(const shared_ptr<Symbol>& lhs,
-	const shared_ptr<Symbol>& rhs) const noexcept
-{
-	return (*lhs) == (*rhs);
-}
-
 std::reference_wrapper<const TypeSymbol> TypeSymbol::Get(TypeEnum kind)
 {
 	static const auto error = TypeSymbol("?");
+	static const auto any_ = TypeSymbol("any");
 	static const auto bool_ = TypeSymbol("bool");
 	static const auto int_ = TypeSymbol("int");
 	static const auto string_ = TypeSymbol("string");
@@ -73,6 +33,7 @@ std::reference_wrapper<const TypeSymbol> TypeSymbol::Get(TypeEnum kind)
 	switch (kind)
 	{
 		case TypeEnum::Error: return error;
+		case TypeEnum::Any: return any_;
 		case TypeEnum::Bool: return bool_;
 		case TypeEnum::Int: return int_;
 		case TypeEnum::String: return string_;

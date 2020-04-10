@@ -33,9 +33,10 @@ void BoundScope::ResetToParent(unique_ptr<BoundScope>& current)noexcept
 	current.swap(current->_parent);
 }
 
-Binder::Binder(unique_ptr<BoundScope> parent, const FunctionSymbol* function)
-	: _diagnostics(make_unique<DiagnosticBag>()),
-	_scope(make_unique<BoundScope>(std::move(parent))), _function(function),
+Binder::Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbol* function)
+	: _diagnostics(make_unique<DiagnosticBag>()), _isScript(isScript),
+	_function(function),
+	_scope(make_unique<BoundScope>(std::move(parent))),
 	_loopStack(), _labelCount(0)
 {
 	if (function != nullptr)
@@ -86,7 +87,29 @@ shared_ptr<BoundStatement> Binder::BindErrorStatement()
 	return make_shared<BoundExpressionStatement>(make_shared<BoundErrorExpression>());
 }
 
-shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindGlobalStatement(const StatementSyntax* syntax)
+{
+	return BindStatement(syntax, true);
+}
+
+shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax* syntax, bool isGlobal)
+{
+	auto result = BindStatementInternal(syntax);
+	if (!_isScript || !isGlobal)
+		if (result->Kind() == BoundNodeKind::ExpressionStatement)
+		{
+			auto es = static_cast<BoundExpressionStatement*>(result.get());
+			auto allowExpression = es->Expression()->Kind() == BoundNodeKind::ErrorExpression
+				|| es->Expression()->Kind() == BoundNodeKind::AssignmentExpression
+				|| es->Expression()->Kind() == BoundNodeKind::CallExpression
+				|| es->Expression()->Kind() == BoundNodeKind::PostfixExpression;
+			if (!allowExpression)
+				_diagnostics->ReportInvalidExpressionStatement(syntax->Location());
+		}
+	return result;
+}
+
+shared_ptr<BoundStatement> Binder::BindStatementInternal(const StatementSyntax* syntax)
 {
 	switch (syntax->Kind())
 	{
@@ -258,11 +281,17 @@ shared_ptr<BoundStatement> Binder::BindContinueStatement(const ContinueStatement
 
 shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSyntax* syntax)
 {
-	auto expression = syntax->Expression() == nullptr ?
-		nullptr : BindExpression(syntax->Expression());
+	auto expression = syntax->Expression() ?
+		BindExpression(syntax->Expression()) : nullptr;
 	if (_function == nullptr)
 	{
-		_diagnostics->ReportInvalidReturn(syntax->Keyword().Location());
+		if (_isScript)
+		{
+			if (expression == nullptr)
+				expression = make_shared<BoundLiteralExpression>("");
+		} else if (expression != nullptr)
+			_diagnostics->ReportInvalidReturnExpression(syntax->Expression()->Location(),
+				_function->Name());
 	} else
 	{
 		if (_function->Type().get() == TypeSymbol::Get(TypeEnum::Void))
@@ -439,15 +468,15 @@ shared_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 
 shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSyntax* syntax)
 {
-	if (syntax->Arguments()->size() == 1)
+	if (syntax->Arguments().size() == 1)
 	{
 		auto type = LookupType(syntax->Identifier().Text());
 		if (type.has_value())
-			return BindConversion((*syntax->Arguments())[0], *type, true);
+			return BindConversion(syntax->Arguments()[0], *type, true);
 	}
 
 	auto boundArguments = vector<shared_ptr<BoundExpression>>();
-	for (const auto& arg : *(syntax->Arguments()))
+	for (const auto& arg : syntax->Arguments())
 	{
 		auto p = static_cast<ExpressionSyntax*>(arg.get());
 		boundArguments.push_back(BindExpression(p));
@@ -469,17 +498,17 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		return make_shared<BoundErrorExpression>();
 	}
 
-	if (syntax->Arguments()->size() != function->Parameters().size())
+	if (syntax->Arguments().size() != function->Parameters().size())
 	{
 		TextSpan span;
-		if (syntax->Arguments()->size() > function->Parameters().size())
+		if (syntax->Arguments().size() > function->Parameters().size())
 		{
 			const SyntaxNode* firstExceedingNode = nullptr;
 			if (function->Parameters().size() > 0)
-				firstExceedingNode = syntax->Arguments()->GetSeparator(function->Parameters().size() - 1);
+				firstExceedingNode = syntax->Arguments().GetSeparator(function->Parameters().size() - 1);
 			else
-				firstExceedingNode = (*syntax->Arguments())[0];
-			auto lastExceedingArg = (*syntax->Arguments())[syntax->Arguments()->size() - 1];
+				firstExceedingNode = syntax->Arguments()[0];
+			auto lastExceedingArg = syntax->Arguments()[syntax->Arguments().size() - 1];
 
 			span = TextSpan::FromBounds(firstExceedingNode->Span().Start(),
 				lastExceedingArg->Span().End());
@@ -490,25 +519,17 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		auto location = TextLocation(syntax->SynTree().Text(), span);
 		_diagnostics->ReportWrongArgumentCount(
 			std::move(location), function->Name(),
-			function->Parameters().size(), syntax->Arguments()->size());
+			function->Parameters().size(), syntax->Arguments().size());
 		return make_shared<BoundErrorExpression>();
 	}
 
-	auto hasError = false;
-	for (size_t i = 0; i < syntax->Arguments()->size(); ++i)
+	for (size_t i = 0; i < syntax->Arguments().size(); ++i)
 	{
-		auto arg = boundArguments[i].get();
+		auto argLocation = syntax->Arguments()[i]->Location();
+		auto& arg = boundArguments[i];
 		auto param = function->Parameters()[i];
-		if (arg->Type().get() != param.Type())
-		{
-			_diagnostics->ReportWrongArgumentType(
-				(*syntax->Arguments())[i]->Location(),
-				param.Name(), param.Type(), arg->Type());
-			hasError = true;
-		}
+		boundArguments.at(i) = BindConversion(argLocation, arg, param.Type());
 	}
-	if (hasError)
-		return make_shared<BoundErrorExpression>();
 
 	return make_shared<BoundCallExpression>(function, boundArguments);
 }
@@ -633,6 +654,7 @@ std::optional<ConstTypeRef> Binder::BindTypeClause(const std::optional<TypeClaus
 std::optional<ConstTypeRef> Binder::LookupType(string_view name) const
 {
 	if (name == "bool") return TypeSymbol::Get(TypeEnum::Bool);
+	else if (name == "any") return TypeSymbol::Get(TypeEnum::Any);
 	else if (name == "int") return TypeSymbol::Get(TypeEnum::Int);
 	else if (name == "string") return TypeSymbol::Get(TypeEnum::String);
 	else return std::nullopt;
@@ -669,12 +691,14 @@ unique_ptr<BoundScope> Binder::CreateRootScope()
 	return result;
 }
 
-unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* previous,
+unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
+	const BoundGlobalScope* previous,
 	const vector<const SyntaxTree*>& synTrees)
 {
 	auto parentScope = CreateParentScope(previous);
-	auto binder = Binder(std::move(parentScope), nullptr);
+	auto binder = Binder(isScript, std::move(parentScope), nullptr);
 	auto statements = vector<shared_ptr<BoundStatement>>();
+	auto globalStmts = vector<const GlobalStatementSyntax*>();
 
 	for (const auto& tree : synTrees)
 	{
@@ -689,21 +713,83 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(const BoundGlobalScope* pre
 			if (it->Kind() == SyntaxKind::GlobalStatement)
 			{
 				auto globalStatement = static_cast<GlobalStatementSyntax*>(it.get());
-				statements.push_back(binder.BindStatement(globalStatement->Statement()));
+				globalStmts.push_back(globalStatement);
+				statements.push_back(binder.BindGlobalStatement(globalStatement->Statement()));
 			}
 		}
 	}
 
+	auto firstGlobalStmtPerSynTree = vector<const GlobalStatementSyntax*>();
+	std::for_each(synTrees.cbegin(), synTrees.cend(),
+		[&firstGlobalStmtPerSynTree](const auto& tree)
+		{
+			auto& members = tree->Root()->Members();
+			auto it = std::find_if(members.cbegin(), members.cend(),
+				[](const auto& it)
+				{
+					return it->Kind() == SyntaxKind::GlobalStatement;
+				});
+			if (it != members.cend())
+				firstGlobalStmtPerSynTree.push_back(static_cast<GlobalStatementSyntax*>(it->get()));
+		});
+
 	auto functions = binder._scope->GetDeclaredFunctions();
-	auto variables = binder._scope->GetDeclaredVariables();
+	unique_ptr<FunctionSymbol> mainFunc = nullptr;
+	unique_ptr<FunctionSymbol> scriptFunc = nullptr;
+
+	if (isScript)
+	{
+		if (!globalStmts.empty())
+		{
+			scriptFunc = make_unique<FunctionSymbol>("$eval", vector<ParameterSymbol>(),
+				TypeSymbol::Get(TypeEnum::Void), nullptr);
+		}
+	} else
+	{
+		auto it = std::find_if(functions.cbegin(), functions.cend(),
+			[](const auto& it) { return it->Name() == "main"; });
+		if (it != functions.cend())
+		{
+			if ((*it)->Type().get() != TypeSymbol::Get(TypeEnum::Void)
+				|| !(*it)->Parameters().empty())
+				binder._diagnostics->ReportMainMustHaveCorrectSignature(
+					(*it)->Declaration()->Identifier().Location()
+				);
+			mainFunc = make_unique<FunctionSymbol>(**it);
+		}
+		if (!globalStmts.empty())
+		{
+			if (mainFunc != nullptr)
+			{
+				binder._diagnostics->ReportCannotMixMainAndGlobalStatements(
+					mainFunc->Declaration()->Identifier().Location()
+				);
+				for (const auto& gs : firstGlobalStmtPerSynTree)
+				{
+					binder._diagnostics->ReportCannotMixMainAndGlobalStatements(
+						gs->Location());
+				}
+			} else
+			{
+				mainFunc = make_unique<FunctionSymbol>("main", vector<ParameterSymbol>(),
+					TypeSymbol::Get(TypeEnum::Void), nullptr);
+			}
+		}
+	}
+
 	auto& diagnostics = binder.Diagnostics();
+	auto variables = binder._scope->GetDeclaredVariables();
 	if (previous != nullptr)
 		diagnostics.AddRangeFront(previous->Diagnostics());
-	return make_unique<BoundGlobalScope>(previous, std::move(binder._diagnostics),
-		std::move(functions), std::move(variables), std::move(statements));
+	return make_unique<BoundGlobalScope>(previous,
+		std::move(binder._diagnostics),
+		std::move(mainFunc), std::move(scriptFunc),
+		std::move(functions), std::move(variables),
+		std::move(statements));
 }
 
-unique_ptr<BoundProgram> Binder::BindProgram(unique_ptr<BoundProgram> previous,
+unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
+	unique_ptr<BoundProgram> previous,
 	const BoundGlobalScope* globalScope)
 {
 	auto parentScope = CreateParentScope(globalScope);
@@ -713,7 +799,7 @@ unique_ptr<BoundProgram> Binder::BindProgram(unique_ptr<BoundProgram> previous,
 
 	for (const auto& it : globalScope->Functions())
 	{
-		auto binder = Binder(std::make_unique<BoundScope>(*parentScope), it.get());
+		auto binder = Binder(isScript, std::make_unique<BoundScope>(*parentScope), it.get());
 		auto body = binder.BindStatement(it->Declaration()->Body());
 		auto lowerBody = Lowerer::Lower(std::move(body));
 
@@ -728,10 +814,37 @@ unique_ptr<BoundProgram> Binder::BindProgram(unique_ptr<BoundProgram> previous,
 		diag->AddRange(binder.Diagnostics());
 	}
 
-	auto s = make_shared<BoundBlockStatement>(globalScope->Statements());
-	auto statement = Lowerer::Lower(std::move(s));
+	if (globalScope->MainFunc() != nullptr && !globalScope->Statements().empty())
+	{
+		auto body = Lowerer::Lower(make_shared<BoundBlockStatement>(globalScope->Statements()));
+		funcBodies.emplace(globalScope->MainFunc(), std::move(body));
+	} else if (globalScope->ScriptFunc() != nullptr)
+	{
+		auto statements = globalScope->Statements();
+
+		// adds return to one-liner expression 
+		// otherwise return empty string ""
+		if (statements.size() == 1
+			&& statements.at(0)->Kind() == BoundNodeKind::ExpressionStatement)
+		{
+			auto es = static_cast<BoundExpressionStatement*>(statements.at(0).get());
+			if (es->Expression()->Type().get() != TypeSymbol::Get(TypeEnum::Void))
+			{
+				statements.at(0) = make_shared<BoundReturnStatement>(es->Expression());
+			}
+		} else if (!statements.empty()
+			&& statements.back()->Kind() != BoundNodeKind::ReturnStatement)
+		{
+			auto nullValue = make_shared<BoundLiteralExpression>("");
+			statements.push_back(make_shared<BoundReturnStatement>(nullValue));
+		}
+		auto body = Lowerer::Lower(make_shared<BoundBlockStatement>(std::move(statements)));
+		funcBodies.emplace(globalScope->ScriptFunc(), std::move(body));
+	}
+
 	return make_unique<BoundProgram>(std::move(previous), std::move(diag),
-		std::move(funcBodies), std::move(statement));
+		globalScope->MainFunc(), globalScope->ScriptFunc(),
+		std::move(funcBodies));
 }
 
 }//MCF

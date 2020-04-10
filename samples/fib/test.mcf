@@ -1,4 +1,4 @@
 using "add.mcf"
 using "fib.mcf"
 
-add(fib(15), fib(16)) == fib(17)
+print(string( add(fib(15), fib(16)) == fib(17) ))

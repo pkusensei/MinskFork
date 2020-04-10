@@ -44,14 +44,14 @@ void DiagnosticBag::ReportInvalidNumber(TextLocation location,
 void DiagnosticBag::ReportBadCharacter(TextLocation location, char character)
 {
 	string message{ "Bad character in input: " };
-	message.append(&character);
+	message.push_back(character);
 	Report(std::move(location), std::move(message));
 }
 
 void DiagnosticBag::ReportUnterminatedString(TextLocation location)
 {
-	string message{ "Unterminated string literal." };
-	Report(std::move(location), std::move(message));
+	auto message = "Unterminated string literal.";
+	Report(std::move(location), message);
 }
 
 void DiagnosticBag::ReportUnexpectedToken(TextLocation location,
@@ -99,16 +99,16 @@ void DiagnosticBag::ReportUndefinedType(TextLocation location, string_view name)
 void DiagnosticBag::ReportCannotConvert(TextLocation location,
 	const TypeSymbol& fromType, const TypeSymbol& toType)
 {
-	string message("Cannot convert type '");
-	message += fromType.ToString() + "' to '" + toType.ToString() + "'.";
+	auto message = BuildStringFrom("Cannot convert type '", fromType.ToString(),
+		"' to '", toType.ToString(), "'.");
 	Report(std::move(location), std::move(message));
 }
 
 void DiagnosticBag::ReportCannotConvertImplicitly(TextLocation location,
 	const TypeSymbol& fromType, const TypeSymbol& toType)
 {
-	string message("Cannot convert type '");
-	message += fromType.ToString() + "' to '" + toType.ToString() + "' implicitly.";
+	auto message = BuildStringFrom("Cannot convert type '", fromType.ToString(), "' to '", toType.ToString(), "'.",
+		" An explicit conversion exists (are you missing a cast?)");
 	Report(std::move(location), std::move(message));
 }
 
@@ -152,18 +152,10 @@ void DiagnosticBag::ReportWrongArgumentCount(TextLocation location,
 	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportWrongArgumentType(TextLocation location, string_view name,
-	const TypeSymbol& expectedType, const TypeSymbol& actualType)
-{
-	auto message = BuildStringFrom("Parameter '", name, "' requires a value of type '", expectedType.ToString()
-		, "' but was given '", actualType.ToString(), "'.");
-	Report(std::move(location), std::move(message));
-}
-
 void DiagnosticBag::ReportExpressionMustHaveValue(TextLocation location)
 {
-	string message("Expression must have a value.");
-	Report(std::move(location), std::move(message));
+	auto message = "Expression must have a value.";
+	Report(std::move(location), message);
 }
 
 void DiagnosticBag::ReportInvalidBreakOrContinue(TextLocation location,
@@ -183,14 +175,8 @@ void DiagnosticBag::ReportExpressionNotSupportPostfixOperator(TextLocation locat
 
 void DiagnosticBag::ReportAllPathsMustReturn(TextLocation location)
 {
-	string message = "Not all code paths return a value.";
-	Report(std::move(location), std::move(message));
-}
-
-void DiagnosticBag::ReportInvalidReturn(TextLocation location)
-{
-	string message = "The keyword 'return' can only be used inside of functions.";
-	Report(std::move(location), std::move(message));
+	auto message = "Not all code paths return a value.";
+	Report(std::move(location), message);
 }
 
 void DiagnosticBag::ReportInvalidReturnExpression(TextLocation location, string_view funcName)
@@ -216,6 +202,24 @@ void DiagnosticBag::ReportSourceFileNotExist(TextLocation location, string_view 
 {
 	auto message = BuildStringFrom("File '", fileName, ", doesn't exist.");
 	Report(std::move(location), std::move(message));
+}
+
+void DiagnosticBag::ReportInvalidExpressionStatement(TextLocation location)
+{
+	auto message = "Only assignment, call, and postfix expressions can be used as a statement.";
+	Report(std::move(location), message);
+}
+
+void DiagnosticBag::ReportMainMustHaveCorrectSignature(TextLocation location)
+{
+	auto message = "main must not take arguments and not return anything.";
+	Report(std::move(location), message);
+}
+
+void DiagnosticBag::ReportCannotMixMainAndGlobalStatements(TextLocation location)
+{
+	auto message = "Cannot declare main function when global statements are used.";
+	Report(std::move(location), message);
 }
 
 }//MCF

@@ -12,6 +12,10 @@ namespace fs = std::filesystem;
 
 constexpr auto NEW_LINE = '\r';
 
+
+const std::unique_ptr<MCF::Compilation> McfRepl::emptyCompilation
+= MCF::Compilation::CreateScript(nullptr, nullptr);
+
 fs::path GetSubmissionDir()
 {
 	/// %USERPROFILE%/AppData/Local/Temp
@@ -405,9 +409,20 @@ void Repl::EvaluateHelp()
 	auto writer = MCF::TextWriter(std::cout);
 	for (const auto& it : _metaCommands)
 	{
-		auto paddedName = std::string(it.Name).append(maxNameLength - it.Name.length(), ' ');
-		writer.WritePunctuation("#");
-		writer.WriteIdentifier(paddedName);
+		if (it.Arity == 0)
+		{
+			auto paddedName = std::string(it.Name).append(maxNameLength - it.Name.length(), ' ');
+			writer.WritePunctuation("#");
+			writer.WriteIdentifier(paddedName);
+		} else
+		{
+			writer.WritePunctuation("#");
+			writer.WriteIdentifier(it.Name);
+			writer.WriteSpace();
+			writer.WritePunctuation("<");
+			writer.WriteIdentifier("symbol");
+			writer.WritePunctuation(">");
+		}
 		writer.WriteSpace();
 		writer.WriteSpace();
 		writer.WriteSpace();
@@ -556,9 +571,9 @@ void McfRepl::EvaluateCls()const
 
 void McfRepl::EvaluateLs()
 {
-	if (_previous == nullptr)
-		return;
-	auto symbols = _previous->GetSymbols();
+	auto compilation = _previous ? _previous.get() : emptyCompilation.get();
+
+	auto symbols = compilation->GetSymbols();
 	std::sort(symbols.begin(), symbols.end(),
 		[](const auto& a, const auto& b)
 		{
@@ -596,10 +611,10 @@ void McfRepl::EvaluateShowProgram()
 
 void McfRepl::EvaluateDump(std::string_view name)const
 {
-	if (_previous == nullptr)
-		return;
+	auto compilation = _previous ? _previous.get() : emptyCompilation.get();
+
 	auto func =
-		std::find_if(_previous->GetSymbols().cbegin(), _previous->GetSymbols().cend(),
+		std::find_if(compilation->GetSymbols().cbegin(), compilation->GetSymbols().cend(),
 			[name](const auto& it)
 			{
 				return it->Kind() == MCF::SymbolKind::Function
@@ -704,9 +719,8 @@ void McfRepl::EvaluateSubmission(std::string_view text)
 	// At the end of the day each syntax tree keeps its own copy of input string
 	auto syntaxTree = MCF::SyntaxTree::Parse(text);
 
-	auto compilation = _previous == nullptr ?
-		std::make_unique<MCF::Compilation>(std::move(syntaxTree))
-		: MCF::Compilation::ContinueWith(std::move(_previous), std::move(syntaxTree));
+	auto compilation = MCF::Compilation::CreateScript(std::move(_previous), std::move(syntaxTree));
+
 	if (_showTree)
 		compilation->SynTrees().back()->Root()->WriteTo(std::cout);
 	if (_showProgram)
@@ -720,7 +734,7 @@ void McfRepl::EvaluateSubmission(std::string_view text)
 		if (value.HasValue())
 		{
 			MCF::SetConsoleColor(MCF::ConsoleColor::White);
-			std::cout << value << '\n';
+			std::cout << value;
 			MCF::ResetConsoleColor();
 		}
 
@@ -731,5 +745,4 @@ void McfRepl::EvaluateSubmission(std::string_view text)
 		auto writer = MCF::IndentedTextWriter(std::cout);
 		writer.WriteDiagnostics(diagnostics);
 	}
-	std::cout << '\n';
 }

@@ -46,27 +46,50 @@ public:
 	void WriteTo(std::ostream& out)const;
 	string ToString() const;
 
-	bool operator==(const Symbol& other)const noexcept;
-	bool operator!=(const Symbol& other)const noexcept;
+	bool operator==(const Symbol& other)const noexcept
+	{
+		return Name() == other.Name();
+	}
+	bool operator!=(const Symbol& other)const noexcept
+	{
+		return !(*this == other);
+	}
+
 };
 
 struct MCF_API SymbolHash
 {
-	size_t operator()(const Symbol& s)const noexcept;
-	size_t operator()(const Symbol* s)const noexcept;
-	size_t operator()(const shared_ptr<Symbol>& s)const noexcept;
+	template<typename Ptr, typename = std::enable_if_t<!std::is_base_of_v<Symbol, Ptr>>>
+	size_t operator()(const Ptr& p)const noexcept
+	{
+		return std::hash<string_view>{}(p->Name());
+	}
+
+	size_t operator()(const Symbol& s)const noexcept
+	{
+		return std::hash<string_view>{}(s.Name());
+	}
+
 };
 
 struct SymbolEqual
 {
-	bool operator()(const Symbol& lhs, const Symbol& rhs) const noexcept;
-	bool operator()(const Symbol* lhs, const Symbol* rhs) const noexcept;
-	bool operator()(const shared_ptr<Symbol>& lhs, const shared_ptr<Symbol>& rhs)const noexcept;
+	bool operator()(const Symbol& lhs, const Symbol& rhs) const noexcept
+	{
+		return lhs == rhs;
+	}
+
+	template<typename P1, typename P2,
+		typename = std::enable_if_t<!std::is_base_of_v<Symbol, P1> && !std::is_base_of_v<Symbol, P2>>>
+		bool operator()(const P1& p1, const P2& p2)const noexcept
+	{
+		return (*p1) == (*p2);
+	}
 };
 
 enum class TypeEnum
 {
-	Error, Bool, Int, String, Void
+	Error, Any, Bool, Int, String, Void
 };
 
 class TypeSymbol final :public Symbol

@@ -55,7 +55,9 @@ public:
 
 class Evaluator final
 {
-	using FuncMap = std::unordered_map<const FunctionSymbol*, const BoundBlockStatement*>;
+	using FuncMap = std::unordered_map<const FunctionSymbol*, 
+		const BoundBlockStatement*, SymbolHash, SymbolEqual>;
+
 
 private:
 	unique_ptr<BoundProgram> _program;
@@ -88,6 +90,7 @@ public:
 class MCF_API Compilation final
 {
 private:
+	bool _isScript;
 	unique_ptr<Compilation> _previous;
 	vector<unique_ptr<SyntaxTree>> _syntaxTrees;
 	unique_ptr<BoundGlobalScope> _globalScope;
@@ -97,11 +100,10 @@ private:
 
 	unique_ptr<BoundProgram> GetProgram();
 
+	explicit Compilation(bool isScript, unique_ptr<Compilation> previous = nullptr,
+		vector<unique_ptr<SyntaxTree>> trees = {});
+
 public:
-	Compilation(unique_ptr<Compilation> previous, vector<unique_ptr<SyntaxTree>> trees);
-	explicit Compilation(vector<unique_ptr<SyntaxTree>> trees);
-	Compilation(unique_ptr<Compilation> previous, unique_ptr<SyntaxTree> tree);
-	explicit Compilation(unique_ptr<SyntaxTree> tree);
 
 	Compilation(Compilation&& other) noexcept;
 	Compilation& operator=(Compilation&& other) = delete;
@@ -109,6 +111,11 @@ public:
 	Compilation& operator=(const Compilation&) = delete;
 	~Compilation();
 
+	[[nodiscard]] static unique_ptr<Compilation> Create(vector<unique_ptr<SyntaxTree>> trees);
+	[[nodiscard]] static unique_ptr<Compilation> CreateScript(unique_ptr<Compilation> previous,
+		unique_ptr<SyntaxTree> tree);
+
+	constexpr bool IsScript()const noexcept { return _isScript; }
 	Compilation* Previous() noexcept { return _previous.get(); }
 	const Compilation* Previous()const noexcept { return _previous.get(); }
 	const vector<const SyntaxTree*> SynTrees()const noexcept;
@@ -116,12 +123,9 @@ public:
 	const BoundGlobalScope* GlobalScope();
 	const vector<shared_ptr<FunctionSymbol>>& Functions();
 	const vector<shared_ptr<VariableSymbol>>& Variables();
-
-	[[nodiscard]] static unique_ptr<Compilation> ContinueWith(unique_ptr<Compilation> previous,
-		unique_ptr<SyntaxTree> tree);
 	const vector<const Symbol*> GetSymbols();
 
-	EvaluationResult Evaluate(VarMap& variables);
+	[[nodiscard]] EvaluationResult Evaluate(VarMap& variables);
 	void EmitTree(std::ostream& out);
 	void EmitTree(const FunctionSymbol* symbol, std::ostream& out);
 };

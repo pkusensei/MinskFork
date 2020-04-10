@@ -80,8 +80,6 @@ public:
 	void ReportParameterAlreadyDeclared(TextLocation location, string_view name);
 	void ReportWrongArgumentCount(TextLocation location, string_view name,
 		size_t expectedCount, size_t actualCount);
-	void ReportWrongArgumentType(TextLocation location, string_view name,
-		const TypeSymbol& expectedType, const TypeSymbol& actualType);
 	void ReportExpressionMustHaveValue(TextLocation location);
 	void ReportInvalidBreakOrContinue(TextLocation location, string_view text);
 
@@ -89,7 +87,6 @@ public:
 		string_view operatorText, SyntaxKind kind);
 
 	void ReportAllPathsMustReturn(TextLocation location);
-	void ReportInvalidReturn(TextLocation location);
 	void ReportInvalidReturnExpression(TextLocation location, string_view funcName);
 	void ReportMissingReturnExpression(TextLocation location,
 		const TypeSymbol& returnType);
@@ -97,6 +94,10 @@ public:
 	void ReportVariableNotSupportPostfixOperator(TextLocation location,
 		string_view operatorText, const TypeSymbol& variableType);
 	void ReportSourceFileNotExist(TextLocation, string_view fileName);
+
+	void ReportInvalidExpressionStatement(TextLocation location);
+	void ReportMainMustHaveCorrectSignature(TextLocation location);
+	void ReportCannotMixMainAndGlobalStatements(TextLocation location);
 
 	template<typename Cond,
 		typename = std::enable_if_t<std::is_invocable_v<Cond, const Diagnostic&, const Diagnostic&>>>

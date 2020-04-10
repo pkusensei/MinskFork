@@ -72,28 +72,36 @@ TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 		{ "\"test\" == \"abc\"", false },
 		{ "\"test\" != \"abc\"", true },
 		{ "\"test\" + \"abc\"", "testabc"},
-		{ "{var a = 10 }", 10 },
-		{ "{var a = 10 (a * a) }", 100 },
-		{ "{var a = 0 (a = 10) * a }", 100 },
-		{ "{var a = 0 if a == 0 a = 10 a }", 10 },
-		{ "{var a = 0 if a == 4 a = 10 a }", 0 },
-		{ "{var a = 0 if a == 0 a = 10 else a = 5 a }", 10 },
-		{ "{var a = 0 if a == 4 a = 10 else a = 5 a }", 5 },
-		{ "{var i = 10 var result = 0 while i > 0 { result = result + i i = i - 1} result }", 55 },
-		{ "{var result = 0 for i = 1 to 10 { result = result + i } result }", 55 },
-		{ "{var a = 10 for i = 1 to (a = a - 1) { } a }", 9 },
-		{ "{var a = 0 do a = a + 1 while a < 10 a}", 10 },
-		{ "{ var i = 0 while i < 5 { i = i + 1 if i == 5 continue } i }", 5 },
-		{ "{ var i = 0 do { i = i + 1 if i == 5 continue } while i < 5 i }", 5 },
+		{ "{var a = 10 return a}", 10 },
+		{ "{var a = 10 return (a * a) }", 100 },
+		{ "{var a = 0 return (a = 10) * a }", 100 },
+		{ "{var a = 0 if a == 0 a = 10 return a }", 10 },
+		{ "{var a = 0 if a == 4 a = 10 return a }", 0 },
+		{ "{var a = 0 if a == 0 a = 10 else a = 5 return a }", 10 },
+		{ "{var a = 0 if a == 4 a = 10 else a = 5 return a }", 5 },
+		{ "{var i = 10 var result = 0 while i > 0 { result = result + i i = i - 1} return result }", 55 },
+		{ "{var result = 0 for i = 1 to 10 { result = result + i } return result }", 55 },
+		{ "{var a = 10 for i = 1 to (a = a - 1) { } return a }", 9 },
+		{ "{var a = 0 do a = a + 1 while a < 10 return a}", 10 },
+		{ "{ var i = 0 while i < 5 { i = i + 1 if i == 5 continue } return i }", 5 },
+		{ "{ var i = 0 do { i = i + 1 if i == 5 continue } while i < 5 return i }", 5 },
 
-		{ "{var x = 41 x++}", 42 },
-		{ "{var x = 3 x---5}", -3 },
+		{ "{var x = 41 x++ return x }", 42 },
+		{ "{var x = 3 return x---5 }", -3 },
 
 			}));
 	SECTION("One evaluation")
 	{
 		AssertValue(input, expected);
 	}
+}
+
+TEST_CASE("Evaluator reports script returns keyword", "[Evaluator][return]")
+{
+	auto text = R"(
+            return
+			)";
+	AssertValue(text, "");
 }
 
 TEST_CASE("Evaluator reports redeclaration in VariableDeclaration", "[Evaluator]")
@@ -164,7 +172,7 @@ TEST_CASE("Evaluator reports wrong argument type", "[Evaluator][function][call]"
 			)";
 
 	auto diag = R"(
-            Parameter 'n' requires a value of type 'int' but was given 'string'.
+			Cannot convert type 'string' to 'int'. An explicit conversion exists (are you missing a cast?)		
 			)";
 
 	AssertDiagnostics(text, diag);
@@ -292,18 +300,6 @@ TEST_CASE("Evaluator reports function must have a name", "[Evaluator][function]"
 
 	auto diag = R"(
             Unexpected token <OpenParenthesisToken>, expected <IdentifierToken>.
-			)";
-
-	AssertDiagnostics(text, diag);
-}
-
-TEST_CASE("Evaluator reports invalid return keyword", "[Evaluator][return]")
-{
-	auto text = R"(
-            [return]
-			)";
-	auto diag = R"(
-            The keyword 'return' can only be used inside of functions.
 			)";
 
 	AssertDiagnostics(text, diag);
@@ -541,9 +537,9 @@ TEST_CASE("Evaluator reports undefined binary operation", "[Evaluator]")
 void AssertValue(std::string_view text, const MCF::ValueType& value)
 {
 	auto tree = MCF::SyntaxTree::Parse(text);
-	MCF::Compilation compilation(std::move(tree));
+	auto compilation = MCF::Compilation::CreateScript(nullptr, std::move(tree));
 	MCF::VarMap variables;
-	auto result = compilation.Evaluate(variables);
+	auto result = compilation->Evaluate(variables);
 
 	CHECK(result.Diagnostics().empty());
 	CHECK(value == result.Value());
@@ -553,9 +549,9 @@ void AssertDiagnostics(std::string_view text, std::string_view diagnosticText)
 {
 	auto annotatedText = AnnotatedText::Parse(text);
 	auto tree = MCF::SyntaxTree::Parse(annotatedText.Text());
-	auto compilation = MCF::Compilation(std::move(tree));
+	auto compilation = MCF::Compilation::CreateScript(nullptr, std::move(tree));
 	MCF::VarMap variables;
-	auto result = compilation.Evaluate(variables);
+	auto result = compilation->Evaluate(variables);
 	auto expectedDiagnostoics = AnnotatedText::DedentLines(diagnosticText);
 
 	if (annotatedText.Spans().size() != expectedDiagnostoics.size())

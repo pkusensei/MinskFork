@@ -32,7 +32,11 @@ Evaluator::Evaluator(unique_ptr<BoundProgram> program, VarMap& variables)
 
 ValueType Evaluator::Evaluate()
 {
-	return EvaluateStatement(_program->Statement());
+	auto function = _program->MainFunc() ? _program->MainFunc() : _program->ScriptFunc();
+	if (function == nullptr)
+		return NullValue;
+	auto body = _functions.at(function);
+	return EvaluateStatement(body);
 }
 
 ValueType Evaluator::EvaluateStatement(const BoundBlockStatement* body)
@@ -298,7 +302,7 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 			locals.emplace(&param, std::move(value));
 		}
 		_locals.push(std::move(locals));
-		auto statement = _program->Functions().at(node->Function().get()).get();
+		auto statement = _functions.at(node->Function().get());
 		auto result = EvaluateStatement(statement);
 
 		_locals.pop();
@@ -309,7 +313,9 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpression* node)
 {
 	auto value = EvaluateExpression(node->Expression().get());
-	if (node->Type().get() == TypeSymbol::Get(TypeEnum::Bool))
+	if (node->Type().get() == TypeSymbol::Get(TypeEnum::Any))
+		return value;
+	else if (node->Type().get() == TypeSymbol::Get(TypeEnum::Bool))
 		return value.ToBoolean();
 	else if (node->Type().get() == TypeSymbol::Get(TypeEnum::Int))
 		return value.ToInteger();
@@ -347,9 +353,10 @@ void Evaluator::Assign(const VariableSymbol* variable, const ValueType& value)
 	}
 }
 
-Compilation::Compilation(unique_ptr<Compilation> previous,
+Compilation::Compilation(bool isScript,
+	unique_ptr<Compilation> previous,
 	vector<unique_ptr<SyntaxTree>> trees)
-	:_previous(std::move(previous)), _syntaxTrees(),
+	:_isScript(isScript), _previous(std::move(previous)), _syntaxTrees(),
 	_globalScope(nullptr), _diagnostics(make_unique<DiagnosticBag>())
 {
 	auto vec = vector<unique_ptr<SyntaxTree>>();
@@ -364,23 +371,6 @@ Compilation::Compilation(unique_ptr<Compilation> previous,
 	_syntaxTrees = std::move(vec);
 }
 
-Compilation::Compilation(vector<unique_ptr<SyntaxTree>> trees)
-	: Compilation(nullptr, std::move(trees))
-{
-}
-
-Compilation::Compilation(unique_ptr<Compilation> previous, unique_ptr<SyntaxTree> tree)
-	: Compilation(std::move(previous), std::vector<unique_ptr<SyntaxTree>>{})
-{
-	auto trees = SyntaxTree::Flatten(std::move(tree));
-	_syntaxTrees = std::move(trees);
-}
-
-Compilation::Compilation(unique_ptr<SyntaxTree> tree)
-	:Compilation(nullptr, std::move(tree))
-{
-}
-
 Compilation::~Compilation() = default;
 
 Compilation::Compilation(Compilation&& other) noexcept
@@ -388,6 +378,19 @@ Compilation::Compilation(Compilation&& other) noexcept
 	_globalScope(std::move(other._globalScope)), _diagnostics(std::move(other._diagnostics)),
 	_mtx()
 {
+}
+
+unique_ptr<Compilation> Compilation::Create(vector<unique_ptr<SyntaxTree>> trees)
+{
+	return unique_ptr<Compilation>(new Compilation(false, nullptr, std::move(trees)));
+}
+
+unique_ptr<Compilation> Compilation::CreateScript(unique_ptr<Compilation> previous,
+	unique_ptr<SyntaxTree> tree)
+{
+	auto vec = vector<unique_ptr<SyntaxTree>>();
+	vec.push_back(std::move(tree));
+	return unique_ptr<Compilation>(new Compilation(true, std::move(previous), std::move(vec)));
 }
 
 const vector<const SyntaxTree*> Compilation::SynTrees()const noexcept
@@ -404,9 +407,9 @@ const BoundGlobalScope* Compilation::GlobalScope()
 	{
 		unique_ptr<BoundGlobalScope> tmp{ nullptr };
 		if (_previous == nullptr)
-			tmp = Binder::BindGlobalScope(nullptr, SynTrees());
+			tmp = Binder::BindGlobalScope(IsScript(), nullptr, SynTrees());
 		else
-			tmp = Binder::BindGlobalScope(_previous->GlobalScope(), SynTrees());
+			tmp = Binder::BindGlobalScope(IsScript(), _previous->GlobalScope(), SynTrees());
 
 		std::unique_lock<std::mutex> lock(_mtx, std::defer_lock);
 		if (lock.try_lock() && _globalScope == nullptr)
@@ -423,14 +426,6 @@ const vector<shared_ptr<FunctionSymbol>>& Compilation::Functions()
 const vector<shared_ptr<VariableSymbol>>& Compilation::Variables()
 {
 	return GlobalScope()->Variables();
-}
-
-unique_ptr<Compilation> Compilation::ContinueWith(unique_ptr<Compilation> previous,
-	unique_ptr<SyntaxTree> tree)
-{
-	auto vec = vector<unique_ptr<SyntaxTree>>();
-	vec.push_back(std::move(tree));
-	return make_unique<Compilation>(std::move(previous), std::move(vec));
 }
 
 const vector<const Symbol*> Compilation::GetSymbols()
@@ -460,25 +455,25 @@ const vector<const Symbol*> Compilation::GetSymbols()
 unique_ptr<BoundProgram> Compilation::GetProgram()
 {
 	auto previous = Previous() ? Previous()->GetProgram() : nullptr;
-	return Binder::BindProgram(std::move(previous), GlobalScope());
+	return Binder::BindProgram(IsScript(), std::move(previous), GlobalScope());
 }
 
 EvaluationResult Compilation::Evaluate(VarMap& variables)
 {
-	auto createCfgFile = [](const BoundProgram& p)
-	{
-		auto file = std::ofstream();
-		file.open("cfg.dot", std::ios_base::out | std::ios_base::trunc);
-		if (file.is_open())
-		{
-			auto cfgStatement =
-				p.Statement()->Statements().empty() && !p.Functions().empty() ?
-				(--p.Functions().end())->second.get()
-				: p.Statement();
-			auto cfg = ControlFlowGraph::Create(cfgStatement);
-			cfg.WriteTo(file);
-		}
-	};
+	//auto createCfgFile = [](const BoundProgram& p)
+	//{
+	//	auto file = std::ofstream();
+	//	file.open("cfg.dot", std::ios_base::out | std::ios_base::trunc);
+	//	if (file.is_open())
+	//	{
+	//		auto cfgStatement =
+	//			p.Statement()->Statements().empty() && !p.Functions().empty() ?
+	//			(--p.Functions().end())->second.get()
+	//			: p.Statement();
+	//		auto cfg = ControlFlowGraph::Create(cfgStatement);
+	//		cfg.WriteTo(file);
+	//	}
+	//};
 
 	std::for_each(_syntaxTrees.cbegin(), _syntaxTrees.cend(),
 		[this](const auto& tree) { _diagnostics->AddRange(tree->Diagnostics()); });
@@ -489,7 +484,7 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 		return EvaluationResult(*_diagnostics, NullValue);
 
 	auto program = GetProgram();
-	createCfgFile(*program);
+	//createCfgFile(*program);
 	if (!program->Diagnostics().empty())
 	{
 		_diagnostics->AddRange(program->Diagnostics());
@@ -503,24 +498,10 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 
 void Compilation::EmitTree(std::ostream& out)
 {
-	auto program = GetProgram();
-	if (!program->Statement()->Statements().empty())
-	{
-		program->Statement()->WriteTo(out);
-	} else
-	{
-		for (const auto& [fs, body] : program->Functions())
-		{
-			auto& funcs = GlobalScope()->Functions();
-			if (std::find_if(funcs.begin(), funcs.end(),
-				[fs = fs](const auto& it) { return it.get() == fs; }) == funcs.end())
-			{
-				continue;
-			}
-			fs->WriteTo(out);
-			body->WriteTo(out);
-		}
-	}
+	if (GlobalScope()->MainFunc() != nullptr)
+		EmitTree(GlobalScope()->MainFunc(), out);
+	else if (GlobalScope()->ScriptFunc() != nullptr)
+		EmitTree(GlobalScope()->ScriptFunc(), out);
 }
 
 void Compilation::EmitTree(const FunctionSymbol* symbol, std::ostream& out)

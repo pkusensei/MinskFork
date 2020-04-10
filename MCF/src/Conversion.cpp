@@ -4,7 +4,7 @@
 
 namespace MCF {
 
-Conversion Conversion::GetConversion(ConversionEnum  kind)
+Conversion Conversion::GetConversion(ConversionEnum kind)
 {
 	switch (kind)
 	{
@@ -25,6 +25,16 @@ Conversion Conversion::Classify(ConstTypeRef from, ConstTypeRef to)
 {
 	if (from.get() == to)
 		return GetConversion(ConversionEnum::Identity);
+	if (from.get() != TypeSymbol::Get(TypeEnum::Void)
+		&& to.get() == TypeSymbol::Get(TypeEnum::Any))
+	{
+		return GetConversion(ConversionEnum::Implicit);
+	}
+	if (from.get() == TypeSymbol::Get(TypeEnum::Any)
+		&& to.get() != TypeSymbol::Get(TypeEnum::Void))
+	{
+		return GetConversion(ConversionEnum::Explicit);
+	}
 	if (from.get() == TypeSymbol::Get(TypeEnum::Int)
 		|| from.get() == TypeSymbol::Get(TypeEnum::Bool))
 	{
