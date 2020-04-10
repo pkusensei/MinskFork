@@ -586,8 +586,8 @@ shared_ptr<BoundExpression> Binder::BindConversion(const ExpressionSyntax* synta
 shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
 	shared_ptr<BoundExpression> expression, ConstTypeRef type, bool allowExplicit)
 {
-	auto conversion = Conversion::Classify(expression->Type(), type);
-	if (!conversion.Exists())
+	auto conversion = Classify(expression->Type(), type);
+	if (conversion == ConversionEnum::None)
 	{
 		if (expression->Type().get() != TypeSymbol::Get(TypeEnum::Error)
 			&& type.get() != TypeSymbol::Get(TypeEnum::Error))
@@ -595,10 +595,10 @@ shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
 				std::move(diagLocation), expression->Type(), type);
 		return make_shared<BoundErrorExpression>();
 	}
-	if (!allowExplicit && conversion.IsExplicit())
+	if (!allowExplicit && conversion == ConversionEnum::Explicit)
 		_diagnostics->ReportCannotConvertImplicitly(
 			std::move(diagLocation), expression->Type(), type);
-	if (conversion.IsIdentity())
+	if (conversion == ConversionEnum::Identity)
 		return expression;
 	return make_shared<BoundConversionExpression>(type, std::move(expression));
 }
