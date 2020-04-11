@@ -70,7 +70,7 @@ ControlFlowGraph::BasicBlockBuilder::Build(const BoundBlockStatement* block)
 				_statements.push_back(statement.get());
 				break;
 			default:
-				throw std::invalid_argument(BuildStringFrom("Unexpected statement"
+				throw std::invalid_argument(BuildStringFrom("Unexpected statement: "
 					, nameof(statement->Kind())));
 		}
 	}

@@ -166,7 +166,7 @@ shared_ptr<BoundStatement> Binder::BindStatementInternal(const StatementSyntax* 
 		default:
 			break;
 	}
-	throw std::invalid_argument(BuildStringFrom("Unexpected syntax ", nameof(syntax->Kind())));
+	throw std::invalid_argument(BuildStringFrom("Unexpected syntax: ", nameof(syntax->Kind())));
 }
 
 shared_ptr<BoundStatement> Binder::BindBlockStatement(const BlockStatementSyntax* syntax)
@@ -383,7 +383,7 @@ shared_ptr<BoundExpression> Binder::BindExpressionInternal(const ExpressionSynta
 		default:
 			break;
 	}
-	throw std::invalid_argument(BuildStringFrom("Invalid expression ", nameof(syntax->Kind())));
+	throw std::invalid_argument(BuildStringFrom("Invalid expression: ", nameof(syntax->Kind())));
 
 }
 
@@ -570,7 +570,7 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 			return make_shared<BoundPostfixExpression>(std::move(variable),
 				BoundPostfixOperatorEnum::Decrement, std::move(boundExpression));
 		default:
-			throw std::invalid_argument(BuildStringFrom("Unexpected operator token "
+			throw std::invalid_argument(BuildStringFrom("Unexpected operator token: "
 				, nameof(syntax->Op().Kind())));
 	}
 }

@@ -100,7 +100,7 @@ ValueType Evaluator::EvaluateStatement(const BoundBlockStatement* body)
 				return _lastValue;
 			}
 			default:
-				throw std::invalid_argument(BuildStringFrom("Unexpected statement ", nameof(s->Kind())));
+				throw std::invalid_argument(BuildStringFrom("Unexpected statement: ", nameof(s->Kind())));
 		}
 	}
 	return _lastValue;
@@ -322,7 +322,7 @@ ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpressio
 	else if (node->Type() == TypeSymbol(TypeEnum::String))
 		return value.ToString();
 	else
-		throw std::invalid_argument("Unexpected type " + node->Type().ToString());
+		throw std::invalid_argument("Unexpected type: " + node->Type().ToString());
 }
 
 ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression* node)
@@ -338,7 +338,7 @@ ValueType Evaluator::EvaluatePostfixExpression(const BoundPostfixExpression* nod
 			Assign(node->Variable().get(), --result);
 			return result;
 		default:
-			throw std::invalid_argument(BuildStringFrom("Unexpected postfix operator ", nameof(node->OperatorKind())));
+			throw std::invalid_argument(BuildStringFrom("Unexpected postfix operator: ", nameof(node->OperatorKind())));
 	}
 }
 

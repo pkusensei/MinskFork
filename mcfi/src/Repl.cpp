@@ -12,7 +12,6 @@ namespace fs = std::filesystem;
 
 constexpr auto NEW_LINE = '\r';
 
-
 const std::unique_ptr<MCF::Compilation> McfRepl::emptyCompilation
 = MCF::Compilation::CreateScript(nullptr, nullptr);
 
@@ -627,7 +626,7 @@ void McfRepl::EvaluateDump(std::string_view name)const
 		MCF::ResetConsoleColor();
 		return;
 	}
-	_previous->EmitTree(static_cast<const MCF::FunctionSymbol*>(*func), std::cout);
+	compilation->EmitTree(static_cast<const MCF::FunctionSymbol*>(*func), std::cout);
 }
 
 void McfRepl::EvaluateLoad(std::string_view path)

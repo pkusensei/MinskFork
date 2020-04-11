@@ -439,7 +439,7 @@ unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(unique_ptr<Expressio
 		return make_unique<PostfixExpressionSyntax>(_tree, ne->IdentifierToken(),
 			operatorToken, std::move(expression));
 	} else
-		throw std::invalid_argument(BuildStringFrom("Unexpected expression ",
+		throw std::invalid_argument(BuildStringFrom("Unexpected expression: ",
 			nameof(expression->Kind())));
 }
 

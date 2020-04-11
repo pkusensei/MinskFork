@@ -92,23 +92,23 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(shared_ptr<B
 	auto& statements = node->Statements();
 	for (size_t i = 0; i < statements.size(); ++i)
 	{
-		auto oldStatement = statements[i];
-		auto newStatement = RewriteStatement(std::move(oldStatement));
-		result.push_back(std::move(newStatement));
-
-		//The block of code below and similarly in RewriteCallExpression
-		//produces malformed rewritten tree which fails to evaluate. :(
-		//if (newStatement != oldStatement)
-		//{
-		//	for (auto j = 0; j < i; ++j)
-		//		result.emplace_back(statements[j]);
-		//}
-		//if (!result.empty())
-		//	result.emplace_back(newStatement);
+		auto& oldStmt = statements.at(i);
+		auto newStmt = RewriteStatement(oldStmt);
+		if (newStmt == oldStmt)
+		{
+			if (!result.empty())
+				result.push_back(std::move(newStmt));
+		} else
+		{
+			if (result.empty())
+				for (size_t j = 0; j < i; ++j)
+					result.push_back(statements.at(j));
+			result.push_back(std::move(newStmt));
+		}
 	}
 	if (result.empty())
 		return node;
-	return make_shared<BoundBlockStatement>(result);
+	return make_shared<BoundBlockStatement>(std::move(result));
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteVariableDeclaration(shared_ptr<BoundVariableDeclaration> node)
@@ -116,7 +116,7 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteVariableDeclaration(shared_
 	auto initializer = RewriteExpression(node->Initializer());
 	if (initializer == node->Initializer())
 		return node;
-	return make_shared<BoundVariableDeclaration>(node->Variable(), initializer);
+	return make_shared<BoundVariableDeclaration>(node->Variable(), std::move(initializer));
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteIfStatement(shared_ptr<BoundIfStatement> node)
@@ -130,7 +130,8 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteIfStatement(shared_ptr<Boun
 		&& thenStatement == node->ThenStatement()
 		&& elseStatement == node->ElseStatement())
 		return node;
-	return make_shared<BoundIfStatement>(condition, thenStatement, elseStatement);
+	return make_shared<BoundIfStatement>(std::move(condition),
+		std::move(thenStatement), std::move(elseStatement));
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteWhileStatement(shared_ptr<BoundWhileStatement> node)
@@ -139,7 +140,7 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteWhileStatement(shared_ptr<B
 	auto body = RewriteStatement(node->Body());
 	if (condition == node->Condition() && body == node->Body())
 		return node;
-	return make_shared<BoundWhileStatement>(condition, body,
+	return make_shared<BoundWhileStatement>(std::move(condition), std::move(body),
 		node->BreakLabel(), node->ContinueLabel());
 }
 
@@ -149,7 +150,7 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteDoWhileStatement(shared_ptr
 	auto condition = RewriteExpression(node->Condition());
 	if (body == node->Body() && condition == node->Condition())
 		return node;
-	return make_shared<BoundDoWhileStatement>(body, condition,
+	return make_shared<BoundDoWhileStatement>(std::move(body), std::move(condition),
 		node->BreakLabel(), node->ContinueLabel());
 }
 
@@ -162,8 +163,8 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteForStatement(shared_ptr<Bou
 		&& upperBound == node->UpperBound()
 		&& body == node->Body())
 		return node;
-	return make_shared<BoundForStatement>(node->Variable(), lowerBound,
-		upperBound, body, node->BreakLabel(), node->ContinueLabel());
+	return make_shared<BoundForStatement>(node->Variable(), std::move(lowerBound),
+		std::move(upperBound), body, node->BreakLabel(), node->ContinueLabel());
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteLabelStatement(shared_ptr<BoundLabelStatement> node)
@@ -181,7 +182,8 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteConditionalGotoStatement(sh
 	auto condition = RewriteExpression(node->Condition());
 	if (condition == node->Condition())
 		return node;
-	return make_shared<BoundConditionalGotoStatement>(node->Label(), condition, node->JumpIfTrue());
+	return make_shared<BoundConditionalGotoStatement>(node->Label(),
+		std::move(condition), node->JumpIfTrue());
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteReturnStatement(shared_ptr<BoundReturnStatement> node)
@@ -191,7 +193,7 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteReturnStatement(shared_ptr<
 
 	if (expression == node->Expression())
 		return node;
-	return make_shared<BoundReturnStatement>(expression);
+	return make_shared<BoundReturnStatement>(std::move(expression));
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteExpressionStatement(shared_ptr<BoundExpressionStatement> node)
@@ -199,7 +201,7 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteExpressionStatement(shared_
 	auto expression = RewriteExpression(node->Expression());
 	if (expression == node->Expression())
 		return node;
-	return make_shared<BoundExpressionStatement>(expression);
+	return make_shared<BoundExpressionStatement>(std::move(expression));
 }
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(shared_ptr<BoundExpression> node)
@@ -286,7 +288,7 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteAssignmentExpression(share
 	auto expression = RewriteExpression(node->Expression());
 	if (expression == node->Expression())
 		return node;
-	return make_shared<BoundAssignmentExpression>(node->Variable(), expression);
+	return make_shared<BoundAssignmentExpression>(node->Variable(), std::move(expression));
 }
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteUnaryExpression(shared_ptr<BoundUnaryExpression> node)
@@ -294,7 +296,7 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteUnaryExpression(shared_ptr
 	auto operand = RewriteExpression(node->Operand());
 	if (operand == node->Operand())
 		return node;
-	return make_shared<BoundUnaryExpression>(node->Op(), operand);
+	return make_shared<BoundUnaryExpression>(node->Op(), std::move(operand));
 }
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteBinaryExpression(shared_ptr<BoundBinaryExpression> node)
@@ -303,7 +305,7 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteBinaryExpression(shared_pt
 	auto right = RewriteExpression(node->Right());
 	if (left == node->Left() && right == node->Right())
 		return node;
-	return make_shared<BoundBinaryExpression>(left, node->Op(), right);
+	return make_shared<BoundBinaryExpression>(std::move(left), node->Op(), std::move(right));
 }
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteCallExpression(shared_ptr<BoundCallExpression> node)
@@ -311,21 +313,23 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteCallExpression(shared_ptr<
 	auto result = vector<shared_ptr<BoundExpression>>();
 	for (size_t i = 0; i < node->Arguments().size(); ++i)
 	{
-		auto oldArg = node->Arguments()[i];
-		auto newArg = RewriteExpression(std::move(oldArg));
-		result.push_back(std::move(newArg));
-		//if (newArg != oldArg)
-		//{
-		//	if (result.empty())
-		//		for (auto j = 0; j < i; ++j)
-		//			result.emplace_back(node->Arguments()[i]);
-		//}
-		//if (!result.empty())
-		//	result.emplace_back(newArg);
+		auto& oldArg = node->Arguments().at(i);
+		auto newArg = RewriteExpression(oldArg);
+		if (newArg == oldArg)
+		{
+			if (!result.empty())
+				result.push_back(std::move(newArg));
+		} else
+		{
+			if (result.empty())
+				for (size_t j = 0; j < i; ++j)
+					result.push_back(node->Arguments().at(j));
+			result.push_back(std::move(newArg));
+		}
 	}
 	if (result.empty())
 		return node;
-	return make_shared<BoundCallExpression>(node->Function(), result);
+	return make_shared<BoundCallExpression>(node->Function(), std::move(result));
 }
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteConversionExpression(shared_ptr<BoundConversionExpression> node)
@@ -333,7 +337,7 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteConversionExpression(share
 	auto expression = RewriteExpression(node->Expression());
 	if (expression == node->Expression())
 		return node;
-	return make_shared<BoundConversionExpression>(node->Type(), expression);
+	return make_shared<BoundConversionExpression>(node->Type(), std::move(expression));
 }
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewritePostfixExpression(shared_ptr<BoundPostfixExpression> node)
@@ -341,7 +345,8 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewritePostfixExpression(shared_p
 	auto expression = RewriteExpression(node->Expression());
 	if (expression == node->Expression())
 		return node;
-	return make_shared<BoundPostfixExpression>(node->Variable(), node->OperatorKind(), expression);
+	return make_shared<BoundPostfixExpression>(node->Variable(),
+		node->OperatorKind(), std::move(expression));
 }
 
 BoundLabel Lowerer::GenerateLabel()
@@ -355,7 +360,7 @@ unique_ptr<BoundBlockStatement> Lowerer::Lower(shared_ptr<BoundStatement> statem
 {
 	auto lowerer = Lowerer();
 	auto result = lowerer.RewriteStatement(std::move(statement));
-	return Flatten(result);
+	return Flatten(std::move(result));
 }
 
 unique_ptr<BoundBlockStatement> Lowerer::Flatten(shared_ptr<BoundStatement> statement)
@@ -369,9 +374,9 @@ unique_ptr<BoundBlockStatement> Lowerer::Flatten(shared_ptr<BoundStatement> stat
 		auto current = std::move(stack.top());
 		stack.pop();
 
-		auto p = std::dynamic_pointer_cast<BoundBlockStatement>(current);
-		if (p)
+		if (current->Kind() == BoundNodeKind::BlockStatement)
 		{
+			auto p = static_cast<BoundBlockStatement*>(current.get());
 			auto& statements = p->Statements();
 			for (auto it = statements.rbegin(); it != statements.rend(); ++it)
 				stack.push(*it);
@@ -380,7 +385,7 @@ unique_ptr<BoundBlockStatement> Lowerer::Flatten(shared_ptr<BoundStatement> stat
 			result.push_back(std::move(current));
 		}
 	}
-	return make_unique<BoundBlockStatement>(result);
+	return make_unique<BoundBlockStatement>(std::move(result));
 }
 
 shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStatement> node)
@@ -397,7 +402,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStateme
 			gotoFalse, node->ThenStatement(), endLabelStatement
 		};
 		auto result = make_shared<BoundBlockStatement>(statements);
-		return RewriteStatement(result);
+		return RewriteStatement(std::move(result));
 	} else
 	{
 		auto elseLabel = GenerateLabel();
@@ -413,7 +418,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStateme
 			gotoFalse, node->ThenStatement(), gotoEndStatement,
 			elseLabelStatement, node->ElseStatement(), endLabelStatement
 		};
-		auto result = make_shared<BoundBlockStatement>(statements);
+		auto result = make_shared<BoundBlockStatement>(std::move(statements));
 		return RewriteStatement(std::move(result));
 	}
 }
@@ -434,7 +439,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteWhileStatement(shared_ptr<BoundWhileS
 		continueLabelStatement, gotoTrue, breakLabelStatement
 	};
 
-	auto result = make_shared<BoundBlockStatement>(statements);
+	auto result = make_shared<BoundBlockStatement>(std::move(statements));
 	return RewriteStatement(std::move(result));
 }
 
@@ -452,7 +457,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteDoWhileStatement(shared_ptr<BoundDoWh
 		bodyLabelStatement, node->Body(), continueLabelStatement,
 		gotoTrue, breakLabelStatement
 	};
-	auto result = make_shared<BoundBlockStatement>(statements);
+	auto result = make_shared<BoundBlockStatement>(std::move(statements));
 	return RewriteStatement(std::move(result));
 }
 
@@ -490,12 +495,12 @@ shared_ptr<BoundStatement> Lowerer::RewriteForStatement(shared_ptr<BoundForState
 
 	auto statements = vector<shared_ptr<BoundStatement>>{
 		node->Body(),continueLabelStatement, increment };
-	auto whileBody = make_shared<BoundBlockStatement>(statements);
+	auto whileBody = make_shared<BoundBlockStatement>(std::move(statements));
 	auto whileStatement = make_shared<BoundWhileStatement>(condition, whileBody,
 		node->BreakLabel(), GenerateLabel());
 
 	statements = { variableDeclaration, upperBoundDeclaration, whileStatement };
-	auto result = make_shared<BoundBlockStatement>(statements);
+	auto result = make_shared<BoundBlockStatement>(std::move(statements));
 	return RewriteStatement(std::move(result));
 }
 

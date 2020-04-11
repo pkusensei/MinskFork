@@ -133,7 +133,7 @@ void BoundNodePrinter::Write(const BoundNode& node)
 			break;
 		}
 		default:
-			throw std::invalid_argument(BuildStringFrom("Unexpected node ", nameof(node.Kind())));
+			throw std::invalid_argument(BuildStringFrom("Unexpected node: ", nameof(node.Kind())));
 	}
 }
 
@@ -317,7 +317,7 @@ void BoundNodePrinter::WriteLiteralExpression(const BoundLiteralExpression& node
 		value = '"' + value + '"';
 		_writer.WriteString(value);
 	} else
-		throw std::invalid_argument(BuildStringFrom("Unexpected type ", node.Type().Name()));
+		throw std::invalid_argument(BuildStringFrom("Unexpected type: ", node.Type().Name()));
 }
 
 void BoundNodePrinter::WriteVariableExpression(const BoundVariableExpression& node)
