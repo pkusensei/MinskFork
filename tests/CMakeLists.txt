@@ -3,8 +3,6 @@ project(tests)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY 
 	${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
 
-enable_testing()
-
 add_executable(mcf_test src/test_main.cpp
 	src/Evaluation_tests.cpp
 	src/Lexer_tests.cpp
@@ -21,4 +19,6 @@ target_link_libraries(mcf_test PRIVATE Catch2::Catch2)
 
 target_link_libraries(mcf_test PUBLIC MCF)
 
-add_test(test_all mcf_test)
+include(CTest)
+include(Catch)
+catch_discover_tests(mcf_test)

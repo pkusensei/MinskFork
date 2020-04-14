@@ -12,4 +12,6 @@ endif()
 add_subdirectory(MCF)
 add_subdirectory(mcfc)
 add_subdirectory(mcfi)
+
+enable_testing()
 add_subdirectory(tests)
