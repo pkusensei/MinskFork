@@ -20,6 +20,11 @@
           "name": "CMAKE_C_COMPILER",
           "value": "${env.USERPROFILE}/Documents/LLVM/bin/clang-cl.exe",
           "type": "FILEPATH"
+        },
+        {
+          "name": "CMAKE_TOOLCHAIN_FILE",
+          "value": "D:/Coding/vcpkg/scripts/buildsystems/vcpkg.cmake",
+          "type": "FILEPATH"
         }
       ]
     }

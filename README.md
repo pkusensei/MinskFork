@@ -3,22 +3,36 @@ This is a C++ fork of the [Minsk compiler](https://github.com/terrajobst/minsk).
 
 ### To build and run
 
-The following should be accessible in command line by adding to path or setting environment variables.
+#### Prerequisites
 
-    - Compiler with C++17 support
-    - CMake
-    - Ninja (Sorry MSBuid)
+- Compiler with C++17 support
+- CMake
+- Ninja (Sorry MSBuid)
+- vcpkg with [Catch2](https://github.com/catchorg/Catch2) installed
 
-Then execute `build.cmd` in command line.
 
-The executables can be found in `./build/Debug/` and try it out with:
+#### Build
 
 ```cmd
-cd build/Debug
+mkdir build && cd build
+cmake -G Ninja -DCMAKE_TOOLCHAIN_FILE=<vcpkg_root>/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows .. [1]
+cmake --build . [2]
+```
+
+[1]: `-DVCPKG_TARGET_TRIPLET=x64-windows` is not needed if building for x86.
+
+[2]: vcpkg complains about dumpbin.exe missing but the build is completed.
+
+#### Run
+
+The executables can be found in `./build/Debug/`. Try it out with:
+
+```cmd
+cd Debug
 mcfc ../../samples/hello/helloworld.mcf
 ```
 
-Or fire up VS Code from source directory, navigate to one of the source files, and `ctrl+shift+P` to run `mcfc` task. 
+Or fire up VS Code from source directory, navigate to one of the sample files, and `ctrl+shift+P` to run `mcfc` task. 
 
 
 ### Design Difference

@@ -1,4 +1,4 @@
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include "SourceText.h"
 
@@ -10,7 +10,8 @@ TEST_CASE("SourceText includes last line", "[SourceText]")
 			{".", 1},
 			{"\r\n", 2},
 			{".\r\n\r\n", 3},
-			}));
+			})
+			);
 
 	SECTION("One pair")
 	{

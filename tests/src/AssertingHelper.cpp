@@ -1,6 +1,7 @@
 #include "AssertingHelper.h"
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
+
 #include <stack>
 
 #include "Diagnostic.h"

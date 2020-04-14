@@ -16,6 +16,9 @@ add_executable(mcf_test src/test_main.cpp
 target_include_directories(mcf_test 
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+find_package(Catch2 REQUIRED)
+target_link_libraries(mcf_test PRIVATE Catch2::Catch2)
+
 target_link_libraries(mcf_test PUBLIC MCF)
 
 add_test(test_all mcf_test)
