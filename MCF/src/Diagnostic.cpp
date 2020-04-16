@@ -185,6 +185,12 @@ void DiagnosticBag::ReportInvalidReturnExpression(TextLocation location, string_
 	Report(std::move(location), std::move(message));
 }
 
+void DiagnosticBag::ReportInvalidReturnWithValueInGlobalStatements(TextLocation location)
+{
+	auto message = "The 'return' keyword cannot be followed by an expression in global statements.";
+	Report(std::move(location), message);
+}
+
 void DiagnosticBag::ReportMissingReturnExpression(TextLocation location, const TypeSymbol& returnType)
 {
 	auto message = BuildStringFrom("An expression of type '", returnType.ToString(), "' is expected.");

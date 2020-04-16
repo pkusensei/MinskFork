@@ -88,6 +88,7 @@ public:
 
 	void ReportAllPathsMustReturn(TextLocation location);
 	void ReportInvalidReturnExpression(TextLocation location, string_view funcName);
+	void ReportInvalidReturnWithValueInGlobalStatements(TextLocation location);
 	void ReportMissingReturnExpression(TextLocation location,
 		const TypeSymbol& returnType);
 

@@ -290,8 +290,8 @@ shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSynt
 			if (expression == nullptr)
 				expression = make_shared<BoundLiteralExpression>("");
 		} else if (expression != nullptr)
-			_diagnostics->ReportInvalidReturnExpression(syntax->Expression()->Location(),
-				_function->Name());
+			_diagnostics->ReportInvalidReturnWithValueInGlobalStatements(
+				syntax->Expression()->Location());
 	} else
 	{
 		if (_function->Type() == TypeSymbol(TypeEnum::Void))
