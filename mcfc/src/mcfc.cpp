@@ -38,18 +38,14 @@ int main(int argc, char** argv)
 		return 1;
 
 	auto compilation = MCF::Compilation::Create(std::move(trees));
-	MCF::VarMap variables;
-	auto result = compilation->Evaluate(variables);
+	auto result = compilation->Emit("output.o");
 
-	if (result.Diagnostics().empty())
-	{
-		if (result.Value().HasValue())
-			std::cout << result.Value() << '\n';
-	} else
+	if (!result.empty())
 	{
 		auto writer = MCF::IndentedTextWriter(std::cerr);
-		writer.WriteDiagnostics(result.Diagnostics());
+		writer.WriteDiagnostics(result);
 		return 1;
 	}
+
 	return 0;
 }

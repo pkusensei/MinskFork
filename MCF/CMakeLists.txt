@@ -11,6 +11,7 @@ add_library(MCF SHARED src/Binding.cpp
 	src/ControlFlowGraph.cpp
 	src/Conversion.cpp
 	src/Diagnostic.cpp
+	src/Emitter.cpp
 	src/helpers.cpp
 	src/IO.cpp
 	src/Lexer.cpp
@@ -24,15 +25,21 @@ add_library(MCF SHARED src/Binding.cpp
 	src/SyntaxStatements.cpp
 	src/SyntaxToken.cpp)
 
-include(GNUInstallDirs)
-
 target_include_directories(
     ${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
+find_package(LLVM REQUIRED)
+target_link_libraries(
+	${PROJECT_NAME} PRIVATE LLVMMC LLVMLTO LLVMMCA LLVMipo)
+target_include_directories(
+	${PROJECT_NAME} PRIVATE ${LLVM_INCLUDE_DIRS})
+
 target_compile_definitions(
-	${PROJECT_NAME} PRIVATE -DMCF_EXPORTS)
+	${PROJECT_NAME} PRIVATE -DMCF_EXPORTS -D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+)
+
 
 # install(
 # 	TARGETS ${PROJECT_NAME}

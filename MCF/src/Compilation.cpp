@@ -11,6 +11,7 @@
 #include "BoundStatements.h"
 #include "ControlFlowGraph.h"
 #include "Diagnostic.h"
+#include "Emitter.h"
 #include "helpers.h"
 #include "Parsing.h"
 
@@ -524,5 +525,11 @@ void Compilation::EmitTree(const FunctionSymbol* symbol, std::ostream& out)
 		return;
 	}
 }
+
+DiagnosticBag Compilation::Emit(const string& outPath)
+{
+	return MCF::Emit(outPath);
+}
+
 
 }//MCF

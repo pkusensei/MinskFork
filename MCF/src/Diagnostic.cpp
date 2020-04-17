@@ -8,7 +8,7 @@
 
 namespace MCF {
 
-void DiagnosticBag::Report(TextLocation location, string message)
+void DiagnosticBag::Report(std::optional<TextLocation> location, string message)
 {
 	_diagnostics.emplace_back(std::move(location), std::move(message));
 }
@@ -226,6 +226,24 @@ void DiagnosticBag::ReportCannotMixMainAndGlobalStatements(TextLocation location
 {
 	auto message = "Cannot declare main function when global statements are used.";
 	Report(std::move(location), message);
+}
+
+void DiagnosticBag::ReportRequestedTargetNotFound(string_view error)
+{
+	auto message = BuildStringFrom("Cannot find requested target. ", error);
+	Report(std::nullopt, std::move(message));
+}
+
+void DiagnosticBag::ReportCannotOpenOutputFile(string_view error)
+{
+	auto message = BuildStringFrom("Cannot open output file: ", error);
+	Report(std::nullopt, std::move(message));
+}
+
+void DiagnosticBag::ReportCannotEmitFileType()
+{
+	// NOte Not so sure about this
+	Report(std::nullopt, "Target machine cannot emit object file");
 }
 
 }//MCF

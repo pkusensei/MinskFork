@@ -80,6 +80,16 @@ void TextWriter::WritePunctuation(string_view text)
 
 void TextWriter::WriteDiagnostics(DiagnosticBag& diagnostics)
 {
+	auto second = std::partition(diagnostics.begin(), diagnostics.end(),
+		[](const auto& it) { return !it.HasLocation(); });
+
+	for (auto it = diagnostics.cbegin(); it != second; ++it)
+	{
+		MCF::SetConsoleColor(MCF::ConsoleColor::DarkRed);
+		_out << it->ToString() << '\n';
+		MCF::ResetConsoleColor();
+	}
+
 	auto selector = [](const auto& a, const auto& b)
 	{
 		if (a.Location().FilePath() == b.Location().FilePath())
@@ -94,16 +104,18 @@ void TextWriter::WriteDiagnostics(DiagnosticBag& diagnostics)
 		}
 	};
 
-	for (const auto& diag : diagnostics.SortBy(selector))
-	{
-		auto text = diag.Location().Text();
-		auto fileName = diag.Location().FilePath();
-		auto startLine = diag.Location().StartLine() + 1;
-		auto startCharacter = diag.Location().StartCharacter() + 1;
-		auto endLine = diag.Location().EndLine() + 1;
-		auto endCharacter = diag.Location().EndCharacter() + 1;
+	std::sort(second, diagnostics.end(), selector);
 
-		auto span = diag.Location().Span();
+	for (; second != diagnostics.cend(); ++second)
+	{
+		auto text = second->Location().Text();
+		auto fileName = second->Location().FilePath();
+		auto startLine = second->Location().StartLine() + 1;
+		auto startCharacter = second->Location().StartCharacter() + 1;
+		auto endLine = second->Location().EndLine() + 1;
+		auto endCharacter = second->Location().EndCharacter() + 1;
+
+		auto span = second->Location().Span();
 		auto lineIndex = text.GetLineIndex(span.Start());
 		auto line = text.Lines()[lineIndex];
 		_out << '\n';
@@ -111,7 +123,7 @@ void TextWriter::WriteDiagnostics(DiagnosticBag& diagnostics)
 		MCF::SetConsoleColor(MCF::ConsoleColor::DarkRed);
 		_out << fileName << "(" << startLine << "," << startCharacter << ','
 			<< endLine << ',' << endCharacter << "): ";
-		_out << diag.ToString() << '\n';
+		_out << second->ToString() << '\n';
 		MCF::ResetConsoleColor();
 
 		auto prefixSpan = MCF::TextSpan::FromBounds(line.Start(), span.Start());

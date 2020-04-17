@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <optional>
 
 #include "SourceText.h"
 
@@ -19,16 +20,26 @@ class TypeSymbol;
 class Diagnostic final
 {
 private:
-	TextLocation _location;
+	std::optional<TextLocation> _location;
 	string _message;
 
 public:
-	Diagnostic(TextLocation location, string message)
+	explicit Diagnostic(string message)
+		:_location(std::nullopt), _message(std::move(message))
+	{
+	}
+
+	Diagnostic(std::optional<TextLocation> location, string message)
 		:_location(std::move(location)), _message(std::move(message))
 	{
 	}
 
-	constexpr const TextLocation& Location() const noexcept { return _location; }
+	constexpr bool HasLocation()const noexcept { return _location.has_value(); }
+
+	constexpr const TextLocation& Location() const
+	{
+		return _location.value(); // HACK this throws
+	}
 	constexpr string_view Message() const { return _message; }
 
 	constexpr string_view ToString()const { return Message(); }
@@ -38,7 +49,7 @@ class MCF_API DiagnosticBag final
 {
 private:
 	std::deque<Diagnostic> _diagnostics;
-	void Report(TextLocation location, string message);
+	void Report(std::optional<TextLocation> location, string message);
 
 public:
 	DiagnosticBag()
@@ -46,13 +57,15 @@ public:
 	{
 	}
 
+	void clear()noexcept { _diagnostics.clear(); }
 	size_t size() const noexcept { return _diagnostics.size(); }
 	bool empty()const noexcept { return _diagnostics.empty(); }
 
-	class iterator;
 	const Diagnostic& operator[](size_t idx) const;
-	auto begin()const noexcept { return _diagnostics.begin(); }
-	auto end()const noexcept { return _diagnostics.end(); }
+	auto cbegin() const noexcept { return _diagnostics.cbegin(); }
+	auto cend() const noexcept { return _diagnostics.cend(); }
+	auto begin() noexcept { return _diagnostics.begin(); }
+	auto end() noexcept { return _diagnostics.end(); }
 
 	void AddRangeFront(DiagnosticBag& other);
 	void AddRange(DiagnosticBag& other);
@@ -100,13 +113,10 @@ public:
 	void ReportMainMustHaveCorrectSignature(TextLocation location);
 	void ReportCannotMixMainAndGlobalStatements(TextLocation location);
 
-	template<typename Cond,
-		typename = std::enable_if_t<std::is_invocable_v<Cond, const Diagnostic&, const Diagnostic&>>>
-		const DiagnosticBag& SortBy(Cond&& cond)
-	{
-		std::sort(_diagnostics.begin(), _diagnostics.end(), std::forward<Cond>(cond));
-		return *this;
-	}
+	void ReportRequestedTargetNotFound(string_view error);
+	void ReportCannotOpenOutputFile(string_view error);
+	void ReportCannotEmitFileType();
+
 };
 
 }//MCF
