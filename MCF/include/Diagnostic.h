@@ -40,9 +40,9 @@ public:
 	{
 		return _location.value(); // HACK this throws
 	}
-	constexpr string_view Message() const { return _message; }
+	string_view Message() const { return _message; }
 
-	constexpr string_view ToString()const { return Message(); }
+	string_view ToString()const { return Message(); }
 };
 
 class MCF_API DiagnosticBag final

@@ -36,7 +36,7 @@ public:
 	virtual TextSpan Span()const;
 	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
 
-	constexpr const SyntaxTree& SynTree()const noexcept { return _tree; }
+	const SyntaxTree& SynTree()const noexcept { return _tree; }
 	TextLocation Location()const;
 	const SyntaxToken& GetLastToken()const;
 

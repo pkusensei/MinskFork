@@ -68,7 +68,7 @@ public:
 
 	~TextLine() = default;
 
-	constexpr const SourceText& Text()const noexcept { return _text; }
+	const SourceText& Text()const noexcept { return _text; }
 	constexpr size_t Start()const noexcept { return _start; }
 	constexpr size_t Length()const noexcept { return _length; }
 	constexpr size_t End()const noexcept { return _start + _length; }
@@ -109,11 +109,11 @@ private:
 public:
 	constexpr const fs::path& FilePath()const { return _filePath; }
 	constexpr const vector<TextLine>& Lines()const { return _lines; }
-	constexpr size_t Length()const noexcept { return _text.length(); }
-	constexpr char operator[](size_t sub) const { return _text.at(sub); }
+	size_t Length()const noexcept { return _text.length(); }
+	char operator[](size_t sub) const { return _text.at(sub); }
 	size_t GetLineIndex(size_t position)const noexcept;
 
-	constexpr string_view ToString()const { return _text; }
+	string_view ToString()const { return _text; }
 	constexpr string_view ToString(size_t start, size_t length)const
 	{
 		return ToString().substr(start, length);
@@ -141,15 +141,15 @@ public:
 	{
 	}
 
-	constexpr const SourceText& Text()const noexcept { return _text; }
+	const SourceText& Text()const noexcept { return _text; }
 	constexpr const TextSpan& Span()const noexcept { return _span; }
 
 	constexpr const fs::path& FilePath()const { return Text().FilePath(); }
-	constexpr size_t StartLine()const noexcept
+	size_t StartLine()const noexcept
 	{
 		return Text().GetLineIndex(Span().Start());
 	}
-	constexpr size_t EndLine()const noexcept
+	size_t EndLine()const noexcept
 	{
 		return Text().GetLineIndex(Span().End());
 	}
