@@ -9,6 +9,7 @@
 #pragma GCC diagnostic ignored "-Wlanguage-extension-token"
 #endif //defined(_MSC_VER) && !defined(__clang__)
 
+#include <llvm/ADT/APInt.h>
 #include <llvm/ADT/Optional.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
@@ -41,25 +42,17 @@ DiagnosticBag Emit(const string& outPath)
 
 	auto result = DiagnosticBag();
 
-	auto funcType = llvm::FunctionType::get(builder.getVoidTy(), false);
-	auto mainFunc = llvm::Function::Create(funcType,
-		llvm::Function::ExternalLinkage, "main", module.get());
-
-	auto entry = llvm::BasicBlock::Create(context, "entrypoint", mainFunc);
+	//
+	// create a dub function
+	// int test() { return 42; }
+	// 
+	auto test = llvm::FunctionType::get(builder.getInt32Ty(), false);
+	auto func = llvm::Function::Create(test, llvm::Function::ExternalLinkage,
+		"test", module.get());
+	auto entry = llvm::BasicBlock::Create(context, "entrypoint", func);
+	auto value = llvm::ConstantInt::get(context, llvm::APInt(32, 42, true));
 	builder.SetInsertPoint(entry);
-	auto text = builder.CreateGlobalStringPtr("Hello world from mcf.\n");
-
-	auto putsArgs = vector<llvm::Type*>();
-	putsArgs.push_back(builder.getInt8Ty()->getPointerTo());
-	auto argsRef = llvm::ArrayRef<llvm::Type*>(putsArgs);
-
-	auto putsType = llvm::FunctionType::get(builder.getInt32Ty(), argsRef, false);
-	auto putsFunc = module->getOrInsertFunction("puts", putsType);
-
-	builder.CreateCall(putsFunc, text);
-	builder.CreateRetVoid();
-
-	//module->dump();
+	builder.CreateRet(value);
 
 	llvm::InitializeAllTargetInfos();
 	llvm::InitializeAllTargets();
@@ -72,7 +65,10 @@ DiagnosticBag Emit(const string& outPath)
 	string error;
 	auto target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
 	if (target == nullptr)
+	{
 		result.ReportRequestedTargetNotFound(error);
+		return result;
+	}
 
 	auto cpu = "generic";
 	auto features = "";
@@ -85,12 +81,18 @@ DiagnosticBag Emit(const string& outPath)
 	std::error_code ec;
 	auto dest = llvm::raw_fd_ostream(outPath, ec, llvm::sys::fs::OF_None);
 	if (ec)
+	{
 		result.ReportCannotOpenOutputFile(ec.message());
+		return result;
+	}
 
 	auto pass = llvm::legacy::PassManager();
 	auto fileType = llvm::TargetMachine::CGFT_ObjectFile;
 	if (targetMachine->addPassesToEmitFile(pass, dest, nullptr, fileType))
+	{
 		result.ReportCannotEmitFileType();
+		return result;
+	}
 
 	pass.run(*module);
 	dest.flush();
