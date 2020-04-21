@@ -34,16 +34,16 @@
 
 namespace MCF {
 
-DiagnosticBag Emit(const string& outPath)
+DiagnosticBag Emit(const string& moduleName, const fs::path& outPath)
 {
 	static auto context = llvm::LLVMContext();
 	static auto builder = llvm::IRBuilder<>(context);
-	static auto module = std::make_unique<llvm::Module>("test", context);
+	static auto module = std::make_unique<llvm::Module>(moduleName, context);
 
 	auto result = DiagnosticBag();
 
 	//
-	// create a dub function
+	// create a stub function
 	// int test() { return 42; }
 	// 
 	auto test = llvm::FunctionType::get(builder.getInt32Ty(), false);
@@ -79,7 +79,7 @@ DiagnosticBag Emit(const string& outPath)
 	module->setDataLayout(targetMachine->createDataLayout());
 
 	std::error_code ec;
-	auto dest = llvm::raw_fd_ostream(outPath, ec, llvm::sys::fs::OF_None);
+	auto dest = llvm::raw_fd_ostream(outPath.string(), ec, llvm::sys::fs::OF_None);
 	if (ec)
 	{
 		result.ReportCannotOpenOutputFile(ec.message());

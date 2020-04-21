@@ -526,9 +526,9 @@ void Compilation::EmitTree(const FunctionSymbol* symbol, std::ostream& out)
 	}
 }
 
-DiagnosticBag Compilation::Emit(const string& outPath)
+DiagnosticBag Compilation::Emit(const string& moduleName, const fs::path& outPath)
 {
-	return MCF::Emit(outPath);
+	return MCF::Emit(moduleName, outPath);
 }
 
 

@@ -20,3 +20,8 @@ _deps
 # CMake build directories
 out/
 build/
+
+# Build artifacts
+*.o
+*.obj
+*.exe

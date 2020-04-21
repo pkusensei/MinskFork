@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <mutex>
 #include <stack>
 #include <unordered_map>
@@ -13,6 +14,8 @@
 #endif // defined(_MSC_VER) && !defined(__clang__)
 
 namespace MCF {
+
+namespace fs = std::filesystem;
 
 class DiagnosticBag;
 
@@ -55,7 +58,7 @@ public:
 
 class Evaluator final
 {
-	using FuncMap = std::unordered_map<const FunctionSymbol*, 
+	using FuncMap = std::unordered_map<const FunctionSymbol*,
 		const BoundBlockStatement*, SymbolHash, SymbolEqual>;
 
 
@@ -128,7 +131,7 @@ public:
 	[[nodiscard]] EvaluationResult Evaluate(VarMap& variables);
 	void EmitTree(std::ostream& out);
 	void EmitTree(const FunctionSymbol* symbol, std::ostream& out);
-	DiagnosticBag Emit(const string& outPath);
+	DiagnosticBag Emit(const string& moduleName, const fs::path& outPath);
 };
 
 }//MCF
