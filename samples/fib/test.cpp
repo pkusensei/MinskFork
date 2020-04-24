@@ -2,10 +2,12 @@
 
 extern "C"
 {
-    int test();
+    bool retBool();
+    int retInt();
 }
 
 int main()
 {
-    std::cout << test() << '\n';
+    std::cout << retBool() << '\n';
+    std::cout << retInt() << '\n';
 }

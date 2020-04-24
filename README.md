@@ -43,16 +43,17 @@ Although this fork stays as close to the original as possible, there are some ch
 
 - Using directive
 
-    It just feels not right to automatically compile every source file in the same directory without any checks. Here a `using` keyword is added to bring other source files into the fold. As of now it works with [/samples/hello/helloworld.mcf](/samples/hello/helloworld.mcf) and [/samples/fib/test.mcf](/samples/fib/test.mcf) but definitely needs more testing. In the hindsight it works more like Python's `import` than C#'s `using`. The downside is it pollutes the current source file with every symbol from imported sources. 
+    It just feels not right to automatically compile every source file in the same directory without any checks. Here a `using` keyword is added to bring other source files into the fold. ~~As of now it works with [/samples/hello/helloworld.mcf](/samples/hello/helloworld.mcf) and [/samples/fib/test.mcf](/samples/fib/test.mcf) but definitely needs more testing.~~(Not working before compiler takes decent shape) In the hindsight it works more like Python's `import` than C#'s `using`. The downside is it pollutes the current source file with every symbol from imported sources. 
 
     A side effect is that it doesn't take multiple paths as input as all necessary source files should be properly imported. I consider this an improvement.
 
 - LLVM backend
 
-    Because why not. Still this is very much wading through the muddy waters of the huge LLVM world and right now it only emits a stub function that returns an int 42 in an .obj file. Not so shockingly it also needs a proper C++ wrapper/driver to link against and turn into an executable. A sample is in the [/samples/fib/](/samples/fib/) directory. The two main obstacles:
+    Because why not. Still this is very much wading through the muddy waters of the huge LLVM world and right now it only emits functions that take no argument and return an integral value to an .obj file. Not so shockingly it also needs a proper C++ wrapper/driver to link against and turn into an executable. A sample is in the [/samples/fib/](/samples/fib/) directory. The main obstacles:
         
-        - How to emit a proper "main" function, and
-        - How to print a string
+    - How to emit a proper "main" function,
+    - How to do proper IO, and
+    - How to emit string operations
 
 - Postfix operations, i.e. `i++` & `i--`
 

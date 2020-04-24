@@ -242,8 +242,20 @@ void DiagnosticBag::ReportCannotOpenOutputFile(string_view error)
 
 void DiagnosticBag::ReportCannotEmitFileType()
 {
-	// NOte Not so sure about this
-	Report(std::nullopt, "Target machine cannot emit object file");
+	// Note Not so sure about this
+	Report(std::nullopt, "Target machine cannot emit object file.");
+}
+
+void DiagnosticBag::ReportFunctionDeclarationNotFound(string_view name)
+{
+	auto message = BuildStringFrom("Declaration of function '", name, ", is missing. Cannot create function body.");
+	Report(std::nullopt, std::move(message));
+}
+
+void DiagnosticBag::ReportCannotCreateFunctionBody(string_view error)
+{
+	auto message = BuildStringFrom("Cannot create function body: ", error);
+	Report(std::nullopt, std::move(message));
 }
 
 }//MCF

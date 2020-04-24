@@ -17,6 +17,7 @@
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Type.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/TargetRegistry.h>
 #include <llvm/Support/TargetSelect.h>
@@ -30,10 +31,14 @@
 #endif
 
 #include "Binding.h"
+#include "BoundExpressions.h"
 #include "BoundStatements.h"
 #include "Diagnostic.h"
+#include "helpers.h"
 
 namespace MCF {
+
+constexpr auto INT_BITS = sizeof(IntegerType) * 8;
 
 class Emitter
 {
@@ -43,7 +48,28 @@ private:
 	unique_ptr<llvm::Module> _module;
 	llvm::TargetMachine* _targetMachine;
 
+	std::unordered_map<TypeSymbol, llvm::Type*, SymbolHash, SymbolEqual> _knownTypes;
 	DiagnosticBag _diagnostics;
+
+	void EmitFunctionDeclaration(const FunctionSymbol& function);
+	void EmitFunctionBody(const FunctionSymbol& function, const BoundBlockStatement& body);
+
+	void EmitStatement(const BoundStatement& node);
+	void EmitVariableDeclaration(const BoundVariableDeclaration& node);
+	void EmitLabelStatement(const BoundLabelStatement& node);
+	void EmitGotoStatement(const BoundGotoStatement& node);
+	void EmitConditionalGotoStatement(const BoundConditionalGotoStatement& node);
+	void EmitReturnStatement(const BoundReturnStatement& node);
+	void EmitExpressionStatement(const BoundExpressionStatement& node);
+
+	llvm::Value* EmitExpression(const BoundExpression& node);
+	llvm::Value* EmitLiteralExpression(const BoundLiteralExpression& node);
+	llvm::Value* EmitVariableExpression(const BoundVariableExpression& node);
+	llvm::Value* EmitAssignmentExpression(const BoundAssignmentExpression& node);
+	llvm::Value* EmitUnaryExpression(const BoundUnaryExpression& node);
+	llvm::Value* EmitBinaryExpression(const BoundBinaryExpression& node);
+	llvm::Value* EmitCallExpression(const BoundCallExpression& node);
+	llvm::Value* EmitConversionExpression(const BoundConversionExpression& node);
 
 public:
 	explicit Emitter(const string& moduleName);
@@ -58,6 +84,9 @@ Emitter::Emitter(const string& moduleName)
 	_targetMachine(nullptr),
 	_diagnostics()
 {
+	_knownTypes.emplace(TypeSymbol(TypeEnum::Bool), llvm::ConstantInt::getTrue(_context)->getType());
+	_knownTypes.emplace(TypeSymbol(TypeEnum::Int), _builder.getInt32Ty());
+
 	llvm::InitializeAllTargetInfos();
 	llvm::InitializeAllTargets();
 	llvm::InitializeAllTargetMCs();
@@ -83,9 +112,183 @@ Emitter::Emitter(const string& moduleName)
 	_module->setDataLayout(_targetMachine->createDataLayout());
 }
 
+void Emitter::EmitFunctionDeclaration(const FunctionSymbol& function)
+{
+	auto retType = _knownTypes.at(function.Type());
+	auto args = vector<llvm::Type*>();
+	for (const auto& it : function.Parameters())
+	{
+		args.push_back(_knownTypes.at(it.Type()));
+	}
+	auto f = llvm::FunctionType::get(retType, args, false);
+	llvm::Function::Create(f, llvm::Function::ExternalLinkage,
+		string(function.Name()), *_module);
+}
+
+void Emitter::EmitFunctionBody(const FunctionSymbol& function, const BoundBlockStatement& body)
+{
+	auto func = _module->getFunction(string(function.Name()));
+	if (func == nullptr)
+	{
+		_diagnostics.ReportFunctionDeclarationNotFound(function.Name());
+		return;
+	}
+	auto entry = llvm::BasicBlock::Create(_context, "entry", func);
+	_builder.SetInsertPoint(entry);
+
+	try
+	{
+		for (const auto& it : body.Statements())
+			EmitStatement(*it);
+		llvm::verifyFunction(*func);
+	} catch (const std::exception& e)
+	{
+		_diagnostics.ReportCannotCreateFunctionBody(e.what());
+		func->removeFromParent();
+	}
+}
+
+void Emitter::EmitStatement(const BoundStatement& node)
+{
+	switch (node.Kind())
+	{
+		case BoundNodeKind::VariableDeclaration:
+			EmitVariableDeclaration(static_cast<const BoundVariableDeclaration&>(node));
+			break;
+		case BoundNodeKind::LabelStatement:
+			EmitLabelStatement(static_cast<const BoundLabelStatement&>(node));
+			break;
+		case BoundNodeKind::GotoStatement:
+			EmitGotoStatement(static_cast<const BoundGotoStatement&>(node));
+			break;
+		case BoundNodeKind::ConditionalGotoStatement:
+			EmitConditionalGotoStatement(static_cast<const BoundConditionalGotoStatement&>(node));
+			break;
+		case BoundNodeKind::ReturnStatement:
+			EmitReturnStatement(static_cast<const BoundReturnStatement&>(node));
+			break;
+		case BoundNodeKind::ExpressionStatement:
+			EmitExpressionStatement(static_cast<const BoundExpressionStatement&>(node));
+			break;
+		default:
+			throw std::invalid_argument(BuildStringFrom("Unexpected node:", nameof(node.Kind())));
+	}
+}
+
+void Emitter::EmitVariableDeclaration(const BoundVariableDeclaration& node)
+{
+	(void)node;
+}
+
+void Emitter::EmitLabelStatement(const BoundLabelStatement& node)
+{
+	(void)node;
+}
+
+void Emitter::EmitGotoStatement(const BoundGotoStatement& node)
+{
+	(void)node;
+}
+
+void Emitter::EmitConditionalGotoStatement(const BoundConditionalGotoStatement& node)
+{
+	(void)node;
+}
+
+void Emitter::EmitReturnStatement(const BoundReturnStatement& node)
+{
+	if (node.Expression() != nullptr)
+		_builder.CreateRet(EmitExpression(*node.Expression()));
+	else _builder.CreateRetVoid();
+}
+
+void Emitter::EmitExpressionStatement(const BoundExpressionStatement& node)
+{
+	EmitExpression(*node.Expression());
+}
+
+llvm::Value* Emitter::EmitExpression(const BoundExpression& node)
+{
+	switch (node.Kind())
+	{
+		case BoundNodeKind::LiteralExpression:
+			return EmitLiteralExpression(static_cast<const BoundLiteralExpression&>(node));
+		case BoundNodeKind::VariableExpression:
+			return EmitVariableExpression(static_cast<const BoundVariableExpression&>(node));
+		case BoundNodeKind::AssignmentExpression:
+			return EmitAssignmentExpression(static_cast<const BoundAssignmentExpression&>(node));
+		case BoundNodeKind::UnaryExpression:
+			return EmitUnaryExpression(static_cast<const BoundUnaryExpression&>(node));
+		case BoundNodeKind::BinaryExpression:
+			return EmitBinaryExpression(static_cast<const BoundBinaryExpression&>(node));
+		case BoundNodeKind::CallExpression:
+			return EmitCallExpression(static_cast<const BoundCallExpression&>(node));
+		case BoundNodeKind::ConversionExpression:
+			return EmitConversionExpression(static_cast<const BoundConversionExpression&>(node));
+		default:
+			throw std::invalid_argument(BuildStringFrom("Unexpected node:", nameof(node.Kind())));
+	}
+}
+
+llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)
+{
+	auto type = node.Type();
+	if (type == TypeSymbol(TypeEnum::Bool))
+	{
+		auto v = node.Value().ToBoolean();
+		return v ? llvm::ConstantInt::getTrue(_context)
+			: llvm::ConstantInt::getFalse(_context);
+	} else if (type == TypeSymbol(TypeEnum::Int))
+	{
+		auto v = node.Value().ToInteger();
+		return llvm::ConstantInt::get(_context, llvm::APInt(INT_BITS, v, true));
+	} else
+	{
+		throw std::invalid_argument("Only supports bool and int for now");
+	}
+	return nullptr;
+}
+
+llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node)
+{
+	(void)node;
+	return nullptr;
+}
+
+llvm::Value* Emitter::EmitAssignmentExpression(const BoundAssignmentExpression& node)
+{
+	(void)node;
+	return nullptr;
+}
+
+llvm::Value* Emitter::EmitUnaryExpression(const BoundUnaryExpression& node)
+{
+	(void)node;
+	return nullptr;
+}
+
+llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
+{
+	(void)node;
+	return nullptr;
+}
+
+llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
+{
+	(void)node;
+	return nullptr;
+}
+
+llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& node)
+{
+	(void)node;
+	return nullptr;
+}
+
 DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputPath)
 {
-	(void)program;
+	if (!_diagnostics.empty())
+		return _diagnostics;
 
 	auto result = DiagnosticBag();
 
@@ -93,13 +296,19 @@ DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputP
 	// create a stub function
 	// int test() { return 42; }
 	// 
-	auto test = llvm::FunctionType::get(_builder.getInt32Ty(), false);
-	auto func = llvm::Function::Create(test, llvm::Function::ExternalLinkage,
-		"test", _module.get());
-	auto entry = llvm::BasicBlock::Create(_context, "entrypoint", func);
-	auto value = llvm::ConstantInt::get(_context, llvm::APInt(sizeof(IntegerType) * 8, 42, true));
-	_builder.SetInsertPoint(entry);
-	_builder.CreateRet(value);
+	//auto test = llvm::FunctionType::get(_builder.getInt32Ty(), false);
+	//auto func = llvm::Function::Create(test, llvm::Function::ExternalLinkage,
+	//	"test", _module.get());
+	//auto entry = llvm::BasicBlock::Create(_context, "entrypoint", func);
+	//auto value = llvm::ConstantInt::get(_context, llvm::APInt(INT_BITS, 42, true));
+	//_builder.SetInsertPoint(entry);
+	//_builder.CreateRet(value);
+
+	for (const auto& [func, body] : program.Functions())
+	{
+		EmitFunctionDeclaration(*func);
+		EmitFunctionBody(*func, *body);
+	}
 
 	std::error_code ec;
 	auto dest = llvm::raw_fd_ostream(outputPath.string(), ec, llvm::sys::fs::OF_None);
@@ -128,8 +337,6 @@ DiagnosticBag Emit(const BoundProgram& program, const string& moduleName, const 
 		return program.Diagnostics();
 
 	auto e = Emitter(moduleName);
-	if (!e.Diagnostics().empty())
-		return e.Diagnostics();
 	return e.Emit(program, outPath);
 }
 

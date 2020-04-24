@@ -2,6 +2,7 @@
 
 #include <cxxopts.hpp>
 
+#include "ConsoleHelper.h"
 #include "Compilation.h"
 #include "Diagnostic.h"
 #include "IO.h"
@@ -56,31 +57,20 @@ int main(int argc, char** argv)
 	if (moduleName.empty())
 		moduleName = sourcePath.filename().string();
 
-	auto trees = std::vector<std::unique_ptr<MCF::SyntaxTree>>();
-	auto hasError = false;
-
-	for (int i = 1; i < argc; ++i)
+	if (!fs::exists(sourcePath))
 	{
-		if (!fs::exists(sourcePath))
-		{
-			std::cerr << "error: file '" << sourcePath << "' doesn't exist.\n";
-			hasError = true;
-			continue;
-		} else
-		{
-			auto tree = MCF::SyntaxTree::Load(sourcePath);
-			trees.push_back(std::move(tree));
-		}
-	}
-
-	if (hasError)
+		std::cerr << "error: file '" << sourcePath << "' doesn't exist.\n";
 		return 1;
+	}
+	auto tree = MCF::SyntaxTree::Load(sourcePath);
 
-	auto compilation = MCF::Compilation::Create(std::move(trees));
+	auto compilation = MCF::Compilation::Create(std::move(tree));
 	auto result = compilation->Emit(moduleName, outputPath);
 
 	if (!result.empty())
 	{
+		if(!MCF::EnableVTMode())
+			std::cerr << "Warning: Unable to enter VT processing mode.\n";
 		auto writer = MCF::IndentedTextWriter(std::cerr);
 		writer.WriteDiagnostics(result);
 		return 1;

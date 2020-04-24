@@ -114,7 +114,7 @@ public:
 	Compilation& operator=(const Compilation&) = delete;
 	~Compilation();
 
-	[[nodiscard]] static unique_ptr<Compilation> Create(vector<unique_ptr<SyntaxTree>> trees);
+	[[nodiscard]] static unique_ptr<Compilation> Create(unique_ptr<SyntaxTree> tree);
 	[[nodiscard]] static unique_ptr<Compilation> CreateScript(unique_ptr<Compilation> previous,
 		unique_ptr<SyntaxTree> tree);
 

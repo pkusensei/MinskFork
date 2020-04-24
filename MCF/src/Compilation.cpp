@@ -381,9 +381,9 @@ Compilation::Compilation(Compilation&& other) noexcept
 {
 }
 
-unique_ptr<Compilation> Compilation::Create(vector<unique_ptr<SyntaxTree>> trees)
+unique_ptr<Compilation> Compilation::Create(unique_ptr<SyntaxTree> tree)
 {
-	return unique_ptr<Compilation>(new Compilation(false, nullptr, std::move(trees)));
+	return unique_ptr<Compilation>(new Compilation(false, nullptr, SyntaxTree::Flatten(std::move(tree))));
 }
 
 unique_ptr<Compilation> Compilation::CreateScript(unique_ptr<Compilation> previous,

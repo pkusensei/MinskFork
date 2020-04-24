@@ -59,13 +59,13 @@ public:
 
 struct MCF_API SymbolHash
 {
-	template<typename Ptr>
-	size_t operator()(const Ptr& p)const noexcept
+	template<typename Ptr,
+		typename = std::enable_if_t<!std::is_base_of_v<Symbol, Ptr>>>
+		size_t operator()(const Ptr& p)const noexcept
 	{
 		return std::hash<string_view>{}(p->Name());
 	}
 
-	template<>
 	size_t operator()(const Symbol& s)const noexcept
 	{
 		return std::hash<string_view>{}(s.Name());
@@ -74,13 +74,13 @@ struct MCF_API SymbolHash
 
 struct SymbolEqual
 {
-	template<typename P1, typename P2>
-	bool operator()(const P1& p1, const P2& p2)const noexcept
+	template<typename P1, typename P2,
+		typename = std::enable_if_t<!std::is_base_of_v<Symbol, P1> && !std::is_base_of_v<Symbol, P2>>>
+		bool operator()(const P1& p1, const P2& p2)const noexcept
 	{
 		return (*p1) == (*p2);
 	}
 
-	template<>
 	bool operator()(const Symbol& lhs, const Symbol& rhs) const noexcept
 	{
 		return lhs == rhs;

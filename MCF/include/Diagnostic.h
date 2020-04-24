@@ -116,7 +116,8 @@ public:
 	void ReportRequestedTargetNotFound(string_view error);
 	void ReportCannotOpenOutputFile(string_view error);
 	void ReportCannotEmitFileType();
-
+	void ReportFunctionDeclarationNotFound(string_view name);
+	void ReportCannotCreateFunctionBody(string_view error);
 };
 
 }//MCF

@@ -1,4 +1,9 @@
-using "add.mcf"
-using "fib.mcf"
+function retBool(): bool
+{
+    return true
+}
 
-print(string( add(fib(15), fib(16)) == fib(17) ))
+function retInt(): int
+{
+    return 42
+}
