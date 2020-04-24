@@ -49,7 +49,7 @@ Although this fork stays as close to the original as possible, there are some ch
 
 - LLVM backend
 
-    Because why not. Still this is very much wading through the muddy waters of the huge LLVM world and right now it only emits functions that take no argument and return an integral value to an .obj file. Not so shockingly it also needs a proper C++ wrapper/driver to link against and turn into an executable. A sample is in the [/samples/fib/](/samples/fib/) directory. The main obstacles:
+    Because why not. Still this is very much wading through the muddy waters of the huge LLVM world and right now it only emits functions that take and return an integral value to an .obj file. Not so shockingly it also needs a proper C++ wrapper/driver to link against and turn into an executable. A sample is in the [/samples/fib/](/samples/fib/) directory. The main obstacles:
         
     - How to emit a proper "main" function,
     - How to do proper IO, and
