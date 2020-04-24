@@ -49,6 +49,7 @@ private:
 	llvm::TargetMachine* _targetMachine;
 
 	std::unordered_map<TypeSymbol, llvm::Type*, SymbolHash, SymbolEqual> _knownTypes;
+	std::unordered_map<string_view, llvm::Value*> _locals;
 	DiagnosticBag _diagnostics;
 
 	void EmitFunctionDeclaration(const FunctionSymbol& function);
@@ -132,9 +133,22 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& function, const BoundBlockS
 	{
 		_diagnostics.ReportFunctionDeclarationNotFound(function.Name());
 		return;
+	} else if (!func->empty())
+	{
+		_diagnostics.ReportFunctionViolateODR(function.Name());
+		return;
 	}
 	auto entry = llvm::BasicBlock::Create(_context, "entry", func);
 	_builder.SetInsertPoint(entry);
+
+	// Place all parameters into _locals table
+	_locals.clear();
+	size_t i = 0;
+	for (auto& arg : func->args())
+	{
+		_locals.emplace(function.Parameters().at(i).Name(), &arg);
+		++i;
+	}
 
 	try
 	{
@@ -251,8 +265,14 @@ llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)
 
 llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node)
 {
-	(void)node;
-	return nullptr;
+	try
+	{
+		return _locals.at(node.Variable()->Name());
+	} catch (const std::out_of_range&)
+	{
+		_diagnostics.ReportUndefinedVariable(node.Variable()->Name());
+		return nullptr;
+	}
 }
 
 llvm::Value* Emitter::EmitAssignmentExpression(const BoundAssignmentExpression& node)
@@ -275,7 +295,8 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 
 llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 {
-	(void)node;
+	for (const auto& arg : node.Arguments())
+		EmitExpression(*arg);
 	return nullptr;
 }
 
@@ -309,6 +330,9 @@ DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputP
 		EmitFunctionDeclaration(*func);
 		EmitFunctionBody(*func, *body);
 	}
+
+	if (!_diagnostics.empty())
+		return _diagnostics;
 
 	std::error_code ec;
 	auto dest = llvm::raw_fd_ostream(outputPath.string(), ec, llvm::sys::fs::OF_None);

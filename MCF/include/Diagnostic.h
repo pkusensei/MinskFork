@@ -117,7 +117,10 @@ public:
 	void ReportCannotOpenOutputFile(string_view error);
 	void ReportCannotEmitFileType();
 	void ReportFunctionDeclarationNotFound(string_view name);
+	void ReportFunctionViolateODR(string_view name);
 	void ReportCannotCreateFunctionBody(string_view error);
+	void ReportUndefinedVariable(string_view name);
+
 };
 
 }//MCF

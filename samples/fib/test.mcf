@@ -1,9 +1,9 @@
-function retBool(): bool
+function retBool(value: bool): bool
 {
-    return true
+    return value
 }
 
-function retInt(): int
+function retInt(value: int): int
 {
-    return 42
+    return value
 }

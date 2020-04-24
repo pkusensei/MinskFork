@@ -248,13 +248,25 @@ void DiagnosticBag::ReportCannotEmitFileType()
 
 void DiagnosticBag::ReportFunctionDeclarationNotFound(string_view name)
 {
-	auto message = BuildStringFrom("Declaration of function '", name, ", is missing. Cannot create function body.");
+	auto message = BuildStringFrom("Declaration of function '", name, "' is missing. Cannot create function body.");
+	Report(std::nullopt, std::move(message));
+}
+
+void DiagnosticBag::ReportFunctionViolateODR(string_view name)
+{
+	auto message = BuildStringFrom("Cannot define function '", name, "' twice.");
 	Report(std::nullopt, std::move(message));
 }
 
 void DiagnosticBag::ReportCannotCreateFunctionBody(string_view error)
 {
 	auto message = BuildStringFrom("Cannot create function body: ", error);
+	Report(std::nullopt, std::move(message));
+}
+
+void DiagnosticBag::ReportUndefinedVariable(string_view name)
+{
+	auto message = BuildStringFrom("Variable '", name, "' doesn't exist.");
 	Report(std::nullopt, std::move(message));
 }
 
