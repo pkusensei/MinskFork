@@ -270,7 +270,7 @@ llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node
 		return _locals.at(node.Variable()->Name());
 	} catch (const std::out_of_range&)
 	{
-		_diagnostics.ReportUndefinedVariable(node.Variable()->Name());
+		_diagnostics.ReportUndefinedVariable(std::nullopt, node.Variable()->Name());
 		return nullptr;
 	}
 }
@@ -295,9 +295,22 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 
 llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 {
+	auto callee = _module->getFunction(string(node.Function()->Name()));
+	if (callee == nullptr)
+	{
+		_diagnostics.ReportUndefinedFunction(std::nullopt, node.Function()->Name());
+		return nullptr;
+	}
+	if (callee->arg_size() != node.Arguments().size())
+	{
+		_diagnostics.ReportWrongArgumentCount(std::nullopt, node.Function()->Name(),
+			callee->arg_size(), node.Arguments().size());
+		return nullptr;
+	}
+	auto args = vector<llvm::Value*>();
 	for (const auto& arg : node.Arguments())
-		EmitExpression(*arg);
-	return nullptr;
+		args.push_back(EmitExpression(*arg));
+	return _builder.CreateCall(callee, args, string(node.Function()->Name()));
 }
 
 llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& node)

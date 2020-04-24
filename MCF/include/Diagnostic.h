@@ -78,7 +78,7 @@ public:
 		const TypeSymbol& operandType);
 	void ReportUndefinedBinaryOperator(TextLocation location, string_view operatorText,
 		const TypeSymbol& leftType, const TypeSymbol& rightType);
-	void ReportUndefinedVariable(TextLocation location, string_view name);
+	void ReportUndefinedVariable(std::optional<TextLocation> location, string_view name);
 	void ReportNotAVariable(TextLocation location, string_view name);
 	void ReportUndefinedType(TextLocation location, string_view name);
 	void ReportCannotConvert(TextLocation location, const TypeSymbol& fromType,
@@ -88,10 +88,10 @@ public:
 	void ReportSymbolAlreadyDeclared(TextLocation location, string_view name);
 	void ReportCannotAssign(TextLocation location, string_view name);
 
-	void ReportUndefinedFunction(TextLocation location, string_view name);
+	void ReportUndefinedFunction(std::optional<TextLocation> location, string_view name);
 	void ReportNotAFunction(TextLocation location, string_view name);
 	void ReportParameterAlreadyDeclared(TextLocation location, string_view name);
-	void ReportWrongArgumentCount(TextLocation location, string_view name,
+	void ReportWrongArgumentCount(std::optional<TextLocation> location, string_view name,
 		size_t expectedCount, size_t actualCount);
 	void ReportExpressionMustHaveValue(TextLocation location);
 	void ReportInvalidBreakOrContinue(TextLocation location, string_view text);
@@ -119,7 +119,6 @@ public:
 	void ReportFunctionDeclarationNotFound(string_view name);
 	void ReportFunctionViolateODR(string_view name);
 	void ReportCannotCreateFunctionBody(string_view error);
-	void ReportUndefinedVariable(string_view name);
 
 };
 

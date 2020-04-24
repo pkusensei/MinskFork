@@ -78,7 +78,7 @@ void DiagnosticBag::ReportUndefinedBinaryOperator(TextLocation location,
 	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportUndefinedVariable(TextLocation location, string_view name)
+void DiagnosticBag::ReportUndefinedVariable(std::optional<TextLocation> location, string_view name)
 {
 	auto message = BuildStringFrom("Variable '", name, "' doesn't exist.");
 	Report(std::move(location), std::move(message));
@@ -125,7 +125,7 @@ void DiagnosticBag::ReportCannotAssign(TextLocation location, string_view name)
 	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportUndefinedFunction(TextLocation location,
+void DiagnosticBag::ReportUndefinedFunction(std::optional<TextLocation> location,
 	string_view name)
 {
 	auto message = BuildStringFrom("Function '", name, "' doesn't exist.");
@@ -144,7 +144,7 @@ void DiagnosticBag::ReportParameterAlreadyDeclared(TextLocation location, string
 	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportWrongArgumentCount(TextLocation location,
+void DiagnosticBag::ReportWrongArgumentCount(std::optional<TextLocation> location,
 	string_view name, size_t expectedCount, size_t actualCount)
 {
 	auto message = BuildStringFrom("Function '", name, "' requires ", std::to_string(expectedCount)
@@ -261,12 +261,6 @@ void DiagnosticBag::ReportFunctionViolateODR(string_view name)
 void DiagnosticBag::ReportCannotCreateFunctionBody(string_view error)
 {
 	auto message = BuildStringFrom("Cannot create function body: ", error);
-	Report(std::nullopt, std::move(message));
-}
-
-void DiagnosticBag::ReportUndefinedVariable(string_view name)
-{
-	auto message = BuildStringFrom("Variable '", name, "' doesn't exist.");
 	Report(std::nullopt, std::move(message));
 }
 
