@@ -6,8 +6,9 @@ namespace MCF {
 
 namespace fs = std::filesystem;
 
+class BoundProgram;
 class DiagnosticBag;
 
-DiagnosticBag Emit(const std::string& moduleName, const fs::path& outPath);
+DiagnosticBag Emit(const BoundProgram& program, const std::string& moduleName, const fs::path& outPath);
 
 } //MCF

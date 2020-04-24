@@ -528,8 +528,8 @@ void Compilation::EmitTree(const FunctionSymbol* symbol, std::ostream& out)
 
 DiagnosticBag Compilation::Emit(const string& moduleName, const fs::path& outPath)
 {
-	return MCF::Emit(moduleName, outPath);
+	auto p = GetProgram();
+	return MCF::Emit(*p, moduleName, outPath);
 }
-
 
 }//MCF

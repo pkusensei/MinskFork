@@ -11,6 +11,12 @@ namespace fs = std::filesystem;
 
 int main(int argc, char** argv)
 {
+	if (argc == 1)
+	{
+		std::cout << "usage: mcfc [OPTIONS...]" << '\n';
+		return 0;
+	}
+
 	auto options = cxxopts::Options("mcfc", "A C++ fork of Minsk Compiler");
 	options.add_options()
 		("h,help", "Prints help", cxxopts::value<bool>()->default_value("false"))
