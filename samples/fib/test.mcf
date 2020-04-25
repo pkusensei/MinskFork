@@ -1,9 +1,11 @@
 function inner(value: int): int
 {
+    let v = 3
     return value
 }
 
 function retInt(value: int): int
 {
-    return inner(value)
+    let v = inner(value)
+    return v
 }

@@ -49,7 +49,9 @@ private:
 	llvm::TargetMachine* _targetMachine;
 
 	std::unordered_map<TypeSymbol, llvm::Type*, SymbolHash, SymbolEqual> _knownTypes;
-	std::unordered_map<string_view, llvm::Value*> _locals;
+	std::unordered_map<string_view, llvm::AllocaInst*> _locals;
+	llvm::Function* _function;
+
 	DiagnosticBag _diagnostics;
 
 	void EmitFunctionDeclaration(const FunctionSymbol& function);
@@ -72,6 +74,8 @@ private:
 	llvm::Value* EmitCallExpression(const BoundCallExpression& node);
 	llvm::Value* EmitConversionExpression(const BoundConversionExpression& node);
 
+	llvm::AllocaInst* CreateEntryBlockAlloca(llvm::Type* type, string_view varName);
+
 public:
 	explicit Emitter(const string& moduleName);
 
@@ -83,6 +87,7 @@ Emitter::Emitter(const string& moduleName)
 	:_context(), _builder(_context),
 	_module(std::make_unique<llvm::Module>(moduleName, _context)),
 	_targetMachine(nullptr),
+	_function(nullptr),
 	_diagnostics()
 {
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Bool), llvm::ConstantInt::getTrue(_context)->getType());
@@ -126,27 +131,30 @@ void Emitter::EmitFunctionDeclaration(const FunctionSymbol& function)
 		string(function.Name()), *_module);
 }
 
-void Emitter::EmitFunctionBody(const FunctionSymbol& function, const BoundBlockStatement& body)
+void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStatement& body)
 {
-	auto func = _module->getFunction(string(function.Name()));
+	auto func = _module->getFunction(string(fs.Name()));
 	if (func == nullptr)
 	{
-		_diagnostics.ReportFunctionDeclarationNotFound(function.Name());
+		_diagnostics.ReportFunctionDeclarationNotFound(fs.Name());
 		return;
 	} else if (!func->empty())
 	{
-		_diagnostics.ReportFunctionViolateODR(function.Name());
+		_diagnostics.ReportFunctionViolateODR(fs.Name());
 		return;
 	}
 	auto entry = llvm::BasicBlock::Create(_context, "entry", func);
 	_builder.SetInsertPoint(entry);
 
 	// Place all parameters into _locals table
+	_function = func;
 	_locals.clear();
 	size_t i = 0;
 	for (auto& arg : func->args())
 	{
-		_locals.emplace(function.Parameters().at(i).Name(), &arg);
+		auto alloca = CreateEntryBlockAlloca(arg.getType(), fs.Parameters().at(i).Name());
+		_builder.CreateStore(&arg, alloca);
+		_locals.emplace(fs.Parameters().at(i).Name(), alloca);
 		++i;
 	}
 
@@ -191,7 +199,14 @@ void Emitter::EmitStatement(const BoundStatement& node)
 
 void Emitter::EmitVariableDeclaration(const BoundVariableDeclaration& node)
 {
-	(void)node;
+	auto value = node.Initializer() == nullptr ?
+		nullptr : EmitExpression(*node.Initializer());
+	auto type = value ?
+		value->getType()
+		: _knownTypes.at(node.Variable()->Type());
+	auto alloca = CreateEntryBlockAlloca(type, node.Variable()->Name());
+	_locals.emplace(node.Variable()->Name(), alloca);
+	_builder.CreateStore(value, alloca);
 }
 
 void Emitter::EmitLabelStatement(const BoundLabelStatement& node)
@@ -260,14 +275,14 @@ llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)
 	{
 		throw std::invalid_argument("Only supports bool and int for now");
 	}
-	return nullptr;
 }
 
 llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node)
 {
 	try
 	{
-		return _locals.at(node.Variable()->Name());
+		auto v = _locals.at(node.Variable()->Name());
+		return _builder.CreateLoad(v, node.Variable()->Name().data());
 	} catch (const std::out_of_range&)
 	{
 		_diagnostics.ReportUndefinedVariable(std::nullopt, node.Variable()->Name());
@@ -295,7 +310,7 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 
 llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 {
-	auto callee = _module->getFunction(string(node.Function()->Name()));
+	auto callee = _module->getFunction(node.Function()->Name().data());
 	if (callee == nullptr)
 	{
 		_diagnostics.ReportUndefinedFunction(std::nullopt, node.Function()->Name());
@@ -326,18 +341,6 @@ DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputP
 
 	auto result = DiagnosticBag();
 
-	//
-	// create a stub function
-	// int test() { return 42; }
-	// 
-	//auto test = llvm::FunctionType::get(_builder.getInt32Ty(), false);
-	//auto func = llvm::Function::Create(test, llvm::Function::ExternalLinkage,
-	//	"test", _module.get());
-	//auto entry = llvm::BasicBlock::Create(_context, "entrypoint", func);
-	//auto value = llvm::ConstantInt::get(_context, llvm::APInt(INT_BITS, 42, true));
-	//_builder.SetInsertPoint(entry);
-	//_builder.CreateRet(value);
-
 	for (const auto& [func, body] : program.Functions())
 	{
 		EmitFunctionDeclaration(*func);
@@ -366,6 +369,13 @@ DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputP
 	pass.run(*_module);
 	dest.flush();
 	return result;
+}
+
+llvm::AllocaInst* Emitter::CreateEntryBlockAlloca(llvm::Type* type, string_view varName)
+{
+	auto builder = llvm::IRBuilder<>(&_function->getEntryBlock(),
+		_function->getEntryBlock().begin());
+	return builder.CreateAlloca(type, 0, string(varName));
 }
 
 DiagnosticBag Emit(const BoundProgram& program, const string& moduleName, const fs::path& outPath)
