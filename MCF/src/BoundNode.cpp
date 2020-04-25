@@ -60,8 +60,7 @@ string_view nameof(BoundNodeKind  kind)
 
 void BoundNode::WriteTo(std::ostream& out) const
 {
-	auto printer = BoundNodePrinter(out);
-	printer.Write(*this);
+	Write(*this, out);
 }
 
 string BoundNode::ToString() const

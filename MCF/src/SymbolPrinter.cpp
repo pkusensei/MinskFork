@@ -7,6 +7,32 @@
 
 namespace MCF {
 
+class SymbolPrinter
+{
+private:
+	TextWriter _writer;
+
+	void WriteFunction(const FunctionSymbol& symbol);
+	void WriteGlobalVariable(const GlobalVariableSymbol& symbol);
+	void WriteLocalVariable(const LocalVariableSymbol& symbol);
+	void WriteParameter(const ParameterSymbol& symbol);
+	void WriteType(const TypeSymbol& symbol);
+
+public:
+	constexpr explicit SymbolPrinter(std::ostream& out)noexcept
+		:_writer(out)
+	{
+	}
+
+	void Write(const Symbol& symbol);
+};
+
+void Write(const Symbol& symbol, std::ostream& out)
+{
+	auto w = SymbolPrinter(out);
+	w.Write(symbol);
+}
+
 void SymbolPrinter::Write(const Symbol& symbol)
 {
 	switch (symbol.Kind())

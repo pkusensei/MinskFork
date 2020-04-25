@@ -15,6 +15,80 @@
 
 namespace MCF {
 
+class BoundScope final
+{
+private:
+	std::unordered_map<string_view, shared_ptr<Symbol>> _symbols;
+	unique_ptr<BoundScope> _parent;
+
+	template<typename T, typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
+	bool TryDeclareSymbol(shared_ptr<T> symbol)
+	{
+		auto name = symbol->Name();
+		if (_symbols.find(name) == _symbols.end() && !name.empty())
+		{
+			_symbols.emplace(name, std::move(symbol));
+			return true;
+		}
+		return false;
+	}
+
+	template<typename T, typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
+	const vector<shared_ptr<T>> GetDeclaredSymbols() const
+	{
+		auto result = vector<shared_ptr<T>>();
+		for (const auto& [_, symbol] : _symbols)
+		{
+			auto p = std::dynamic_pointer_cast<T>(symbol);
+			if (p)
+				result.push_back(std::move(p));
+		}
+		return result;
+	}
+
+public:
+	explicit BoundScope(unique_ptr<BoundScope> parent = nullptr)
+		: _parent(std::move(parent))
+	{
+	}
+
+	// NOTE copy ctor vs shared_ptr? 
+	BoundScope(const BoundScope& other)
+		:_symbols(other._symbols),
+		_parent(other._parent ? make_unique<BoundScope>(*other._parent) : nullptr)
+	{
+	}
+	BoundScope& operator=(const BoundScope&) = delete;
+
+	BoundScope(BoundScope&&) = default;
+	BoundScope& operator=(BoundScope&&) = default;
+	~BoundScope() = default;
+
+	const BoundScope* Parent()const noexcept { return _parent.get(); }
+
+	std::optional<shared_ptr<Symbol>> TryLookupSymbol(string_view name)const;
+
+	bool TryDeclareVariable(shared_ptr<VariableSymbol> variable)
+	{
+		return TryDeclareSymbol(std::move(variable));
+	}
+	bool TryDeclareFunction(shared_ptr<FunctionSymbol> function)
+	{
+		return TryDeclareSymbol(std::move(function));
+	}
+
+	const vector<shared_ptr<VariableSymbol>> GetDeclaredVariables()const
+	{
+		return GetDeclaredSymbols<VariableSymbol>();
+	}
+	const vector<shared_ptr<FunctionSymbol>> GetDeclaredFunctions()const
+	{
+		return GetDeclaredSymbols<FunctionSymbol>();
+	}
+
+	static void ResetToParent(unique_ptr<BoundScope>& current)noexcept;
+};
+
 std::optional<shared_ptr<Symbol>> BoundScope::TryLookupSymbol(string_view name)const
 {
 	try
@@ -32,6 +106,77 @@ void BoundScope::ResetToParent(unique_ptr<BoundScope>& current)noexcept
 	if (current->Parent() == nullptr) return;
 	current.swap(current->_parent);
 }
+
+class Binder final
+{
+private:
+	unique_ptr<DiagnosticBag> _diagnostics;
+	const bool _isScript;
+	const FunctionSymbol* _function;
+	unique_ptr<BoundScope> _scope;
+	std::stack<std::pair<BoundLabel, BoundLabel>> _loopStack; //break-continue pair
+	size_t _labelCount;
+
+	void BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax);
+
+	shared_ptr<BoundStatement> BindErrorStatement();
+	shared_ptr<BoundStatement> BindGlobalStatement(const StatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindStatement(const StatementSyntax* syntax, bool isGlobal = false);
+	shared_ptr<BoundStatement> BindStatementInternal(const StatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindBlockStatement(const BlockStatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindVariableDeclaration(const VariableDeclarationSyntax* syntax);
+	shared_ptr<BoundStatement> BindIfStatement(const IfStatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindWhileStatement(const WhileStatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindDoWhileStatement(const DoWhileStatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindForStatement(const ForStatementSyntax* syntax);
+	auto BindLoopBody(const StatementSyntax* syntax)
+		->std::tuple<shared_ptr<BoundStatement>, BoundLabel, BoundLabel>;
+
+	shared_ptr<BoundStatement> BindBreakStatement(const BreakStatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindContinueStatement(const ContinueStatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindReturnStatement(const ReturnStatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax* syntax);
+
+	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,
+		const TypeSymbol& targetType);
+	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,
+		bool canBeVoid = false);
+	shared_ptr<BoundExpression> BindExpressionInternal(const ExpressionSyntax* syntax);
+	shared_ptr<BoundExpression> BindParenthesizedExpression(const ParenthesizedExpressionSyntax* syntax);
+	shared_ptr<BoundExpression> BindLiteralExpression(const LiteralExpressionSyntax* syntax);
+	shared_ptr<BoundExpression> BindNameExpression(const NameExpressionSyntax* syntax);
+	shared_ptr<BoundExpression> BindAssignmentExpression(const AssignmentExpressionSyntax* syntax);
+	shared_ptr<BoundExpression> BindUnaryExpression(const UnaryExpressionSyntax* syntax);
+	shared_ptr<BoundExpression> BindBinaryExpression(const BinaryExpressionSyntax* syntax);
+	shared_ptr<BoundExpression> BindCallExpression(const CallExpressionSyntax* syntax);
+	shared_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax* syntax);
+
+	shared_ptr<BoundExpression> BindConversion(const ExpressionSyntax* syntax,
+		const TypeSymbol& type, bool allowExplicit = false);
+	shared_ptr<BoundExpression> BindConversion(
+		TextLocation diagLocation, shared_ptr<BoundExpression> syntax,
+		const TypeSymbol& type, bool allowExplicit = false);
+	shared_ptr<VariableSymbol> BindVariableDeclaration(const SyntaxToken& identifier,
+		bool isReadOnly, const TypeSymbol& type);
+	std::optional<shared_ptr<VariableSymbol>> BindVariableReference(const SyntaxToken& identifier);
+	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
+	std::optional<TypeSymbol> LookupType(string_view name)const;
+
+	[[nodiscard]] static unique_ptr<BoundScope> CreateParentScope(const BoundGlobalScope* previous);
+	[[nodiscard]] static unique_ptr<BoundScope> CreateRootScope();
+
+public:
+	Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbol* function);
+
+	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
+
+	static unique_ptr<BoundGlobalScope> BindGlobalScope(bool isScript,
+		const BoundGlobalScope* previous,
+		const vector<const SyntaxTree*>& synTrees);
+	static unique_ptr<BoundProgram> BindProgram(bool isScript,
+		unique_ptr<BoundProgram> preious,
+		const BoundGlobalScope* globalScope);
+};
 
 Binder::Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbol* function)
 	: _diagnostics(make_unique<DiagnosticBag>()), _isScript(isScript),
@@ -690,6 +835,13 @@ unique_ptr<BoundScope> Binder::CreateRootScope()
 	return result;
 }
 
+unique_ptr<BoundGlobalScope> BindGlobalScope(bool isScript,
+	const BoundGlobalScope* previous,
+	const vector<const SyntaxTree*>& synTrees)
+{
+	return Binder::BindGlobalScope(isScript, previous, synTrees);
+}
+
 unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 	const BoundGlobalScope* previous,
 	const vector<const SyntaxTree*>& synTrees)
@@ -787,6 +939,13 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 		std::move(statements));
 }
 
+unique_ptr<BoundProgram> BindProgram(bool isScript,
+	unique_ptr<BoundProgram> preious,
+	const BoundGlobalScope* globalScope)
+{
+	return Binder::BindProgram(isScript, std::move(preious), globalScope);
+}
+
 unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
 	unique_ptr<BoundProgram> previous,
 	const BoundGlobalScope* globalScope)
@@ -800,7 +959,7 @@ unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
 	{
 		auto binder = Binder(isScript, std::make_unique<BoundScope>(*parentScope), it.get());
 		auto body = binder.BindStatement(it->Declaration()->Body());
-		auto lowerBody = Lowerer::Lower(std::move(body));
+		auto lowerBody = Lower(std::move(body));
 
 		if (it->Type() != TypeSymbol(TypeEnum::Void)
 			&& !ControlFlowGraph::AllPathsReturn(lowerBody.get()))
@@ -815,7 +974,7 @@ unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
 
 	if (globalScope->MainFunc() != nullptr && !globalScope->Statements().empty())
 	{
-		auto body = Lowerer::Lower(make_shared<BoundBlockStatement>(globalScope->Statements()));
+		auto body = Lower(make_shared<BoundBlockStatement>(globalScope->Statements()));
 		funcBodies.emplace(globalScope->MainFunc(), std::move(body));
 	} else if (globalScope->ScriptFunc() != nullptr)
 	{
@@ -837,7 +996,7 @@ unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
 			auto nullValue = make_shared<BoundLiteralExpression>("");
 			statements.push_back(make_shared<BoundReturnStatement>(nullValue));
 		}
-		auto body = Lowerer::Lower(make_shared<BoundBlockStatement>(std::move(statements)));
+		auto body = Lower(make_shared<BoundBlockStatement>(std::move(statements)));
 		funcBodies.emplace(globalScope->ScriptFunc(), std::move(body));
 	}
 

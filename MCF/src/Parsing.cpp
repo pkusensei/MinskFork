@@ -50,6 +50,69 @@ const vector<const SyntaxNode*> CompilationUnitSyntax::GetChildren() const
 	return result;
 }
 
+class Parser final
+{
+private:
+	const SyntaxTree& _tree;
+	const SourceText& _text;
+	vector<SyntaxToken> _tokens;
+	size_t _position;
+	DiagnosticBag& _diagnostics;
+
+	vector<unique_ptr<SyntaxTree>> _usings;
+
+	const SyntaxToken& Peek(int offset = 0) const;
+	const SyntaxToken& Current() const;
+	const SyntaxToken& NextToken();
+	[[nodiscard]] SyntaxToken MatchToken(SyntaxKind kind);
+
+	vector<unique_ptr<MemberSyntax>> ParseMembers();
+	unique_ptr<MemberSyntax> ParseMember();
+	unique_ptr<MemberSyntax> ParseFunctionDeclaration();
+	SeparatedSyntaxList<ParameterSyntax> ParseParameterList();
+	unique_ptr<ParameterSyntax> ParseParameter();
+	unique_ptr<MemberSyntax> ParseGlobalStatement();
+	unique_ptr<MemberSyntax> ParseUsingDirective();
+
+	unique_ptr<StatementSyntax> ParseStatement();
+	unique_ptr<BlockStatementSyntax> ParseBlockStatement();
+	unique_ptr<StatementSyntax> ParseVariableDeclaration();
+	std::optional<TypeClauseSyntax> ParseOptionalTypeClause();
+	TypeClauseSyntax ParseTypeClause();
+	unique_ptr<StatementSyntax> ParseIfStatement();
+	unique_ptr<ElseClauseSyntax> ParseElseClause();
+	unique_ptr<StatementSyntax> ParseWhileStatement();
+	unique_ptr<StatementSyntax> ParseDoWhileStatement();
+	unique_ptr<StatementSyntax> ParseForStatement();
+	unique_ptr<StatementSyntax> ParseBreakStatement();
+	unique_ptr<StatementSyntax> ParseContinueStatement();
+	unique_ptr<StatementSyntax> ParseReturnStatement();
+	unique_ptr<ExpressionStatementSyntax> ParseExpressionStatement();
+
+	unique_ptr<ExpressionSyntax> ParseExpression();
+	unique_ptr<ExpressionSyntax> ParseAssignmentExpression();
+	unique_ptr<ExpressionSyntax> ParseBinaryExpression(int parentPrecedence = 0);
+	unique_ptr<ExpressionSyntax> ParsePostfixExpression(unique_ptr<ExpressionSyntax> expression);
+
+	unique_ptr<ExpressionSyntax> ParsePrimaryExpression();
+	unique_ptr<ExpressionSyntax> ParseParenthesizedExpression();
+	unique_ptr<ExpressionSyntax> ParseBooleanLiteral();
+	unique_ptr<ExpressionSyntax> ParseNumberLiteral();
+	unique_ptr<ExpressionSyntax> ParseStringLiteral();
+	unique_ptr<ExpressionSyntax> ParseNameOrCallExpression();
+	unique_ptr<ExpressionSyntax> ParseCallExpression();
+	unique_ptr<ExpressionSyntax> ParseNameExpression();
+
+	SeparatedSyntaxList<ExpressionSyntax> ParseArguments();
+
+public:
+	explicit Parser(const SyntaxTree& tree);
+
+	constexpr const DiagnosticBag& Diagnostics()const noexcept { return _diagnostics; }
+	unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
+	vector<unique_ptr<SyntaxTree>> FetchUsings()noexcept { return std::move(_usings); };
+};
+
 Parser::Parser(const SyntaxTree& tree)
 	:_tree(tree), _text(tree.Text()), _tokens(),
 	_position(0), _diagnostics(tree.Diagnostics())
@@ -626,7 +689,7 @@ SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics)
 			}
 			tokens.push_back(std::move(token));
 		}
-		return std::make_tuple(std::move(root), vector<unique_ptr<SyntaxTree>>());
+		return std::make_pair(std::move(root), vector<unique_ptr<SyntaxTree>>());
 	};
 
 	auto tree = unique_ptr<SyntaxTree>(new SyntaxTree(std::move(text), parseTokens));

@@ -10,8 +10,7 @@ namespace MCF {
 
 void Symbol::WriteTo(std::ostream& out) const
 {
-	auto printer = SymbolPrinter(out);
-	printer.Write(*this);
+	Write(*this, out);
 }
 
 string Symbol::ToString() const

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <random>
+#include <stack>
 #include <unordered_set>
 
 #include "Binding.h"
@@ -16,6 +17,39 @@
 #include "Parsing.h"
 
 namespace MCF {
+
+class Evaluator final
+{
+	using FuncMap = std::unordered_map<const FunctionSymbol*,
+		const BoundBlockStatement*, SymbolHash, SymbolEqual>;
+
+private:
+	unique_ptr<BoundProgram> _program;
+	VarMap& _globals;
+	FuncMap _functions;
+	std::stack<VarMap> _locals;
+	ValueType _lastValue;
+
+	ValueType EvaluateStatement(const BoundBlockStatement* body);
+	void EvaluateVariableDeclaration(const BoundVariableDeclaration* node);
+	void EvaluateExpressionStatement(const BoundExpressionStatement* node);
+
+	ValueType EvaluateExpression(const BoundExpression* node);
+	ValueType EvaluateLiteralExpression(const BoundLiteralExpression* node)const;
+	ValueType EvaluateVariableExpression(const BoundVariableExpression* node);
+	ValueType EvaluateAssignmentExpression(const BoundAssignmentExpression* node);
+	ValueType EvaluateUnaryExpression(const BoundUnaryExpression* node);
+	ValueType EvaluateBinaryExpression(const BoundBinaryExpression* node);
+	ValueType EvaluateCallExpression(const BoundCallExpression* node);
+	ValueType EvaluateConversionExpression(const BoundConversionExpression* node);
+	ValueType EvaluatePostfixExpression(const BoundPostfixExpression* node);
+
+	void Assign(const VariableSymbol* variable, const ValueType& value);
+
+public:
+	Evaluator(unique_ptr<BoundProgram> program, VarMap& variables);
+	ValueType Evaluate();
+};
 
 Evaluator::Evaluator(unique_ptr<BoundProgram> program, VarMap& variables)
 	: _program(std::move(program)), _globals(variables)
@@ -408,9 +442,9 @@ const BoundGlobalScope* Compilation::GlobalScope()
 	{
 		unique_ptr<BoundGlobalScope> tmp{ nullptr };
 		if (_previous == nullptr)
-			tmp = Binder::BindGlobalScope(IsScript(), nullptr, SynTrees());
+			tmp = BindGlobalScope(IsScript(), nullptr, SynTrees());
 		else
-			tmp = Binder::BindGlobalScope(IsScript(), _previous->GlobalScope(), SynTrees());
+			tmp = BindGlobalScope(IsScript(), _previous->GlobalScope(), SynTrees());
 
 		std::unique_lock<std::mutex> lock(_mtx, std::defer_lock);
 		if (lock.try_lock() && _globalScope == nullptr)
@@ -462,7 +496,7 @@ const vector<const Symbol*> Compilation::GetSymbols()
 unique_ptr<BoundProgram> Compilation::GetProgram()
 {
 	auto previous = Previous() ? Previous()->GetProgram() : nullptr;
-	return Binder::BindProgram(IsScript(), std::move(previous), GlobalScope());
+	return BindProgram(IsScript(), std::move(previous), GlobalScope());
 }
 
 EvaluationResult Compilation::Evaluate(VarMap& variables)

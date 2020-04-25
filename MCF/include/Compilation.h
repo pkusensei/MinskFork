@@ -2,7 +2,6 @@
 
 #include <filesystem>
 #include <mutex>
-#include <stack>
 #include <unordered_map>
 
 #include "Symbols.h"
@@ -18,20 +17,6 @@ namespace MCF {
 namespace fs = std::filesystem;
 
 class DiagnosticBag;
-
-class BoundExpression;
-class BoundLiteralExpression;
-class BoundVariableExpression;
-class BoundAssignmentExpression;
-class BoundUnaryExpression;
-class BoundBinaryExpression;
-class BoundCallExpression;
-class BoundConversionExpression;
-class BoundPostfixExpression;
-
-class BoundBlockStatement;
-class BoundVariableDeclaration;
-class BoundExpressionStatement;
 
 class BoundGlobalScope;
 class BoundProgram;
@@ -54,40 +39,6 @@ public:
 
 	constexpr DiagnosticBag& Diagnostics() const noexcept { return _diagnostics; }
 	constexpr const ValueType& Value()const noexcept { return _value; }
-};
-
-class Evaluator final
-{
-	using FuncMap = std::unordered_map<const FunctionSymbol*,
-		const BoundBlockStatement*, SymbolHash, SymbolEqual>;
-
-
-private:
-	unique_ptr<BoundProgram> _program;
-	VarMap& _globals;
-	FuncMap _functions;
-	std::stack<VarMap> _locals;
-	ValueType _lastValue;
-
-	ValueType EvaluateStatement(const BoundBlockStatement* body);
-	void EvaluateVariableDeclaration(const BoundVariableDeclaration* node);
-	void EvaluateExpressionStatement(const BoundExpressionStatement* node);
-
-	ValueType EvaluateExpression(const BoundExpression* node);
-	ValueType EvaluateLiteralExpression(const BoundLiteralExpression* node)const;
-	ValueType EvaluateVariableExpression(const BoundVariableExpression* node);
-	ValueType EvaluateAssignmentExpression(const BoundAssignmentExpression* node);
-	ValueType EvaluateUnaryExpression(const BoundUnaryExpression* node);
-	ValueType EvaluateBinaryExpression(const BoundBinaryExpression* node);
-	ValueType EvaluateCallExpression(const BoundCallExpression* node);
-	ValueType EvaluateConversionExpression(const BoundConversionExpression* node);
-	ValueType EvaluatePostfixExpression(const BoundPostfixExpression* node);
-
-	void Assign(const VariableSymbol* variable, const ValueType& value);
-
-public:
-	Evaluator(unique_ptr<BoundProgram> program, VarMap& variables);
-	ValueType Evaluate();
 };
 
 class MCF_API Compilation final
