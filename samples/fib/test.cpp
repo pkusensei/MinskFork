@@ -3,6 +3,7 @@
 extern "C"
 {
     int retInt(int);
+    void tp();
 }
 
 extern "C" void print(const char* t)

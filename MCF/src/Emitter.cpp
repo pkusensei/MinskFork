@@ -92,6 +92,7 @@ Emitter::Emitter(const string& moduleName)
 {
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Bool), llvm::ConstantInt::getTrue(_context)->getType());
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Int), _builder.getIntNTy(INT_BITS));
+	_knownTypes.emplace(TypeSymbol(TypeEnum::Void), _builder.getVoidTy());
 
 	llvm::InitializeAllTargetInfos();
 	llvm::InitializeAllTargets();
@@ -136,7 +137,7 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 	auto func = _module->getFunction(string(fs.Name()));
 	if (func == nullptr)
 	{
-		_diagnostics.ReportFunctionDeclarationNotFound(fs.Name());
+		_diagnostics.ReportFunctionDeclarationNotEmitted(fs.Name());
 		return;
 	} else if (!func->empty())
 	{
@@ -162,6 +163,11 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 	{
 		for (const auto& it : body.Statements())
 			EmitStatement(*it);
+
+		//TODO move this to bound tree
+		if (fs.Type() == TypeSymbol(TypeEnum::Void))
+			_builder.CreateRetVoid();
+
 		llvm::verifyFunction(*func);
 	} catch (const std::exception& e)
 	{
@@ -193,7 +199,7 @@ void Emitter::EmitStatement(const BoundStatement& node)
 			EmitExpressionStatement(static_cast<const BoundExpressionStatement&>(node));
 			break;
 		default:
-			throw std::invalid_argument(BuildStringFrom("Unexpected node:", nameof(node.Kind())));
+			throw std::invalid_argument(BuildStringFrom("Unexpected node: ", nameof(node.Kind())));
 	}
 }
 
@@ -252,7 +258,7 @@ llvm::Value* Emitter::EmitExpression(const BoundExpression& node)
 		case BoundNodeKind::ConversionExpression:
 			return EmitConversionExpression(static_cast<const BoundConversionExpression&>(node));
 		default:
-			throw std::invalid_argument(BuildStringFrom("Unexpected node:", nameof(node.Kind())));
+			throw std::invalid_argument(BuildStringFrom("Unexpected node: ", nameof(node.Kind())));
 	}
 }
 
@@ -307,11 +313,18 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 
 llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 {
+	//if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Input))
+	//{
+	//	auto args = vector<llvm::Type*>();
+	//	auto ft = llvm::FunctionType::get(_builder.getInt8Ty()->getPointerTo(), false);
+	//	auto func = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "input", _module.get());
+	//	return _builder.CreateCall(func);
+	//}
 	if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Print))
 	{
 		//TODO stub here. needs proper string ops
 		//auto value = EmitExpression(*node.Arguments()[0]); 
-		auto value = _builder.CreateGlobalStringPtr("Hello wooooorld!");
+		auto value = _builder.CreateGlobalStringPtr("Hello world from mcf.");
 		auto args = vector<llvm::Type*>{ _builder.getInt8Ty()->getPointerTo() };
 		auto ft = llvm::FunctionType::get(_builder.getVoidTy(), args, false);
 		auto func =
@@ -321,18 +334,22 @@ llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 	auto callee = _module->getFunction(string(node.Function()->Name()));
 	if (callee == nullptr)
 	{
-		_diagnostics.ReportUndefinedFunction(std::nullopt, node.Function()->Name());
+		_diagnostics.ReportFunctionDeclarationNotEmitted(node.Function()->Name());
 		return nullptr;
 	}
 	if (callee->arg_size() != node.Arguments().size())
 	{
-		_diagnostics.ReportWrongArgumentCount(std::nullopt, node.Function()->Name(),
-			callee->arg_size(), node.Arguments().size());
+		_diagnostics.ReportWrongArgumentCountEmitted(node.Function()->Name(),
+			node.Arguments().size(), callee->arg_size());
 		return nullptr;
 	}
+
 	auto args = vector<llvm::Value*>();
 	for (const auto& arg : node.Arguments())
 		args.push_back(EmitExpression(*arg));
+
+	if (callee->getReturnType()->isVoidTy())
+		return _builder.CreateCall(callee, args);
 	return _builder.CreateCall(callee, args, string(node.Function()->Name()));
 }
 
@@ -349,9 +366,12 @@ DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputP
 
 	auto result = DiagnosticBag();
 
-	for (const auto& [func, body] : program.Functions())
+	for (const auto& [func, _] : program.Functions())
 	{
 		EmitFunctionDeclaration(*func);
+	}
+	for (const auto& [func, body] : program.Functions())
+	{
 		EmitFunctionBody(*func, *body);
 	}
 

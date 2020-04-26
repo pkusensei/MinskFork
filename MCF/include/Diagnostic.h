@@ -88,10 +88,10 @@ public:
 	void ReportSymbolAlreadyDeclared(TextLocation location, string_view name);
 	void ReportCannotAssign(TextLocation location, string_view name);
 
-	void ReportUndefinedFunction(std::optional<TextLocation> location, string_view name);
+	void ReportUndefinedFunction(TextLocation location, string_view name);
 	void ReportNotAFunction(TextLocation location, string_view name);
 	void ReportParameterAlreadyDeclared(TextLocation location, string_view name);
-	void ReportWrongArgumentCount(std::optional<TextLocation> location, string_view name,
+	void ReportWrongArgumentCount(TextLocation location, string_view name,
 		size_t expectedCount, size_t actualCount);
 	void ReportExpressionMustHaveValue(TextLocation location);
 	void ReportInvalidBreakOrContinue(TextLocation location, string_view text);
@@ -116,10 +116,11 @@ public:
 	void ReportRequestedTargetNotFound(string_view error);
 	void ReportCannotOpenOutputFile(string_view error);
 	void ReportCannotEmitFileType();
-	void ReportFunctionDeclarationNotFound(string_view name);
+	void ReportFunctionDeclarationNotEmitted(string_view name);
 	void ReportFunctionViolateODR(string_view name);
-	void ReportCannotCreateFunctionBody(string_view error);
-
+	void ReportCannotEmitFunctionBody(string_view error);
+	void ReportWrongArgumentCountEmitted(string_view name,
+		size_t expectedCount, size_t actualCount);
 };
 
 }//MCF

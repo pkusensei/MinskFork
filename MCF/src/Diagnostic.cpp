@@ -125,7 +125,7 @@ void DiagnosticBag::ReportCannotAssign(TextLocation location, string_view name)
 	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportUndefinedFunction(std::optional<TextLocation> location,
+void DiagnosticBag::ReportUndefinedFunction(TextLocation location,
 	string_view name)
 {
 	auto message = BuildStringFrom("Function '", name, "' doesn't exist.");
@@ -144,7 +144,7 @@ void DiagnosticBag::ReportParameterAlreadyDeclared(TextLocation location, string
 	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportWrongArgumentCount(std::optional<TextLocation> location,
+void DiagnosticBag::ReportWrongArgumentCount(TextLocation location,
 	string_view name, size_t expectedCount, size_t actualCount)
 {
 	auto message = BuildStringFrom("Function '", name, "' requires ", std::to_string(expectedCount)
@@ -246,9 +246,9 @@ void DiagnosticBag::ReportCannotEmitFileType()
 	Report(std::nullopt, "Target machine cannot emit object file.");
 }
 
-void DiagnosticBag::ReportFunctionDeclarationNotFound(string_view name)
+void DiagnosticBag::ReportFunctionDeclarationNotEmitted(string_view name)
 {
-	auto message = BuildStringFrom("Declaration of function '", name, "' is missing. Cannot create function body.");
+	auto message = BuildStringFrom("Declaration of function '", name, "' is not found.");
 	Report(std::nullopt, std::move(message));
 }
 
@@ -261,6 +261,14 @@ void DiagnosticBag::ReportFunctionViolateODR(string_view name)
 void DiagnosticBag::ReportCannotCreateFunctionBody(string_view error)
 {
 	auto message = BuildStringFrom("Cannot create function body: ", error);
+	Report(std::nullopt, std::move(message));
+}
+
+void DiagnosticBag::ReportWrongArgumentCountEmitted(string_view name,
+	size_t expectedCount, size_t actualCount)
+{
+	auto message = BuildStringFrom("Function '", name, "' requires ", std::to_string(expectedCount)
+		, " argument(s) but only ", actualCount, " were emitted.");
 	Report(std::nullopt, std::move(message));
 }
 

@@ -1,11 +1,10 @@
-function inner(value: int): int
+function retInt(v: int): int
 {
-    print("test")
-    return value
+    tp()
+    return v
 }
 
-function retInt(value: int): int
+function tp()
 {
-    let v = inner(value)
-    return v
+    print("ttt")
 }
