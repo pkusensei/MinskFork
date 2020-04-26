@@ -201,12 +201,16 @@ void Emitter::EmitVariableDeclaration(const BoundVariableDeclaration& node)
 {
 	auto value = node.Initializer() == nullptr ?
 		nullptr : EmitExpression(*node.Initializer());
-	auto type = value ?
-		value->getType()
-		: _knownTypes.at(node.Variable()->Type());
-	auto alloca = CreateEntryBlockAlloca(type, node.Variable()->Name());
-	_locals.emplace(node.Variable()->Name(), alloca);
-	_builder.CreateStore(value, alloca);
+	if (value == nullptr)
+	{
+		_locals.emplace(node.Variable()->Name(), nullptr);
+	} else
+	{
+		auto type = value->getType();
+		auto alloca = CreateEntryBlockAlloca(type, node.Variable()->Name());
+		_locals.emplace(node.Variable()->Name(), alloca);
+		_builder.CreateStore(value, alloca);
+	}
 }
 
 void Emitter::EmitLabelStatement(const BoundLabelStatement& node)
@@ -282,7 +286,7 @@ llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node
 	try
 	{
 		auto v = _locals.at(node.Variable()->Name());
-		return _builder.CreateLoad(v, node.Variable()->Name().data());
+		return v ? _builder.CreateLoad(v, string(node.Variable()->Name().data())) : nullptr;
 	} catch (const std::out_of_range&)
 	{
 		_diagnostics.ReportUndefinedVariable(std::nullopt, node.Variable()->Name());
@@ -310,7 +314,18 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 
 llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 {
-	auto callee = _module->getFunction(node.Function()->Name().data());
+	if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Print))
+	{
+		//TODO stub here. needs proper string ops
+		//auto value = EmitExpression(*node.Arguments()[0]); 
+		auto value = _builder.CreateGlobalStringPtr("Hello wooooorld!");
+		auto args = vector<llvm::Type*>{ _builder.getInt8Ty()->getPointerTo() };
+		auto ft = llvm::FunctionType::get(_builder.getVoidTy(), args, false);
+		auto func =
+			llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "print", _module.get());
+		return _builder.CreateCall(func, value);
+	}
+	auto callee = _module->getFunction(string(node.Function()->Name()));
 	if (callee == nullptr)
 	{
 		_diagnostics.ReportUndefinedFunction(std::nullopt, node.Function()->Name());

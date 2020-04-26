@@ -1,6 +1,6 @@
 function inner(value: int): int
 {
-    let v = 3
+    print("test")
     return value
 }
 
