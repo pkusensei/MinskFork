@@ -171,7 +171,7 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 		llvm::verifyFunction(*func);
 	} catch (const std::exception& e)
 	{
-		_diagnostics.ReportCannotCreateFunctionBody(e.what());
+		_diagnostics.ReportCannotEmitFunctionBody(e.what());
 		func->removeFromParent();
 	}
 }

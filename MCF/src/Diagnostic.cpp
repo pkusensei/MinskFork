@@ -258,7 +258,7 @@ void DiagnosticBag::ReportFunctionViolateODR(string_view name)
 	Report(std::nullopt, std::move(message));
 }
 
-void DiagnosticBag::ReportCannotCreateFunctionBody(string_view error)
+void DiagnosticBag::ReportCannotEmitFunctionBody(string_view error)
 {
 	auto message = BuildStringFrom("Cannot create function body: ", error);
 	Report(std::nullopt, std::move(message));
