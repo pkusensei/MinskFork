@@ -91,7 +91,7 @@ Emitter::Emitter(const string& moduleName)
 	_diagnostics()
 {
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Bool), llvm::ConstantInt::getTrue(_context)->getType());
-	_knownTypes.emplace(TypeSymbol(TypeEnum::Int), _builder.getInt32Ty());
+	_knownTypes.emplace(TypeSymbol(TypeEnum::Int), _builder.getIntNTy(INT_BITS));
 
 	llvm::InitializeAllTargetInfos();
 	llvm::InitializeAllTargets();
@@ -199,18 +199,11 @@ void Emitter::EmitStatement(const BoundStatement& node)
 
 void Emitter::EmitVariableDeclaration(const BoundVariableDeclaration& node)
 {
-	auto value = node.Initializer() == nullptr ?
-		nullptr : EmitExpression(*node.Initializer());
-	if (value == nullptr)
-	{
-		_locals.emplace(node.Variable()->Name(), nullptr);
-	} else
-	{
-		auto type = value->getType();
-		auto alloca = CreateEntryBlockAlloca(type, node.Variable()->Name());
-		_locals.emplace(node.Variable()->Name(), alloca);
-		_builder.CreateStore(value, alloca);
-	}
+	auto value = EmitExpression(*node.Initializer());
+	auto type = value->getType();
+	auto allocaInst = CreateEntryBlockAlloca(type, node.Variable()->Name());
+	_locals.emplace(node.Variable()->Name(), allocaInst);
+	_builder.CreateStore(value, allocaInst);
 }
 
 void Emitter::EmitLabelStatement(const BoundLabelStatement& node)
@@ -286,7 +279,7 @@ llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node
 	try
 	{
 		auto v = _locals.at(node.Variable()->Name());
-		return v ? _builder.CreateLoad(v, string(node.Variable()->Name().data())) : nullptr;
+		return _builder.CreateLoad(v, string(node.Variable()->Name().data()));
 	} catch (const std::out_of_range&)
 	{
 		_diagnostics.ReportUndefinedVariable(std::nullopt, node.Variable()->Name());
