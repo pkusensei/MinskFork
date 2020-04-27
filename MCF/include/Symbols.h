@@ -206,11 +206,9 @@ private:
 public:
 	constexpr ValueType() noexcept :_inner(std::monostate()) {}
 
-	constexpr ValueType(bool value)noexcept :_inner(value) {}
-
 	/// stays implicit
-	template<typename T, std::enable_if_t<std::is_integral_v<T>>>
-	constexpr ValueType(T value)noexcept :_inner(static_cast<IntegerType>(value)) {}
+	constexpr ValueType(bool value)noexcept :_inner(value) {}
+	constexpr ValueType(IntegerType value)noexcept :_inner(value) {}
 
 	constexpr ValueType(const string& s) : _inner(s) {}
 	ValueType(const char* s) : _inner(string(s)) {}
