@@ -30,7 +30,7 @@ using std::make_unique;
 using std::shared_ptr;
 using std::make_shared;
 
-using IntegerType = long; // HACK use long as interger type
+using IntegerType = int;
 
 inline IntegerType StringToInteger(string_view s)
 {

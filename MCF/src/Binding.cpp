@@ -15,8 +15,8 @@
 
 namespace MCF {
 
-// NOTE enable C++ driver by not conflicting with main
-constexpr auto ENTRY_NAME = "Main";
+// NOTE CRT calls this function by name
+constexpr auto ENTRY_NAME = "main";
 
 class BoundScope final
 {

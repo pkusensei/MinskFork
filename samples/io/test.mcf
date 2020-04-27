@@ -3,14 +3,9 @@ function retInt(v: int): int
     return v
 }
 
-function Main()
+function main()
 {
-    print("Say something: ")
-    var v = input()
-    print("It is: ")
-    print(v)
-    print("Some more plz: ")
-    v = input()
-    print("Here we go: ")
-    print(v)
+    print("What's your name?")
+    let v = input()
+    print("Hello " + v + "!")
 }

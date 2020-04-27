@@ -48,9 +48,12 @@ private:
 	unique_ptr<llvm::Module> _module;
 	llvm::TargetMachine* _targetMachine;
 
+	llvm::Type* _charType;
+
 	std::unordered_map<TypeSymbol, llvm::Type*, SymbolHash, SymbolEqual> _knownTypes;
 	llvm::Function* _inputFunc;
 	llvm::Function* _printFunc;
+	llvm::Function* _strConcatFunc;
 
 	// current working function and local variables
 	std::unordered_map<string_view, llvm::AllocaInst*> _locals;
@@ -78,7 +81,10 @@ private:
 	llvm::Value* EmitCallExpression(const BoundCallExpression& node);
 	llvm::Value* EmitConversionExpression(const BoundConversionExpression& node);
 
-	llvm::AllocaInst* CreateEntryBlockAlloca(llvm::Type* type, string_view varName);
+	void InitKnownTypes();
+	void InitExternFunctions();
+	void InitTarget();
+	llvm::AllocaInst* CreateEntryBlockAlloca(llvm::Type* type, string_view varName)const;
 
 public:
 	explicit Emitter(const string& moduleName);
@@ -88,49 +94,20 @@ public:
 };
 
 Emitter::Emitter(const string& moduleName)
-	:_context(), _builder(_context),
+	:_context(),
+	_builder(_context),
 	_module(std::make_unique<llvm::Module>(moduleName, _context)),
 	_targetMachine(nullptr),
+	_charType(_builder.getInt8Ty()),
 	_inputFunc(nullptr),
 	_printFunc(nullptr),
+	_strConcatFunc(nullptr),
 	_function(nullptr),
 	_diagnostics()
 {
-	_knownTypes.emplace(TypeSymbol(TypeEnum::Bool), llvm::ConstantInt::getTrue(_context)->getType());
-	_knownTypes.emplace(TypeSymbol(TypeEnum::Int), _builder.getIntNTy(INT_BITS));
-	_knownTypes.emplace(TypeSymbol(TypeEnum::Void), _builder.getVoidTy());
-
-	auto ft = llvm::FunctionType::get(_builder.getInt8Ty()->getPointerTo(), false);
-	_inputFunc = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "input", _module.get());
-
-	auto args = vector<llvm::Type*>{ _builder.getInt8Ty()->getPointerTo() };
-	ft = llvm::FunctionType::get(_builder.getVoidTy(), args, false);
-	_printFunc =
-		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "print", _module.get());
-
-	llvm::InitializeAllTargetInfos();
-	llvm::InitializeAllTargets();
-	llvm::InitializeAllTargetMCs();
-	llvm::InitializeAllAsmParsers();
-	llvm::InitializeAllAsmPrinters();
-
-	auto targetTriple = llvm::sys::getDefaultTargetTriple();
-	_module->setTargetTriple(targetTriple);
-	string error;
-	auto target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
-	if (target == nullptr)
-	{
-		_diagnostics.ReportRequestedTargetNotFound(error);
-		return;
-	}
-
-	auto cpu = "generic";
-	auto features = "";
-	auto opt = llvm::TargetOptions();
-	auto relocModel = llvm::Optional<llvm::Reloc::Model>();
-	_targetMachine = target->createTargetMachine(
-		targetTriple, cpu, features, opt, relocModel);
-	_module->setDataLayout(_targetMachine->createDataLayout());
+	InitKnownTypes();
+	InitExternFunctions();
+	InitTarget();
 }
 
 void Emitter::EmitFunctionDeclaration(const FunctionSymbol& function)
@@ -291,7 +268,7 @@ llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)
 	} else if (type == TypeSymbol(TypeEnum::String))
 	{
 		auto v = node.Value().ToString();
-		auto charType = _builder.getInt8Ty();
+		auto charType = _charType;
 
 		vector<llvm::Constant*> chars(v.length());
 		std::transform(v.cbegin(), v.cend(), chars.begin(),
@@ -350,7 +327,16 @@ llvm::Value* Emitter::EmitUnaryExpression(const BoundUnaryExpression& node)
 
 llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 {
-	(void)node;
+	if (node.Op().Kind() == BoundBinaryOperatorKind::Addition)
+	{
+		if (node.Left()->Type() == TypeSymbol(TypeEnum::String)
+			&& node.Right()->Type() == TypeSymbol(TypeEnum::String))
+		{
+			auto lhs = EmitExpression(*node.Left());
+			auto rhs = EmitExpression(*node.Right());
+			return _builder.CreateCall(_strConcatFunc, { lhs, rhs });
+		}
+	}
 	return nullptr;
 }
 
@@ -358,7 +344,6 @@ llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 {
 	if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Input))
 	{
-		auto args = vector<llvm::Type*>();
 		return _builder.CreateCall(_inputFunc);
 	} else if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Print))
 	{
@@ -430,7 +415,58 @@ DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputP
 	return result;
 }
 
-llvm::AllocaInst* Emitter::CreateEntryBlockAlloca(llvm::Type* type, string_view varName)
+void Emitter::InitKnownTypes()
+{
+	_knownTypes.emplace(TypeSymbol(TypeEnum::Bool), llvm::ConstantInt::getTrue(_context)->getType());
+	_knownTypes.emplace(TypeSymbol(TypeEnum::Int), _builder.getIntNTy(INT_BITS));
+	_knownTypes.emplace(TypeSymbol(TypeEnum::Void), _builder.getVoidTy());
+}
+
+void Emitter::InitExternFunctions()
+{
+	auto ft = llvm::FunctionType::get(_charType->getPointerTo(), false);
+	_inputFunc =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "input", _module.get());
+
+	auto args = vector<llvm::Type*>{ _charType->getPointerTo() };
+	ft = llvm::FunctionType::get(_builder.getVoidTy(), args, false);
+	_printFunc =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "print", _module.get());
+
+	args = vector<llvm::Type*>(2, _charType->getPointerTo());
+	ft = llvm::FunctionType::get(_charType->getPointerTo(), args, false);
+	_strConcatFunc =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "strConcat", _module.get());
+}
+
+void Emitter::InitTarget()
+{
+	llvm::InitializeAllTargetInfos();
+	llvm::InitializeAllTargets();
+	llvm::InitializeAllTargetMCs();
+	llvm::InitializeAllAsmParsers();
+	llvm::InitializeAllAsmPrinters();
+
+	auto targetTriple = llvm::sys::getDefaultTargetTriple();
+	_module->setTargetTriple(targetTriple);
+	string error;
+	auto target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
+	if (target == nullptr)
+	{
+		_diagnostics.ReportRequestedTargetNotFound(error);
+		return;
+	}
+
+	auto cpu = "generic";
+	auto features = "";
+	auto opt = llvm::TargetOptions();
+	auto relocModel = llvm::Optional<llvm::Reloc::Model>();
+	_targetMachine = target->createTargetMachine(
+		targetTriple, cpu, features, opt, relocModel);
+	_module->setDataLayout(_targetMachine->createDataLayout());
+}
+
+llvm::AllocaInst* Emitter::CreateEntryBlockAlloca(llvm::Type* type, string_view varName)const
 {
 	auto builder = llvm::IRBuilder<>(&_function->getEntryBlock(),
 		_function->getEntryBlock().begin());

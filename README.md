@@ -28,14 +28,14 @@ cmake --build . [2]
 
 #### Run
 
-The executables can be found in `./build/Debug/`. Try the interpreter/repl out with:
+The executables can be found in `./build/Debug/`. Try it out with:
 
 ```cmd
 cd Debug
-mcfi.exe
+mcfc.exe -p ..\..\samples\io\test.mcf
 ```
 
-Meanwhile the compiler counterpart is under heavy construction and out of order for now. 
+Then navigate to [/samples/io/](/samples/io/) directory and execute `build.cmd`.
 
 ### Design Difference
 
@@ -49,11 +49,11 @@ Although this fork stays as close to the original as possible, there are some ch
 
 - LLVM backend
 
-    Because why not. Still this is very much wading through the muddy waters of the huge LLVM world and right now it only emits functions that take and return an integral value to an .obj file. Not so shockingly it also needs a proper C++ wrapper/driver to link against and turn into an executable. A sample is in the [/samples/fib/](/samples/fib/) directory. The main obstacles:
-        
-    - How to emit a proper "main" function,
-    - How to do proper IO, and
-    - How to emit string operations
+    Because why not. Still this is very much wading through the muddy waters of the huge LLVM world and right now it only emits functions that take and return an integral value to an .obj file. Not so shockingly it also needs a proper C++ wrapper/driver to link against and turn into an executable. A sample is in the [/samples/io/](/samples/io/) directory. 
+
+    Peeking through [/samples/io/test.cpp](/samples/io/test.cpp), it is obvious that a lot of heavy lifting, e.g. console IO and string operations, is delegated to C++ code. It sounds very much like cheating. Then again in Minsk such work is done by utilizing .Net assemblies. 
+
+    Another disadvantage here is that all runtime generated strings, either from calling `input()` or concatenating strings are currently stored in a C++ container. Without proper GC it might get bloated up rather quickly. 
 
 - Postfix operations, i.e. `i++` & `i--`
 
