@@ -272,4 +272,10 @@ void DiagnosticBag::ReportWrongArgumentCountEmitted(string_view name,
 	Report(std::nullopt, std::move(message));
 }
 
+void DiagnosticBag::ReportVariableNotEmitted(string_view name)
+{
+	auto message = BuildStringFrom("Variable '", name, "' was not emitted.");
+	Report(std::nullopt, std::move(message));
+}
+
 }//MCF

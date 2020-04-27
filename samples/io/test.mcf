@@ -3,15 +3,14 @@ function retInt(v: int): int
     return v
 }
 
-function ti()
-{
-    print("Say something: ")
-    let v = input()
-    print("It is: ")
-    print(v)
-}
-
 function Main()
 {
-    ti()
+    print("Say something: ")
+    var v = input()
+    print("It is: ")
+    print(v)
+    print("Some more plz: ")
+    v = input()
+    print("Here we go: ")
+    print(v)
 }

@@ -121,6 +121,7 @@ public:
 	void ReportCannotEmitFunctionBody(string_view error);
 	void ReportWrongArgumentCountEmitted(string_view name,
 		size_t expectedCount, size_t actualCount);
+	void ReportVariableNotEmitted(string_view name);
 };
 
 }//MCF

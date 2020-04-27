@@ -330,8 +330,16 @@ llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node
 
 llvm::Value* Emitter::EmitAssignmentExpression(const BoundAssignmentExpression& node)
 {
-	(void)node;
-	return nullptr;
+	auto value = EmitExpression(*node.Expression());
+	try
+	{
+		auto allocaInst = _locals.at(node.Variable()->Name());
+		return _builder.CreateStore(value, allocaInst);
+	} catch (const std::out_of_range&)
+	{
+		_diagnostics.ReportVariableNotEmitted(node.Variable()->Name());
+		return nullptr;
+	}
 }
 
 llvm::Value* Emitter::EmitUnaryExpression(const BoundUnaryExpression& node)
