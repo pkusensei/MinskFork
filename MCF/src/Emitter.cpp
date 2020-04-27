@@ -49,8 +49,11 @@ private:
 	llvm::TargetMachine* _targetMachine;
 
 	std::unordered_map<TypeSymbol, llvm::Type*, SymbolHash, SymbolEqual> _knownTypes;
+	llvm::Function* _printFunc;
+
+	// current working function and local variables
 	std::unordered_map<string_view, llvm::AllocaInst*> _locals;
-	llvm::Function* _function;
+	llvm::Function* _function; 
 
 	DiagnosticBag _diagnostics;
 
@@ -87,12 +90,18 @@ Emitter::Emitter(const string& moduleName)
 	:_context(), _builder(_context),
 	_module(std::make_unique<llvm::Module>(moduleName, _context)),
 	_targetMachine(nullptr),
+	_printFunc(nullptr),
 	_function(nullptr),
 	_diagnostics()
 {
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Bool), llvm::ConstantInt::getTrue(_context)->getType());
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Int), _builder.getIntNTy(INT_BITS));
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Void), _builder.getVoidTy());
+
+	auto args = vector<llvm::Type*>{ _builder.getInt8Ty()->getPointerTo() };
+	auto ft = llvm::FunctionType::get(_builder.getVoidTy(), args, false);
+	_printFunc =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "print", _module.get());
 
 	llvm::InitializeAllTargetInfos();
 	llvm::InitializeAllTargets();
@@ -274,9 +283,30 @@ llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)
 	{
 		auto v = node.Value().ToInteger();
 		return llvm::ConstantInt::get(_context, llvm::APInt(INT_BITS, v, true));
+	} else if (type == TypeSymbol(TypeEnum::String))
+	{
+		auto v = node.Value().ToString();
+		auto charType = _builder.getInt8Ty();
+
+		vector<llvm::Constant*> chars(v.length());
+		std::transform(v.cbegin(), v.cend(), chars.begin(),
+			[charType](const auto& c) { return llvm::ConstantInt::get(charType, c); });
+		chars.push_back(llvm::ConstantInt::get(charType, 0));
+
+		auto strType = llvm::ArrayType::get(charType, chars.size());
+
+		static size_t i = 0;
+		auto name = ".str" + std::to_string(i++);
+		auto global = static_cast<llvm::GlobalVariable*>(_module->getOrInsertGlobal(name, strType));
+		global->setInitializer(llvm::ConstantArray::get(strType, chars));
+		global->setConstant(true);
+		global->setLinkage(llvm::GlobalValue::LinkageTypes::PrivateLinkage);
+		global->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
+
+		return llvm::ConstantExpr::getBitCast(global, charType->getPointerTo());
 	} else
 	{
-		throw std::invalid_argument("Only supports bool and int for now");
+		throw std::invalid_argument("Unexpected value: " + node.Value().ToString());
 	}
 }
 
@@ -322,15 +352,10 @@ llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 	//}
 	if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Print))
 	{
-		//TODO stub here. needs proper string ops
-		//auto value = EmitExpression(*node.Arguments()[0]); 
-		auto value = _builder.CreateGlobalStringPtr("Hello world from mcf.");
-		auto args = vector<llvm::Type*>{ _builder.getInt8Ty()->getPointerTo() };
-		auto ft = llvm::FunctionType::get(_builder.getVoidTy(), args, false);
-		auto func =
-			llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "print", _module.get());
-		return _builder.CreateCall(func, value);
+		auto value = EmitExpression(*node.Arguments()[0]);
+		return _builder.CreateCall(_printFunc, value);
 	}
+
 	auto callee = _module->getFunction(string(node.Function()->Name()));
 	if (callee == nullptr)
 	{
