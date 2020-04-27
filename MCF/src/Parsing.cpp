@@ -157,7 +157,7 @@ SyntaxToken Parser::MatchToken(SyntaxKind kind)
 	if (current.Kind() == kind)
 		return NextToken().Clone();
 	_diagnostics.ReportUnexpectedToken(current.Location(), current.Kind(), kind);
-	return SyntaxToken(_tree, kind, current.Position(), string(), NullValue);
+	return SyntaxToken(_tree, kind, current.Position(), string(), NULL_VALUE);
 }
 
 vector<unique_ptr<MemberSyntax>> Parser::ParseMembers()

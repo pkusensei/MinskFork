@@ -69,7 +69,7 @@ ValueType Evaluator::Evaluate()
 {
 	auto function = _program->MainFunc() ? _program->MainFunc() : _program->ScriptFunc();
 	if (function == nullptr)
-		return NullValue;
+		return NULL_VALUE;
 	auto body = _functions.at(function);
 	return EvaluateStatement(body);
 }
@@ -131,7 +131,7 @@ ValueType Evaluator::EvaluateStatement(const BoundBlockStatement* body)
 			{
 				auto rs = static_cast<const BoundReturnStatement*>(s);
 				_lastValue = rs->Expression() == nullptr ?
-					NullValue : EvaluateExpression(rs->Expression().get());
+					NULL_VALUE : EvaluateExpression(rs->Expression().get());
 				return _lastValue;
 			}
 			default:
@@ -313,7 +313,7 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 	{
 		auto message = EvaluateExpression(node->Arguments()[0].get());
 		std::cout << message.GetValue<string>() << NEW_LINE;
-		return NullValue;
+		return NULL_VALUE;
 	} else if (*(node->Function()) == GetBuiltinFunction(BuiltinFuncEnum::Rnd))
 	{
 		auto max =
@@ -522,14 +522,14 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 	_diagnostics->AddRange(GlobalScope()->Diagnostics());
 
 	if (!_diagnostics->empty())
-		return EvaluationResult(*_diagnostics, NullValue);
+		return EvaluationResult(*_diagnostics, NULL_VALUE);
 
 	auto program = GetProgram();
 	//createCfgFile(*program);
 	if (!program->Diagnostics().empty())
 	{
 		_diagnostics->AddRange(program->Diagnostics());
-		return EvaluationResult(*_diagnostics, NullValue);
+		return EvaluationResult(*_diagnostics, NULL_VALUE);
 	}
 
 	Evaluator evaluator(std::move(program), variables);

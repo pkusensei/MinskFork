@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 		optResult["module"].as<std::string>()
 		: std::string();
 	if (moduleName.empty())
-		moduleName = sourcePath.filename().string();
+		moduleName = sourcePath.filename().replace_extension().string();
 
 	if (!fs::exists(sourcePath))
 	{
@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 
 	if (!result.empty())
 	{
-		if(!MCF::EnableVTMode())
+		if (!MCF::EnableVTMode())
 			std::cerr << "Warning: Unable to enter VT processing mode.\n";
 		auto writer = MCF::IndentedTextWriter(std::cerr);
 		writer.WriteDiagnostics(result);

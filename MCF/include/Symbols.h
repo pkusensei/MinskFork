@@ -230,7 +230,7 @@ public:
 	}
 };
 
-const auto NullValue = ValueType(); // NOTE global constant
+const auto NULL_VALUE = ValueType(); // NOTE global constant
 MCF_API std::ostream& operator<<(std::ostream& out, const ValueType& value);
 
 }//MCF

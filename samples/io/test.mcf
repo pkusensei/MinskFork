@@ -1,0 +1,17 @@
+function retInt(v: int): int
+{
+    return v
+}
+
+function ti()
+{
+    print("Say something: ")
+    let v = input()
+    print("It is: ")
+    print(v)
+}
+
+function Main()
+{
+    ti()
+}

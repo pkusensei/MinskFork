@@ -15,6 +15,9 @@
 
 namespace MCF {
 
+// NOTE enable C++ driver by not conflicting with main
+constexpr auto ENTRY_NAME = "Main";
+
 class BoundScope final
 {
 private:
@@ -898,7 +901,7 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 	} else
 	{
 		auto it = std::find_if(functions.cbegin(), functions.cend(),
-			[](const auto& it) { return it->Name() == "main"; });
+			[](const auto& it) { return it->Name() == ENTRY_NAME; });
 		if (it != functions.cend())
 		{
 			if ((*it)->Type() != TypeSymbol(TypeEnum::Void)
@@ -922,7 +925,7 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 				}
 			} else
 			{
-				mainFunc = make_unique<FunctionSymbol>("main", vector<ParameterSymbol>(),
+				mainFunc = make_unique<FunctionSymbol>(ENTRY_NAME, vector<ParameterSymbol>(),
 					TypeSymbol(TypeEnum::Void), nullptr);
 			}
 		}

@@ -49,11 +49,12 @@ private:
 	llvm::TargetMachine* _targetMachine;
 
 	std::unordered_map<TypeSymbol, llvm::Type*, SymbolHash, SymbolEqual> _knownTypes;
+	llvm::Function* _inputFunc;
 	llvm::Function* _printFunc;
 
 	// current working function and local variables
 	std::unordered_map<string_view, llvm::AllocaInst*> _locals;
-	llvm::Function* _function; 
+	llvm::Function* _function;
 
 	DiagnosticBag _diagnostics;
 
@@ -90,6 +91,7 @@ Emitter::Emitter(const string& moduleName)
 	:_context(), _builder(_context),
 	_module(std::make_unique<llvm::Module>(moduleName, _context)),
 	_targetMachine(nullptr),
+	_inputFunc(nullptr),
 	_printFunc(nullptr),
 	_function(nullptr),
 	_diagnostics()
@@ -98,8 +100,11 @@ Emitter::Emitter(const string& moduleName)
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Int), _builder.getIntNTy(INT_BITS));
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Void), _builder.getVoidTy());
 
+	auto ft = llvm::FunctionType::get(_builder.getInt8Ty()->getPointerTo(), false);
+	_inputFunc = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "input", _module.get());
+
 	auto args = vector<llvm::Type*>{ _builder.getInt8Ty()->getPointerTo() };
-	auto ft = llvm::FunctionType::get(_builder.getVoidTy(), args, false);
+	ft = llvm::FunctionType::get(_builder.getVoidTy(), args, false);
 	_printFunc =
 		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "print", _module.get());
 
@@ -343,14 +348,11 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 
 llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 {
-	//if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Input))
-	//{
-	//	auto args = vector<llvm::Type*>();
-	//	auto ft = llvm::FunctionType::get(_builder.getInt8Ty()->getPointerTo(), false);
-	//	auto func = llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "input", _module.get());
-	//	return _builder.CreateCall(func);
-	//}
-	if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Print))
+	if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Input))
+	{
+		auto args = vector<llvm::Type*>();
+		return _builder.CreateCall(_inputFunc);
+	} else if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Print))
 	{
 		auto value = EmitExpression(*node.Arguments()[0]);
 		return _builder.CreateCall(_printFunc, value);
@@ -392,13 +394,9 @@ DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputP
 	auto result = DiagnosticBag();
 
 	for (const auto& [func, _] : program.Functions())
-	{
 		EmitFunctionDeclaration(*func);
-	}
 	for (const auto& [func, body] : program.Functions())
-	{
 		EmitFunctionBody(*func, *body);
-	}
 
 	if (!_diagnostics.empty())
 		return _diagnostics;

@@ -11,7 +11,7 @@ namespace MCF {
 Lexer::Lexer(const SyntaxTree& tree)
 	:_tree(tree), _text(tree.Text()),
 	_diagnostics(tree.Diagnostics()),
-	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(NullValue)
+	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(NULL_VALUE)
 {
 }
 
@@ -27,7 +27,7 @@ SyntaxToken Lexer::Lex()
 {
 	_start = _position;
 	_kind = SyntaxKind::BadToken;
-	_value = NullValue;
+	_value = NULL_VALUE;
 	auto character = Current();
 
 	switch (character)
