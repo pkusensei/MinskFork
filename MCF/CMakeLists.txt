@@ -1,8 +1,5 @@
 project(MCF)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY 
-	${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
-
 add_library(MCF SHARED src/Binding.cpp
 	src/BoundNode.cpp
 	src/BoundNodePrinter.cpp
@@ -54,26 +51,3 @@ target_compile_definitions(
 	-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 	${LLVM_DEFINITIONS}
 )
-
-
-# install(
-# 	TARGETS ${PROJECT_NAME}
-# 	EXPORT ${PROJECT_NAME}-config
-# 	LIBRARY DESTINATION ${CMAKE_INSTALL_DIR})
-
-# install(
-#     EXPORT ${PROJECT_NAME}-config
-#     NAMESPACE ${PROJECT_NAME}::
-#     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
-
-# install(
-#     DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/
-#     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
-
-# add_custom_command(
-# 	TARGET ${PROJECT_NAME} POST_BUILD
-# 	COMMAND ${CMAKE_COMMAND} -E copy_directory
-#     $<TARGET_FILE_DIR:${PROJECT_NAME}>
-# 	${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE}
-#     VERBATIM
-# )

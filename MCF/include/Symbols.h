@@ -210,7 +210,7 @@ public:
 	constexpr ValueType(bool value)noexcept :_inner(value) {}
 	constexpr ValueType(IntegerType value)noexcept :_inner(value) {}
 
-	constexpr ValueType(const string& s) : _inner(s) {}
+	ValueType(string s) : _inner(std::move(s)) {}
 	ValueType(const char* s) : _inner(string(s)) {}
 
 	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }

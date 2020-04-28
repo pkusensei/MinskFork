@@ -1,8 +1,5 @@
 project(tests)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY 
-	${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
-
 add_executable(mcf_test src/test_main.cpp
 	src/Evaluation_tests.cpp
 	src/Lexer_tests.cpp

@@ -240,8 +240,9 @@ void Lexer::ReadString()
 			}
 		}
 	}
+	s.shrink_to_fit();
 	_kind = SyntaxKind::StringToken;
-	_value = ValueType(s);
+	_value = ValueType(std::move(s));
 }
 
 void Lexer::ReadWhiteSpace()

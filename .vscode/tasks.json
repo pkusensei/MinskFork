@@ -6,6 +6,7 @@
             "command": "${workspaceFolder}/build/Debug/mcfc",
             "type": "shell",
             "args": [
+                "-p",
                 "${file}"
             ],
             "presentation": {

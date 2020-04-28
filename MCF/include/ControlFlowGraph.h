@@ -7,7 +7,6 @@
 
 namespace MCF {
 
-class BoundExpression;
 class BoundStatement;
 class BoundBlockStatement;
 

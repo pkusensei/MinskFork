@@ -55,7 +55,7 @@ AnnotatedText AnnotatedText::Parse(std::string_view input)
 	std::stack<size_t> startStack;
 
 	size_t position = 0;
-	for (const auto& c : text)
+	for (const auto c : text)
 	{
 		if (c == '[')
 			startStack.emplace(position);
@@ -75,5 +75,5 @@ AnnotatedText AnnotatedText::Parse(std::string_view input)
 	}
 	if (!startStack.empty())
 		throw std::invalid_argument("Missing ']' in input text");
-	return AnnotatedText(result, spans);
+	return AnnotatedText(std::move(result), std::move(spans));
 }
