@@ -1,8 +1,3 @@
-function retInt(v: int): int
-{
-    return v
-}
-
 function main()
 {
     print("What's your name?")

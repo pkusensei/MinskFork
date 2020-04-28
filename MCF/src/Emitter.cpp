@@ -52,7 +52,7 @@ private:
 
 	std::unordered_map<TypeSymbol, llvm::Type*, SymbolHash, SymbolEqual> _knownTypes;
 	llvm::Function* _inputFunc;
-	llvm::Function* _printFunc;
+	llvm::Function* _putsFunc; 	// NOTE delegate print to C puts function
 	llvm::Function* _strConcatFunc;
 
 	// current working function and local variables
@@ -100,7 +100,7 @@ Emitter::Emitter(const string& moduleName)
 	_targetMachine(nullptr),
 	_charType(_builder.getInt8Ty()),
 	_inputFunc(nullptr),
-	_printFunc(nullptr),
+	_putsFunc(nullptr),
 	_strConcatFunc(nullptr),
 	_function(nullptr),
 	_diagnostics()
@@ -348,7 +348,7 @@ llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 	} else if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Print))
 	{
 		auto value = EmitExpression(*node.Arguments()[0]);
-		return _builder.CreateCall(_printFunc, value);
+		return _builder.CreateCall(_putsFunc, value);
 	}
 
 	auto callee = _module->getFunction(string(node.Function()->Name()));
@@ -429,9 +429,9 @@ void Emitter::InitExternFunctions()
 		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "input", _module.get());
 
 	auto args = vector<llvm::Type*>{ _charType->getPointerTo() };
-	ft = llvm::FunctionType::get(_builder.getVoidTy(), args, false);
-	_printFunc =
-		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "print", _module.get());
+	ft = llvm::FunctionType::get(_builder.getInt32Ty(), args, false);
+	_putsFunc =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "puts", _module.get());
 
 	args = vector<llvm::Type*>(2, _charType->getPointerTo());
 	ft = llvm::FunctionType::get(_charType->getPointerTo(), args, false);
