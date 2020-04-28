@@ -32,10 +32,10 @@ The executables can be found in `./build/Debug/`. Try it out with:
 
 ```cmd
 cd Debug
-mcfc.exe -p ..\..\samples\io\test.mcf
+mcfc.exe -p ..\..\samples\hello\hello.mcf
 ```
 
-Then navigate to [/samples/io/](/samples/io/) directory and execute `build.cmd`.
+Then navigate to [./samples/hello/](./samples/hello/) directory and execute [build.cmd](./samples/hello/build.cmd).
 
 ### Design Difference
 
@@ -43,15 +43,15 @@ Although this fork stays as close to the original as possible, there are some ch
 
 - Using directive
 
-    It just feels not right to automatically compile every source file in the same directory without any checks. Here a `using` keyword is added to bring other source files into the fold. ~~As of now it works with [/samples/hello/helloworld.mcf](/samples/hello/helloworld.mcf) and [/samples/fib/test.mcf](/samples/fib/test.mcf) but definitely needs more testing.~~(Not working before compiler takes decent shape) In the hindsight it works more like Python's `import` than C#'s `using`. The downside is it pollutes the current source file with every symbol from imported sources. 
+    It just feels not right to automatically compile every source file in the same directory without any checks. Here a `using` keyword is added to bring other source files into the fold. As of now it works with [./samples/hello/hello.mcf](./samples/hello/hello.mcf) ~~and [./samples/fib/test.mcf](./samples/fib/test.mcf)~~ but definitely needs more testing. In the hindsight it works more like Python's `import` than C#'s `using`. The downside is it pollutes the current source file with every symbol from imported sources. 
 
     A side effect is that it doesn't take multiple paths as input as all necessary source files should be properly imported. I consider this an improvement.
 
 - LLVM backend
 
-    Because why not. Still this is very much wading through the muddy waters of the huge LLVM world and right now it only emits functions that take and return an integral value to an .obj file. Not so shockingly it also needs a proper C++ wrapper/driver to link against and turn into an executable. A sample is in the [/samples/io/](/samples/io/) directory. 
+    Because why not. Still this is very much wading through the muddy waters of the huge LLVM world and right now it only emits functions that take and return an integral value to an .obj file. Not so shockingly it needs to link against C runtime to turn into an executable. A sample is in the [./samples/hello/](./samples/hello/) directory. 
 
-    Peeking through [/samples/io/test.cpp](/samples/io/test.cpp), it is obvious that a lot of heavy lifting, e.g. console IO and string operations, is delegated to C++ code. It sounds very much like cheating. Then again in Minsk such work is done by utilizing .Net assemblies. 
+    Peeking through [./samples/strops.cpp](./samples/strops.cpp), it is obvious that a lot of heavy lifting, e.g. console input and string operations, is delegated to C++ code. It sounds very much like cheating. Then again in Minsk such work is done by utilizing .Net assemblies. 
 
     Another disadvantage here is that all runtime generated strings, either from calling `input()` or concatenating strings are currently stored in a C++ container. Without proper GC it might get bloated up rather quickly. 
 

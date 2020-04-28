@@ -1,6 +1,0 @@
-function main()
-{
-    print("What's your name?")
-    let v = input()
-    print("Hello " + v + "!")
-}

@@ -847,14 +847,14 @@ unique_ptr<BoundGlobalScope> BindGlobalScope(bool isScript,
 
 unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 	const BoundGlobalScope* previous,
-	const vector<const SyntaxTree*>& synTrees)
+	const vector<const SyntaxTree*>& trees)
 {
 	auto parentScope = CreateParentScope(previous);
 	auto binder = Binder(isScript, std::move(parentScope), nullptr);
 	auto statements = vector<shared_ptr<BoundStatement>>();
 	auto globalStmts = vector<const GlobalStatementSyntax*>();
 
-	for (const auto& tree : synTrees)
+	for (const auto& tree : trees)
 	{
 		auto syntax = tree->Root();
 		for (const auto& it : syntax->Members())
@@ -864,6 +864,14 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 				auto func = static_cast<FunctionDeclarationSyntax*>(it.get());
 				binder.BindFunctionDeclaration(func);
 			}
+		}
+	}
+
+	for (const auto& tree : trees)
+	{
+		auto syntax = tree->Root();
+		for (const auto& it : syntax->Members())
+		{
 			if (it->Kind() == SyntaxKind::GlobalStatement)
 			{
 				auto globalStatement = static_cast<GlobalStatementSyntax*>(it.get());
@@ -874,7 +882,7 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 	}
 
 	auto firstGlobalStmtPerSynTree = vector<const GlobalStatementSyntax*>();
-	std::for_each(synTrees.cbegin(), synTrees.cend(),
+	std::for_each(trees.cbegin(), trees.cend(),
 		[&firstGlobalStmtPerSynTree](const auto& tree)
 		{
 			auto& members = tree->Root()->Members();

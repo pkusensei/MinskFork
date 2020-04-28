@@ -270,8 +270,8 @@ llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)
 		auto v = node.Value().ToString();
 		auto charType = _charType;
 
-		vector<llvm::Constant*> chars(v.length());
-		std::transform(v.cbegin(), v.cend(), chars.begin(),
+		auto chars = vector<llvm::Constant*>();
+		std::transform(v.cbegin(), v.cend(), std::back_inserter(chars),
 			[charType](const auto& c) { return llvm::ConstantInt::get(charType, c); });
 		chars.push_back(llvm::ConstantInt::get(charType, 0));
 
@@ -419,6 +419,7 @@ void Emitter::InitKnownTypes()
 {
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Bool), llvm::ConstantInt::getTrue(_context)->getType());
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Int), _builder.getIntNTy(INT_BITS));
+	_knownTypes.emplace(TypeSymbol(TypeEnum::String), _charType->getPointerTo());
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Void), _builder.getVoidTy());
 }
 

@@ -72,7 +72,7 @@ public:
 	constexpr bool IsScript()const noexcept { return _isScript; }
 	Compilation* Previous() noexcept { return _previous.get(); }
 	const Compilation* Previous()const noexcept { return _previous.get(); }
-	const vector<const SyntaxTree*> SynTrees()const noexcept;
+	const vector<const SyntaxTree*> SyntaxTrees()const noexcept;
 
 	const BoundGlobalScope* GlobalScope();
 	const vector<shared_ptr<FunctionSymbol>>& Functions();

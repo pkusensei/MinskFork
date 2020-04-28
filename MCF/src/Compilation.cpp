@@ -428,11 +428,11 @@ unique_ptr<Compilation> Compilation::CreateScript(unique_ptr<Compilation> previo
 	return unique_ptr<Compilation>(new Compilation(true, std::move(previous), std::move(vec)));
 }
 
-const vector<const SyntaxTree*> Compilation::SynTrees()const noexcept
+const vector<const SyntaxTree*> Compilation::SyntaxTrees()const noexcept
 {
 	auto result = vector<const SyntaxTree*>();
-	std::for_each(_syntaxTrees.cbegin(), _syntaxTrees.cend(),
-		[&result](const auto& tree) { result.push_back(tree.get()); });
+	std::transform(_syntaxTrees.cbegin(), _syntaxTrees.cend(), std::back_inserter(result),
+		[](const auto& tree) { return tree.get(); });
 	return result;
 }
 
@@ -442,9 +442,9 @@ const BoundGlobalScope* Compilation::GlobalScope()
 	{
 		unique_ptr<BoundGlobalScope> tmp{ nullptr };
 		if (_previous == nullptr)
-			tmp = BindGlobalScope(IsScript(), nullptr, SynTrees());
+			tmp = BindGlobalScope(IsScript(), nullptr, SyntaxTrees());
 		else
-			tmp = BindGlobalScope(IsScript(), _previous->GlobalScope(), SynTrees());
+			tmp = BindGlobalScope(IsScript(), _previous->GlobalScope(), SyntaxTrees());
 
 		std::unique_lock<std::mutex> lock(_mtx, std::defer_lock);
 		if (lock.try_lock() && _globalScope == nullptr)
