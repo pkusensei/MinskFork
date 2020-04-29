@@ -78,7 +78,7 @@ void DiagnosticBag::ReportUndefinedBinaryOperator(TextLocation location,
 	Report(std::move(location), std::move(message));
 }
 
-void DiagnosticBag::ReportUndefinedVariable(std::optional<TextLocation> location, string_view name)
+void DiagnosticBag::ReportUndefinedVariable(TextLocation location, string_view name)
 {
 	auto message = BuildStringFrom("Variable '", name, "' doesn't exist.");
 	Report(std::move(location), std::move(message));

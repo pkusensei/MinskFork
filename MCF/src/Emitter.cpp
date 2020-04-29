@@ -114,10 +114,10 @@ void Emitter::EmitFunctionDeclaration(const FunctionSymbol& function)
 {
 	auto retType = _knownTypes.at(function.Type());
 	auto args = vector<llvm::Type*>();
-	for (const auto& it : function.Parameters())
-	{
-		args.push_back(_knownTypes.at(it.Type()));
-	}
+	std::transform(function.Parameters().cbegin(), function.Parameters().cend(),
+		std::back_inserter(args),
+		[this](const auto& p) { return _knownTypes.at(p.Type()); });
+
 	auto f = llvm::FunctionType::get(retType, args, false);
 	llvm::Function::Create(f, llvm::Function::ExternalLinkage,
 		string(function.Name()), *_module);
@@ -300,7 +300,7 @@ llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node
 		return _builder.CreateLoad(v, string(node.Variable()->Name().data()));
 	} catch (const std::out_of_range&)
 	{
-		_diagnostics.ReportUndefinedVariable(std::nullopt, node.Variable()->Name());
+		_diagnostics.ReportVariableNotEmitted(node.Variable()->Name());
 		return nullptr;
 	}
 }

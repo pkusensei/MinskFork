@@ -78,7 +78,7 @@ public:
 		const TypeSymbol& operandType);
 	void ReportUndefinedBinaryOperator(TextLocation location, string_view operatorText,
 		const TypeSymbol& leftType, const TypeSymbol& rightType);
-	void ReportUndefinedVariable(std::optional<TextLocation> location, string_view name);
+	void ReportUndefinedVariable(TextLocation location, string_view name);
 	void ReportNotAVariable(TextLocation location, string_view name);
 	void ReportUndefinedType(TextLocation location, string_view name);
 	void ReportCannotConvert(TextLocation location, const TypeSymbol& fromType,
