@@ -65,6 +65,9 @@ private:
 	llvm::Function* _strToBoolFunc;
 	llvm::Function* _strToIntFunc;
 
+	llvm::Function* _ptrEqualFunc;
+	llvm::Function* _strEqualFunc;
+
 	// current working function and local variables
 	std::unordered_map<string_view, llvm::AllocaInst*> _locals;
 	llvm::Function* _function;
@@ -90,6 +93,7 @@ private:
 	llvm::Value* EmitBinaryExpression(const BoundBinaryExpression& node);
 	llvm::Value* EmitCallExpression(const BoundCallExpression& node);
 	llvm::Value* EmitConversionExpression(const BoundConversionExpression& node);
+	llvm::Value* EmitPostfixExpression(const BoundPostfixExpression& node);
 
 	void InitKnownTypes();
 	void InitExternFunctions();
@@ -254,6 +258,8 @@ llvm::Value* Emitter::EmitExpression(const BoundExpression& node)
 			return EmitCallExpression(static_cast<const BoundCallExpression&>(node));
 		case BoundNodeKind::ConversionExpression:
 			return EmitConversionExpression(static_cast<const BoundConversionExpression&>(node));
+		case BoundNodeKind::PostfixExpression:
+			return EmitPostfixExpression(static_cast<const BoundPostfixExpression&>(node));
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected node: ", nameof(node.Kind())));
 	}
@@ -358,17 +364,111 @@ llvm::Value* Emitter::EmitUnaryExpression(const BoundUnaryExpression& node)
 
 llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 {
+	auto lhs = EmitExpression(*node.Left());
+	auto rhs = EmitExpression(*node.Right());
+
 	if (node.Op().Kind() == BoundBinaryOperatorKind::Addition)
 	{
 		if (node.Left()->Type() == TypeSymbol(TypeEnum::String)
 			&& node.Right()->Type() == TypeSymbol(TypeEnum::String))
 		{
-			auto lhs = EmitExpression(*node.Left());
-			auto rhs = EmitExpression(*node.Right());
 			return _builder.CreateCall(_strConcatFunc, { lhs, rhs });
 		}
 	}
-	return nullptr;
+
+	if (node.Op().Kind() == BoundBinaryOperatorKind::Equals)
+	{
+		/*
+		* NOTE "any" objects treated as addresses/pointers
+		*      but strings are stored either in
+		*      a) runtime container
+		*      b) as constant in binary
+		*/
+		if (node.Left()->Type() == TypeSymbol(TypeEnum::Any)
+			&& node.Right()->Type() == TypeSymbol(TypeEnum::Any))
+		{
+			return _builder.CreateCall(_ptrEqualFunc, { lhs, rhs });
+		} else if (node.Left()->Type() == TypeSymbol(TypeEnum::String)
+			&& node.Right()->Type() == TypeSymbol(TypeEnum::String))
+		{
+			return _builder.CreateCall(_strEqualFunc, { lhs, rhs });
+		}
+	}
+
+	if (node.Op().Kind() == BoundBinaryOperatorKind::NotEquals)
+	{
+		llvm::CallInst* value = nullptr;
+		auto compareToFalse = [this](llvm::CallInst* v)
+		{
+			auto false_ = llvm::ConstantInt::getFalse(_context);
+			auto op = new llvm::ICmpInst(llvm::CmpInst::Predicate::ICMP_EQ, false_, v);
+			return _builder.Insert(op);
+		};
+
+		if (node.Left()->Type() == TypeSymbol(TypeEnum::Any)
+			&& node.Right()->Type() == TypeSymbol(TypeEnum::Any))
+		{
+			value = _builder.CreateCall(_ptrEqualFunc, { lhs, rhs });
+			return compareToFalse(value);
+		} else if (node.Left()->Type() == TypeSymbol(TypeEnum::String)
+			&& node.Right()->Type() == TypeSymbol(TypeEnum::String))
+		{
+			value = _builder.CreateCall(_strEqualFunc, { lhs, rhs });
+			return compareToFalse(value);
+		}
+	}
+
+	auto binary = [this, lhs, rhs](llvm::Instruction::BinaryOps ins)
+	{
+		auto op = llvm::BinaryOperator::Create(ins, lhs, rhs);
+		return _builder.Insert(op);
+	};
+	auto compare = [this, lhs, rhs](llvm::CmpInst::Predicate p)
+	{
+		auto op = new llvm::ICmpInst(p, lhs, rhs);
+		return _builder.Insert(op);
+	};
+
+	switch (node.Op().Kind())
+	{
+		case BoundBinaryOperatorKind::Addition:
+			return binary(llvm::Instruction::Add);
+		case BoundBinaryOperatorKind::Subtraction:
+			return binary(llvm::Instruction::Sub);
+		case BoundBinaryOperatorKind::Multiplication:
+			return binary(llvm::Instruction::Mul);
+		case BoundBinaryOperatorKind::Division:
+			return binary(llvm::Instruction::SDiv);
+
+		case BoundBinaryOperatorKind::LogicalAnd:
+		case BoundBinaryOperatorKind::BitwiseAnd:
+			return binary(llvm::Instruction::And);
+		case BoundBinaryOperatorKind::LogicalOr:
+		case BoundBinaryOperatorKind::BitwiseOr:
+			return binary(llvm::Instruction::Or);
+		case BoundBinaryOperatorKind::BitwiseXor:
+			return binary(llvm::Instruction::Xor);
+
+		case BoundBinaryOperatorKind::Equals:
+			return compare(llvm::CmpInst::Predicate::ICMP_EQ);
+		case BoundBinaryOperatorKind::NotEquals:
+			return compare(llvm::CmpInst::Predicate::ICMP_NE);
+		case BoundBinaryOperatorKind::Less:
+			return compare(llvm::CmpInst::Predicate::ICMP_SLT);
+		case BoundBinaryOperatorKind::LessOrEquals:
+			return compare(llvm::CmpInst::Predicate::ICMP_SLE);
+		case BoundBinaryOperatorKind::Greater:
+			return compare(llvm::CmpInst::Predicate::ICMP_SGT);
+		case BoundBinaryOperatorKind::GreaterOrEquals:
+			return compare(llvm::CmpInst::Predicate::ICMP_SGE);
+
+		default:
+			throw std::invalid_argument(BuildStringFrom("Unexpected binary operator ",
+				GetText(node.Op().SynKind()),
+				'(', node.Left()->Type().Name(), ", ",
+				node.Right()->Type().Name(), ")")
+			);
+	}
 }
 
 llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
@@ -441,6 +541,39 @@ llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& 
 		throw std::invalid_argument(BuildStringFrom("Unexpected convertion from '",
 			node.Expression()->Type().Name(), "' to '",
 			node.Type().Name(), "'."));
+	}
+}
+
+llvm::Value* Emitter::EmitPostfixExpression(const BoundPostfixExpression& node)
+{
+	auto value = EmitExpression(*node.Expression());
+	try
+	{
+		auto unit = llvm::ConstantInt::get(_intType, 1, true);
+		auto allocaInst = _locals.at(node.Variable()->Name());
+		switch (node.OperatorKind())
+		{
+			case BoundPostfixOperatorEnum::Increment:
+			{
+				auto op = llvm::BinaryOperator::Create(llvm::Instruction::BinaryOps::Add, value, unit);
+				auto result = _builder.Insert(op);
+				_builder.CreateStore(result, allocaInst);
+				return result;
+			}
+			case BoundPostfixOperatorEnum::Decrement:
+			{
+				auto op = llvm::BinaryOperator::Create(llvm::Instruction::BinaryOps::Sub, value, unit);
+				auto result = _builder.Insert(op);
+				_builder.CreateStore(result, allocaInst);
+				return result;
+			}
+			default:
+				throw std::invalid_argument("Unknown BoundPostfixOperator");
+		}
+	} catch (const std::out_of_range&)
+	{
+		_diagnostics.ReportVariableNotEmitted(node.Variable()->Name());
+		return nullptr;
 	}
 }
 
@@ -527,6 +660,17 @@ void Emitter::InitExternFunctions()
 	_strToIntFunc =
 		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "strToInt", *_module);
 
+	// NOTE there is no void* in LLVM representation
+	auto voidPtrType = _charType->getPointerTo(); 
+	args = vector<llvm::Type*>(2, voidPtrType);
+	ft = llvm::FunctionType::get(_boolType, args, false);
+	_ptrEqualFunc =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "ptrEqual", *_module);
+
+	args = vector<llvm::Type*>(2, _charType->getPointerTo());
+	ft = llvm::FunctionType::get(_boolType, args, false);
+	_strEqualFunc =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "strEqual", *_module);
 }
 
 void Emitter::InitTarget()
