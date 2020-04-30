@@ -1,4 +1,7 @@
 using "getname.mcf"
 
 let name = getName()
-print("Hello " + name + "!")
+print("Hello " + name +"!")
+
+print(string(true))
+print(string(42))

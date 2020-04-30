@@ -34,7 +34,7 @@ using IntegerType = int;
 
 inline IntegerType StringToInteger(string_view s)
 {
-	return std::stol(string(s));
+	return std::stoi(string(s));
 }
 
 constexpr auto NEW_LINE = '\n';

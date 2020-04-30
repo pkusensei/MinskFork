@@ -48,12 +48,21 @@ private:
 	unique_ptr<llvm::Module> _module;
 	llvm::TargetMachine* _targetMachine;
 
+	llvm::Type* _boolType;
 	llvm::Type* _charType;
+	llvm::Type* _intType;
 
 	std::unordered_map<TypeSymbol, llvm::Type*, SymbolHash, SymbolEqual> _knownTypes;
+
 	llvm::Function* _inputFunc;
 	llvm::Function* _putsFunc; 	// NOTE delegate print to C puts function
+	llvm::Function* _rndFunc;
 	llvm::Function* _strConcatFunc;
+
+	llvm::Function* _boolToStrFunc;
+	llvm::Function* _intToStrFunc;
+	llvm::Function* _strToBoolFunc;
+	llvm::Function* _strToIntFunc;
 
 	// current working function and local variables
 	std::unordered_map<string_view, llvm::AllocaInst*> _locals;
@@ -98,10 +107,6 @@ Emitter::Emitter(const string& moduleName)
 	_builder(_context),
 	_module(std::make_unique<llvm::Module>(moduleName, _context)),
 	_targetMachine(nullptr),
-	_charType(_builder.getInt8Ty()),
-	_inputFunc(nullptr),
-	_putsFunc(nullptr),
-	_strConcatFunc(nullptr),
 	_function(nullptr),
 	_diagnostics()
 {
@@ -272,7 +277,7 @@ llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)
 
 		auto chars = vector<llvm::Constant*>();
 		std::transform(v.cbegin(), v.cend(), std::back_inserter(chars),
-			[charType](const auto& c) { return llvm::ConstantInt::get(charType, c); });
+			[charType](const auto c) { return llvm::ConstantInt::get(charType, c); });
 		chars.push_back(llvm::ConstantInt::get(charType, 0));
 
 		auto strType = llvm::ArrayType::get(charType, chars.size());
@@ -347,8 +352,12 @@ llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 		return _builder.CreateCall(_inputFunc);
 	} else if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Print))
 	{
-		auto value = EmitExpression(*node.Arguments()[0]);
+		auto value = EmitExpression(*node.Arguments().at(0));
 		return _builder.CreateCall(_putsFunc, value);
+	} else if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Rnd))
+	{
+		auto value = EmitExpression(*node.Arguments().at(0));
+		return _builder.CreateCall(_rndFunc, value);
 	}
 
 	auto callee = _module->getFunction(string(node.Function()->Name()));
@@ -375,8 +384,28 @@ llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 
 llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& node)
 {
-	(void)node;
-	return nullptr;
+	auto value = EmitExpression(*node.Expression());
+	if (value == nullptr)
+		return nullptr;
+	if (node.Type() == TypeSymbol(TypeEnum::Bool))
+	{
+		if (value->getType() == _charType->getPointerTo())
+			return _builder.CreateCall(_strToBoolFunc, value);
+	} else if (node.Type() == TypeSymbol(TypeEnum::Int))
+	{
+		if (value->getType() == _charType->getPointerTo())
+			return _builder.CreateCall(_strToIntFunc, value);
+	} else if (node.Type() == TypeSymbol(TypeEnum::String))
+	{
+		if (value->getType() == _boolType)
+			return _builder.CreateCall(_boolToStrFunc, value);
+		if (value->getType() == _intType)
+			return _builder.CreateCall(_intToStrFunc, value);
+	}
+	// NOTE implicit conversions
+	//      int -> bool non-zero -> true
+	//      bool -> int
+	return value;
 }
 
 DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputPath)
@@ -417,8 +446,12 @@ DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputP
 
 void Emitter::InitKnownTypes()
 {
-	_knownTypes.emplace(TypeSymbol(TypeEnum::Bool), llvm::ConstantInt::getTrue(_context)->getType());
-	_knownTypes.emplace(TypeSymbol(TypeEnum::Int), _builder.getIntNTy(INT_BITS));
+	_boolType = llvm::ConstantInt::getTrue(_context)->getType();
+	_charType = _builder.getInt8Ty();
+	_intType = _builder.getIntNTy(INT_BITS);
+
+	_knownTypes.emplace(TypeSymbol(TypeEnum::Bool), _boolType);
+	_knownTypes.emplace(TypeSymbol(TypeEnum::Int), _intType);
 	_knownTypes.emplace(TypeSymbol(TypeEnum::String), _charType->getPointerTo());
 	_knownTypes.emplace(TypeSymbol(TypeEnum::Void), _builder.getVoidTy());
 }
@@ -427,17 +460,37 @@ void Emitter::InitExternFunctions()
 {
 	auto ft = llvm::FunctionType::get(_charType->getPointerTo(), false);
 	_inputFunc =
-		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "input", _module.get());
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "input", *_module);
 
-	auto args = vector<llvm::Type*>{ _charType->getPointerTo() };
-	ft = llvm::FunctionType::get(_builder.getInt32Ty(), args, false);
+	ft = llvm::FunctionType::get(_builder.getInt32Ty(), _charType->getPointerTo(), false);
 	_putsFunc =
-		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "puts", _module.get());
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "puts", *_module);
 
-	args = vector<llvm::Type*>(2, _charType->getPointerTo());
+	ft = llvm::FunctionType::get(_intType, _intType, false);
+	_rndFunc =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "rnd", *_module);
+
+	auto args = vector<llvm::Type*>(2, _charType->getPointerTo());
 	ft = llvm::FunctionType::get(_charType->getPointerTo(), args, false);
 	_strConcatFunc =
-		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "strConcat", _module.get());
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "strConcat", *_module);
+
+	ft = llvm::FunctionType::get(_charType->getPointerTo(), _boolType, false);
+	_boolToStrFunc =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "boolToStr", *_module);
+
+	ft = llvm::FunctionType::get(_charType->getPointerTo(), _intType, false);
+	_intToStrFunc =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "intToStr", *_module);
+
+	ft = llvm::FunctionType::get(_boolType, _charType->getPointerTo(), false);
+	_strToBoolFunc =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "strToBool", *_module);
+
+	ft = llvm::FunctionType::get(_intType, _charType->getPointerTo(), false);
+	_strToIntFunc =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "strToInt", *_module);
+
 }
 
 void Emitter::InitTarget()
