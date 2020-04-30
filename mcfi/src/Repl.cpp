@@ -721,7 +721,7 @@ void McfRepl::EvaluateSubmission(std::string_view text)
 	auto compilation = MCF::Compilation::CreateScript(std::move(_previous), std::move(syntaxTree));
 
 	if (_showTree)
-		compilation->SynTrees().back()->Root()->WriteTo(std::cout);
+		compilation->SyntaxTrees().back()->Root()->WriteTo(std::cout);
 	if (_showProgram)
 		compilation->EmitTree(std::cout);
 

@@ -13,6 +13,7 @@
 #include <llvm/ADT/Optional.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -326,8 +327,33 @@ llvm::Value* Emitter::EmitAssignmentExpression(const BoundAssignmentExpression& 
 
 llvm::Value* Emitter::EmitUnaryExpression(const BoundUnaryExpression& node)
 {
-	(void)node;
-	return nullptr;
+	auto value = EmitExpression(*node.Operand());
+	switch (node.Op().Kind())
+	{
+		case BoundUnaryOperatorKind::Identity:
+			return value;
+		case BoundUnaryOperatorKind::Negation:
+		{
+			auto op = llvm::BinaryOperator::CreateNeg(value);
+			return _builder.Insert(op);
+		}
+		case BoundUnaryOperatorKind::LogicalNegation:
+		{
+			auto false_ = llvm::ConstantInt::getFalse(_context);
+			auto op = new llvm::ICmpInst(llvm::CmpInst::Predicate::ICMP_EQ, false_, value);
+			return _builder.Insert(op);
+		}
+		case BoundUnaryOperatorKind::OnesComplement:
+		{
+			auto op = llvm::BinaryOperator::CreateNot(value);
+			return _builder.Insert(op);
+		}
+		default:
+			throw std::invalid_argument(BuildStringFrom("Unexpected unary operator ",
+				GetText(node.Op().SynKind()),
+				'(', node.Operand()->Type().Name(), ").")
+			);
+	}
 }
 
 llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
@@ -387,25 +413,35 @@ llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& 
 	auto value = EmitExpression(*node.Expression());
 	if (value == nullptr)
 		return nullptr;
-	if (node.Type() == TypeSymbol(TypeEnum::Bool))
+	if (node.Type() == TypeSymbol(TypeEnum::Any))
+	{
+		return value;
+	} else if (node.Type() == TypeSymbol(TypeEnum::Bool))
 	{
 		if (value->getType() == _charType->getPointerTo())
 			return _builder.CreateCall(_strToBoolFunc, value);
+		return value;
 	} else if (node.Type() == TypeSymbol(TypeEnum::Int))
 	{
 		if (value->getType() == _charType->getPointerTo())
 			return _builder.CreateCall(_strToIntFunc, value);
+		return value;
 	} else if (node.Type() == TypeSymbol(TypeEnum::String))
 	{
 		if (value->getType() == _boolType)
 			return _builder.CreateCall(_boolToStrFunc, value);
 		if (value->getType() == _intType)
 			return _builder.CreateCall(_intToStrFunc, value);
+		return value;
+	} else
+	{
+		// NOTE implicit conversions
+		//      int -> bool non-zero -> true
+		//      bool -> int
+		throw std::invalid_argument(BuildStringFrom("Unexpected convertion from '",
+			node.Expression()->Type().Name(), "' to '",
+			node.Type().Name(), "'."));
 	}
-	// NOTE implicit conversions
-	//      int -> bool non-zero -> true
-	//      bool -> int
-	return value;
 }
 
 DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputPath)
