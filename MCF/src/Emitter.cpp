@@ -70,7 +70,6 @@ private:
 
 	// current working function and local variables
 	std::unordered_map<string_view, llvm::AllocaInst*> _locals;
-	llvm::Function* _function;
 
 	DiagnosticBag _diagnostics;
 
@@ -112,7 +111,6 @@ Emitter::Emitter(const string& moduleName)
 	_builder(_context),
 	_module(std::make_unique<llvm::Module>(moduleName, _context)),
 	_targetMachine(nullptr),
-	_function(nullptr),
 	_diagnostics()
 {
 	InitKnownTypes();
@@ -149,14 +147,13 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 	_builder.SetInsertPoint(entry);
 
 	// Place all parameters into _locals table
-	_function = func;
 	_locals.clear();
 	size_t i = 0;
 	for (auto& arg : func->args())
 	{
-		auto alloca = CreateEntryBlockAlloca(arg.getType(), fs.Parameters().at(i).Name());
-		_builder.CreateStore(&arg, alloca);
-		_locals.emplace(fs.Parameters().at(i).Name(), alloca);
+		auto allocaInst = CreateEntryBlockAlloca(arg.getType(), fs.Parameters().at(i).Name());
+		_builder.CreateStore(&arg, allocaInst);
+		_locals.emplace(fs.Parameters().at(i).Name(), allocaInst);
 		++i;
 	}
 
@@ -661,7 +658,7 @@ void Emitter::InitExternFunctions()
 		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "strToInt", *_module);
 
 	// NOTE there is no void* in LLVM representation
-	auto voidPtrType = _charType->getPointerTo(); 
+	auto voidPtrType = _charType->getPointerTo();
 	args = vector<llvm::Type*>(2, voidPtrType);
 	ft = llvm::FunctionType::get(_boolType, args, false);
 	_ptrEqualFunc =
@@ -702,8 +699,9 @@ void Emitter::InitTarget()
 
 llvm::AllocaInst* Emitter::CreateEntryBlockAlloca(llvm::Type* type, string_view varName)const
 {
-	auto builder = llvm::IRBuilder<>(&_function->getEntryBlock(),
-		_function->getEntryBlock().begin());
+	auto parent = _builder.GetInsertBlock()->getParent();
+	auto builder = llvm::IRBuilder<>(&parent->getEntryBlock(),
+		parent->getEntryBlock().begin());
 	return builder.CreateAlloca(type, 0, string(varName));
 }
 
