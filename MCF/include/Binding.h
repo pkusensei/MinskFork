@@ -83,11 +83,9 @@ public:
 };
 
 unique_ptr<BoundGlobalScope> BindGlobalScope(bool isScript,
-	const BoundGlobalScope* previous,
-	const vector<const SyntaxTree*>& synTrees);
+	const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees);
 
 unique_ptr<BoundProgram> BindProgram(bool isScript,
-	unique_ptr<BoundProgram> preious,
-	const BoundGlobalScope* globalScope);
+	unique_ptr<BoundProgram> preious, const BoundGlobalScope* globalScope);
 
 }//MCF

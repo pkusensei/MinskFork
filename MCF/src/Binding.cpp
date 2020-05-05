@@ -174,11 +174,9 @@ public:
 	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
 
 	static unique_ptr<BoundGlobalScope> BindGlobalScope(bool isScript,
-		const BoundGlobalScope* previous,
-		const vector<const SyntaxTree*>& synTrees);
+		const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees);
 	static unique_ptr<BoundProgram> BindProgram(bool isScript,
-		unique_ptr<BoundProgram> preious,
-		const BoundGlobalScope* globalScope);
+		unique_ptr<BoundProgram> preious, const BoundGlobalScope* globalScope);
 };
 
 Binder::Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbol* function)
@@ -839,15 +837,13 @@ unique_ptr<BoundScope> Binder::CreateRootScope()
 }
 
 unique_ptr<BoundGlobalScope> BindGlobalScope(bool isScript,
-	const BoundGlobalScope* previous,
-	const vector<const SyntaxTree*>& synTrees)
+	const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees)
 {
-	return Binder::BindGlobalScope(isScript, previous, synTrees);
+	return Binder::BindGlobalScope(isScript, previous, trees);
 }
 
 unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
-	const BoundGlobalScope* previous,
-	const vector<const SyntaxTree*>& trees)
+	const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees)
 {
 	auto parentScope = CreateParentScope(previous);
 	auto binder = Binder(isScript, std::move(parentScope), nullptr);
@@ -951,15 +947,13 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 }
 
 unique_ptr<BoundProgram> BindProgram(bool isScript,
-	unique_ptr<BoundProgram> preious,
-	const BoundGlobalScope* globalScope)
+	unique_ptr<BoundProgram> preious, const BoundGlobalScope* globalScope)
 {
 	return Binder::BindProgram(isScript, std::move(preious), globalScope);
 }
 
 unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
-	unique_ptr<BoundProgram> previous,
-	const BoundGlobalScope* globalScope)
+	unique_ptr<BoundProgram> previous, const BoundGlobalScope* globalScope)
 {
 	auto parentScope = CreateParentScope(globalScope);
 

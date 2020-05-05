@@ -272,7 +272,7 @@ void Emitter::EmitConditionalGotoStatement(const BoundConditionalGotoStatement& 
 		auto jumpTo = _labelBBMap.at(node.Label());
 		auto name = ".exit" + std::to_string(_gotoCount);
 		auto exit = llvm::BasicBlock::Create(_context, name);
-		
+
 		cmp = _builder.Insert(cmp);
 		_builder.CreateCondBr(cmp, jumpTo, exit);
 
@@ -614,14 +614,16 @@ llvm::Value* Emitter::EmitPostfixExpression(const BoundPostfixExpression& node)
 		{
 			case BoundPostfixOperatorEnum::Increment:
 			{
-				auto op = llvm::BinaryOperator::Create(llvm::Instruction::BinaryOps::Add, value, unit);
+				auto op = llvm::BinaryOperator::Create(
+					llvm::Instruction::BinaryOps::Add, value, unit);
 				auto result = _builder.Insert(op);
 				_builder.CreateStore(result, allocaInst);
 				return result;
 			}
 			case BoundPostfixOperatorEnum::Decrement:
 			{
-				auto op = llvm::BinaryOperator::Create(llvm::Instruction::BinaryOps::Sub, value, unit);
+				auto op = llvm::BinaryOperator::Create(
+					llvm::Instruction::BinaryOps::Sub, value, unit);
 				auto result = _builder.Insert(op);
 				_builder.CreateStore(result, allocaInst);
 				return result;
@@ -788,7 +790,8 @@ void Emitter::FixPrevLabel()
 	}
 }
 
-DiagnosticBag Emit(const BoundProgram& program, const string& moduleName, const fs::path& outPath)
+DiagnosticBag Emit(const BoundProgram& program, const string& moduleName,
+	const fs::path& outPath)
 {
 	if (!program.Diagnostics().empty())
 		return program.Diagnostics();

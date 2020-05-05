@@ -49,7 +49,7 @@ Although this fork stays as close to the original as possible, there are some ch
 
 - LLVM backend
 
-    Because why not. Still this is very much wading through the muddy waters of the huge LLVM world and right now it only emits functions that take and return an integral value to an .obj file. Not so shockingly it needs to link against C runtime to turn into an executable. A sample is in the [./samples/hello/](./samples/hello/) directory. 
+    Because why not. Still this is very much wading through the muddy waters of the huge LLVM world. Right now it only emits functions into an .obj file and not so shockingly needs to link against C runtime to turn into an executable. A sample is in the [./samples/hello/](./samples/hello/) directory. 
 
     Peeking through [./samples/lib.cpp](./samples/lib.cpp), it is obvious that a lot of heavy lifting, e.g. console input and string operations, is delegated to C++ code. It sounds very much like cheating. Then again in Minsk such work is done by utilizing .Net assemblies. 
 
