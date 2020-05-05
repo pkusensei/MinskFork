@@ -970,7 +970,7 @@ unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
 	{
 		auto binder = Binder(isScript, std::make_unique<BoundScope>(*parentScope), it.get());
 		auto body = binder.BindStatement(it->Declaration()->Body());
-		auto lowerBody = Lower(std::move(body));
+		auto lowerBody = Lower(*it, std::move(body));
 
 		if (it->Type() != TypeSymbol(TypeEnum::Void)
 			&& !ControlFlowGraph::AllPathsReturn(lowerBody.get()))
@@ -985,7 +985,8 @@ unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
 
 	if (globalScope->MainFunc() != nullptr && !globalScope->Statements().empty())
 	{
-		auto body = Lower(make_shared<BoundBlockStatement>(globalScope->Statements()));
+		auto body = Lower(*globalScope->MainFunc(),
+			make_shared<BoundBlockStatement>(globalScope->Statements()));
 		funcBodies.emplace(globalScope->MainFunc(), std::move(body));
 	} else if (globalScope->ScriptFunc() != nullptr)
 	{
@@ -1007,7 +1008,8 @@ unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
 			auto nullValue = make_shared<BoundLiteralExpression>("");
 			statements.push_back(make_shared<BoundReturnStatement>(nullValue));
 		}
-		auto body = Lower(make_shared<BoundBlockStatement>(std::move(statements)));
+		auto body = Lower(*globalScope->ScriptFunc(),
+			make_shared<BoundBlockStatement>(std::move(statements)));
 		funcBodies.emplace(globalScope->ScriptFunc(), std::move(body));
 	}
 

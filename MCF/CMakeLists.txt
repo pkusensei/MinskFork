@@ -36,7 +36,6 @@ target_link_libraries(
 	LLVMipo
 
 	LLVMX86AsmParser
-	LLVMX86AsmPrinter
 	LLVMX86CodeGen
 	LLVMX86Desc
 	LLVMX86Info

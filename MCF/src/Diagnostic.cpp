@@ -267,7 +267,8 @@ void DiagnosticBag::ReportCannotEmitFunctionBody(string_view error)
 void DiagnosticBag::ReportWrongArgumentCountEmitted(string_view name,
 	size_t expectedCount, size_t actualCount)
 {
-	auto message = BuildStringFrom("Function '", name, "' requires ", std::to_string(expectedCount)
+	auto message = BuildStringFrom("Function '", name, "' requires ", 
+		std::to_string(expectedCount)
 		, " argument(s) but only ", actualCount, " were emitted.");
 	Report(std::nullopt, std::move(message));
 }
@@ -275,6 +276,13 @@ void DiagnosticBag::ReportWrongArgumentCountEmitted(string_view name,
 void DiagnosticBag::ReportVariableNotEmitted(string_view name)
 {
 	auto message = BuildStringFrom("Variable '", name, "' was not emitted.");
+	Report(std::nullopt, std::move(message));
+}
+
+void DiagnosticBag::ReportBasicBlockNotCreatedFromLabel(string_view labelName)
+{
+	auto message = BuildStringFrom("No Basic Block created from label '",
+		labelName, "'.");
 	Report(std::nullopt, std::move(message));
 }
 

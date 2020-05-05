@@ -3,13 +3,10 @@ using "getname.mcf"
 let name = getName()
 print("Hello " + name +"!")
 
-print(string("he"!="he"))
-print(string(42/7))
-print(string(1^3))
-print(string(42!=43))
-print(string(42<43))
-print(string(42>=43))
-
 var x = 42
-print(string(x--))
-print(string(x))
+print(string(x-- == 41))
+
+for i = 1 to 10
+{
+    print(string(i))
+}

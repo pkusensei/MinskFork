@@ -386,9 +386,7 @@ class Lowerer final :public BoundTreeRewriter
 private:
 	size_t _labelCount{ 0 };
 
-	Lowerer() = default;
 	[[nodiscard]] BoundLabel GenerateLabel();
-	[[nodiscard]] static unique_ptr<BoundBlockStatement> Flatten(shared_ptr<BoundStatement> statement);
 
 protected:
 	shared_ptr<BoundStatement> RewriteIfStatement(shared_ptr<BoundIfStatement> node)override;
@@ -397,7 +395,7 @@ protected:
 	shared_ptr<BoundStatement> RewriteForStatement(shared_ptr<BoundForStatement> node)override;
 
 public:
-	static unique_ptr<BoundBlockStatement> Lower(shared_ptr<BoundStatement> statement);
+	[[nodiscard]] static unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func, shared_ptr<BoundStatement> statement);
 };
 
 BoundLabel Lowerer::GenerateLabel()
@@ -407,19 +405,14 @@ BoundLabel Lowerer::GenerateLabel()
 	return BoundLabel(std::move(name));
 }
 
-unique_ptr<BoundBlockStatement> Lower(shared_ptr<BoundStatement> statement)
-{
-	return Lowerer::Lower(std::move(statement));
-}
-
-unique_ptr<BoundBlockStatement> Lowerer::Lower(shared_ptr<BoundStatement> statement)
+unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func, shared_ptr<BoundStatement> statement)
 {
 	auto lowerer = Lowerer();
 	auto result = lowerer.RewriteStatement(std::move(statement));
-	return Flatten(std::move(result));
+	return Lowerer::Flatten(func, std::move(result));
 }
 
-unique_ptr<BoundBlockStatement> Lowerer::Flatten(shared_ptr<BoundStatement> statement)
+unique_ptr<BoundBlockStatement> Lowerer::Flatten(const FunctionSymbol& func, shared_ptr<BoundStatement> statement)
 {
 	auto result = vector<shared_ptr<BoundStatement>>();
 	auto stack = std::stack<shared_ptr<BoundStatement>>();
@@ -440,6 +433,17 @@ unique_ptr<BoundBlockStatement> Lowerer::Flatten(shared_ptr<BoundStatement> stat
 		{
 			result.push_back(std::move(current));
 		}
+	}
+
+	auto canFallThrough = [](const BoundStatement& s)
+	{
+		return s.Kind() != BoundNodeKind::ReturnStatement
+			&& s.Kind() != BoundNodeKind::GotoStatement;
+	};
+	if (func.Type() == TypeSymbol(TypeEnum::Void))
+	{
+		if (result.empty() || canFallThrough(*result.back()))
+			result.push_back(make_shared<BoundReturnStatement>(nullptr));
 	}
 	return make_unique<BoundBlockStatement>(std::move(result));
 }

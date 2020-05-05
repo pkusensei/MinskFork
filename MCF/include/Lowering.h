@@ -7,6 +7,8 @@ namespace MCF {
 class BoundStatement;
 class BoundBlockStatement;
 
-unique_ptr<BoundBlockStatement> Lower(shared_ptr<BoundStatement> statement);
+class FunctionSymbol;
+
+unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func, shared_ptr<BoundStatement> statement);
 
 }//MCF

@@ -122,6 +122,7 @@ public:
 	void ReportWrongArgumentCountEmitted(string_view name,
 		size_t expectedCount, size_t actualCount);
 	void ReportVariableNotEmitted(string_view name);
+	void ReportBasicBlockNotCreatedFromLabel(string_view labelName);
 };
 
 }//MCF

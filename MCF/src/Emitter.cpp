@@ -68,7 +68,18 @@ private:
 	llvm::Function* _ptrEqualFunc;
 	llvm::Function* _strEqualFunc;
 
-	// current working function and local variables
+	// current working function
+	llvm::Function* _function;
+
+	size_t _gotoCount = 0;
+
+	// finished(terminated) blocks
+	vector<BoundLabel> _labels;
+
+	// basic blocks created from labels
+	std::unordered_map<BoundLabel, llvm::BasicBlock*, LabelHash> _labelBBMap;
+
+	// local variables
 	std::unordered_map<string_view, llvm::AllocaInst*> _locals;
 
 	DiagnosticBag _diagnostics;
@@ -98,6 +109,8 @@ private:
 	void InitExternFunctions();
 	void InitTarget();
 	llvm::AllocaInst* CreateEntryBlockAlloca(llvm::Type* type, string_view varName)const;
+	void CreateBlocksFromLabels(const BoundBlockStatement& body);
+	void FixPrevLabel();
 
 public:
 	explicit Emitter(const string& moduleName);
@@ -146,6 +159,12 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 	auto entry = llvm::BasicBlock::Create(_context, "entry", func);
 	_builder.SetInsertPoint(entry);
 
+	// start emitting new function
+	_function = func;
+	_gotoCount = 0;
+	_labels.clear();
+	_labelBBMap.clear();
+
 	// Place all parameters into _locals table
 	_locals.clear();
 	size_t i = 0;
@@ -159,12 +178,10 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 
 	try
 	{
+		CreateBlocksFromLabels(body);
+
 		for (const auto& it : body.Statements())
 			EmitStatement(*it);
-
-		//TODO move this to bound tree
-		if (fs.Type() == TypeSymbol(TypeEnum::Void))
-			_builder.CreateRetVoid();
 
 		llvm::verifyFunction(*func);
 	} catch (const std::exception& e)
@@ -212,17 +229,62 @@ void Emitter::EmitVariableDeclaration(const BoundVariableDeclaration& node)
 
 void Emitter::EmitLabelStatement(const BoundLabelStatement& node)
 {
-	(void)node;
+	auto nextBlock = _labelBBMap.at(node.Label());
+
+	auto currentBlock = _builder.GetInsertBlock();
+	if (currentBlock->getTerminator() == nullptr)
+	{
+		_builder.CreateBr(nextBlock);
+		FixPrevLabel();
+	}
+	_labels.push_back(node.Label());
+
+	_function->getBasicBlockList().push_back(nextBlock);
+	_builder.SetInsertPoint(nextBlock);
 }
 
 void Emitter::EmitGotoStatement(const BoundGotoStatement& node)
 {
-	(void)node;
+	try
+	{
+		auto bb = _labelBBMap.at(node.Label());
+		_builder.CreateBr(bb);
+		FixPrevLabel();
+	} catch (const std::out_of_range&)
+	{
+		_diagnostics.ReportBasicBlockNotCreatedFromLabel(node.Label().Name());
+	}
 }
 
 void Emitter::EmitConditionalGotoStatement(const BoundConditionalGotoStatement& node)
 {
-	(void)node;
+	auto cond = EmitExpression(*node.Condition());
+	if (cond == nullptr)
+		return;
+
+	auto jumpIfTrue = node.JumpIfTrue() ?
+		llvm::ConstantInt::getTrue(_context)
+		: llvm::ConstantInt::getFalse(_context);
+	auto cmp = new llvm::ICmpInst(llvm::CmpInst::Predicate::ICMP_EQ, cond, jumpIfTrue);
+
+	try
+	{
+		auto jumpTo = _labelBBMap.at(node.Label());
+		auto name = ".exit" + std::to_string(_gotoCount);
+		auto exit = llvm::BasicBlock::Create(_context, name);
+		
+		cmp = _builder.Insert(cmp);
+		_builder.CreateCondBr(cmp, jumpTo, exit);
+
+		FixPrevLabel();
+		_labels.emplace_back(std::move(name));
+
+		_function->getBasicBlockList().push_back(exit);
+		_builder.SetInsertPoint(exit);
+	} catch (const std::out_of_range&)
+	{
+		_diagnostics.ReportBasicBlockNotCreatedFromLabel(node.Label().Name());
+	}
 }
 
 void Emitter::EmitReturnStatement(const BoundReturnStatement& node)
@@ -598,7 +660,7 @@ DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputP
 	}
 
 	auto pass = llvm::legacy::PassManager();
-	auto fileType = llvm::TargetMachine::CGFT_ObjectFile;
+	auto fileType = llvm::CodeGenFileType::CGFT_ObjectFile;
 	if (_targetMachine->addPassesToEmitFile(pass, dest, nullptr, fileType))
 	{
 		result.ReportCannotEmitFileType();
@@ -699,10 +761,31 @@ void Emitter::InitTarget()
 
 llvm::AllocaInst* Emitter::CreateEntryBlockAlloca(llvm::Type* type, string_view varName)const
 {
-	auto parent = _builder.GetInsertBlock()->getParent();
-	auto builder = llvm::IRBuilder<>(&parent->getEntryBlock(),
-		parent->getEntryBlock().begin());
+	auto builder = llvm::IRBuilder<>(&_function->getEntryBlock(),
+		_function->getEntryBlock().begin());
 	return builder.CreateAlloca(type, 0, string(varName));
+}
+
+void Emitter::CreateBlocksFromLabels(const BoundBlockStatement& body)
+{
+	for (const auto& it : body.Statements())
+	{
+		if (it->Kind() == BoundNodeKind::LabelStatement)
+		{
+			auto node = static_cast<const BoundLabelStatement&>(*it);
+			auto bb = llvm::BasicBlock::Create(_context, string(node.Label().Name()));
+			_labelBBMap.emplace(node.Label(), bb);
+		}
+	}
+}
+
+void Emitter::FixPrevLabel()
+{
+	if (!_labels.empty())
+	{
+		const auto& prevLabel = _labels.back();
+		_labelBBMap.insert_or_assign(prevLabel, _builder.GetInsertBlock());
+	}
 }
 
 DiagnosticBag Emit(const BoundProgram& program, const string& moduleName, const fs::path& outPath)
