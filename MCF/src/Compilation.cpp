@@ -252,7 +252,7 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression* node)
 	switch (node->Op().Kind())
 	{
 		case BoundBinaryOperatorKind::Addition:
-			if (node->Type() == TypeSymbol(TypeEnum::Int))
+			if (node->Type() == TYPE_INT)
 				return left.GetValue<IntegerType>() + right.GetValue<IntegerType>();
 			else return left.GetValue<string>() + right.GetValue<string>();
 		case BoundBinaryOperatorKind::Subtraction:
@@ -264,15 +264,15 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression* node)
 		case BoundBinaryOperatorKind::Modulus:
 			return left.GetValue<IntegerType>() % right.GetValue<IntegerType>();
 		case BoundBinaryOperatorKind::BitwiseAnd:
-			if (node->Type() == TypeSymbol(TypeEnum::Int))
+			if (node->Type() == TYPE_INT)
 				return left.GetValue<IntegerType>() & right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() & right.GetValue<bool>();
 		case BoundBinaryOperatorKind::BitwiseOr:
-			if (node->Type() == TypeSymbol(TypeEnum::Int))
+			if (node->Type() == TYPE_INT)
 				return left.GetValue<IntegerType>() | right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() | right.GetValue<bool>();
 		case BoundBinaryOperatorKind::BitwiseXor:
-			if (node->Type() == TypeSymbol(TypeEnum::Int))
+			if (node->Type() == TYPE_INT)
 				return left.GetValue<IntegerType>() ^ right.GetValue<IntegerType>();
 			else return left.GetValue<bool>() ^ right.GetValue<bool>();
 		case BoundBinaryOperatorKind::LogicalAnd:
@@ -300,7 +300,7 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression* node)
 
 ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 {
-	if (*(node->Function()) == GetBuiltinFunction(BuiltinFuncEnum::Input))
+	if (*(node->Function()) == BUILTIN_INPUT)
 	{
 		auto f = []()
 		{
@@ -309,12 +309,12 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 			return result;
 		};
 		return f();
-	} else if (*(node->Function()) == GetBuiltinFunction(BuiltinFuncEnum::Print))
+	} else if (*(node->Function()) == BUILTIN_PRINT)
 	{
 		auto message = EvaluateExpression(node->Arguments()[0].get());
 		std::cout << message.GetValue<string>() << NEW_LINE;
 		return NULL_VALUE;
-	} else if (*(node->Function()) == GetBuiltinFunction(BuiltinFuncEnum::Rnd))
+	} else if (*(node->Function()) == BUILTIN_RND)
 	{
 		auto max =
 			EvaluateExpression(node->Arguments()[0].get()).GetValue<IntegerType>();
@@ -348,13 +348,13 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 ValueType Evaluator::EvaluateConversionExpression(const BoundConversionExpression* node)
 {
 	auto value = EvaluateExpression(node->Expression().get());
-	if (node->Type() == TypeSymbol(TypeEnum::Any))
+	if (node->Type() == TYPE_ANY)
 		return value;
-	else if (node->Type() == TypeSymbol(TypeEnum::Bool))
+	else if (node->Type() == TYPE_BOOL)
 		return value.ToBoolean();
-	else if (node->Type() == TypeSymbol(TypeEnum::Int))
+	else if (node->Type() == TYPE_INT)
 		return value.ToInteger();
-	else if (node->Type() == TypeSymbol(TypeEnum::String))
+	else if (node->Type() == TYPE_STRING)
 		return value.ToString();
 	else
 		throw std::invalid_argument("Unexpected type: " + node->Type().ToString());

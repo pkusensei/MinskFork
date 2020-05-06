@@ -123,7 +123,7 @@ class BoundErrorExpression final :public BoundExpression
 {
 public:
 	// Inherited via BoundExpression
-	TypeSymbol Type() const override { return TypeSymbol(TypeEnum::Error); }
+	TypeSymbol Type() const override { return TYPE_ERROR; }
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ErrorExpression; }
 };
 
@@ -151,7 +151,7 @@ private:
 
 	BoundUnaryOperator()
 		: BoundUnaryOperator(SyntaxKind::BadToken, BoundUnaryOperatorKind::Identity,
-			TypeSymbol(TypeEnum::Error))
+			TYPE_ERROR)
 	{
 		_isUseful = false;
 	}
@@ -179,13 +179,13 @@ public:
 
 inline const std::array<BoundUnaryOperator, 4> BoundUnaryOperator::operators = {
 	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation,
-						TypeSymbol(TypeEnum::Bool)),
+						TYPE_BOOL),
 	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity,
-						TypeSymbol(TypeEnum::Int)),
+						TYPE_INT),
 	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation,
-						TypeSymbol(TypeEnum::Int)),
+						TYPE_INT),
 	BoundUnaryOperator(SyntaxKind::TildeToken, BoundUnaryOperatorKind::OnesComplement,
-						TypeSymbol(TypeEnum::Int))
+						TYPE_INT)
 };
 
 class BoundUnaryExpression final : public BoundExpression
@@ -240,7 +240,7 @@ private:
 
 	BoundBinaryOperator()
 		: BoundBinaryOperator(SyntaxKind::BadToken, BoundBinaryOperatorKind::Addition,
-			TypeSymbol(TypeEnum::Error))
+			TYPE_ERROR)
 	{
 		_isUseful = false;
 	}
@@ -271,57 +271,57 @@ public:
 
 inline const std::array<BoundBinaryOperator, 24> BoundBinaryOperator::operators = {
 		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
-							TypeSymbol(TypeEnum::Int)),
+							TYPE_INT),
 		BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction,
-							TypeSymbol(TypeEnum::Int)),
+							TYPE_INT),
 		BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication,
-							TypeSymbol(TypeEnum::Int)),
+							TYPE_INT),
 		BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division,
-							TypeSymbol(TypeEnum::Int)),
+							TYPE_INT),
 		BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus,
-							TypeSymbol(TypeEnum::Int)),
+							TYPE_INT),
 
 		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd,
-							TypeSymbol(TypeEnum::Int)),
+							TYPE_INT),
 		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr,
-							TypeSymbol(TypeEnum::Int)),
+							TYPE_INT),
 		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor,
-							TypeSymbol(TypeEnum::Int)),
+							TYPE_INT),
 
 		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TypeSymbol(TypeEnum::Int), TypeSymbol(TypeEnum::Bool)),
+							TYPE_INT, TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TypeSymbol(TypeEnum::Int), TypeSymbol(TypeEnum::Bool)),
+							TYPE_INT, TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less,
-							TypeSymbol(TypeEnum::Int), TypeSymbol(TypeEnum::Bool)),
+							TYPE_INT, TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals,
-							TypeSymbol(TypeEnum::Int), TypeSymbol(TypeEnum::Bool)),
+							TYPE_INT, TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater,
-							TypeSymbol(TypeEnum::Int), TypeSymbol(TypeEnum::Bool)),
+							TYPE_INT, TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals,
-							TypeSymbol(TypeEnum::Int), TypeSymbol(TypeEnum::Bool)),
+							TYPE_INT, TYPE_BOOL),
 
 		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd,
-							TypeSymbol(TypeEnum::Bool)),
+							TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd,
-							TypeSymbol(TypeEnum::Bool)),
+							TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr,
-							TypeSymbol(TypeEnum::Bool)),
+							TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr,
-							TypeSymbol(TypeEnum::Bool)),
+							TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor,
-							TypeSymbol(TypeEnum::Bool)),
+							TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TypeSymbol(TypeEnum::Bool)),
+							TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TypeSymbol(TypeEnum::Bool)),
+							TYPE_BOOL),
 
 		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
-							TypeSymbol(TypeEnum::String)),
+							TYPE_STRING),
 		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TypeSymbol(TypeEnum::String), TypeSymbol(TypeEnum::Bool)),
+							TYPE_STRING, TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TypeSymbol(TypeEnum::String), TypeSymbol(TypeEnum::Bool)),
+							TYPE_STRING, TYPE_BOOL),
 };
 
 class BoundBinaryExpression final : public BoundExpression

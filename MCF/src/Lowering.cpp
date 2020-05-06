@@ -440,7 +440,7 @@ unique_ptr<BoundBlockStatement> Lowerer::Flatten(const FunctionSymbol& func, sha
 		return s.Kind() != BoundNodeKind::ReturnStatement
 			&& s.Kind() != BoundNodeKind::GotoStatement;
 	};
-	if (func.Type() == TypeSymbol(TypeEnum::Void))
+	if (func.Type() == TYPE_VOID)
 	{
 		if (result.empty() || canFallThrough(*result.back()))
 			result.push_back(make_shared<BoundReturnStatement>(nullptr));
@@ -527,7 +527,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteForStatement(shared_ptr<BoundForState
 		node->LowerBound());
 	auto variableExpression = make_shared<BoundVariableExpression>(node->Variable());
 	auto upperBoundSymbol = make_shared<LocalVariableSymbol>(
-		"upperBound", true, TypeSymbol(TypeEnum::Int)
+		"upperBound", true, TYPE_INT
 		);
 	auto upperBoundDeclaration = make_shared<BoundVariableDeclaration>(upperBoundSymbol,
 		node->UpperBound());
@@ -535,8 +535,8 @@ shared_ptr<BoundStatement> Lowerer::RewriteForStatement(shared_ptr<BoundForState
 	auto condition = make_shared<BoundBinaryExpression>(
 		variableExpression,
 		BoundBinaryOperator::Bind(SyntaxKind::LessOrEqualsToken,
-			TypeSymbol(TypeEnum::Int),
-			TypeSymbol(TypeEnum::Int)),
+			TYPE_INT,
+			TYPE_INT),
 		make_shared<BoundVariableExpression>(upperBoundSymbol)
 		);
 	auto continueLabelStatement = make_shared<BoundLabelStatement>(node->ContinueLabel());
@@ -546,8 +546,8 @@ shared_ptr<BoundStatement> Lowerer::RewriteForStatement(shared_ptr<BoundForState
 			make_shared<BoundBinaryExpression>(
 				variableExpression,
 				BoundBinaryOperator::Bind(SyntaxKind::PlusToken,
-					TypeSymbol(TypeEnum::Int),
-					TypeSymbol(TypeEnum::Int)),
+					TYPE_INT,
+					TYPE_INT),
 				make_shared<BoundLiteralExpression>(1)
 				)
 			)

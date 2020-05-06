@@ -353,11 +353,11 @@ void BoundNodePrinter::WriteErrorExpression()
 void BoundNodePrinter::WriteLiteralExpression(const BoundLiteralExpression& node)
 {
 	auto value = node.Value().ToString();
-	if (node.Type() == TypeSymbol(TypeEnum::Bool))
+	if (node.Type() == TYPE_BOOL)
 		_writer.WriteKeyword(value);
-	else if (node.Type() == TypeSymbol(TypeEnum::Int))
+	else if (node.Type() == TYPE_INT)
 		_writer.WriteNumber(value);
-	else if (node.Type() == TypeSymbol(TypeEnum::String))
+	else if (node.Type() == TYPE_STRING)
 	{
 		StringReplaceAll(value, "\"", "\"\"");
 		value = '"' + value + '"';

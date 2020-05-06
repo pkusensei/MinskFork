@@ -94,22 +94,21 @@ enum class TypeEnum
 
 class TypeSymbol final :public Symbol
 {
-private:
+public:
 	constexpr explicit TypeSymbol(string_view name)noexcept
 		:Symbol(name)
 	{
 	}
 
-	static string_view nameof(TypeEnum);
-
-public:
-	explicit TypeSymbol(TypeEnum kind)
-		:Symbol(nameof(kind))
-	{
-	}
-
 	SymbolKind Kind() const noexcept override { return SymbolKind::Type; }
 };
+
+inline const auto TYPE_ERROR = TypeSymbol("?");
+inline const auto TYPE_ANY = TypeSymbol("any");
+inline const auto TYPE_BOOL = TypeSymbol("bool");
+inline const auto TYPE_INT = TypeSymbol("int");
+inline const auto TYPE_STRING = TypeSymbol("string");
+inline const auto TYPE_VOID = TypeSymbol("void");
 
 class MCF_API VariableSymbol : public Symbol
 {
@@ -179,7 +178,7 @@ public:
 	{
 	}
 	FunctionSymbol()
-		:FunctionSymbol("", vector<ParameterSymbol>(), TypeSymbol(TypeEnum::Error))
+		:FunctionSymbol("", vector<ParameterSymbol>(), TYPE_ERROR)
 	{
 	}
 
@@ -190,12 +189,16 @@ public:
 
 };
 
-enum class BuiltinFuncEnum
-{
-	Input, Print, Rnd
-};
+inline const auto BUILTIN_INPUT = FunctionSymbol("input",
+	vector<ParameterSymbol>(),
+	TYPE_STRING);
+inline const auto BUILTIN_PRINT = FunctionSymbol("print",
+	vector<ParameterSymbol>{ParameterSymbol("text", TYPE_STRING)},
+	TYPE_VOID);
+inline const auto BUILTIN_RND = FunctionSymbol("rnd",
+	vector<ParameterSymbol>{ParameterSymbol("max", TYPE_INT)},
+	TYPE_INT);
 
-const FunctionSymbol& GetBuiltinFunction(BuiltinFuncEnum kind);
 const std::array<FunctionSymbol, 3>& GetAllBuiltinFunctions();
 
 class MCF_API ValueType final
@@ -229,7 +232,7 @@ public:
 	}
 };
 
-const auto NULL_VALUE = ValueType(); // NOTE global constant
+inline const auto NULL_VALUE = ValueType(); // NOTE global constant
 MCF_API std::ostream& operator<<(std::ostream& out, const ValueType& value);
 
 }//MCF

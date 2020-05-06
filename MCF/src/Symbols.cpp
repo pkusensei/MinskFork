@@ -20,27 +20,6 @@ string Symbol::ToString() const
 	return ss.str();
 }
 
-string_view TypeSymbol::nameof(TypeEnum kind)
-{
-	switch (kind)
-	{
-		case MCF::TypeEnum::Error:
-			return "?";
-		case MCF::TypeEnum::Any:
-			return "any";
-		case MCF::TypeEnum::Bool:
-			return "bool";
-		case MCF::TypeEnum::Int:
-			return "int";
-		case MCF::TypeEnum::String:
-			return "string";
-		case MCF::TypeEnum::Void:
-			return "void";
-		default:
-			throw std::invalid_argument("Unexpected TypeEnum value.");
-	}
-}
-
 string_view nameof(SymbolKind kind)
 {
 	switch (kind)
@@ -60,34 +39,10 @@ string_view nameof(SymbolKind kind)
 	}
 }
 
-const FunctionSymbol& GetBuiltinFunction(BuiltinFuncEnum kind)
-{
-	static const auto& funcs = GetAllBuiltinFunctions();
-
-	switch (kind)
-	{
-		case BuiltinFuncEnum::Input: return funcs[0];
-		case BuiltinFuncEnum::Print: return funcs[1];
-		case BuiltinFuncEnum::Rnd: return funcs[2];
-		default:
-			throw std::invalid_argument("Unexpected BuiltinFuncEnum enum value.");
-	}
-}
-
 const std::array<FunctionSymbol, 3>& GetAllBuiltinFunctions()
 {
 	static const auto funcs = std::array{
-		FunctionSymbol("input",
-			vector<ParameterSymbol>(),
-			TypeSymbol(TypeEnum::String)),
-		FunctionSymbol("print",
-			vector<ParameterSymbol>{ParameterSymbol("text",
-				TypeSymbol(TypeEnum::String))},
-			TypeSymbol(TypeEnum::Void)),
-		FunctionSymbol("rnd",
-			vector<ParameterSymbol>{ParameterSymbol("max",
-				TypeSymbol(TypeEnum::Int))},
-			TypeSymbol(TypeEnum::Int))
+		BUILTIN_INPUT, BUILTIN_PRINT, BUILTIN_RND
 	};
 	return funcs;
 }
@@ -97,14 +52,14 @@ TypeSymbol ValueType::Type() const
 	switch (_inner.index())
 	{
 		case 1:
-			return TypeSymbol(TypeEnum::Bool);
+			return TYPE_BOOL;
 		case 2:
-			return TypeSymbol(TypeEnum::Int);
+			return TYPE_INT;
 		case 3:
-			return TypeSymbol(TypeEnum::String);
+			return TYPE_STRING;
 		case 0:
 		default:
-			return TypeSymbol(TypeEnum::Error);
+			return TYPE_ERROR;
 	}
 }
 

@@ -327,16 +327,16 @@ llvm::Value* Emitter::EmitExpression(const BoundExpression& node)
 llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)
 {
 	auto type = node.Type();
-	if (type == TypeSymbol(TypeEnum::Bool))
+	if (type == TYPE_BOOL)
 	{
 		auto v = node.Value().ToBoolean();
 		return v ? llvm::ConstantInt::getTrue(_context)
 			: llvm::ConstantInt::getFalse(_context);
-	} else if (type == TypeSymbol(TypeEnum::Int))
+	} else if (type == TYPE_INT)
 	{
 		auto v = node.Value().ToInteger();
 		return llvm::ConstantInt::get(_context, llvm::APInt(INT_BITS, v, true));
-	} else if (type == TypeSymbol(TypeEnum::String))
+	} else if (type == TYPE_STRING)
 	{
 		auto v = node.Value().ToString();
 		auto charType = _charType;
@@ -428,8 +428,8 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 
 	if (node.Op().Kind() == BoundBinaryOperatorKind::Addition)
 	{
-		if (node.Left()->Type() == TypeSymbol(TypeEnum::String)
-			&& node.Right()->Type() == TypeSymbol(TypeEnum::String))
+		if (node.Left()->Type() == TYPE_STRING
+			&& node.Right()->Type() == TYPE_STRING)
 		{
 			return _builder.CreateCall(_strConcatFunc, { lhs, rhs });
 		}
@@ -443,12 +443,12 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 		*      a) runtime container
 		*      b) as constant in binary
 		*/
-		if (node.Left()->Type() == TypeSymbol(TypeEnum::Any)
-			&& node.Right()->Type() == TypeSymbol(TypeEnum::Any))
+		if (node.Left()->Type() == TYPE_ANY
+			&& node.Right()->Type() == TYPE_ANY)
 		{
 			return _builder.CreateCall(_ptrEqualFunc, { lhs, rhs });
-		} else if (node.Left()->Type() == TypeSymbol(TypeEnum::String)
-			&& node.Right()->Type() == TypeSymbol(TypeEnum::String))
+		} else if (node.Left()->Type() == TYPE_STRING
+			&& node.Right()->Type() == TYPE_STRING)
 		{
 			return _builder.CreateCall(_strEqualFunc, { lhs, rhs });
 		}
@@ -464,13 +464,13 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 			return _builder.Insert(op);
 		};
 
-		if (node.Left()->Type() == TypeSymbol(TypeEnum::Any)
-			&& node.Right()->Type() == TypeSymbol(TypeEnum::Any))
+		if (node.Left()->Type() == TYPE_ANY
+			&& node.Right()->Type() == TYPE_ANY)
 		{
 			value = _builder.CreateCall(_ptrEqualFunc, { lhs, rhs });
 			return compareToFalse(value);
-		} else if (node.Left()->Type() == TypeSymbol(TypeEnum::String)
-			&& node.Right()->Type() == TypeSymbol(TypeEnum::String))
+		} else if (node.Left()->Type() == TYPE_STRING
+			&& node.Right()->Type() == TYPE_STRING)
 		{
 			value = _builder.CreateCall(_strEqualFunc, { lhs, rhs });
 			return compareToFalse(value);
@@ -532,14 +532,14 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 
 llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 {
-	if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Input))
+	if (*(node.Function()) == BUILTIN_INPUT)
 	{
 		return _builder.CreateCall(_inputFunc);
-	} else if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Print))
+	} else if (*(node.Function()) == BUILTIN_PRINT)
 	{
 		auto value = EmitExpression(*node.Arguments().at(0));
 		return _builder.CreateCall(_putsFunc, value);
-	} else if (*(node.Function()) == GetBuiltinFunction(BuiltinFuncEnum::Rnd))
+	} else if (*(node.Function()) == BUILTIN_RND)
 	{
 		auto value = EmitExpression(*node.Arguments().at(0));
 		return _builder.CreateCall(_rndFunc, value);
@@ -572,20 +572,20 @@ llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& 
 	auto value = EmitExpression(*node.Expression());
 	if (value == nullptr)
 		return nullptr;
-	if (node.Type() == TypeSymbol(TypeEnum::Any))
+	if (node.Type() == TYPE_ANY)
 	{
 		return value;
-	} else if (node.Type() == TypeSymbol(TypeEnum::Bool))
+	} else if (node.Type() == TYPE_BOOL)
 	{
 		if (value->getType() == _charType->getPointerTo())
 			return _builder.CreateCall(_strToBoolFunc, value);
 		return value;
-	} else if (node.Type() == TypeSymbol(TypeEnum::Int))
+	} else if (node.Type() == TYPE_INT)
 	{
 		if (value->getType() == _charType->getPointerTo())
 			return _builder.CreateCall(_strToIntFunc, value);
 		return value;
-	} else if (node.Type() == TypeSymbol(TypeEnum::String))
+	} else if (node.Type() == TYPE_STRING)
 	{
 		if (value->getType() == _boolType)
 			return _builder.CreateCall(_boolToStrFunc, value);
@@ -680,10 +680,10 @@ void Emitter::InitKnownTypes()
 	_charType = _builder.getInt8Ty();
 	_intType = _builder.getIntNTy(INT_BITS);
 
-	_knownTypes.emplace(TypeSymbol(TypeEnum::Bool), _boolType);
-	_knownTypes.emplace(TypeSymbol(TypeEnum::Int), _intType);
-	_knownTypes.emplace(TypeSymbol(TypeEnum::String), _charType->getPointerTo());
-	_knownTypes.emplace(TypeSymbol(TypeEnum::Void), _builder.getVoidTy());
+	_knownTypes.emplace(TYPE_BOOL, _boolType);
+	_knownTypes.emplace(TYPE_INT, _intType);
+	_knownTypes.emplace(TYPE_STRING, _charType->getPointerTo());
+	_knownTypes.emplace(TYPE_VOID, _builder.getVoidTy());
 }
 
 void Emitter::InitExternFunctions()

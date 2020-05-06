@@ -8,26 +8,22 @@ ConversionEnum Classify(const TypeSymbol& from, const TypeSymbol& to)
 {
 	if (from == to)
 		return ConversionEnum::Identity;
-	if (from != TypeSymbol(TypeEnum::Void)
-		&& to == TypeSymbol(TypeEnum::Any))
+	if (from != TYPE_VOID && to == TYPE_ANY)
 	{
 		return ConversionEnum::Implicit;
 	}
-	if (from == TypeSymbol(TypeEnum::Any)
-		&& to != TypeSymbol(TypeEnum::Void))
+	if (from == TYPE_ANY && to != TYPE_VOID)
 	{
 		return ConversionEnum::Explicit;
 	}
-	if (from == TypeSymbol(TypeEnum::Int)
-		|| from == TypeSymbol(TypeEnum::Bool))
+	if (from == TYPE_INT || from == TYPE_BOOL)
 	{
-		if (to == TypeSymbol(TypeEnum::String))
+		if (to == TYPE_STRING)
 			return ConversionEnum::Explicit;
 	}
-	if (from == TypeSymbol(TypeEnum::String))
+	if (from == TYPE_STRING)
 	{
-		if (to == TypeSymbol(TypeEnum::Int)
-			|| to == TypeSymbol(TypeEnum::Bool))
+		if (to == TYPE_INT || to == TYPE_BOOL)
 			return ConversionEnum::Explicit;
 	}
 	return ConversionEnum::None;

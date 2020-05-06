@@ -92,7 +92,7 @@ void SymbolPrinter::WriteFunction(const FunctionSymbol& symbol)
 
 	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
 
-	if (symbol.Type() != TypeSymbol(TypeEnum::Void))
+	if (symbol.Type() != TYPE_VOID)
 	{
 		_writer.WritePunctuation(SyntaxKind::ColonToken);
 		_writer.WriteSpace();
