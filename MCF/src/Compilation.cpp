@@ -94,6 +94,9 @@ ValueType Evaluator::EvaluateStatement(const BoundBlockStatement* body)
 		auto s = statements.at(index).get();
 		switch (s->Kind())
 		{
+			case BoundNodeKind::NopStatement:
+				++index;
+				break;
 			case BoundNodeKind::VariableDeclaration:
 			{
 				auto p = static_cast<const BoundVariableDeclaration*>(s);

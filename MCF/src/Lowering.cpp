@@ -1,10 +1,12 @@
 #include "Lowering.h"
 
+#include <algorithm>
 #include <stack>
-#include <stdexcept>
+#include <unordered_set>
 
 #include "BoundExpressions.h"
 #include "BoundStatements.h"
+#include "ControlFlowGraph.h"
 #include "helpers.h"
 #include "SyntaxKind.h"
 
@@ -14,6 +16,7 @@ class BoundTreeRewriter
 {
 protected:
 	virtual shared_ptr<BoundStatement> RewriteBlockStatement(shared_ptr<BoundBlockStatement> node);
+	virtual shared_ptr<BoundStatement> RewriteNopStatement(shared_ptr<BoundNopStatement> node);
 	virtual shared_ptr<BoundStatement> RewriteVariableDeclaration(shared_ptr<BoundVariableDeclaration> node);
 	virtual shared_ptr<BoundStatement> RewriteIfStatement(shared_ptr<BoundIfStatement> node);
 	virtual shared_ptr<BoundStatement> RewriteWhileStatement(shared_ptr<BoundWhileStatement> node);
@@ -50,6 +53,12 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(shared_ptr<BoundS
 		{
 			auto p = std::dynamic_pointer_cast<BoundBlockStatement>(node);
 			if (p) return RewriteBlockStatement(std::move(p));
+			else break;
+		}
+		case BoundNodeKind::NopStatement:
+		{
+			auto p = std::dynamic_pointer_cast<BoundNopStatement>(node);
+			if (p) return RewriteNopStatement(std::move(p));
 			else break;
 		}
 		case BoundNodeKind::VariableDeclaration:
@@ -141,6 +150,11 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(shared_ptr<B
 	if (result.empty())
 		return node;
 	return make_shared<BoundBlockStatement>(std::move(result));
+}
+
+shared_ptr<BoundStatement> BoundTreeRewriter::RewriteNopStatement(shared_ptr<BoundNopStatement> node)
+{
+	return node;
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteVariableDeclaration(shared_ptr<BoundVariableDeclaration> node)
@@ -393,9 +407,12 @@ protected:
 	shared_ptr<BoundStatement> RewriteWhileStatement(shared_ptr<BoundWhileStatement> node)override;
 	shared_ptr<BoundStatement> RewriteDoWhileStatement(shared_ptr<BoundDoWhileStatement> node)override;
 	shared_ptr<BoundStatement> RewriteForStatement(shared_ptr<BoundForStatement> node)override;
+	shared_ptr<BoundStatement> RewriteConditionalGotoStatement(shared_ptr<BoundConditionalGotoStatement> node)override;
 
 public:
 	[[nodiscard]] static unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func, shared_ptr<BoundStatement> statement);
+	[[nodiscard]] static unique_ptr<BoundBlockStatement> RemoveDeadCode(unique_ptr<BoundBlockStatement> node);
+
 };
 
 BoundLabel Lowerer::GenerateLabel()
@@ -409,7 +426,7 @@ unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func, shared_ptr<Bou
 {
 	auto lowerer = Lowerer();
 	auto result = lowerer.RewriteStatement(std::move(statement));
-	return Lowerer::Flatten(func, std::move(result));
+	return Lowerer::RemoveDeadCode(Lowerer::Flatten(func, std::move(result)));
 }
 
 unique_ptr<BoundBlockStatement> Lowerer::Flatten(const FunctionSymbol& func, shared_ptr<BoundStatement> statement)
@@ -444,6 +461,29 @@ unique_ptr<BoundBlockStatement> Lowerer::Flatten(const FunctionSymbol& func, sha
 	{
 		if (result.empty() || canFallThrough(*result.back()))
 			result.push_back(make_shared<BoundReturnStatement>(nullptr));
+	}
+	return make_unique<BoundBlockStatement>(std::move(result));
+}
+
+unique_ptr<BoundBlockStatement> Lowerer::RemoveDeadCode(unique_ptr<BoundBlockStatement> node)
+{
+	auto cfg = ControlFlowGraph::Create(node.get());
+	auto reachableStmts = std::unordered_set<const BoundStatement*>();
+	for (const auto& block : cfg.Blocks())
+	{
+		for (const auto& p : block->Statements())
+			reachableStmts.emplace(p);
+	}
+
+	auto result = node->Statements();
+	auto it = result.end();
+	while (it > result.begin())
+	{
+		--it;
+		if (reachableStmts.find(it->get()) == reachableStmts.end())
+		{
+			it = result.erase(it);
+		}
 	}
 	return make_unique<BoundBlockStatement>(std::move(result));
 }
@@ -527,7 +567,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteForStatement(shared_ptr<BoundForState
 		node->LowerBound());
 	auto variableExpression = make_shared<BoundVariableExpression>(node->Variable());
 	auto upperBoundSymbol = make_shared<LocalVariableSymbol>(
-		"upperBound", true, TYPE_INT
+		"upperBound", true, TYPE_INT, node->UpperBound()->ConstantValue()
 		);
 	auto upperBoundDeclaration = make_shared<BoundVariableDeclaration>(upperBoundSymbol,
 		node->UpperBound());
@@ -562,6 +602,21 @@ shared_ptr<BoundStatement> Lowerer::RewriteForStatement(shared_ptr<BoundForState
 	statements = { variableDeclaration, upperBoundDeclaration, whileStatement };
 	auto result = make_shared<BoundBlockStatement>(std::move(statements));
 	return RewriteStatement(std::move(result));
+}
+
+shared_ptr<BoundStatement> Lowerer::RewriteConditionalGotoStatement(shared_ptr<BoundConditionalGotoStatement> node)
+{
+	if (node->Condition()->ConstantValue() != NULL_VALUE)
+	{
+		bool condition = node->Condition()->ConstantValue().GetValue<bool>();
+		condition = node->JumpIfTrue() ? condition : !condition;
+		if (condition)
+			return make_shared<BoundGotoStatement>(node->Label());
+		else
+			return make_shared<BoundNopStatement>();
+	}
+
+	return BoundTreeRewriter::RewriteConditionalGotoStatement(std::move(node));
 }
 
 }//MCF

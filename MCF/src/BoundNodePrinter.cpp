@@ -18,6 +18,7 @@ private:
 		const BoundExpression& node);
 
 	void WriteBlockStatement(const BoundBlockStatement& node);
+	void WriteNopStatement();
 	void WriteVariableDeclaration(const BoundVariableDeclaration& node);
 	void WriteIfStatement(const BoundIfStatement& node);
 	void WriteWhileStatement(const BoundWhileStatement& node);
@@ -63,6 +64,9 @@ void BoundNodePrinter::Write(const BoundNode& node)
 			WriteBlockStatement(p);
 			break;
 		}
+		case BoundNodeKind::NopStatement:
+			WriteNopStatement();
+			break;
 		case BoundNodeKind::VariableDeclaration:
 		{
 			auto& p = static_cast<const BoundVariableDeclaration&>(node);
@@ -124,12 +128,8 @@ void BoundNodePrinter::Write(const BoundNode& node)
 			break;
 		}
 		case BoundNodeKind::ErrorExpression:
-		{
-			auto& p = static_cast<const BoundErrorExpression&>(node);
-			static_cast<void>(p);
 			WriteErrorExpression();
 			break;
-		}
 		case BoundNodeKind::LiteralExpression:
 		{
 			auto& p = static_cast<const BoundLiteralExpression&>(node);
@@ -230,6 +230,12 @@ void BoundNodePrinter::WriteBlockStatement(const BoundBlockStatement& node)
 		Write(*it);
 	_writer.Dedent();
 	_writer.WritePunctuation(SyntaxKind::CloseBraceToken);
+	_writer.WriteLine();
+}
+
+void BoundNodePrinter::WriteNopStatement()
+{
+	_writer.WriteKeyword("nop");
 	_writer.WriteLine();
 }
 

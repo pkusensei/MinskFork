@@ -4,7 +4,7 @@
 #include <optional>
 #include <variant>
 
-#include "common.h"
+#include "Values.h"
 
 // To suppress annoying MSVC warnings about exporting classes/functions
 #if defined(_MSC_VER) && !defined(__clang__)
@@ -115,23 +115,29 @@ class MCF_API VariableSymbol : public Symbol
 private:
 	bool _isReadOnly;
 	TypeSymbol _type;
+	BoundConstant _constant;
 
 public:
-	VariableSymbol(string_view name, bool isReadOnly, TypeSymbol type) noexcept
-		:Symbol(name), _isReadOnly(isReadOnly), _type(type)
+	VariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
+		BoundConstant constant) noexcept
+		:Symbol(name),
+		_isReadOnly(isReadOnly), _type(type),
+		_constant(isReadOnly ? std::move(constant) : NULL_VALUE)
 	{
 	}
 
 	bool IsReadOnly()const noexcept { return _isReadOnly; }
 
-	constexpr const TypeSymbol& Type()const { return _type; }
+	constexpr const TypeSymbol& Type()const noexcept { return _type; }
+	constexpr const BoundConstant& Constant()const noexcept { return _constant; }
 };
 
 class GlobalVariableSymbol final :public VariableSymbol
 {
 public:
-	GlobalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type)noexcept
-		:VariableSymbol(name, isReadOnly, type)
+	GlobalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
+		BoundConstant constant)noexcept
+		:VariableSymbol(name, isReadOnly, type, std::move(constant))
 	{
 	}
 
@@ -141,8 +147,9 @@ public:
 class LocalVariableSymbol :public VariableSymbol
 {
 public:
-	LocalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type)noexcept
-		:VariableSymbol(name, isReadOnly, type)
+	LocalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
+		BoundConstant constant)noexcept
+		:VariableSymbol(name, isReadOnly, type, std::move(constant))
 	{
 	}
 
@@ -153,7 +160,7 @@ class ParameterSymbol final : public LocalVariableSymbol
 {
 public:
 	ParameterSymbol(string_view name, TypeSymbol type)noexcept
-		:LocalVariableSymbol(name, true, type)
+		:LocalVariableSymbol(name, true, type, NULL_VALUE)
 	{
 	}
 
@@ -200,40 +207,6 @@ inline const auto BUILTIN_RND = FunctionSymbol("rnd",
 	TYPE_INT);
 
 const std::array<FunctionSymbol, 3>& GetAllBuiltinFunctions();
-
-class MCF_API ValueType final
-{
-private:
-	std::variant<std::monostate, bool, IntegerType, string> _inner;
-
-public:
-	constexpr ValueType() noexcept :_inner(std::monostate()) {}
-
-	/// stays implicit
-	constexpr ValueType(bool value)noexcept :_inner(value) {}
-	constexpr ValueType(IntegerType value)noexcept :_inner(value) {}
-
-	ValueType(string s) : _inner(std::move(s)) {}
-	ValueType(const char* s) : _inner(string(s)) {}
-
-	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
-	TypeSymbol Type()const;
-
-	constexpr bool operator==(const ValueType& other)const { return _inner == other._inner; }
-	constexpr bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }
-	bool ToBoolean()const;
-	IntegerType ToInteger()const;
-	string ToString()const;
-
-	template<typename T>
-	constexpr decltype(auto) GetValue() const
-	{
-		return std::get<T>(_inner);
-	}
-};
-
-inline const auto NULL_VALUE = ValueType(); // NOTE global constant
-MCF_API std::ostream& operator<<(std::ostream& out, const ValueType& value);
 
 }//MCF
 

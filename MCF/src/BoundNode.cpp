@@ -13,6 +13,8 @@ string_view nameof(BoundNodeKind  kind)
 	{
 		case BoundNodeKind::BlockStatement:
 			return "BlockStatement";
+		case BoundNodeKind::NopStatement:
+			return "NopStatement";
 		case BoundNodeKind::VariableDeclaration:
 			return "VariableDeclaration";
 		case BoundNodeKind::IfStatement:

@@ -8,6 +8,7 @@ enum class BoundNodeKind
 {
 	// Statements
 	BlockStatement,
+	NopStatement,
 	VariableDeclaration,
 	IfStatement,
 	WhileStatement,

@@ -29,6 +29,14 @@ public:
 	constexpr const vector<shared_ptr<BoundStatement>>& Statements()const noexcept { return _statements; }
 };
 
+class BoundNopStatement final :public BoundStatement
+{
+public:
+	// Inherited via BoundStatement
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::NopStatement; }
+
+};
+
 class BoundVariableDeclaration final :public BoundStatement
 {
 private:

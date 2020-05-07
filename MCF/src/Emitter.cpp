@@ -87,6 +87,7 @@ private:
 	void EmitFunctionBody(const FunctionSymbol& function, const BoundBlockStatement& body);
 
 	void EmitStatement(const BoundStatement& node);
+	void EmitNopStatement(const BoundNopStatement& node);
 	void EmitVariableDeclaration(const BoundVariableDeclaration& node);
 	void EmitLabelStatement(const BoundLabelStatement& node);
 	void EmitGotoStatement(const BoundGotoStatement& node);
@@ -196,6 +197,9 @@ void Emitter::EmitStatement(const BoundStatement& node)
 {
 	switch (node.Kind())
 	{
+		case BoundNodeKind::NopStatement:
+			EmitNopStatement(static_cast<const BoundNopStatement&>(node));
+			break;
 		case BoundNodeKind::VariableDeclaration:
 			EmitVariableDeclaration(static_cast<const BoundVariableDeclaration&>(node));
 			break;
@@ -217,6 +221,11 @@ void Emitter::EmitStatement(const BoundStatement& node)
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected node: ", nameof(node.Kind())));
 	}
+}
+
+void Emitter::EmitNopStatement(const BoundNopStatement& node)
+{
+	(void)node;
 }
 
 void Emitter::EmitVariableDeclaration(const BoundVariableDeclaration& node)

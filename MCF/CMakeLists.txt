@@ -1,6 +1,7 @@
 project(MCF)
 
 add_library(MCF SHARED src/Binding.cpp
+	src/BoundExpressions.cpp
 	src/BoundNode.cpp
 	src/BoundNodePrinter.cpp
 	src/Compilation.cpp
@@ -20,7 +21,8 @@ add_library(MCF SHARED src/Binding.cpp
 	src/SyntaxExpressions.cpp
 	src/SyntaxKind.cpp
 	src/SyntaxStatements.cpp
-	src/SyntaxToken.cpp)
+	src/SyntaxToken.cpp
+	src/Values.cpp)
 
 target_include_directories(
     ${PROJECT_NAME} PUBLIC

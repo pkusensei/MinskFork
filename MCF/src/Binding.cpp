@@ -160,7 +160,7 @@ private:
 		TextLocation diagLocation, shared_ptr<BoundExpression> syntax,
 		const TypeSymbol& type, bool allowExplicit = false);
 	shared_ptr<VariableSymbol> BindVariableDeclaration(const SyntaxToken& identifier,
-		bool isReadOnly, const TypeSymbol& type);
+		bool isReadOnly, const TypeSymbol& type, BoundConstant constant = NULL_VALUE);
 	std::optional<shared_ptr<VariableSymbol>> BindVariableReference(const SyntaxToken& identifier);
 	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
 	std::optional<TypeSymbol> LookupType(string_view name)const;
@@ -332,7 +332,8 @@ shared_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclara
 	auto type = BindTypeClause(syntax->TypeClause());
 	auto init = BindExpression(syntax->Initializer());
 	auto variableType = type.value_or(init->Type());
-	auto variable = BindVariableDeclaration(syntax->Identifier(), readOnly, variableType);
+	auto variable = BindVariableDeclaration(syntax->Identifier(), readOnly,
+		variableType, init->ConstantValue());
 	auto convertInitializer = BindConversion(syntax->Identifier().Location(),
 		std::move(init), variableType);
 
@@ -748,16 +749,16 @@ shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
 	return make_shared<BoundConversionExpression>(type, std::move(expression));
 }
 
-shared_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& identifier, bool isReadOnly,
-	const TypeSymbol& type)
+shared_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& identifier,
+	bool isReadOnly, const TypeSymbol& type, BoundConstant constant)
 {
 	auto name = identifier.Text().empty() ? "?" : identifier.Text();
 	auto declare = !identifier.IsMissing();
 	shared_ptr<VariableSymbol> variable = nullptr;
 	if (_function == nullptr)
-		variable = make_shared<GlobalVariableSymbol>(name, isReadOnly, type);
+		variable = make_shared<GlobalVariableSymbol>(name, isReadOnly, type, std::move(constant));
 	else
-		variable = make_shared<LocalVariableSymbol>(name, isReadOnly, type);
+		variable = make_shared<LocalVariableSymbol>(name, isReadOnly, type, std::move(constant));
 
 	if (declare && !_scope->TryDeclareVariable(variable))
 		_diagnostics->ReportSymbolAlreadyDeclared(identifier.Location(), name);

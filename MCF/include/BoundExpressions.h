@@ -14,24 +14,6 @@ enum class BoundUnaryOperatorKind
 	OnesComplement
 };
 
-inline string_view nameof(BoundUnaryOperatorKind kind)
-{
-	switch (kind)
-	{
-		case BoundUnaryOperatorKind::Identity:
-			return "Identity";
-		case BoundUnaryOperatorKind::Negation:
-			return "Negation";
-		case BoundUnaryOperatorKind::LogicalNegation:
-			return "LogicalNegation";
-		case BoundUnaryOperatorKind::OnesComplement:
-			return "OnesComplement";
-
-		default:
-			return string_view();
-	}
-}
-
 enum class BoundBinaryOperatorKind
 {
 	Addition,
@@ -52,78 +34,28 @@ enum class BoundBinaryOperatorKind
 	GreaterOrEquals
 };
 
-inline string_view nameof(BoundBinaryOperatorKind kind)
-{
-	switch (kind)
-	{
-		case BoundBinaryOperatorKind::Addition:
-			return "Addition";
-		case BoundBinaryOperatorKind::Subtraction:
-			return "Subtraction";
-		case BoundBinaryOperatorKind::Multiplication:
-			return "Multiplication";
-		case BoundBinaryOperatorKind::Division:
-			return "Division";
-		case BoundBinaryOperatorKind::Modulus:
-			return "Modulus";
-		case BoundBinaryOperatorKind::LogicalAnd:
-			return "LogicalAnd";
-		case BoundBinaryOperatorKind::LogicalOr:
-			return "LogicalOr";
-		case BoundBinaryOperatorKind::BitwiseAnd:
-			return "BitwiseAnd";
-		case BoundBinaryOperatorKind::BitwiseOr:
-			return "BitwiseOr";
-		case BoundBinaryOperatorKind::BitwiseXor:
-			return "BitwiseXor";
-		case BoundBinaryOperatorKind::Equals:
-			return "Equals";
-		case BoundBinaryOperatorKind::NotEquals:
-			return "NotEquals";
-		case BoundBinaryOperatorKind::Less:
-			return "Less";
-		case BoundBinaryOperatorKind::LessOrEquals:
-			return "LessOrEquals";
-		case BoundBinaryOperatorKind::Greater:
-			return "Greater";
-		case BoundBinaryOperatorKind::GreaterOrEquals:
-			return "GreaterOrEquals";
-
-		default:
-			return string_view();
-	}
-}
-
 enum class BoundPostfixOperatorEnum
 {
 	Increment,
 	Decrement,
 };
 
-inline string_view nameof(BoundPostfixOperatorEnum kind)
-{
-	switch (kind)
-	{
-		case BoundPostfixOperatorEnum::Increment:
-			return "Increment";
-		case BoundPostfixOperatorEnum::Decrement:
-			return "Decrement";
-		default:
-			return string_view();
-	}
-}
+string_view nameof(BoundUnaryOperatorKind kind);
+string_view nameof(BoundBinaryOperatorKind kind);
+string_view nameof(BoundPostfixOperatorEnum kind);
 
 class BoundExpression :public BoundNode
 {
 public:
-	virtual TypeSymbol Type() const = 0;
+	virtual const TypeSymbol& Type() const = 0;
+	virtual const BoundConstant& ConstantValue()const noexcept { return NULL_VALUE; }
 };
 
 class BoundErrorExpression final :public BoundExpression
 {
 public:
 	// Inherited via BoundExpression
-	TypeSymbol Type() const override { return TYPE_ERROR; }
+	const TypeSymbol& Type() const override { return TYPE_ERROR; }
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ErrorExpression; }
 };
 
@@ -165,48 +97,7 @@ public:
 	constexpr const TypeSymbol& Type()const { return _resultType; }
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
-	static BoundUnaryOperator Bind(SyntaxKind synKind,
-		const TypeSymbol& type)
-	{
-		for (const auto& op : operators)
-		{
-			if (op.SynKind() == synKind && op.OperandType() == type)
-				return op;
-		}
-		return BoundUnaryOperator();
-	}
-};
-
-inline const std::array<BoundUnaryOperator, 4> BoundUnaryOperator::operators = {
-	BoundUnaryOperator(SyntaxKind::BangToken, BoundUnaryOperatorKind::LogicalNegation,
-						TYPE_BOOL),
-	BoundUnaryOperator(SyntaxKind::PlusToken, BoundUnaryOperatorKind::Identity,
-						TYPE_INT),
-	BoundUnaryOperator(SyntaxKind::MinusToken, BoundUnaryOperatorKind::Negation,
-						TYPE_INT),
-	BoundUnaryOperator(SyntaxKind::TildeToken, BoundUnaryOperatorKind::OnesComplement,
-						TYPE_INT)
-};
-
-class BoundUnaryExpression final : public BoundExpression
-{
-private:
-	BoundUnaryOperator _op;
-	shared_ptr<BoundExpression> _operand;
-
-public:
-	BoundUnaryExpression(const BoundUnaryOperator& op,
-		shared_ptr<BoundExpression> operand)
-		:_op(op), _operand(std::move(operand))
-	{
-	}
-
-	// Inherited via BoundExpression
-	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::UnaryExpression; }
-	TypeSymbol Type() const  override { return _op.Type(); }
-
-	constexpr const BoundUnaryOperator& Op()const noexcept { return _op; }
-	constexpr const shared_ptr<BoundExpression>& Operand()const noexcept { return _operand; }
+	static BoundUnaryOperator Bind(SyntaxKind synKind, const TypeSymbol& type);
 };
 
 class BoundBinaryOperator final
@@ -256,82 +147,42 @@ public:
 	constexpr bool IsUseful()const noexcept { return _isUseful; }
 
 	static BoundBinaryOperator Bind(SyntaxKind synKind,
-		const TypeSymbol& leftType, const TypeSymbol& rightType)
-	{
-		for (const auto& op : operators)
-		{
-			if (op.SynKind() == synKind && op.LeftType() == leftType
-				&& op.RightType() == rightType)
-				return op;
-		}
-		return BoundBinaryOperator();
-	}
+		const TypeSymbol& leftType, const TypeSymbol& rightType);
 
 };
 
-inline const std::array<BoundBinaryOperator, 26> BoundBinaryOperator::operators = {
-		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
-							TYPE_INT),
-		BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction,
-							TYPE_INT),
-		BoundBinaryOperator(SyntaxKind::StarToken, BoundBinaryOperatorKind::Multiplication,
-							TYPE_INT),
-		BoundBinaryOperator(SyntaxKind::SlashToken, BoundBinaryOperatorKind::Division,
-							TYPE_INT),
-		BoundBinaryOperator(SyntaxKind::PercentToken, BoundBinaryOperatorKind::Modulus,
-							TYPE_INT),
+BoundConstant ComputeConstant(const BoundUnaryOperator& op, const BoundExpression& operand);
+BoundConstant ComputeConstant(const BoundExpression& left, const BoundBinaryOperator& op,
+	const BoundExpression& right);
 
-		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd,
-							TYPE_INT),
-		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr,
-							TYPE_INT),
-		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor,
-							TYPE_INT),
+class BoundUnaryExpression final : public BoundExpression
+{
+private:
+	BoundConstant _constant;
+	BoundUnaryOperator _op;
+	shared_ptr<BoundExpression> _operand;
 
-		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TYPE_INT, TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TYPE_INT, TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::LessToken, BoundBinaryOperatorKind::Less,
-							TYPE_INT, TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::LessOrEqualsToken, BoundBinaryOperatorKind::LessOrEquals,
-							TYPE_INT, TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::GreaterToken, BoundBinaryOperatorKind::Greater,
-							TYPE_INT, TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::GreaterOrEqualsToken, BoundBinaryOperatorKind::GreaterOrEquals,
-							TYPE_INT, TYPE_BOOL),
+public:
+	BoundUnaryExpression(const BoundUnaryOperator& op,
+		shared_ptr<BoundExpression> operand)
+		:_constant(ComputeConstant(op, *operand)),
+		_op(op), _operand(std::move(operand))
+	{
+	}
 
-		BoundBinaryOperator(SyntaxKind::AmpersandToken, BoundBinaryOperatorKind::BitwiseAnd,
-							TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::AmpersandAmpersandToken, BoundBinaryOperatorKind::LogicalAnd,
-							TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::PipeToken, BoundBinaryOperatorKind::BitwiseOr,
-							TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::PipePipeToken, BoundBinaryOperatorKind::LogicalOr,
-							TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::HatToken, BoundBinaryOperatorKind::BitwiseXor,
-							TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TYPE_BOOL),
+	// Inherited via BoundExpression
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::UnaryExpression; }
+	const TypeSymbol& Type() const  override { return _op.Type(); }
+	const BoundConstant& ConstantValue()const noexcept override { return _constant; }
 
-		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
-							TYPE_STRING),
-		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TYPE_STRING, TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TYPE_STRING, TYPE_BOOL),
-
-		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
-							TYPE_ANY, TYPE_BOOL),
-		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
-							TYPE_ANY, TYPE_BOOL),
+	constexpr const BoundUnaryOperator& Op()const noexcept { return _op; }
+	constexpr const shared_ptr<BoundExpression>& Operand()const noexcept { return _operand; }
 };
 
 class BoundBinaryExpression final : public BoundExpression
 {
 private:
+	BoundConstant _constant;
 	shared_ptr<BoundExpression> _left;
 	shared_ptr<BoundExpression> _right;
 	BoundBinaryOperator _op;
@@ -339,13 +190,15 @@ private:
 public:
 	BoundBinaryExpression(shared_ptr<BoundExpression> left,
 		BoundBinaryOperator op, shared_ptr<BoundExpression> right)
-		:_left(std::move(left)), _right(std::move(right)), _op(std::move(op))
+		:_constant(ComputeConstant(*left, op, *right)),
+		_left(std::move(left)), _right(std::move(right)), _op(std::move(op))
 	{
 	}
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::BinaryExpression; }
-	TypeSymbol Type() const  override { return _op.Type(); }
+	const TypeSymbol& Type() const override { return _op.Type(); }
+	const BoundConstant& ConstantValue()const noexcept override { return _constant; }
 
 	constexpr const shared_ptr<BoundExpression>& Left()const noexcept { return _left; }
 	constexpr const shared_ptr<BoundExpression>& Right()const noexcept { return _right; }
@@ -367,7 +220,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::AssignmentExpression; }
-	TypeSymbol Type() const  override { return _expression->Type(); }
+	const TypeSymbol& Type() const  override { return _expression->Type(); }
 
 	constexpr const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 	constexpr const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
@@ -376,19 +229,21 @@ public:
 class BoundLiteralExpression final : public BoundExpression
 {
 private:
-	ValueType _value;
+	TypeSymbol _type;
+	BoundConstant _constant;
 
 public:
 	explicit BoundLiteralExpression(ValueType value)
-		: _value(std::move(value))
+		:_type(value.Type()), _constant(std::move(value))
 	{
 	}
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::LiteralExpression; }
-	TypeSymbol Type() const  override { return _value.Type(); }
+	const TypeSymbol& Type() const override { return _type; }
+	const BoundConstant& ConstantValue()const noexcept override { return _constant; }
 
-	constexpr const ValueType& Value()const noexcept { return _value; }
+	constexpr const ValueType& Value()const noexcept { return _constant; }
 };
 
 class BoundVariableExpression final : public BoundExpression
@@ -404,7 +259,8 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::VariableExpression; }
-	TypeSymbol Type() const override { return _variable->Type(); }
+	const TypeSymbol& Type() const override { return _variable->Type(); }
+	const BoundConstant& ConstantValue()const noexcept override { return _variable->Constant(); }
 
 	constexpr const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 };
@@ -424,7 +280,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::CallExpression; }
-	TypeSymbol Type() const override { return _function->Type(); }
+	const TypeSymbol& Type() const override { return _function->Type(); }
 
 	constexpr const shared_ptr<FunctionSymbol>& Function()const noexcept { return _function; }
 	constexpr const vector<shared_ptr<BoundExpression>>& Arguments()const noexcept { return _arguments; }
@@ -445,7 +301,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::ConversionExpression; }
-	TypeSymbol Type() const override { return _type; }
+	const TypeSymbol& Type() const override { return _type; }
 
 	constexpr const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
 };
@@ -467,7 +323,7 @@ public:
 
 	// Inherited via BoundExpression
 	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::PostfixExpression; }
-	TypeSymbol Type() const override { return _variable->Type(); }
+	const TypeSymbol& Type() const override { return _variable->Type(); }
 
 	constexpr const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
 	constexpr BoundPostfixOperatorEnum OperatorKind()const noexcept { return _kind; }
