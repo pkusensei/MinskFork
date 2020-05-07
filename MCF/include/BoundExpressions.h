@@ -245,7 +245,7 @@ private:
 		_isUseful = false;
 	}
 
-	static const std::array<BoundBinaryOperator, 24> operators;
+	static const std::array<BoundBinaryOperator, 26> operators;
 
 public:
 	constexpr SyntaxKind SynKind()const noexcept { return _syntaxKind; }
@@ -269,7 +269,7 @@ public:
 
 };
 
-inline const std::array<BoundBinaryOperator, 24> BoundBinaryOperator::operators = {
+inline const std::array<BoundBinaryOperator, 26> BoundBinaryOperator::operators = {
 		BoundBinaryOperator(SyntaxKind::PlusToken, BoundBinaryOperatorKind::Addition,
 							TYPE_INT),
 		BoundBinaryOperator(SyntaxKind::MinusToken, BoundBinaryOperatorKind::Subtraction,
@@ -322,6 +322,11 @@ inline const std::array<BoundBinaryOperator, 24> BoundBinaryOperator::operators 
 							TYPE_STRING, TYPE_BOOL),
 		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
 							TYPE_STRING, TYPE_BOOL),
+
+		BoundBinaryOperator(SyntaxKind::EqualsEqualsToken, BoundBinaryOperatorKind::Equals,
+							TYPE_ANY, TYPE_BOOL),
+		BoundBinaryOperator(SyntaxKind::BangEqualsToken, BoundBinaryOperatorKind::NotEquals,
+							TYPE_ANY, TYPE_BOOL),
 };
 
 class BoundBinaryExpression final : public BoundExpression

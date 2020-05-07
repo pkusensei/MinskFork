@@ -74,11 +74,6 @@ extern "C" const char *strConcat(const char *s1, const char *s2)
     return (*it)->c_str();
 }
 
-extern "C" bool ptrEqual(void *a, void *b) noexcept
-{
-    return a == b;
-}
-
 extern "C" bool strEqual(const char *a, const char *b) noexcept
 {
     return std::strcmp(a, b) == 0;

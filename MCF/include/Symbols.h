@@ -193,7 +193,7 @@ inline const auto BUILTIN_INPUT = FunctionSymbol("input",
 	vector<ParameterSymbol>(),
 	TYPE_STRING);
 inline const auto BUILTIN_PRINT = FunctionSymbol("print",
-	vector<ParameterSymbol>{ParameterSymbol("text", TYPE_STRING)},
+	vector<ParameterSymbol>{ParameterSymbol("text", TYPE_ANY)},
 	TYPE_VOID);
 inline const auto BUILTIN_RND = FunctionSymbol("rnd",
 	vector<ParameterSymbol>{ParameterSymbol("max", TYPE_INT)},

@@ -312,7 +312,7 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 	} else if (*(node->Function()) == BUILTIN_PRINT)
 	{
 		auto message = EvaluateExpression(node->Arguments()[0].get());
-		std::cout << message.GetValue<string>() << NEW_LINE;
+		std::cout << message.ToString() << NEW_LINE;
 		return NULL_VALUE;
 	} else if (*(node->Function()) == BUILTIN_RND)
 	{

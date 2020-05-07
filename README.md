@@ -70,7 +70,9 @@ This section documents some interesting decisions made when forking Minsk, mostl
 
 - `std::variant` for a unified value system.
 
-     It comes in really handy here to mimic `object` in C#, and `std::monostate` acts as a placeholder for `null`. The caveat is consumers/users of this hack have to know the underlying type stored in `std::variant` if they want to read the value. Then again C++ is a statically typed language.
+     It comes in really handy here to mimic `System.Object` in C#, and `std::monostate` acts as a placeholder for `null`. The caveat is consumers/users of this hack have to know the underlying type stored in `std::variant` if they want to read the value. Then again C++ is a statically typed language.
+
+     This approach works well until it turns away from interpreter and hits the challenges of compiler. Minsk supports an `any` type which closely alignes with `object`, but `std::variant` doesn't translate well into LLVM representation. For now `any == any` and such convert `any` values into strings and do the corresponding operations using string semantics. 
 
 - Spamming `std::string_view`
 
@@ -79,10 +81,6 @@ This section documents some interesting decisions made when forking Minsk, mostl
 - Code Redundancy
 
     Emerging from lack of reflection in C++, e.g. in class derived from `SyntaxNode`, or property, e.g. an array of getters in nearly every class. This problem is partly alleviated by conjuring up some templates. And some `std::function` magic. 
-
-- Templates vs Generics
-
-    Templates are powerful, templates are fun, templates are hard to write, and (maybe) even harder to reason about. Also using `std::enable_if` and type traits to mimic type constraints is not very elegant in any way. (where is CONCEPTS)
 
 - CMake + Visual Studio + Ninja + MSBuild + ...
 

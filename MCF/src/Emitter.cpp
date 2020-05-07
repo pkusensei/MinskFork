@@ -65,7 +65,6 @@ private:
 	llvm::Function* _strToBoolFunc;
 	llvm::Function* _strToIntFunc;
 
-	llvm::Function* _ptrEqualFunc;
 	llvm::Function* _strEqualFunc;
 
 	// current working function
@@ -111,6 +110,8 @@ private:
 	llvm::AllocaInst* CreateEntryBlockAlloca(llvm::Type* type, string_view varName)const;
 	void CreateBlocksFromLabels(const BoundBlockStatement& body);
 	void FixPrevLabel();
+
+	llvm::Value* ConvertToStr(llvm::Value* value);
 
 public:
 	explicit Emitter(const string& moduleName);
@@ -437,26 +438,25 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 
 	if (node.Op().Kind() == BoundBinaryOperatorKind::Equals)
 	{
-		/*
-		* NOTE "any" objects treated as addresses/pointers
-		*      but strings are stored either in
-		*      a) runtime container
-		*      b) as constant in binary
-		*/
 		if (node.Left()->Type() == TYPE_ANY
 			&& node.Right()->Type() == TYPE_ANY)
 		{
-			return _builder.CreateCall(_ptrEqualFunc, { lhs, rhs });
+			// HACK convert integral values into strings
+			auto lstr = ConvertToStr(lhs);
+			auto rstr = ConvertToStr(rhs);
+			return _builder.CreateCall(_strEqualFunc, { lstr, rstr });
 		} else if (node.Left()->Type() == TYPE_STRING
 			&& node.Right()->Type() == TYPE_STRING)
 		{
+			// NOTE strings are stored either in
+			// a) runtime container
+			// b) as constant in binary
 			return _builder.CreateCall(_strEqualFunc, { lhs, rhs });
 		}
 	}
 
 	if (node.Op().Kind() == BoundBinaryOperatorKind::NotEquals)
 	{
-		llvm::CallInst* value = nullptr;
 		auto compareToFalse = [this](llvm::CallInst* v)
 		{
 			auto false_ = llvm::ConstantInt::getFalse(_context);
@@ -464,10 +464,14 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 			return _builder.Insert(op);
 		};
 
+		llvm::CallInst* value = nullptr;
+
 		if (node.Left()->Type() == TYPE_ANY
 			&& node.Right()->Type() == TYPE_ANY)
 		{
-			value = _builder.CreateCall(_ptrEqualFunc, { lhs, rhs });
+			auto lstr = ConvertToStr(lhs);
+			auto rstr = ConvertToStr(rhs);
+			value = _builder.CreateCall(_strEqualFunc, { lstr, rstr });
 			return compareToFalse(value);
 		} else if (node.Left()->Type() == TYPE_STRING
 			&& node.Right()->Type() == TYPE_STRING)
@@ -538,7 +542,10 @@ llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 	} else if (*(node.Function()) == BUILTIN_PRINT)
 	{
 		auto value = EmitExpression(*node.Arguments().at(0));
-		return _builder.CreateCall(_putsFunc, value);
+
+		llvm::Value* str = ConvertToStr(value);
+		return _builder.CreateCall(_putsFunc, str);
+
 	} else if (*(node.Function()) == BUILTIN_RND)
 	{
 		auto value = EmitExpression(*node.Arguments().at(0));
@@ -587,11 +594,7 @@ llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& 
 		return value;
 	} else if (node.Type() == TYPE_STRING)
 	{
-		if (value->getType() == _boolType)
-			return _builder.CreateCall(_boolToStrFunc, value);
-		if (value->getType() == _intType)
-			return _builder.CreateCall(_intToStrFunc, value);
-		return value;
+		return ConvertToStr(value);
 	} else
 	{
 		// NOTE implicit conversions
@@ -721,13 +724,6 @@ void Emitter::InitExternFunctions()
 	_strToIntFunc =
 		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "strToInt", *_module);
 
-	// NOTE there is no void* in LLVM representation
-	auto voidPtrType = _charType->getPointerTo();
-	args = vector<llvm::Type*>(2, voidPtrType);
-	ft = llvm::FunctionType::get(_boolType, args, false);
-	_ptrEqualFunc =
-		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "ptrEqual", *_module);
-
 	args = vector<llvm::Type*>(2, _charType->getPointerTo());
 	ft = llvm::FunctionType::get(_boolType, args, false);
 	_strEqualFunc =
@@ -788,6 +784,18 @@ void Emitter::FixPrevLabel()
 		const auto& prevLabel = _labels.back();
 		_labelBBMap.insert_or_assign(prevLabel, _builder.GetInsertBlock());
 	}
+}
+
+llvm::Value* Emitter::ConvertToStr(llvm::Value* value)
+{
+	if (value->getType() == _boolType)
+		return _builder.CreateCall(_boolToStrFunc, value);
+	else if (value->getType() == _intType)
+		return _builder.CreateCall(_intToStrFunc, value);
+	else if (value->getType() == _charType->getPointerTo())
+		return value;
+	else
+		throw std::invalid_argument("Cannot convert type to str.");
 }
 
 DiagnosticBag Emit(const BoundProgram& program, const string& moduleName,
