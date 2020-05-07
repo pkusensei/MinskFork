@@ -82,7 +82,7 @@ public:
 	[[nodiscard]] EvaluationResult Evaluate(VarMap& variables);
 	void EmitTree(std::ostream& out);
 	void EmitTree(const FunctionSymbol* symbol, std::ostream& out);
-	DiagnosticBag Emit(const string& moduleName, const fs::path& outPath);
+	[[nodiscard]] DiagnosticBag Emit(const string& moduleName, const fs::path& outPath);
 };
 
 }//MCF

@@ -66,6 +66,7 @@ private:
 	llvm::Function* _strToIntFunc;
 
 	llvm::Function* _strEqualFunc;
+	llvm::Function* _nopIntrinsic;
 
 	// current working function
 	llvm::Function* _function;
@@ -87,7 +88,7 @@ private:
 	void EmitFunctionBody(const FunctionSymbol& function, const BoundBlockStatement& body);
 
 	void EmitStatement(const BoundStatement& node);
-	void EmitNopStatement(const BoundNopStatement& node);
+	void EmitNopStatement();
 	void EmitVariableDeclaration(const BoundVariableDeclaration& node);
 	void EmitLabelStatement(const BoundLabelStatement& node);
 	void EmitGotoStatement(const BoundGotoStatement& node);
@@ -198,7 +199,7 @@ void Emitter::EmitStatement(const BoundStatement& node)
 	switch (node.Kind())
 	{
 		case BoundNodeKind::NopStatement:
-			EmitNopStatement(static_cast<const BoundNopStatement&>(node));
+			EmitNopStatement();
 			break;
 		case BoundNodeKind::VariableDeclaration:
 			EmitVariableDeclaration(static_cast<const BoundVariableDeclaration&>(node));
@@ -223,9 +224,9 @@ void Emitter::EmitStatement(const BoundStatement& node)
 	}
 }
 
-void Emitter::EmitNopStatement(const BoundNopStatement& node)
+void Emitter::EmitNopStatement()
 {
-	(void)node;
+	_builder.CreateCall(_nopIntrinsic);
 }
 
 void Emitter::EmitVariableDeclaration(const BoundVariableDeclaration& node)
@@ -737,6 +738,11 @@ void Emitter::InitExternFunctions()
 	ft = llvm::FunctionType::get(_boolType, args, false);
 	_strEqualFunc =
 		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "strEqual", *_module);
+
+	ft = llvm::FunctionType::get(_knownTypes.at(TYPE_VOID), false);
+	_nopIntrinsic =
+		llvm::Function::Create(ft, llvm::Function::ExternalLinkage, "llvm.donothing", *_module);
+
 }
 
 void Emitter::InitTarget()
