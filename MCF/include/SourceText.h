@@ -31,6 +31,12 @@ public:
 	constexpr size_t Start()const noexcept { return _start; }
 	constexpr size_t Length()const noexcept { return _length; }
 	constexpr size_t End()const noexcept { return Start() + Length(); }
+
+	constexpr bool OverlapsWith(const TextSpan& span)const noexcept
+	{
+		return Start() < span.End() && span.Start() < End();
+	}
+
 	string ToString() const
 	{
 		return std::to_string(Start()) + ".." + std::to_string(End());

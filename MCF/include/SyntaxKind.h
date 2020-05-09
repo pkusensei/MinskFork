@@ -18,10 +18,10 @@ enum class SyntaxKind
 	MinusToken,
 	StarToken,
 	SlashToken,
-	PercentToken,
+	PercentToken, //
 	BangToken,
-	PlusPlusToken,
-	MinusMinusToken,
+	PlusPlusToken, //
+	MinusMinusToken, //
 	EqualsToken,
 	TildeToken,
 	HatToken,
@@ -58,7 +58,7 @@ enum class SyntaxKind
 	VarKeyword,
 	WhileKeyword,
 	DoKeyword,
-	UsingKeyworld,
+	UsingKeyworld, //
 
 	// Nodes
 	CompilationUnit,
@@ -67,7 +67,7 @@ enum class SyntaxKind
 	Parameter,
 	TypeClause,
 	ElseClause,
-	UsingDirective,
+	UsingDirective, //
 
 	// Statements
 	BlockStatement,
@@ -89,7 +89,7 @@ enum class SyntaxKind
 	ParenthesizedExpression,
 	AssignmentExpression,
 	CallExpression,
-	PostfixExpression,
+	PostfixExpression, //
 };
 
 constexpr size_t SYNTAXKIND_COUNT = 75;

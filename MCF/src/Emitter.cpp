@@ -512,6 +512,8 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 			return binary(llvm::Instruction::Mul);
 		case BoundBinaryOperatorKind::Division:
 			return binary(llvm::Instruction::SDiv);
+		case BoundBinaryOperatorKind::Modulus:
+			return binary(llvm::Instruction::BinaryOps::SRem);
 
 		case BoundBinaryOperatorKind::LogicalAnd:
 		case BoundBinaryOperatorKind::BitwiseAnd:

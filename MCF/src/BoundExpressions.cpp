@@ -213,7 +213,7 @@ BoundConstant ComputeConstant(const BoundExpression& left, const BoundBinaryOper
 		if ((lc != NULL_VALUE && lc.GetValue<bool>()) ||
 			(rc != NULL_VALUE && rc.GetValue<bool>()))
 		{
-			return  BoundConstant(true);
+			return BoundConstant(true);
 		}
 	}
 
@@ -224,46 +224,48 @@ BoundConstant ComputeConstant(const BoundExpression& left, const BoundBinaryOper
 	{
 		case BoundBinaryOperatorKind::Addition:
 			if (left.Type() == TYPE_INT)
-				return  BoundConstant(lc.GetValue<IntegerType>() + rc.GetValue<IntegerType>());
+				return BoundConstant(lc.GetValue<IntegerType>() + rc.GetValue<IntegerType>());
 			else
-				return  BoundConstant(lc.GetValue<string>() + rc.GetValue<string>());
+				return BoundConstant(lc.GetValue<string>() + rc.GetValue<string>());
 		case BoundBinaryOperatorKind::Subtraction:
-			return  BoundConstant(lc.GetValue<IntegerType>() - rc.GetValue<IntegerType>());
+			return BoundConstant(lc.GetValue<IntegerType>() - rc.GetValue<IntegerType>());
 		case BoundBinaryOperatorKind::Multiplication:
-			return  BoundConstant(lc.GetValue<IntegerType>() * rc.GetValue<IntegerType>());
+			return BoundConstant(lc.GetValue<IntegerType>() * rc.GetValue<IntegerType>());
 		case BoundBinaryOperatorKind::Division:
-			return  BoundConstant(lc.GetValue<IntegerType>() / rc.GetValue<IntegerType>());
+			return BoundConstant(lc.GetValue<IntegerType>() / rc.GetValue<IntegerType>());
+		case BoundBinaryOperatorKind::Modulus:
+			return BoundConstant(lc.GetValue<IntegerType>() % rc.GetValue<IntegerType>());
 		case BoundBinaryOperatorKind::BitwiseAnd:
 			if (left.Type() == TYPE_INT)
-				return  BoundConstant(lc.GetValue<IntegerType>() & rc.GetValue<IntegerType>());
+				return BoundConstant(lc.GetValue<IntegerType>() & rc.GetValue<IntegerType>());
 			else
-				return  BoundConstant(lc.GetValue<bool>() & rc.GetValue<bool>());
+				return BoundConstant(lc.GetValue<bool>() & rc.GetValue<bool>());
 		case BoundBinaryOperatorKind::BitwiseOr:
 			if (left.Type() == TYPE_INT)
-				return  BoundConstant(lc.GetValue<IntegerType>() | rc.GetValue<IntegerType>());
+				return BoundConstant(lc.GetValue<IntegerType>() | rc.GetValue<IntegerType>());
 			else
-				return  BoundConstant(lc.GetValue<bool>() | rc.GetValue<bool>());
+				return BoundConstant(lc.GetValue<bool>() | rc.GetValue<bool>());
 		case BoundBinaryOperatorKind::BitwiseXor:
 			if (left.Type() == TYPE_INT)
-				return  BoundConstant(lc.GetValue<IntegerType>() ^ rc.GetValue<IntegerType>());
+				return BoundConstant(lc.GetValue<IntegerType>() ^ rc.GetValue<IntegerType>());
 			else
-				return  BoundConstant(lc.GetValue<bool>() ^ rc.GetValue<bool>());
+				return BoundConstant(lc.GetValue<bool>() ^ rc.GetValue<bool>());
 		case BoundBinaryOperatorKind::LogicalAnd:
-			return  BoundConstant(lc.GetValue<bool>() && rc.GetValue<bool>());
+			return BoundConstant(lc.GetValue<bool>() && rc.GetValue<bool>());
 		case BoundBinaryOperatorKind::LogicalOr:
-			return  BoundConstant(lc.GetValue<bool>() || rc.GetValue<bool>());
+			return BoundConstant(lc.GetValue<bool>() || rc.GetValue<bool>());
 		case BoundBinaryOperatorKind::Equals:
-			return  BoundConstant(lc == rc);
+			return BoundConstant(lc == rc);
 		case BoundBinaryOperatorKind::NotEquals:
-			return  BoundConstant(lc != rc);
+			return BoundConstant(lc != rc);
 		case BoundBinaryOperatorKind::Less:
-			return  BoundConstant(lc.GetValue<IntegerType>() < rc.GetValue<IntegerType>());
+			return BoundConstant(lc.GetValue<IntegerType>() < rc.GetValue<IntegerType>());
 		case BoundBinaryOperatorKind::LessOrEquals:
-			return  BoundConstant(lc.GetValue<IntegerType>() <= rc.GetValue<IntegerType>());
+			return BoundConstant(lc.GetValue<IntegerType>() <= rc.GetValue<IntegerType>());
 		case BoundBinaryOperatorKind::Greater:
-			return  BoundConstant(lc.GetValue<IntegerType>() > rc.GetValue<IntegerType>());
+			return BoundConstant(lc.GetValue<IntegerType>() > rc.GetValue<IntegerType>());
 		case BoundBinaryOperatorKind::GreaterOrEquals:
-			return  BoundConstant(lc.GetValue<IntegerType>() >= rc.GetValue<IntegerType>());
+			return BoundConstant(lc.GetValue<IntegerType>() >= rc.GetValue<IntegerType>());
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected binary operator '",
 				nameof(op.Kind()), "'."));
