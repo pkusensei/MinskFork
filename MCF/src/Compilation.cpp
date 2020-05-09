@@ -565,6 +565,14 @@ void Compilation::EmitTree(const FunctionSymbol* symbol, std::ostream& out)
 
 DiagnosticBag Compilation::Emit(const string& moduleName, const fs::path& outPath)
 {
+	std::for_each(_syntaxTrees.cbegin(), _syntaxTrees.cend(),
+		[this](const auto& tree) { _diagnostics->AddRange(tree->Diagnostics()); });
+
+	_diagnostics->AddRange(GlobalScope()->Diagnostics());
+
+	if (!_diagnostics->empty())
+		return *_diagnostics;
+
 	auto p = GetProgram();
 	return MCF::Emit(*p, moduleName, outPath);
 }

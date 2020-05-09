@@ -12,7 +12,6 @@ add_library(MCF SHARED src/Binding.cpp
 	src/Emitter.cpp
 	src/helpers.cpp
 	src/IO.cpp
-	src/Lexer.cpp
 	src/Lowering.cpp
 	src/Parsing.cpp
 	src/SourceText.cpp

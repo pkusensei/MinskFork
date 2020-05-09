@@ -183,7 +183,7 @@ public:
 	SyntaxTree& operator=(const SyntaxTree&) = delete;
 	~SyntaxTree();
 
-	const SourceText& Text() const { return *_text; }
+	const SourceText& Text() const noexcept { return *_text; }
 	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
 	DiagnosticBag& Diagnostics() const noexcept { return *_diagnostics; }
 

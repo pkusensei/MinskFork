@@ -4,22 +4,27 @@
 #include <stdexcept>
 
 #include "EnumHelper.h"
+#include "helpers.h"
 
 namespace MCF {
 
 const std::array<SyntaxKind, SYNTAXKIND_COUNT>& AllSyntaxKinds
-= GetAllEnumValue<SyntaxKind, SYNTAXKIND_COUNT>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
+= GetAllEnumValue<SyntaxKind, SYNTAXKIND_COUNT>(SyntaxKind::BadTokenTrivia, SyntaxKind::PostfixExpression);
 
-string_view nameof(SyntaxKind kind)
+string_view nameof(SyntaxKind kind) noexcept
 {
 	switch (kind)
 	{
-		case SyntaxKind::BadToken:
-			return "BadToken";
+		case SyntaxKind::BadTokenTrivia:
+			return "BadTokenTrivia";
 		case SyntaxKind::EndOfFileToken:
 			return "EndOfFileToken";
-		case SyntaxKind::WhitespaceToken:
-			return "WhitespaceToken";
+		case SyntaxKind::WhitespaceTrivia:
+			return "WhitespaceTrivia";
+		case SyntaxKind::SingleLineCommentTrivia:
+			return "SingleLineCommentTrivia";
+		case SyntaxKind::MultiLineCommentTriva:
+			return "MultiLineCommentTriva";
 		case SyntaxKind::NumberToken:
 			return "NumberToken";
 		case SyntaxKind::StringToken:
@@ -166,7 +171,7 @@ string_view nameof(SyntaxKind kind)
 			return "PostfixExpression";
 
 		default:
-			throw std::invalid_argument("Invalid syntax; no such syntax kind.");
+			return string_view();
 	}
 }
 
@@ -253,6 +258,37 @@ string_view GetText(SyntaxKind kind)
 		case SyntaxKind::UsingKeyworld: return "using";
 		default: return string_view();
 	}
+}
+
+bool IsComment(SyntaxKind kind)noexcept
+{
+	return kind == SyntaxKind::SingleLineCommentTrivia ||
+		kind == SyntaxKind::MultiLineCommentTriva;
+}
+
+bool IsTrivia(SyntaxKind kind)noexcept
+{
+	switch (kind)
+	{
+		case SyntaxKind::BadTokenTrivia:
+		case SyntaxKind::WhitespaceTrivia:
+		case SyntaxKind::SingleLineCommentTrivia:
+		case SyntaxKind::MultiLineCommentTriva:
+			return true;
+		default:
+			return false;
+	}
+}
+
+bool IsKeyword(SyntaxKind kind)
+{
+	return StringEndsWith(nameof(kind), "Keyword");
+}
+
+bool IsToken(SyntaxKind kind)
+{
+	return !IsTrivia(kind) &&
+		(IsKeyword(kind) || StringEndsWith(nameof(kind), "Token"));
 }
 
 int GetUnaryOperatorPrecedence(SyntaxKind kind) noexcept

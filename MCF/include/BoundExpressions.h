@@ -82,7 +82,7 @@ private:
 	}
 
 	BoundUnaryOperator()
-		: BoundUnaryOperator(SyntaxKind::BadToken, BoundUnaryOperatorKind::Identity,
+		: BoundUnaryOperator(SyntaxKind::BadTokenTrivia, BoundUnaryOperatorKind::Identity,
 			TYPE_ERROR)
 	{
 		_isUseful = false;
@@ -130,7 +130,7 @@ private:
 	}
 
 	BoundBinaryOperator()
-		: BoundBinaryOperator(SyntaxKind::BadToken, BoundBinaryOperatorKind::Addition,
+		: BoundBinaryOperator(SyntaxKind::BadTokenTrivia, BoundBinaryOperatorKind::Addition,
 			TYPE_ERROR)
 	{
 		_isUseful = false;

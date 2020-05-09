@@ -4,7 +4,6 @@
 
 #include "Diagnostic.h"
 #include "helpers.h"
-#include "Lexer.h"
 #include "ReflectionHelper.h"
 
 namespace MCF {
@@ -48,6 +47,374 @@ const vector<const SyntaxNode*> CompilationUnitSyntax::GetChildren() const
 	auto rest = MakeVecOfRaw<SyntaxNode>(_endOfFileToken);
 	result.insert(result.end(), rest.begin(), rest.end());
 	return result;
+}
+
+class Lexer final
+{
+private:
+	const SyntaxTree& _tree;
+	const SourceText& _text;
+	DiagnosticBag& _diagnostics;
+
+	size_t _position;
+	size_t _start;
+	SyntaxKind _kind;
+	ValueType _value;
+
+	char Peek(int offset) const;
+	char Current() const { return Peek(0); }
+	char Lookahead() const { return Peek(1); }
+	constexpr void Next(size_t step = 1) noexcept { _position += step; }
+
+	void ReadSingleLineComment();
+	void ReadMultiLineComment();
+	void ReadString();
+	void ReadWhiteSpace();
+	void ReadNumberToken();
+	void ReadIdentifierOrKeyword();
+
+public:
+	explicit Lexer(const SyntaxTree& text);
+
+	[[nodiscard]] SyntaxToken Lex();
+	constexpr const DiagnosticBag& Diagnostics()const noexcept { return _diagnostics; }
+};
+
+Lexer::Lexer(const SyntaxTree& tree)
+	:_tree(tree), _text(tree.Text()),
+	_diagnostics(tree.Diagnostics()),
+	_position(0), _start(0), _kind(SyntaxKind::EndOfFileToken), _value(NULL_VALUE)
+{
+}
+
+char Lexer::Peek(int offset) const
+{
+	size_t idx = _position + offset;
+	if (idx >= _text.Length())
+		return '\0';
+	return _text[idx];
+}
+
+SyntaxToken Lexer::Lex()
+{
+	_start = _position;
+	_kind = SyntaxKind::BadTokenTrivia;
+	_value = NULL_VALUE;
+	auto character = Current();
+
+	switch (character)
+	{
+		case '\0':
+			_kind = SyntaxKind::EndOfFileToken;
+			break;
+		case '+':
+			if (Lookahead() == '+')
+			{
+				Next(2);
+				_kind = SyntaxKind::PlusPlusToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::PlusToken;
+			}
+			break;
+		case '-':
+			if (Lookahead() == '-')
+			{
+				Next(2);
+				_kind = SyntaxKind::MinusMinusToken;
+			} else
+			{
+				// NOTE "---" works as "-- -" so that "3---5" is -3
+				Next();
+				_kind = SyntaxKind::MinusToken;
+			}
+			break;
+		case '*':
+			Next();
+			_kind = SyntaxKind::StarToken;
+			break;
+		case '/':
+			if (Lookahead() == '/')
+			{
+				ReadSingleLineComment();
+			} else if (Lookahead() == '*')
+			{
+				ReadMultiLineComment();
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::SlashToken;
+			}
+			break;
+		case '%':
+			Next();
+			_kind = SyntaxKind::PercentToken;
+			break;
+		case '(':
+			Next();
+			_kind = SyntaxKind::OpenParenthesisToken;
+			break;
+		case ')':
+			Next();
+			_kind = SyntaxKind::CloseParenthesisToken;
+			break;
+		case '{':
+			Next();
+			_kind = SyntaxKind::OpenBraceToken;
+			break;
+		case '}':
+			Next();
+			_kind = SyntaxKind::CloseBraceToken;
+			break;
+		case ':':
+			Next();
+			_kind = SyntaxKind::ColonToken;
+			break;
+		case ',':
+			Next();
+			_kind = SyntaxKind::CommaToken;
+			break;
+		case '~':
+			Next();
+			_kind = SyntaxKind::TildeToken;
+			break;
+		case '^':
+			Next();
+			_kind = SyntaxKind::HatToken;
+			break;
+		case '&':
+			if (Lookahead() == '&')
+			{
+				Next(2);
+				_kind = SyntaxKind::AmpersandAmpersandToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::AmpersandToken;
+			}
+			break;
+		case '|':
+			if (Lookahead() == '|')
+			{
+				Next(2);
+				_kind = SyntaxKind::PipePipeToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::PipeToken;
+			}
+			break;
+		case '=':
+			if (Lookahead() == '=')
+			{
+				Next(2);
+				_kind = SyntaxKind::EqualsEqualsToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::EqualsToken;
+			}
+			break;
+		case '!':
+			if (Lookahead() == '=')
+			{
+				Next(2);
+				_kind = SyntaxKind::BangEqualsToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::BangToken;
+			}
+			break;
+		case '<':
+			if (Lookahead() == '=')
+			{
+				Next(2);
+				_kind = SyntaxKind::LessOrEqualsToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::LessToken;
+			}
+			break;
+		case '>':
+			if (Lookahead() == '=')
+			{
+				Next(2);
+				_kind = SyntaxKind::GreaterOrEqualsToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::GreaterToken;
+			}
+			break;
+		case '"':
+			ReadString();
+			break;
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+			ReadNumberToken();
+			break;
+		case ' ': case '\n': case '\t': case '\r':
+			ReadWhiteSpace();
+			break;
+		default:
+			if (std::isalpha(character))
+				ReadIdentifierOrKeyword();
+			else if (std::isspace(character))
+				ReadWhiteSpace();
+			else
+			{
+				auto span = TextSpan(_position, 1);
+				auto location = TextLocation(_text, std::move(span));
+				_diagnostics.ReportBadCharacter(std::move(location), character);
+				Next();
+			}
+			break;
+	}
+	auto length = _position - _start;
+	auto text = GetText(_kind);
+	if (text.empty())
+		text = _text.ToString(_start, length);
+
+	return SyntaxToken(_tree, _kind, _start, text, _value);
+}
+
+void Lexer::ReadSingleLineComment()
+{
+	Next(2);
+	auto done = false;
+	while (!done)
+	{
+		switch (Current())
+		{
+			case '\0':
+			case '\r':
+			case '\n':
+				done = true;
+				break;
+			default:
+				Next();
+				break;
+		}
+	}
+
+	_kind = SyntaxKind::SingleLineCommentTrivia;
+}
+
+void Lexer::ReadMultiLineComment()
+{
+	Next(2);
+	auto done = false;
+
+	while (!done)
+	{
+		switch (Current())
+		{
+			case '\0':
+			{
+				auto span = TextSpan(_start, 2);
+				auto location = TextLocation(_text, span);
+				_diagnostics.ReportUnterminatedMultiLineComment(std::move(location));
+				done = true;
+				break;
+			}
+			case '*':
+				if (Lookahead() == '/')
+				{
+					Next();
+					done = true;
+				}
+				Next();
+				break;
+			default:
+				Next();
+				break;
+		}
+	}
+
+	_kind = SyntaxKind::MultiLineCommentTriva;
+}
+
+void Lexer::ReadString()
+{
+	Next();
+	auto s = string();
+	auto done = false;
+
+	while (!done)
+	{
+		auto c = Current();
+		switch (c)
+		{
+			case '\0': case '\r': case '\n':
+			{
+				auto span = TextSpan(_start, 1);
+				auto location = TextLocation(_text, std::move(span));
+				_diagnostics.ReportUnterminatedString(std::move(location));
+				done = true;
+				break;
+			}
+			case '"':
+			{
+				if (Lookahead() == '"')
+				{
+					s.push_back(c);
+					Next(2);
+				} else
+				{
+					Next();
+					done = true;
+				}
+				break;
+			}
+			default:
+			{
+				s.push_back(c);
+				Next();
+				break;
+			}
+		}
+	}
+	s.shrink_to_fit();
+	_kind = SyntaxKind::StringToken;
+	_value = ValueType(std::move(s));
+}
+
+void Lexer::ReadWhiteSpace()
+{
+	while (std::isspace(Current()))
+		Next();
+	_kind = SyntaxKind::WhitespaceTrivia;
+}
+
+void Lexer::ReadNumberToken()
+{
+	while (std::isdigit(Current()))
+		Next();
+	auto length = _position - _start;
+	auto text = _text.ToString(_start, length);
+
+	try
+	{
+		_value = ValueType(StringToInteger(text));
+		_kind = SyntaxKind::NumberToken;
+	} catch (...)
+	{
+		auto span = TextSpan(_start, length);
+		_diagnostics.ReportInvalidNumber(TextLocation(_text, std::move(span)),
+			text, TYPE_INT);
+	}
+}
+
+void Lexer::ReadIdentifierOrKeyword()
+{
+	while (std::isalpha(Current()))
+		Next();
+	auto length = _position - _start;
+	auto text = _text.ToString(_start, length);
+	_kind = GetKeywordKind(text);
 }
 
 class Parser final
@@ -118,12 +485,11 @@ Parser::Parser(const SyntaxTree& tree)
 	_position(0), _diagnostics(tree.Diagnostics())
 {
 	auto lexer = Lexer(tree);
-	auto kind = SyntaxKind::BadToken;
+	auto kind = SyntaxKind::BadTokenTrivia;
 	do
 	{
 		auto token = lexer.Lex();
-		if (token.Kind() != SyntaxKind::WhitespaceToken &&
-			token.Kind() != SyntaxKind::BadToken)
+		if (!IsTrivia(token.Kind()))
 		{
 			kind = token.Kind();
 			_tokens.push_back(std::move(token));

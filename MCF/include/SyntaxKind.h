@@ -7,9 +7,11 @@ namespace MCF {
 enum class SyntaxKind
 {
 	// Tokens
-	BadToken,
+	BadTokenTrivia = 0,
 	EndOfFileToken,
-	WhitespaceToken,
+	WhitespaceTrivia,
+	SingleLineCommentTrivia,
+	MultiLineCommentTriva,
 	NumberToken,
 	StringToken,
 	PlusToken,
@@ -90,15 +92,21 @@ enum class SyntaxKind
 	PostfixExpression,
 };
 
-constexpr size_t SYNTAXKIND_COUNT = 73;
+constexpr size_t SYNTAXKIND_COUNT = 75;
 
 // NOTE global constant
-extern "C" MCF_API const std::array<SyntaxKind, SYNTAXKIND_COUNT> & AllSyntaxKinds;
+extern "C" MCF_API inline const std::array<SyntaxKind, SYNTAXKIND_COUNT> & AllSyntaxKinds;
 
-MCF_API string_view nameof(SyntaxKind kind);
+MCF_API string_view nameof(SyntaxKind kind)noexcept;
 
 SyntaxKind GetKeywordKind(string_view text) noexcept;
 MCF_API string_view GetText(SyntaxKind kind);
+
+MCF_API bool IsComment(SyntaxKind kind)noexcept;
+bool IsTrivia(SyntaxKind kind)noexcept;
+MCF_API bool IsKeyword(SyntaxKind kind);
+MCF_API bool IsToken(SyntaxKind kind);
+
 MCF_API int GetUnaryOperatorPrecedence(SyntaxKind kind)noexcept;
 MCF_API int GetBinaryOperatorPrecedence(SyntaxKind kind)noexcept;
 MCF_API const vector<SyntaxKind>& GetUnaryOperatorKinds();

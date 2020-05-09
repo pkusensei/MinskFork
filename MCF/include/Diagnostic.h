@@ -72,6 +72,7 @@ public:
 	void ReportInvalidNumber(TextLocation location, string_view text, const TypeSymbol& type);
 	void ReportBadCharacter(TextLocation location, char character);
 	void ReportUnterminatedString(TextLocation location);
+	void ReportUnterminatedMultiLineComment(TextLocation location);
 	void ReportUnexpectedToken(TextLocation location, SyntaxKind actualKind,
 		SyntaxKind expectedKind);
 	void ReportUndefinedUnaryOperator(TextLocation location, string_view operatorText,

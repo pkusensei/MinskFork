@@ -8,26 +8,24 @@
 #include "SourceText.h"
 
 auto GetTokens()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&;
-auto GetSeperators()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&;
+auto GetSeparators()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&;
 auto GetTokenData()->std::vector<std::pair<MCF::SyntaxKind, std::string_view>>;
 auto GetTokenPairsData()->std::vector<
 	std::tuple<MCF::SyntaxKind, std::string_view, MCF::SyntaxKind, std::string_view>>;
-auto GetTokenPairsWithSeperator()->std::vector<std::tuple<
+auto GetTokenPairsWithSeparator()->std::vector<std::tuple<
 	MCF::SyntaxKind, std::string_view, MCF::SyntaxKind, std::string_view,
 	MCF::SyntaxKind, std::string_view>>;
-bool RequiresSeperators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind);
+bool RequiresSeparators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind);
 
 TEST_CASE("Lexer covers all tokens", "[Lexer]")
 {
 	auto tokenKinds = std::vector<MCF::SyntaxKind>();
-	for (const auto& kind : MCF::AllSyntaxKinds)
-	{
-		auto text = MCF::nameof(kind);
-		if (MCF::StringEndsWith(text, "Keyword") || MCF::StringEndsWith(text, "Token"))
-			tokenKinds.emplace_back(kind);
-	}
-	std::set<MCF::SyntaxKind> untestedTokenKinds(tokenKinds.begin(), tokenKinds.end());
-	untestedTokenKinds.erase(MCF::SyntaxKind::BadToken);
+	std::copy_if(MCF::AllSyntaxKinds.cbegin(), MCF::AllSyntaxKinds.cend(),
+		std::back_inserter(tokenKinds),
+		[](const auto k) { return MCF::IsToken(k); });
+
+	std::set<MCF::SyntaxKind> untestedTokenKinds(tokenKinds.cbegin(), tokenKinds.cend());
+	untestedTokenKinds.erase(MCF::SyntaxKind::BadTokenTrivia);
 	untestedTokenKinds.erase(MCF::SyntaxKind::EndOfFileToken);
 
 	auto tokens = GetTokenData();
@@ -86,9 +84,9 @@ TEST_CASE("Lexer lexes token pairs", "[Lexer]")
 	}
 }
 
-TEST_CASE("Lexer lexes token pairs with seperators", "[Lexer]")
+TEST_CASE("Lexer lexes token pairs with separators", "[Lexer]")
 {
-	auto data = GetTokenPairsWithSeperator();
+	auto data = GetTokenPairsWithSeparator();
 	for (const auto& it : data)
 	{
 		auto [t1kind, t1text, skind, stext, t2kind, t2text] = it;
@@ -149,14 +147,14 @@ auto GetTokens()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>
 	return result;
 }
 
-auto GetSeperators()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&
+auto GetSeparators()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&
 {
 	static const auto result = std::vector<std::pair<MCF::SyntaxKind, std::string_view>>{
-		{MCF::SyntaxKind::WhitespaceToken, " "},
-		{MCF::SyntaxKind::WhitespaceToken, "  "},
-		{MCF::SyntaxKind::WhitespaceToken, "\r"},
-		{MCF::SyntaxKind::WhitespaceToken, "\n"},
-		{MCF::SyntaxKind::WhitespaceToken, "\r\n"},
+		{MCF::SyntaxKind::WhitespaceTrivia, " "},
+		{MCF::SyntaxKind::WhitespaceTrivia, "  "},
+		{MCF::SyntaxKind::WhitespaceTrivia, "\r"},
+		{MCF::SyntaxKind::WhitespaceTrivia, "\n"},
+		{MCF::SyntaxKind::WhitespaceTrivia, "\r\n"},
 	};
 	return result;
 }
@@ -164,8 +162,8 @@ auto GetSeperators()->const std::vector<std::pair<MCF::SyntaxKind, std::string_v
 auto GetTokenData()->std::vector<std::pair<MCF::SyntaxKind, std::string_view>>
 {
 	auto tokens = GetTokens();
-	auto seperators = GetSeperators();
-	tokens.insert(tokens.end(), seperators.begin(), seperators.end());
+	auto& separators = GetSeparators();
+	tokens.insert(tokens.end(), separators.begin(), separators.end());
 	tokens.shrink_to_fit();
 	return tokens;
 }
@@ -173,42 +171,43 @@ auto GetTokenData()->std::vector<std::pair<MCF::SyntaxKind, std::string_view>>
 auto GetTokenPairsData()->std::vector<std::tuple<
 	MCF::SyntaxKind, std::string_view, MCF::SyntaxKind, std::string_view>>
 {
-	auto tokens = GetTokens();
+	auto& tokens = GetTokens();
 	auto result = std::vector<std::tuple<MCF::SyntaxKind, std::string_view,
 		MCF::SyntaxKind, std::string_view>>();
 	for (const auto& t1 : tokens)
 		for (const auto& t2 : tokens)
 		{
-			if (!RequiresSeperators(t1.first, t2.first))
+			if (!RequiresSeparators(t1.first, t2.first))
 				result.emplace_back(t1.first, t1.second, t2.first, t2.second);
 		}
 	return result;
 }
 
-auto GetTokenPairsWithSeperator()->std::vector<std::tuple<
+auto GetTokenPairsWithSeparator()->std::vector<std::tuple<
 	MCF::SyntaxKind, std::string_view, MCF::SyntaxKind, std::string_view,
 	MCF::SyntaxKind, std::string_view>>
 {
-	auto tokens = GetTokens();
+	auto& tokens = GetTokens();
 	auto result = std::vector<std::tuple<MCF::SyntaxKind, std::string_view,
 		MCF::SyntaxKind, std::string_view, MCF::SyntaxKind, std::string_view>>();
 	for (const auto& t1 : tokens)
 		for (const auto& t2 : tokens)
 		{
-			if (RequiresSeperators(t1.first, t2.first))
+			if (RequiresSeparators(t1.first, t2.first))
 			{
-				auto seperators = GetSeperators();
-				for (const auto& s : seperators)
+				auto& separators = GetSeparators();
+				for (const auto& s : separators)
 					result.emplace_back(t1.first, t1.second, s.first, s.second, t2.first, t2.second);
 			}
 		}
 	return result;
 }
 
-bool RequiresSeperators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind)
+bool RequiresSeparators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind)
 {
-	auto t1IsKeyword = MCF::StringEndsWith(MCF::nameof(t1kind), "Keyword");
-	auto t2IsKeyword = MCF::StringEndsWith(MCF::nameof(t2kind), "Keyword");
+	auto t1IsKeyword = MCF::IsKeyword(t1kind);
+	auto t2IsKeyword = MCF::IsKeyword(t2kind);
+
 	if (t1kind == MCF::SyntaxKind::IdentifierToken && t2kind == MCF::SyntaxKind::IdentifierToken)
 		return true;
 	if (t1IsKeyword && t2IsKeyword)
@@ -256,6 +255,15 @@ bool RequiresSeperators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind)
 	if (t1kind == MCF::SyntaxKind::PipeToken && t2kind == MCF::SyntaxKind::PipeToken)
 		return true;
 	if (t1kind == MCF::SyntaxKind::PipeToken && t2kind == MCF::SyntaxKind::PipePipeToken)
+		return true;
+
+	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::SlashToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::StarToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::SingleLineCommentTrivia)
+		return true;
+	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::MultiLineCommentTriva)
 		return true;
 
 	return false;

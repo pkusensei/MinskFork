@@ -409,10 +409,6 @@ protected:
 	shared_ptr<BoundStatement> RewriteForStatement(shared_ptr<BoundForStatement> node)override;
 	shared_ptr<BoundStatement> RewriteConditionalGotoStatement(shared_ptr<BoundConditionalGotoStatement> node)override;
 
-public:
-	[[nodiscard]] static unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func, shared_ptr<BoundStatement> statement);
-	[[nodiscard]] static unique_ptr<BoundBlockStatement> RemoveDeadCode(unique_ptr<BoundBlockStatement> node);
-
 };
 
 BoundLabel Lowerer::GenerateLabel()
@@ -422,71 +418,6 @@ BoundLabel Lowerer::GenerateLabel()
 	return BoundLabel(std::move(name));
 }
 
-unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func, shared_ptr<BoundStatement> statement)
-{
-	auto lowerer = Lowerer();
-	auto result = lowerer.RewriteStatement(std::move(statement));
-	return Lowerer::RemoveDeadCode(Lowerer::Flatten(func, std::move(result)));
-}
-
-unique_ptr<BoundBlockStatement> Lowerer::Flatten(const FunctionSymbol& func, shared_ptr<BoundStatement> statement)
-{
-	auto result = vector<shared_ptr<BoundStatement>>();
-	auto stack = std::stack<shared_ptr<BoundStatement>>();
-	stack.push(std::move(statement));
-
-	while (!stack.empty())
-	{
-		auto current = std::move(stack.top());
-		stack.pop();
-
-		if (current->Kind() == BoundNodeKind::BlockStatement)
-		{
-			auto p = static_cast<BoundBlockStatement*>(current.get());
-			auto& statements = p->Statements();
-			for (auto it = statements.rbegin(); it != statements.rend(); ++it)
-				stack.push(*it);
-		} else
-		{
-			result.push_back(std::move(current));
-		}
-	}
-
-	auto canFallThrough = [](const BoundStatement& s)
-	{
-		return s.Kind() != BoundNodeKind::ReturnStatement
-			&& s.Kind() != BoundNodeKind::GotoStatement;
-	};
-	if (func.Type() == TYPE_VOID)
-	{
-		if (result.empty() || canFallThrough(*result.back()))
-			result.push_back(make_shared<BoundReturnStatement>(nullptr));
-	}
-	return make_unique<BoundBlockStatement>(std::move(result));
-}
-
-unique_ptr<BoundBlockStatement> Lowerer::RemoveDeadCode(unique_ptr<BoundBlockStatement> node)
-{
-	auto cfg = ControlFlowGraph::Create(node.get());
-	auto reachableStmts = std::unordered_set<const BoundStatement*>();
-	for (const auto& block : cfg.Blocks())
-	{
-		for (const auto& p : block->Statements())
-			reachableStmts.emplace(p);
-	}
-
-	auto result = node->Statements();
-	auto it = result.end();
-	while (it > result.begin())
-	{
-		--it;
-		if (reachableStmts.find(it->get()) == reachableStmts.end())
-		{
-			it = result.erase(it);
-		}
-	}
-	return make_unique<BoundBlockStatement>(std::move(result));
-}
 
 shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStatement> node)
 {
@@ -617,6 +548,72 @@ shared_ptr<BoundStatement> Lowerer::RewriteConditionalGotoStatement(shared_ptr<B
 	}
 
 	return BoundTreeRewriter::RewriteConditionalGotoStatement(std::move(node));
+}
+
+unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func, shared_ptr<BoundStatement> statement)
+{
+	auto result = vector<shared_ptr<BoundStatement>>();
+	auto stack = std::stack<shared_ptr<BoundStatement>>();
+	stack.push(std::move(statement));
+
+	while (!stack.empty())
+	{
+		auto current = std::move(stack.top());
+		stack.pop();
+
+		if (current->Kind() == BoundNodeKind::BlockStatement)
+		{
+			auto p = static_cast<BoundBlockStatement*>(current.get());
+			auto& statements = p->Statements();
+			for (auto it = statements.rbegin(); it != statements.rend(); ++it)
+				stack.push(*it);
+		} else
+		{
+			result.push_back(std::move(current));
+		}
+	}
+
+	auto canFallThrough = [](const BoundStatement& s)
+	{
+		return s.Kind() != BoundNodeKind::ReturnStatement
+			&& s.Kind() != BoundNodeKind::GotoStatement;
+	};
+	if (func.Type() == TYPE_VOID)
+	{
+		if (result.empty() || canFallThrough(*result.back()))
+			result.push_back(make_shared<BoundReturnStatement>(nullptr));
+	}
+	return make_unique<BoundBlockStatement>(std::move(result));
+}
+
+unique_ptr<BoundBlockStatement> RemoveDeadCode(unique_ptr<BoundBlockStatement> node)
+{
+	auto cfg = ControlFlowGraph::Create(node.get());
+	auto reachableStmts = std::unordered_set<const BoundStatement*>();
+	for (const auto& block : cfg.Blocks())
+	{
+		for (const auto& p : block->Statements())
+			reachableStmts.emplace(p);
+	}
+
+	auto result = node->Statements();
+	auto it = result.end();
+	while (it > result.begin())
+	{
+		--it;
+		if (reachableStmts.find(it->get()) == reachableStmts.end())
+		{
+			it = result.erase(it);
+		}
+	}
+	return make_unique<BoundBlockStatement>(std::move(result));
+}
+
+unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func, shared_ptr<BoundStatement> statement)
+{
+	auto lowerer = Lowerer();
+	auto result = lowerer.RewriteStatement(std::move(statement));
+	return RemoveDeadCode(Flatten(func, std::move(result)));
 }
 
 }//MCF

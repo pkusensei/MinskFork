@@ -176,6 +176,7 @@ private:
 	bool _showProgram{ false };
 	MCF::VarMap _variables;
 
+	void EvaluateExit()const;
 	void EvaluateCls()const;
 	void EvaluateLs();
 	void EvaluateReset();

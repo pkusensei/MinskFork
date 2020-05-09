@@ -56,7 +56,7 @@ void Repl::Run()
 		std::cout << '\n'; // HACK prevents last line displayed from being eaten
 		auto text = EditSubmission();
 		if (text.empty())
-			return;
+			continue;
 
 		auto& lastItem = _submissionHistory.emplace_back(std::move(text));
 		if (lastItem.find(NEW_LINE) == lastItem.npos && MCF::StringStartsWith(lastItem, "#"))
@@ -519,7 +519,10 @@ void Repl::SubmissionView::CurrentCharacter(const size_t value)
 
 McfRepl::McfRepl()
 	:Repl()
+
 {
+	_metaCommands.emplace_back("exit", "Exits the REPL.",
+		[this] { EvaluateExit(); });
 	_metaCommands.emplace_back("cls", "Clears the screen.",
 		[this] { EvaluateCls(); });
 	_metaCommands.emplace_back("ls", "Lists all symbols",
@@ -561,6 +564,11 @@ void McfRepl::RenderLine(std::string_view line) const
 		std::cout << it.Text();
 		MCF::ResetConsoleColor();
 	}
+}
+
+void McfRepl::EvaluateExit()const
+{
+	std::exit(0);
 }
 
 void McfRepl::EvaluateCls()const

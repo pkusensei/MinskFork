@@ -54,6 +54,12 @@ void DiagnosticBag::ReportUnterminatedString(TextLocation location)
 	Report(std::move(location), message);
 }
 
+void DiagnosticBag::ReportUnterminatedMultiLineComment(TextLocation location)
+{
+	auto message = "Unterminated multi-line comment.";
+	Report(std::move(location), message);
+}
+
 void DiagnosticBag::ReportUnexpectedToken(TextLocation location,
 	SyntaxKind actualKind, SyntaxKind expectedKind)
 {
