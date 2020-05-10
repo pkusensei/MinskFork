@@ -129,9 +129,9 @@ public:
 		return ToString(span.Start(), span.Length());
 	}
 
-	static unique_ptr<SourceText> From(string text, fs::path path = {})
+	static SourceText From(string text, fs::path path = {})
 	{
-		return unique_ptr<SourceText>(new SourceText(std::move(text), std::move(path)));
+		return SourceText(std::move(text), std::move(path));
 	}
 };
 

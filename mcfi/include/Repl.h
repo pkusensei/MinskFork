@@ -21,11 +21,18 @@ public:
 		_collection.emplace_back(std::forward<U>(init));
 	}
 
-	void SetAction(std::function<void()> action) { _action = std::move(action); }
+	void SetAction(std::function<void()> action)noexcept { _action = std::move(action); }
 
 	size_t size()const noexcept { return _collection.size(); }
+	T& operator[](size_t index) { return _collection.at(index); }
 	const T& operator[](size_t index)const { return _collection.at(index); }
-	const std::vector<T>& Contents()const noexcept { return _collection; }
+
+	decltype(auto) begin()noexcept { return _collection.begin(); }
+	decltype(auto) begin()const noexcept { return _collection.begin(); }
+	decltype(auto) cbegin()const noexcept { return _collection.cbegin(); }
+	decltype(auto) end()noexcept { return _collection.end(); }
+	decltype(auto) end()const noexcept { return _collection.end(); }
+	decltype(auto) cend()const noexcept { return _collection.cend(); }
 
 	template<typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T>>>
 	void Add(U&& content)
@@ -66,8 +73,9 @@ public:
 
 class Repl
 {
-
+protected:
 	using Document = ObservableCollection<std::string>;
+	using LineRenderHandle = std::function<void(std::string_view)>;
 
 private:
 	struct MetaCommand;
@@ -123,49 +131,11 @@ public:
 	void Run();
 };
 
-struct Repl::MetaCommand
-{
-	// HACK a big hack
-	using MethodType = std::variant<std::function<void()>, std::function<void(std::string_view)>>;
-
-	std::string_view Name;
-	std::string_view Description;
-	size_t Arity;
-	MethodType Method;
-
-	MetaCommand(std::string_view name, std::string_view description,
-		MethodType method, size_t arity = 0)
-		:Name(name), Description(description), Arity(arity), Method(std::move(method))
-	{
-	}
-};
-
-class Repl::SubmissionView final
-{
-private:
-	std::function<void(std::string_view)> _lineRenderer;
-	const ObservableCollection<std::string>& _submissionDocument;
-	size_t _cursorTop;
-	int _renderedLineCount{ 0 };
-	size_t _currentLine{ 0 };
-	size_t _currentCharacter{ 0 };
-
-	void SubmissionDocumentChanged();
-	void Render();
-	void UpdateCursorPosition();
-
-public:
-	SubmissionView(std::function<void(std::string_view)> lineRenderer,
-		ObservableCollection<std::string>& document);
-
-	size_t CurrentLine()const { return _currentLine; }
-	void CurrentLine(const size_t value);
-	size_t CurrentCharacter()const { return _currentCharacter; }
-	void CurrentCharacter(const size_t value);
-};
-
 class McfRepl final :public Repl
 {
+private:
+	struct RenderState;
+
 private:
 
 	static const std::unique_ptr<MCF::Compilation> emptyCompilation;
@@ -197,4 +167,5 @@ protected:
 
 public:
 	McfRepl();
+	~McfRepl();
 };

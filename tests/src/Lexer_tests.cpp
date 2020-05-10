@@ -155,6 +155,7 @@ auto GetSeparators()->const std::vector<std::pair<MCF::SyntaxKind, std::string_v
 		{MCF::SyntaxKind::WhitespaceTrivia, "\r"},
 		{MCF::SyntaxKind::WhitespaceTrivia, "\n"},
 		{MCF::SyntaxKind::WhitespaceTrivia, "\r\n"},
+		{MCF::SyntaxKind::MultiLineCommentTriva, "/**/"}
 	};
 	return result;
 }
@@ -174,11 +175,11 @@ auto GetTokenPairsData()->std::vector<std::tuple<
 	auto& tokens = GetTokens();
 	auto result = std::vector<std::tuple<MCF::SyntaxKind, std::string_view,
 		MCF::SyntaxKind, std::string_view>>();
-	for (const auto& t1 : tokens)
-		for (const auto& t2 : tokens)
+	for (const auto& [t1kind, t1text] : tokens)
+		for (const auto& [t2kind, t2text] : tokens)
 		{
-			if (!RequiresSeparators(t1.first, t2.first))
-				result.emplace_back(t1.first, t1.second, t2.first, t2.second);
+			if (!RequiresSeparators(t1kind, t2kind))
+				result.emplace_back(t1kind, t1text, t2kind, t2text);
 		}
 	return result;
 }
@@ -190,15 +191,16 @@ auto GetTokenPairsWithSeparator()->std::vector<std::tuple<
 	auto& tokens = GetTokens();
 	auto result = std::vector<std::tuple<MCF::SyntaxKind, std::string_view,
 		MCF::SyntaxKind, std::string_view, MCF::SyntaxKind, std::string_view>>();
-	for (const auto& t1 : tokens)
-		for (const auto& t2 : tokens)
+	for (const auto& [t1kind, t1text] : tokens)
+		for (const auto& [t2kind, t2text] : tokens)
 		{
-			if (RequiresSeparators(t1.first, t2.first))
-			{
-				auto& separators = GetSeparators();
-				for (const auto& s : separators)
-					result.emplace_back(t1.first, t1.second, s.first, s.second, t2.first, t2.second);
-			}
+			auto& separators = GetSeparators();
+			for (const auto& [skind, stext] : separators)
+				if (!RequiresSeparators(t1kind, skind)
+					&& !RequiresSeparators(skind, t2kind))
+				{
+					result.emplace_back(t1kind, t1text, skind, stext, t2kind, t2text);
+				}
 		}
 	return result;
 }

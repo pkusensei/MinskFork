@@ -10,7 +10,7 @@
 
 namespace fs = std::filesystem;
 
-constexpr auto NEW_LINE = '\r';
+constexpr auto NEW_LINE = '\n';
 
 const std::unique_ptr<MCF::Compilation> McfRepl::emptyCompilation
 = MCF::Compilation::CreateScript(nullptr, nullptr);
@@ -36,6 +36,132 @@ std::string ReadTextFromFile(const fs::path& path)
 	auto text = std::stringstream();
 	text << std::ifstream(path).rdbuf();
 	return text.str();
+}
+
+struct Repl::MetaCommand
+{
+	// HACK a big hack
+	using MethodType = std::variant<std::function<void()>, std::function<void(std::string_view)>>;
+
+	std::string_view Name;
+	std::string_view Description;
+	size_t Arity;
+	MethodType Method;
+
+	MetaCommand(std::string_view name, std::string_view description,
+		MethodType method, size_t arity = 0)
+		:Name(name), Description(description), Arity(arity), Method(std::move(method))
+	{
+	}
+};
+
+class Repl::SubmissionView final
+{
+private:
+	LineRenderHandle _lineRenderer;
+	const Document& _submissionDocument;
+	size_t _cursorTop;
+	int _renderedLineCount{ 0 };
+	size_t _currentLine{ 0 };
+	size_t _currentCharacter{ 0 };
+
+	void SubmissionDocumentChanged();
+	void Render();
+	void UpdateCursorPosition();
+
+public:
+	SubmissionView(LineRenderHandle lineRenderer, Document& document);
+
+	size_t CurrentLine()const { return _currentLine; }
+	void CurrentLine(const size_t value);
+	size_t CurrentCharacter()const { return _currentCharacter; }
+	void CurrentCharacter(const size_t value);
+};
+
+Repl::SubmissionView::SubmissionView(LineRenderHandle lineRenderer, Document& document)
+	:_lineRenderer(std::move(lineRenderer)),
+	_submissionDocument(document), _cursorTop(MCF::GetCursorTop())
+{
+	document.SetAction([this]() { this->SubmissionDocumentChanged(); });
+	Render();
+
+	//_lineRenderer -- Repl::RenderLine & McfRepl::RenderLine
+	//             used in SubmissionView::Render & thus SubmissionView::SubmissionDocumentChanged
+	//
+	//SubmissionView::SubmissionDocumentChanged -- ObservableCollection::_action
+	//             the function called when _submissionDocument changed
+}
+
+void Repl::SubmissionView::SubmissionDocumentChanged()
+{
+	Render();
+}
+
+void Repl::SubmissionView::Render()
+{
+	MCF::SetCursorVisibility(false);
+
+	auto lineCount = 0;
+
+	for (const auto& line : _submissionDocument)
+	{
+		if (_cursorTop + lineCount >= static_cast<size_t>(MCF::GetConsoleHeight()))
+		{
+			MCF::SetCursorPosition(0, MCF::GetConsoleHeight() - 1);
+			std::cout << '\n';
+			if (_cursorTop > 0)
+				--_cursorTop;
+		}
+		MCF::SetCursorPosition(0, _cursorTop + lineCount);
+
+		MCF::SetConsoleColor(MCF::ConsoleColor::Green);
+		if (lineCount == 0)
+			std::cout << "> ";
+		else std::cout << "| ";
+		MCF::ResetConsoleColor();
+
+		_lineRenderer(line);
+		std::cout << std::string(MCF::GetConsoleWidth() - line.length() - 2, ' ');
+		++lineCount;
+	}
+	auto numberOfBlankLines = _renderedLineCount - lineCount;
+	if (numberOfBlankLines > 0)
+	{
+		auto blankLine = std::string(MCF::GetConsoleWidth() - 1, ' ');
+		for (int i = 0; i < numberOfBlankLines; ++i)
+		{
+			MCF::SetCursorPosition(0, _cursorTop + lineCount + i);
+			std::cout << blankLine << '\n';
+		}
+	}
+	_renderedLineCount = lineCount;
+	MCF::SetCursorVisibility(true);
+	UpdateCursorPosition();
+}
+
+void Repl::SubmissionView::UpdateCursorPosition()
+{
+	MCF::SetCursorPosition(2 + _currentCharacter, _cursorTop + _currentLine);
+}
+
+void Repl::SubmissionView::CurrentLine(const size_t value)
+{
+	if (_currentLine != value)
+	{
+		_currentLine = value;
+		_currentCharacter = _submissionDocument[_currentLine].length() < _currentCharacter ?
+			_submissionDocument[_currentLine].length() : _currentCharacter;
+		UpdateCursorPosition();
+	}
+}
+
+void Repl::SubmissionView::CurrentCharacter(const size_t value)
+{
+	if (_currentCharacter != value)
+	{
+		_currentCharacter = value;
+		UpdateCursorPosition();
+	}
 }
 
 Repl::Repl()
@@ -70,9 +196,9 @@ void Repl::Run()
 std::string Repl::EditSubmission()
 {
 	_done = false;
-	auto document = ObservableCollection<std::string>(std::string());
+	auto document = Document(std::string());
 	auto view = SubmissionView(
-		[this](std::string_view line) { this->RenderLine(line); },
+		[this](std::string_view line) { return this->RenderLine(line); },
 		document);
 
 	while (!_done)
@@ -83,8 +209,7 @@ std::string Repl::EditSubmission()
 	view.CurrentLine(document.size() - 1);
 	view.CurrentCharacter(document[view.CurrentLine()].length());
 	std::cout << '\n';
-	return MCF::StringJoin(document.Contents().cbegin(),
-		document.Contents().cend(), NEW_LINE);
+	return MCF::StringJoin(document.cbegin(), document.cend(), NEW_LINE);
 }
 
 void Repl::HandleKey(const MCF::KeyInfo& key,
@@ -159,8 +284,8 @@ void Repl::HandleEscape(Document& document, SubmissionView& view)
 
 void Repl::HandleEnter(Document& document, SubmissionView& view)
 {
-	auto text = MCF::StringJoin(document.Contents().cbegin(),
-		document.Contents().cend(), NEW_LINE);
+	auto text = MCF::StringJoin(document.cbegin(), document.cend(), NEW_LINE);
+
 	if (MCF::StringStartsWith(text, "#") || IsCompleteSubmission(text))
 	{
 		_done = true;
@@ -317,7 +442,7 @@ void Repl::HandleTyping(Document& document, SubmissionView& view, const std::str
 	view.CurrentCharacter(view.CurrentCharacter() + text.length());
 }
 
-void Repl::RenderLine(std::string_view line) const
+void Repl::RenderLine(std::string_view line)const
 {
 	std::cout << line;
 }
@@ -430,96 +555,20 @@ void Repl::EvaluateHelp()
 	}
 }
 
-
-Repl::SubmissionView::SubmissionView(std::function<void(std::string_view)> lineRenderer,
-	ObservableCollection<std::string>& document)
-	:_lineRenderer(std::move(lineRenderer)),
-	_submissionDocument(document), _cursorTop(MCF::GetCursorTop())
+struct McfRepl::RenderState
 {
-	document.SetAction([this]() { this->SubmissionDocumentChanged(); });
-	Render();
+	MCF::SourceText Text;
+	std::vector<MCF::SyntaxToken> Tokens;
 
-	//_lineRenderer -- Repl::RenderLine & McfRepl::RenderLine
-	//             used in SubmissionView::Render & thus SubmissionView::SubmissionDocumentChanged
-	//
-	//SubmissionView::SubmissionDocumentChanged -- ObservableCollection::_action
-	//             the function called when _submissionDocument changed
-}
-
-void Repl::SubmissionView::SubmissionDocumentChanged()
-{
-	Render();
-}
-
-void Repl::SubmissionView::Render()
-{
-	MCF::SetCursorVisibility(false);
-
-	auto lineCount = 0;
-	for (const auto& line : _submissionDocument.Contents())
+	RenderState(MCF::SourceText text, std::vector<MCF::SyntaxToken> tokens)
+		:Text(std::move(text)), Tokens(std::move(tokens))
 	{
-		if (_cursorTop + lineCount >= static_cast<size_t>(MCF::GetConsoleHeight()))
-		{
-			MCF::SetCursorPosition(0, MCF::GetConsoleHeight() - 1);
-			std::cout << '\n';
-			if (_cursorTop > 0)
-				--_cursorTop;
-		}
-		MCF::SetCursorPosition(0, _cursorTop + lineCount);
-
-		MCF::SetConsoleColor(MCF::ConsoleColor::Green);
-		if (lineCount == 0)
-			std::cout << "> ";
-		else std::cout << "| ";
-		MCF::ResetConsoleColor();
-
-		_lineRenderer(line);
-		std::cout << std::string(MCF::GetConsoleWidth() - line.length() - 2, ' ');
-		++lineCount;
 	}
-	auto numberOfBlankLines = _renderedLineCount - lineCount;
-	if (numberOfBlankLines > 0)
-	{
-		auto blankLine = std::string(MCF::GetConsoleWidth(), ' ');
-		for (int i = 0; i < numberOfBlankLines; ++i)
-		{
-			MCF::SetCursorPosition(0, _cursorTop + lineCount + i);
-			std::cout << blankLine << '\n';
-		}
-	}
-	_renderedLineCount = lineCount;
-	MCF::SetCursorVisibility(true);
-	UpdateCursorPosition();
-}
+};
 
-void Repl::SubmissionView::UpdateCursorPosition()
-{
-	MCF::SetCursorPosition(2 + _currentCharacter, _cursorTop + _currentLine);
-}
-
-void Repl::SubmissionView::CurrentLine(const size_t value)
-{
-	if (_currentLine != value)
-	{
-		_currentLine = value;
-		_currentCharacter = _submissionDocument[_currentLine].length() < _currentCharacter ?
-			_submissionDocument[_currentLine].length() : _currentCharacter;
-		UpdateCursorPosition();
-	}
-}
-
-void Repl::SubmissionView::CurrentCharacter(const size_t value)
-{
-	if (_currentCharacter != value)
-	{
-		_currentCharacter = value;
-		UpdateCursorPosition();
-	}
-}
 
 McfRepl::McfRepl()
 	:Repl()
-
 {
 	_metaCommands.emplace_back("exit", "Exits the REPL.",
 		[this] { EvaluateExit(); });
@@ -541,7 +590,9 @@ McfRepl::McfRepl()
 	LoadSubmissions();
 }
 
-void McfRepl::RenderLine(std::string_view line) const
+McfRepl::~McfRepl() = default;
+
+void McfRepl::RenderLine(std::string_view line)const
 {
 	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(line);
 	for (const auto& it : tokens)
@@ -712,7 +763,9 @@ bool McfRepl::IsCompleteSubmission(std::string_view text) const
 	if (lastTwoLinesAreBlank()) return true;
 
 	auto tree = MCF::SyntaxTree::Parse(text);
-	if (tree->Root()->Members().back()->GetLastToken().IsMissing())
+	auto last = tree->Root()->Members().empty() ?
+		nullptr : tree->Root()->Members().back().get();
+	if (last == nullptr || last->GetLastToken().IsMissing())
 		return false;
 	return true;
 }

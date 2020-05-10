@@ -298,8 +298,6 @@ int GetUnaryOperatorPrecedence(SyntaxKind kind) noexcept
 		case SyntaxKind::PlusToken:
 		case SyntaxKind::MinusToken:
 		case SyntaxKind::BangToken:
-			//case SyntaxKind::PlusPlusToken:
-			//case SyntaxKind::MinusMinusToken:
 		case SyntaxKind::TildeToken:
 			return 6;
 		default:

@@ -999,13 +999,13 @@ unique_ptr<SyntaxTree> SyntaxTree::Load(const fs::path& path)
 	auto file = std::ifstream(path);
 	auto ss = std::stringstream();
 	ss << file.rdbuf();
-	auto sourceText = SourceText::From(ss.str(), path);
+	auto sourceText = make_unique<SourceText>(SourceText::From(ss.str(), path));
 	return Parse(std::move(sourceText));
 }
 
 unique_ptr<SyntaxTree> SyntaxTree::Parse(string_view text)
 {
-	auto sourceText = SourceText::From(string(text));
+	auto sourceText = make_unique<SourceText>(SourceText::From(string(text)));
 	return Parse(std::move(sourceText));
 }
 
@@ -1017,14 +1017,14 @@ unique_ptr<SyntaxTree> SyntaxTree::Parse(unique_ptr<SourceText> text)
 std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 SyntaxTree::ParseTokens(string_view text)
 {
-	auto source = SourceText::From(string(text));
+	auto source = make_unique<SourceText>(SourceText::From(string(text)));
 	return ParseTokens(std::move(source));
 }
 
 std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 SyntaxTree::ParseTokens(string_view text, DiagnosticBag& diagnostics)
 {
-	auto source = SourceText::From(string(text));
+	auto source = make_unique<SourceText>(SourceText::From(string(text)));
 	return ParseTokens(std::move(source), diagnostics);
 }
 
