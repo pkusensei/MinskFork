@@ -10,7 +10,7 @@
 
 namespace fs = std::filesystem;
 
-constexpr auto NEW_LINE = '\n';
+constexpr auto NEW_LINE = '\r';
 
 fs::path GetSubmissionDir()
 {
@@ -99,6 +99,7 @@ void Repl::SubmissionView::Render()
 	MCF::SetCursorVisibility(false);
 
 	auto lineCount = 0;
+	bool resetState = true;
 
 	for (const auto& line : _submissionDocument)
 	{
@@ -117,7 +118,7 @@ void Repl::SubmissionView::Render()
 		else std::cout << "| ";
 		MCF::ResetConsoleColor();
 
-		_lineRenderer(line);
+		resetState = _lineRenderer(_submissionDocument, lineCount, resetState);
 		std::cout << std::string(MCF::GetConsoleWidth() - line.length() - 2, ' ');
 		++lineCount;
 	}
@@ -195,7 +196,10 @@ std::string Repl::EditSubmission()
 	_done = false;
 	auto document = Document(std::string());
 	auto view = SubmissionView(
-		[this](std::string_view line) { return this->RenderLine(line); },
+		[this](const Document& lines, size_t index, bool resetState)
+		{
+			return this->RenderLine(lines, index, resetState);
+		},
 		document);
 
 	while (!_done)
@@ -260,7 +264,7 @@ void Repl::HandleKey(const MCF::KeyInfo& key,
 				default:
 					auto c = key.Key;
 					if (c >= ' ')
-						HandleTyping(document, view, std::string(1, c));
+						HandleTyping(document, view, c);
 					break;
 			}
 		}
@@ -268,7 +272,7 @@ void Repl::HandleKey(const MCF::KeyInfo& key,
 	{
 		auto c = key.Key;
 		if (c >= ' ')
-			HandleTyping(document, view, std::string(1, c));
+			HandleTyping(document, view, c);
 	}
 }
 
@@ -430,18 +434,19 @@ void Repl::UpdateDocumentFromHistory(Document& document,
 	view.CurrentCharacter(document[view.CurrentLine()].length());
 }
 
-void Repl::HandleTyping(Document& document, SubmissionView& view, const std::string& text)
+void Repl::HandleTyping(Document& document, SubmissionView& view, char c)
 {
 	auto lineIndex = view.CurrentLine();
-	auto start = view.CurrentCharacter();
-	auto line = document[lineIndex];
-	document.SetAt(lineIndex, line.insert(start, text));
-	view.CurrentCharacter(view.CurrentCharacter() + text.length());
+	auto& line = document[lineIndex];
+	line.push_back(c);
+	document.SetAt(lineIndex, line);
+	view.CurrentCharacter(view.CurrentCharacter() + 1);
 }
 
-void Repl::RenderLine(std::string_view line)const
+bool Repl::RenderLine(const Document& lines, size_t index, bool resetState)const
 {
-	std::cout << line;
+	std::cout << lines[index];
+	return resetState;
 }
 
 std::vector<std::string> ParseArgs(std::string_view input)
@@ -591,15 +596,35 @@ McfRepl::McfRepl()
 
 McfRepl::~McfRepl() = default;
 
-void McfRepl::RenderLine(std::string_view line)const
+bool McfRepl::RenderLine(const Document & lines, size_t index, bool resetState)const
 {
-	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(line);
-	for (const auto& tk : tokens)
+	static std::unique_ptr<RenderState> renderState = nullptr;
+
+	if (resetState)
 	{
+		auto text = MCF::StringJoin(lines.cbegin(), lines.cend(), NEW_LINE);
+		auto srcText = MCF::SourceText::From(text);
+		auto [tokens, _] = MCF::SyntaxTree::ParseTokens(std::make_unique<MCF::SourceText>(srcText));
+		renderState = std::make_unique<RenderState>(std::move(srcText), std::move(tokens));
+	}
+
+	auto lineSpan = renderState->Text.Lines()[index].Span();
+
+	for (const auto& tk : renderState->Tokens)
+	{
+		if (!lineSpan.OverlapsWith(tk.Span()))
+			continue;
+
+		auto tkStart = std::max(tk.Span().Start(), lineSpan.Start());
+		auto tkEnd = std::min(tk.Span().End(), lineSpan.End());
+		auto tkSpan = MCF::TextSpan::FromBounds(tkStart, tkEnd);
+		auto tkText = renderState->Text.ToString(tkSpan);
+
 		auto isKeyword = MCF::IsKeyword(tk.Kind());
 		auto isIdentifier = tk.Kind() == MCF::SyntaxKind::IdentifierToken;
 		auto isNumber = tk.Kind() == MCF::SyntaxKind::NumberToken;
 		auto isString = tk.Kind() == MCF::SyntaxKind::StringToken;
+		auto isComment = MCF::IsComment(tk.Kind());
 
 		if (isKeyword)
 			MCF::SetConsoleColor(MCF::ConsoleColor::Blue);
@@ -609,11 +634,15 @@ void McfRepl::RenderLine(std::string_view line)const
 			MCF::SetConsoleColor(MCF::ConsoleColor::Cyan);
 		else if (isString)
 			MCF::SetConsoleColor(MCF::ConsoleColor::Magenta);
+		else if (isComment)
+			MCF::SetConsoleColor(MCF::ConsoleColor::Green);
 		else MCF::SetConsoleColor(MCF::ConsoleColor::DarkGray);
 
-		std::cout << tk.Text();
+		std::cout << MCF::TrimString(tkText);
 		MCF::ResetConsoleColor();
 	}
+
+	return false;
 }
 
 void McfRepl::EvaluateExit()const

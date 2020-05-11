@@ -75,7 +75,7 @@ class Repl
 {
 protected:
 	using Document = ObservableCollection<std::string>;
-	using LineRenderHandle = std::function<void(std::string_view)>;
+	using LineRenderHandle = std::function<bool(const Document&, size_t, bool)>;
 
 private:
 	struct MetaCommand;
@@ -113,8 +113,7 @@ private:
 	void HandlePageDown(Document& document, SubmissionView& view);
 	void UpdateDocumentFromHistory(Document& document, SubmissionView& view);
 
-	void HandleTyping(Document& document, SubmissionView& view,
-		const std::string& text);
+	void HandleTyping(Document& document, SubmissionView& view, char c);
 
 protected:
 	Repl();
@@ -122,7 +121,7 @@ protected:
 	void EvaluateMetaCommand(std::string_view input);
 	void EvaluateHelp();
 
-	virtual void RenderLine(std::string_view line)const;
+	virtual bool RenderLine(const Document& lines, size_t index, bool resetState)const;
 	virtual bool IsCompleteSubmission(std::string_view text)const = 0;
 	virtual void EvaluateSubmission(std::string_view text) = 0;
 
@@ -162,7 +161,7 @@ private:
 
 protected:
 	// Inherited via Repl
-	void RenderLine(std::string_view line)const override;
+	bool RenderLine(const Document& lines, size_t index, bool resetState)const override;
 	bool IsCompleteSubmission(std::string_view text) const override;
 	void EvaluateSubmission(std::string_view text) override;
 

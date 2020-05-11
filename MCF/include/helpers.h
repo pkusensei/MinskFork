@@ -35,7 +35,7 @@ bool StringIsBlank(const T& text)
 		std::all_of<It, int(*)(int)>(text.cbegin(), text.cend(), std::isspace); // NOTE just why? 
 }
 
-template<typename It >
+template<typename It>
 string StringJoin(It begin, It end, char seperator = ' ')
 {
 	static_assert(std::is_same_v<char,
