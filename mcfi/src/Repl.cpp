@@ -12,9 +12,6 @@ namespace fs = std::filesystem;
 
 constexpr auto NEW_LINE = '\n';
 
-const std::unique_ptr<MCF::Compilation> McfRepl::emptyCompilation
-= MCF::Compilation::CreateScript(nullptr, nullptr);
-
 fs::path GetSubmissionDir()
 {
 	/// %USERPROFILE%/AppData/Local/Temp
@@ -566,6 +563,8 @@ struct McfRepl::RenderState
 	}
 };
 
+const std::unique_ptr<MCF::Compilation> McfRepl::emptyCompilation
+= MCF::Compilation::CreateScript(nullptr, nullptr);
 
 McfRepl::McfRepl()
 	:Repl()
@@ -595,12 +594,12 @@ McfRepl::~McfRepl() = default;
 void McfRepl::RenderLine(std::string_view line)const
 {
 	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(line);
-	for (const auto& it : tokens)
+	for (const auto& tk : tokens)
 	{
-		auto isKeyword = MCF::StringEndsWith(MCF::nameof(it.Kind()), "Keyword");
-		auto isIdentifier = it.Kind() == MCF::SyntaxKind::IdentifierToken;
-		auto isNumber = it.Kind() == MCF::SyntaxKind::NumberToken;
-		auto isString = it.Kind() == MCF::SyntaxKind::StringToken;
+		auto isKeyword = MCF::IsKeyword(tk.Kind());
+		auto isIdentifier = tk.Kind() == MCF::SyntaxKind::IdentifierToken;
+		auto isNumber = tk.Kind() == MCF::SyntaxKind::NumberToken;
+		auto isString = tk.Kind() == MCF::SyntaxKind::StringToken;
 
 		if (isKeyword)
 			MCF::SetConsoleColor(MCF::ConsoleColor::Blue);
@@ -612,7 +611,7 @@ void McfRepl::RenderLine(std::string_view line)const
 			MCF::SetConsoleColor(MCF::ConsoleColor::Magenta);
 		else MCF::SetConsoleColor(MCF::ConsoleColor::DarkGray);
 
-		std::cout << it.Text();
+		std::cout << tk.Text();
 		MCF::ResetConsoleColor();
 	}
 }

@@ -81,10 +81,15 @@ private:
 	struct MetaCommand;
 	class SubmissionView;
 
+private:
 	std::vector<std::string> _submissionHistory;
 	size_t _submissionHistoryIndex{ 0 };
 	bool _done{ false };
 
+protected:
+	std::vector<MetaCommand> _metaCommands;
+
+private:
 	std::string EditSubmission();
 	void HandleKey(const MCF::KeyInfo& key, Document& document,
 		SubmissionView& view);
@@ -112,9 +117,6 @@ private:
 		const std::string& text);
 
 protected:
-
-	std::vector<MetaCommand> _metaCommands;
-
 	Repl();
 
 	void EvaluateMetaCommand(std::string_view input);
@@ -137,7 +139,6 @@ private:
 	struct RenderState;
 
 private:
-
 	static const std::unique_ptr<MCF::Compilation> emptyCompilation;
 
 	bool _loadingSubmission;
