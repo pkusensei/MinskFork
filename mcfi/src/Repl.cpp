@@ -10,7 +10,7 @@
 
 namespace fs = std::filesystem;
 
-constexpr auto NEW_LINE = '\r';
+constexpr auto NEW_LINE = '\n';
 
 fs::path GetSubmissionDir()
 {

@@ -21,7 +21,7 @@ size_t SourceText::GetLineBreakWidth(string_view text, size_t position)
 	auto last = position + 1 >= text.length() ? '\0' : text.at(position + 1);
 	if (character == '\r' && last == '\n')
 		return 2;
-	else if (character == '\r' || last == '\n')
+	else if (character == '\r' || character == '\n')
 		return 1;
 	else return 0;
 }
