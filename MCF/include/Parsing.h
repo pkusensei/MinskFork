@@ -192,13 +192,13 @@ public:
 	static unique_ptr<SyntaxTree> Parse(string_view text);
 	static unique_ptr<SyntaxTree> Parse(unique_ptr<SourceText> text);
 	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
-		ParseTokens(string_view text);
+		ParseTokens(string_view text, bool includeEndOfFile = false);
 	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
-		ParseTokens(string_view text, DiagnosticBag& diagnostics);
+		ParseTokens(string_view text, DiagnosticBag& diagnostics, bool includeEndOfFile = false);
 	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
-		ParseTokens(unique_ptr<SourceText> text);
+		ParseTokens(unique_ptr<SourceText> text, bool includeEndOfFile = false);
 	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
-		ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics);
+		ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics, bool includeEndOfFile = false);
 
 	static vector<unique_ptr<SyntaxTree>> Flatten(unique_ptr<SyntaxTree> tree);
 

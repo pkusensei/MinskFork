@@ -61,15 +61,20 @@ private:
 	SyntaxKind _kind;
 	ValueType _value;
 
+	vector<SyntaxTrivia> _trivias;
+
 	char Peek(int offset) const;
 	char Current() const { return Peek(0); }
 	char Lookahead() const { return Peek(1); }
 	constexpr void Next(size_t step = 1) noexcept { _position += step; }
 
+	void ReadTrivia(bool leading);
+	void ReadLineBreak();
+	void ReadWhiteSpace();
 	void ReadSingleLineComment();
 	void ReadMultiLineComment();
+	void ReadToken();
 	void ReadString();
-	void ReadWhiteSpace();
 	void ReadNumberToken();
 	void ReadIdentifierOrKeyword();
 
@@ -83,7 +88,7 @@ public:
 Lexer::Lexer(const SyntaxTree& tree)
 	:_tree(tree), _text(tree.Text()),
 	_diagnostics(tree.Diagnostics()),
-	_position(0), _start(0), _kind(SyntaxKind::EndOfFileToken), _value(NULL_VALUE)
+	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(NULL_VALUE)
 {
 }
 
@@ -97,12 +102,180 @@ char Lexer::Peek(int offset) const
 
 SyntaxToken Lexer::Lex()
 {
+	ReadTrivia(true);
+
+	vector<SyntaxTrivia> leading = std::move(_trivias);
+	auto tkStart = _position;
+
+	ReadToken();
+
+	auto tkKind = _kind;
+	ValueType tkValue = std::move(_value);
+	auto tkLength = _position - _start;
+
+	ReadTrivia(false);
+
+	vector<SyntaxTrivia> trailing = std::move(_trivias);
+
+	auto tkText = GetText(tkKind);
+	if (tkText.empty())
+		tkText = _text.ToString(tkStart, tkLength);
+
+	return SyntaxToken(_tree, tkKind, tkStart, tkText, std::move(tkValue),
+		std::move(leading), std::move(trailing));
+}
+
+void Lexer::ReadTrivia(bool leading)
+{
+	_trivias.clear();
+	bool done = false;
+
+	while (!done)
+	{
+		_start = _position;
+		_kind = SyntaxKind::BadToken;
+		_value = NULL_VALUE;
+
+		switch (Current())
+		{
+			case'\0':
+				done = true;
+				break;
+			case '/':
+				if (Lookahead() == '/')
+				{
+					ReadSingleLineComment();
+				} else if (Lookahead() == '*')
+				{
+					ReadMultiLineComment();
+				} else
+				{
+					done = true;
+				}
+				break;
+			case '\n':
+			case '\r':
+				if (!leading)
+					done = true;
+				ReadLineBreak();
+				break;
+			case ' ':
+			case '\t':
+				ReadWhiteSpace();
+				break;
+			default:
+				if (std::isspace(Current()))
+					ReadWhiteSpace();
+				else
+					done = true;
+				break;
+		}
+		auto length = _position - _start;
+		if (length > 0)
+		{
+			auto text = _text.ToString(_start, length);
+			_trivias.emplace_back(_tree, _kind, _start, text);
+		}
+	}
+}
+
+void Lexer::ReadLineBreak()
+{
+	if (Current() == '\r' && Lookahead() == '\n')
+		Next(2);
+	else Next();
+
+	_kind = SyntaxKind::LineBreakTrivia;
+}
+
+void Lexer::ReadWhiteSpace()
+{
+	bool done = false;
+
+	while (!done)
+	{
+		switch (Current())
+		{
+			case '\0':
+			case '\r':
+			case '\n':
+				done = true;
+				break;
+			default:
+				if (!std::isspace(Current()))
+					done = true;
+				else
+					Next();
+				break;
+		}
+	}
+	_kind = SyntaxKind::WhitespaceTrivia;
+}
+
+void Lexer::ReadSingleLineComment()
+{
+	Next(2);
+	auto done = false;
+	while (!done)
+	{
+		switch (Current())
+		{
+			case '\0':
+			case '\r':
+			case '\n':
+				done = true;
+				break;
+			default:
+				Next();
+				break;
+		}
+	}
+
+	_kind = SyntaxKind::SingleLineCommentTrivia;
+}
+
+void Lexer::ReadMultiLineComment()
+{
+	Next(2);
+	auto done = false;
+
+	while (!done)
+	{
+		switch (Current())
+		{
+			case '\0':
+			{
+				auto span = TextSpan(_start, 2);
+				auto location = TextLocation(_text, span);
+				_diagnostics.ReportUnterminatedMultiLineComment(std::move(location));
+				done = true;
+				break;
+			}
+			case '*':
+				if (Lookahead() == '/')
+				{
+					Next();
+					done = true;
+				}
+				Next();
+				break;
+			default:
+				Next();
+				break;
+		}
+	}
+
+	_kind = SyntaxKind::MultiLineCommentTrivia;
+}
+
+void Lexer::ReadToken()
+{
 	_start = _position;
 	_kind = SyntaxKind::BadToken;
 	_value = NULL_VALUE;
-	auto character = Current();
+	auto c = Current();
 
-	switch (character)
+	switch (c)
 	{
 		case '\0':
 			_kind = SyntaxKind::EndOfFileToken;
@@ -135,17 +308,8 @@ SyntaxToken Lexer::Lex()
 			_kind = SyntaxKind::StarToken;
 			break;
 		case '/':
-			if (Lookahead() == '/')
-			{
-				ReadSingleLineComment();
-			} else if (Lookahead() == '*')
-			{
-				ReadMultiLineComment();
-			} else
-			{
-				Next();
-				_kind = SyntaxKind::SlashToken;
-			}
+			Next();
+			_kind = SyntaxKind::SlashToken;
 			break;
 		case '%':
 			Next();
@@ -256,88 +420,21 @@ SyntaxToken Lexer::Lex()
 		case '5': case '6': case '7': case '8': case '9':
 			ReadNumberToken();
 			break;
-		case ' ': case '\n': case '\t': case '\r':
-			ReadWhiteSpace();
-			break;
 		case '_':
 			ReadIdentifierOrKeyword();
 			break;
 		default:
-			if (std::isalpha(character))
+			if (std::isalpha(c))
 				ReadIdentifierOrKeyword();
-			else if (std::isspace(character))
-				ReadWhiteSpace();
 			else
 			{
 				auto span = TextSpan(_position, 1);
 				auto location = TextLocation(_text, std::move(span));
-				_diagnostics.ReportBadCharacter(std::move(location), character);
+				_diagnostics.ReportBadCharacter(std::move(location), c);
 				Next();
 			}
 			break;
 	}
-	auto length = _position - _start;
-	auto text = GetText(_kind);
-	if (text.empty())
-		text = _text.ToString(_start, length);
-
-	return SyntaxToken(_tree, _kind, _start, text, _value);
-}
-
-void Lexer::ReadSingleLineComment()
-{
-	Next(2);
-	auto done = false;
-	while (!done)
-	{
-		switch (Current())
-		{
-			case '\0':
-			case '\r':
-			case '\n':
-				done = true;
-				break;
-			default:
-				Next();
-				break;
-		}
-	}
-
-	_kind = SyntaxKind::SingleLineCommentTrivia;
-}
-
-void Lexer::ReadMultiLineComment()
-{
-	Next(2);
-	auto done = false;
-
-	while (!done)
-	{
-		switch (Current())
-		{
-			case '\0':
-			{
-				auto span = TextSpan(_start, 2);
-				auto location = TextLocation(_text, span);
-				_diagnostics.ReportUnterminatedMultiLineComment(std::move(location));
-				done = true;
-				break;
-			}
-			case '*':
-				if (Lookahead() == '/')
-				{
-					Next();
-					done = true;
-				}
-				Next();
-				break;
-			default:
-				Next();
-				break;
-		}
-	}
-
-	_kind = SyntaxKind::MultiLineCommentTrivia;
 }
 
 void Lexer::ReadString()
@@ -383,13 +480,6 @@ void Lexer::ReadString()
 	s.shrink_to_fit();
 	_kind = SyntaxKind::StringToken;
 	_value = ValueType(std::move(s));
-}
-
-void Lexer::ReadWhiteSpace()
-{
-	while (std::isspace(Current()))
-		Next();
-	_kind = SyntaxKind::WhitespaceTrivia;
 }
 
 void Lexer::ReadNumberToken()
@@ -488,15 +578,46 @@ Parser::Parser(const SyntaxTree& tree)
 	:_tree(tree), _text(tree.Text()), _tokens(),
 	_position(0), _diagnostics(tree.Diagnostics())
 {
+	auto badTokens = vector<SyntaxToken>();
+
 	auto lexer = Lexer(tree);
 	auto kind = SyntaxKind::BadToken;
 	do
 	{
 		auto token = lexer.Lex();
-		if (!IsTrivia(token.Kind()))
+		kind = token.Kind();
+		if (token.Kind() == SyntaxKind::BadToken)
+			badTokens.push_back(std::move(token));
+		else
 		{
-			kind = token.Kind();
-			_tokens.push_back(std::move(token));
+			if (!badTokens.empty())
+			{
+				auto leading = token.LeadingTrivia();
+				auto index = 0;
+
+				for (const auto& tk : badTokens)
+				{
+					for (const auto& lt : tk.LeadingTrivia())
+					{
+						leading.insert(leading.cbegin() + index, lt);
+						++index;
+					}
+
+					leading.emplace(leading.cbegin() + index,
+						tree, SyntaxKind::SkippedTextTrivia, tk.Position(), tk.Text());
+					++index;
+
+					for (const auto& tt : tk.TrailingTrivia())
+					{
+						leading.insert(leading.cbegin() + index, tt);
+						++index;
+					}
+				}
+				badTokens.clear();
+				_tokens.emplace_back(token.Tree(), token.Kind(), token.Position(), token.Text(),
+					token.Value(), std::move(leading), token.TrailingTrivia());
+			} else
+				_tokens.push_back(std::move(token));
 		}
 	} while (kind != SyntaxKind::EndOfFileToken);
 }
@@ -527,7 +648,8 @@ SyntaxToken Parser::MatchToken(SyntaxKind kind)
 	if (current.Kind() == kind)
 		return NextToken().Clone();
 	_diagnostics.ReportUnexpectedToken(current.Location(), current.Kind(), kind);
-	return SyntaxToken(_tree, kind, current.Position(), string(), NULL_VALUE);
+	return SyntaxToken(_tree, kind, current.Position(), string(), NULL_VALUE,
+		vector<SyntaxTrivia>(), vector<SyntaxTrivia>());
 }
 
 vector<unique_ptr<MemberSyntax>> Parser::ParseMembers()
@@ -1019,32 +1141,32 @@ unique_ptr<SyntaxTree> SyntaxTree::Parse(unique_ptr<SourceText> text)
 }
 
 std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
-SyntaxTree::ParseTokens(string_view text)
+SyntaxTree::ParseTokens(string_view text, bool includeEndOfFile)
 {
 	auto source = make_unique<SourceText>(SourceText::From(string(text)));
-	return ParseTokens(std::move(source));
+	return ParseTokens(std::move(source), includeEndOfFile);
 }
 
 std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
-SyntaxTree::ParseTokens(string_view text, DiagnosticBag& diagnostics)
+SyntaxTree::ParseTokens(string_view text, DiagnosticBag& diagnostics, bool includeEndOfFile)
 {
 	auto source = make_unique<SourceText>(SourceText::From(string(text)));
-	return ParseTokens(std::move(source), diagnostics);
+	return ParseTokens(std::move(source), diagnostics, includeEndOfFile);
 }
 
 std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
-SyntaxTree::ParseTokens(unique_ptr<SourceText> text)
+SyntaxTree::ParseTokens(unique_ptr<SourceText> text, bool includeEndOfFile)
 {
 	auto _ = DiagnosticBag();
-	return ParseTokens(std::move(text), _);
+	return ParseTokens(std::move(text), _, includeEndOfFile);
 }
 
 std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
-SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics)
+SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics, bool includeEndOfFile)
 {
 	auto tokens = vector<SyntaxToken>();
 
-	auto parseTokens = [&tokens](const SyntaxTree& tree)
+	auto parseTokens = [&tokens, includeEndOfFile](const SyntaxTree& tree)
 	{
 		unique_ptr<CompilationUnitSyntax> root = nullptr;
 		auto lexer = Lexer(tree);
@@ -1052,12 +1174,13 @@ SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics)
 		{
 			auto token = lexer.Lex();
 			if (token.Kind() == SyntaxKind::EndOfFileToken)
-			{
 				root = make_unique<CompilationUnitSyntax>(tree,
-					vector<unique_ptr<MemberSyntax>>(), std::move(token));
+					vector<unique_ptr<MemberSyntax>>(), token.Clone());
+
+			if (token.Kind() != SyntaxKind::EndOfFileToken || includeEndOfFile)
+				tokens.push_back(std::move(token));
+			if (token.Kind() == SyntaxKind::EndOfFileToken)
 				break;
-			}
-			tokens.push_back(std::move(token));
 		}
 		return std::make_pair(std::move(root), vector<unique_ptr<SyntaxTree>>());
 	};

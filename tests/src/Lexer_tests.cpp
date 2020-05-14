@@ -46,24 +46,38 @@ TEST_CASE("Lexer lexes unterminated string", "[Lexer]")
 	auto diagnostics = MCF::DiagnosticBag();
 	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(text, diagnostics);
 
-	CHECK(tokens.size() == 1);
+	REQUIRE(tokens.size() == 1);
 	CHECK(MCF::SyntaxKind::StringToken == tokens[0].Kind());
 	CHECK(text == tokens[0].Text());
 
-	CHECK(diagnostics.size() == 1);
+	REQUIRE(diagnostics.size() == 1);
 	CHECK(MCF::TextSpan(0, 1) == diagnostics[0].Location().Span());
 	CHECK("Unterminated string literal." == diagnostics[0].Message());
 }
 
 TEST_CASE("Lexer lexes token", "[Lexer]")
 {
-	auto data = GetTokenData();
-	for (const auto& it : data)
+	auto& data = GetTokens();
+	for (const auto& [kind, text] : data)
 	{
-		auto [tokens, _] = MCF::SyntaxTree::ParseTokens(it.second);
+		auto [tokens, _] = MCF::SyntaxTree::ParseTokens(text);
 		REQUIRE(tokens.size() == 1);
-		REQUIRE(it.first == tokens[0].Kind());
-		REQUIRE(it.second == tokens[0].Text());
+		CHECK(kind == tokens[0].Kind());
+		CHECK(text == tokens[0].Text());
+	}
+}
+
+TEST_CASE("Lexer lexes sparator", "[Lexer]")
+{
+	auto& data = GetSeparators();
+	for (const auto& [kind, text] : data)
+	{
+		auto [tokens, _] = MCF::SyntaxTree::ParseTokens(text, true);
+
+		REQUIRE(tokens.size() == 1);
+		REQUIRE(tokens.at(0).LeadingTrivia().size() == 1);
+		CHECK(kind == tokens.at(0).LeadingTrivia().at(0).Kind);
+		CHECK(text == tokens.at(0).LeadingTrivia().at(0).Text);
 	}
 }
 
@@ -77,10 +91,10 @@ TEST_CASE("Lexer lexes token pairs", "[Lexer]")
 		auto [tokens, _] = MCF::SyntaxTree::ParseTokens(text);
 		REQUIRE(2 == tokens.size());
 
-		REQUIRE(t1kind == tokens[0].Kind());
-		REQUIRE(t1text == tokens[0].Text());
-		REQUIRE(t2kind == tokens[1].Kind());
-		REQUIRE(t2text == tokens[1].Text());
+		CHECK(t1kind == tokens[0].Kind());
+		CHECK(t1text == tokens[0].Text());
+		CHECK(t2kind == tokens[1].Kind());
+		CHECK(t2text == tokens[1].Text());
 	}
 }
 
@@ -92,14 +106,18 @@ TEST_CASE("Lexer lexes token pairs with separators", "[Lexer]")
 		auto [t1kind, t1text, skind, stext, t2kind, t2text] = it;
 		auto text = MCF::BuildStringFrom(t1text, stext, t2text);
 		auto [tokens, _] = MCF::SyntaxTree::ParseTokens(text);
-		REQUIRE(3 == tokens.size());
+		REQUIRE(2 == tokens.size());
 
-		REQUIRE(t1kind == tokens[0].Kind());
-		REQUIRE(t1text == tokens[0].Text());
-		REQUIRE(skind == tokens[1].Kind());
-		REQUIRE(stext == tokens[1].Text());
-		REQUIRE(t2kind == tokens[2].Kind());
-		REQUIRE(t2text == tokens[2].Text());
+		CHECK(t1kind == tokens[0].Kind());
+		CHECK(t1text == tokens[0].Text());
+
+		REQUIRE(tokens.at(0).TrailingTrivia().size() == 1);
+		auto& separator = tokens.at(0).TrailingTrivia().at(0);
+		CHECK(skind == separator.Kind);
+		CHECK(stext == separator.Text);
+
+		CHECK(t2kind == tokens[1].Kind());
+		CHECK(t2text == tokens[1].Text());
 	}
 }
 
@@ -111,8 +129,8 @@ TEST_CASE("Lexer lexes identifiers", "[Lexer]")
 	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(name);
 
 	REQUIRE(tokens.size() == 1);
-	REQUIRE(tokens.at(0).Kind() == MCF::SyntaxKind::IdentifierToken);
-	REQUIRE(tokens.at(0).Text() == name);
+	CHECK(tokens.at(0).Kind() == MCF::SyntaxKind::IdentifierToken);
+	CHECK(tokens.at(0).Text() == name);
 }
 
 TEST_CASE("GetText_RoundTrip")
@@ -125,8 +143,8 @@ TEST_CASE("GetText_RoundTrip")
 			auto [tokens, _] = MCF::SyntaxTree::ParseTokens(text);
 			REQUIRE(1 == tokens.size());
 
-			REQUIRE(kind == tokens[0].Kind());
-			REQUIRE(text == tokens[0].Text());
+			CHECK(kind == tokens[0].Kind());
+			CHECK(text == tokens[0].Text());
 		}
 	}
 }
@@ -164,9 +182,9 @@ auto GetSeparators()->const std::vector<std::pair<MCF::SyntaxKind, std::string_v
 	static const auto result = std::vector<std::pair<MCF::SyntaxKind, std::string_view>>{
 		{MCF::SyntaxKind::WhitespaceTrivia, " "},
 		{MCF::SyntaxKind::WhitespaceTrivia, "  "},
-		{MCF::SyntaxKind::WhitespaceTrivia, "\r"},
-		{MCF::SyntaxKind::WhitespaceTrivia, "\n"},
-		{MCF::SyntaxKind::WhitespaceTrivia, "\r\n"},
+		{MCF::SyntaxKind::LineBreakTrivia, "\r"},
+		{MCF::SyntaxKind::LineBreakTrivia, "\n"},
+		{MCF::SyntaxKind::LineBreakTrivia, "\r\n"},
 		{MCF::SyntaxKind::MultiLineCommentTrivia, "/**/"}
 	};
 	return result;

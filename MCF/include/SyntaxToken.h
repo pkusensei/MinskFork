@@ -36,6 +36,8 @@ public:
 	virtual TextSpan Span()const;
 	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
 
+	virtual TextSpan FullSpan()const;
+
 	const SyntaxTree& Tree()const noexcept { return _tree; }
 	TextLocation Location()const;
 	const SyntaxToken& GetLastToken()const;
@@ -44,9 +46,9 @@ public:
 	string ToString() const;
 };
 
-struct SyntaxTrivia final
+struct MCF_API SyntaxTrivia final
 {
-	const SyntaxTree& Tree;
+	std::reference_wrapper<const SyntaxTree> Tree;
 	SyntaxKind Kind;
 	size_t Position;
 	string_view Text;
@@ -57,6 +59,15 @@ struct SyntaxTrivia final
 	}
 
 	TextSpan Span()const noexcept;
+
+	bool operator==(const SyntaxTrivia& other)const noexcept
+	{
+		return Kind == other.Kind && Position == other.Position && Text == other.Text;
+	}
+	bool operator!=(const SyntaxTrivia& other)const noexcept
+	{
+		return !((*this) == other);
+	}
 };
 
 class MCF_API SyntaxToken final :public SyntaxNode
@@ -66,12 +77,18 @@ private:
 	size_t _position;
 	string_view _text;
 	ValueType _value;
+	vector<SyntaxTrivia> _leadingTrivia;
+	vector<SyntaxTrivia> _trailingTrivia;
 
 public:
 	SyntaxToken(const SyntaxTree& tree, SyntaxKind kind, size_t position,
-				string_view text, ValueType value)
+				string_view text, ValueType value,
+				vector<SyntaxTrivia> leadingTrivia,
+				vector<SyntaxTrivia> trailingTrivia)
 		:SyntaxNode(tree), _kind(kind), _position(position),
-		_text(text), _value(std::move(value))
+		_text(text), _value(std::move(value)),
+		_leadingTrivia(std::move(leadingTrivia)),
+		_trailingTrivia(std::move(trailingTrivia))
 	{
 	}
 
@@ -80,12 +97,15 @@ public:
 
 	// Inherited via SyntaxNode
 	SyntaxKind Kind() const noexcept override { return _kind; }
-	TextSpan Span()const noexcept override;
+	TextSpan Span()const override;
 	const vector<const SyntaxNode*> GetChildren() const override;
+	TextSpan FullSpan()const override;
 
 	constexpr size_t Position() const noexcept { return _position; }
 	constexpr string_view Text() const { return _text; }
-	ValueType Value() const noexcept { return _value; }
+	constexpr const ValueType& Value() const noexcept { return _value; }
+	constexpr const vector<SyntaxTrivia>& LeadingTrivia()const noexcept { return _leadingTrivia; }
+	constexpr const vector<SyntaxTrivia>& TrailingTrivia()const noexcept { return _trailingTrivia; }
 	constexpr bool IsMissing()const noexcept { return _text.empty(); }
 
 	SyntaxToken Clone()const;

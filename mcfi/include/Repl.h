@@ -135,9 +135,6 @@ public:
 class McfRepl final :public Repl
 {
 private:
-	struct RenderState;
-
-private:
 	static const std::unique_ptr<MCF::Compilation> emptyCompilation;
 
 	bool _loadingSubmission;

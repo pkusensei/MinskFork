@@ -8,6 +8,8 @@
 #include "Parsing.h"
 #include "StringHelper.h"
 
+#include "Authoring.h"
+
 namespace fs = std::filesystem;
 
 constexpr auto NEW_LINE = '\n';
@@ -557,17 +559,6 @@ void Repl::EvaluateHelp()
 	}
 }
 
-struct McfRepl::RenderState
-{
-	MCF::SourceText Text;
-	std::vector<MCF::SyntaxToken> Tokens;
-
-	RenderState(MCF::SourceText text, std::vector<MCF::SyntaxToken> tokens)
-		:Text(std::move(text)), Tokens(std::move(tokens))
-	{
-	}
-};
-
 const std::unique_ptr<MCF::Compilation> McfRepl::emptyCompilation
 = MCF::Compilation::CreateScript(nullptr, nullptr);
 
@@ -598,47 +589,44 @@ McfRepl::~McfRepl() = default;
 
 bool McfRepl::RenderLine(const Document & lines, size_t index, bool resetState)const
 {
-	static std::unique_ptr<RenderState> renderState = nullptr;
+	static std::unique_ptr<MCF::SyntaxTree> tree = nullptr;
 
 	if (resetState)
 	{
 		auto text = MCF::StringJoin(lines.cbegin(), lines.cend(), NEW_LINE);
-		auto srcText = MCF::SourceText::From(text);
-		auto [tokens, _] = MCF::SyntaxTree::ParseTokens(std::make_unique<MCF::SourceText>(srcText));
-		renderState = std::make_unique<RenderState>(std::move(srcText), std::move(tokens));
+		tree = MCF::SyntaxTree::Parse(text);
 	}
 
-	auto lineSpan = renderState->Text.Lines()[index].Span();
+	auto lineSpan = tree->Text().Lines()[index].Span();
+	auto classSpans = Classify(*tree, lineSpan);
 
-	for (const auto& tk : renderState->Tokens)
+	for (const auto& span : classSpans)
 	{
-		if (!lineSpan.OverlapsWith(tk.Span()))
-			continue;
+		auto spanText = tree->Text().ToString(span.Span);
+		switch (span.ClassEnum)
+		{
+			case Classification::Keyword:
+				MCF::SetConsoleColor(MCF::ConsoleColor::Blue);
+				break;
+			case Classification::Identifier:
+				MCF::SetConsoleColor(MCF::ConsoleColor::DarkYellow);
+				break;
+			case Classification::Number:
+				MCF::SetConsoleColor(MCF::ConsoleColor::Cyan);
+				break;
+			case Classification::String:
+				MCF::SetConsoleColor(MCF::ConsoleColor::Magenta);
+				break;
+			case Classification::Comment:
+				MCF::SetConsoleColor(MCF::ConsoleColor::Green);
+				break;
+			case Classification::Text:
+			default:
+				MCF::SetConsoleColor(MCF::ConsoleColor::DarkGray);
+				break;
+		}
 
-		auto tkStart = std::max(tk.Span().Start(), lineSpan.Start());
-		auto tkEnd = std::min(tk.Span().End(), lineSpan.End());
-		auto tkSpan = MCF::TextSpan::FromBounds(tkStart, tkEnd);
-		auto tkText = renderState->Text.ToString(tkSpan);
-
-		auto isKeyword = MCF::IsKeyword(tk.Kind());
-		auto isIdentifier = tk.Kind() == MCF::SyntaxKind::IdentifierToken;
-		auto isNumber = tk.Kind() == MCF::SyntaxKind::NumberToken;
-		auto isString = tk.Kind() == MCF::SyntaxKind::StringToken;
-		auto isComment = MCF::IsComment(tk.Kind());
-
-		if (isKeyword)
-			MCF::SetConsoleColor(MCF::ConsoleColor::Blue);
-		else if (isIdentifier)
-			MCF::SetConsoleColor(MCF::ConsoleColor::DarkYellow);
-		else if (isNumber)
-			MCF::SetConsoleColor(MCF::ConsoleColor::Cyan);
-		else if (isString)
-			MCF::SetConsoleColor(MCF::ConsoleColor::Magenta);
-		else if (isComment)
-			MCF::SetConsoleColor(MCF::ConsoleColor::Green);
-		else MCF::SetConsoleColor(MCF::ConsoleColor::DarkGray);
-
-		std::cout << MCF::TrimString(tkText);
+		std::cout << MCF::TrimString(spanText);
 		MCF::ResetConsoleColor();
 	}
 

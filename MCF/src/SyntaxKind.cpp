@@ -276,7 +276,8 @@ bool IsTrivia(SyntaxKind kind)noexcept
 {
 	switch (kind)
 	{
-		case SyntaxKind::BadToken:
+		case SyntaxKind::SkippedTextTrivia:
+		case SyntaxKind::LineBreakTrivia:
 		case SyntaxKind::WhitespaceTrivia:
 		case SyntaxKind::SingleLineCommentTrivia:
 		case SyntaxKind::MultiLineCommentTrivia:
