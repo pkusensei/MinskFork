@@ -25,7 +25,7 @@ TEST_CASE("Lexer covers all tokens", "[Lexer]")
 		[](const auto k) { return MCF::IsToken(k); });
 
 	std::set<MCF::SyntaxKind> untestedTokenKinds(tokenKinds.cbegin(), tokenKinds.cend());
-	untestedTokenKinds.erase(MCF::SyntaxKind::BadTokenTrivia);
+	untestedTokenKinds.erase(MCF::SyntaxKind::BadToken);
 	untestedTokenKinds.erase(MCF::SyntaxKind::EndOfFileToken);
 
 	auto tokens = GetTokenData();
@@ -103,6 +103,18 @@ TEST_CASE("Lexer lexes token pairs with separators", "[Lexer]")
 	}
 }
 
+TEST_CASE("Lexer lexes identifiers", "[Lexer]")
+{
+	auto name = GENERATE(as<std::string_view>{},
+		"foo", "foo42", "foo_42", "_foo");
+
+	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(name);
+
+	REQUIRE(tokens.size() == 1);
+	REQUIRE(tokens.at(0).Kind() == MCF::SyntaxKind::IdentifierToken);
+	REQUIRE(tokens.at(0).Text() == name);
+}
+
 TEST_CASE("GetText_RoundTrip")
 {
 	for (const auto& kind : MCF::AllSyntaxKinds)
@@ -155,7 +167,7 @@ auto GetSeparators()->const std::vector<std::pair<MCF::SyntaxKind, std::string_v
 		{MCF::SyntaxKind::WhitespaceTrivia, "\r"},
 		{MCF::SyntaxKind::WhitespaceTrivia, "\n"},
 		{MCF::SyntaxKind::WhitespaceTrivia, "\r\n"},
-		{MCF::SyntaxKind::MultiLineCommentTriva, "/**/"}
+		{MCF::SyntaxKind::MultiLineCommentTrivia, "/**/"}
 	};
 	return result;
 }
@@ -218,6 +230,12 @@ bool RequiresSeparators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind)
 		return true;
 	if (t1kind == MCF::SyntaxKind::IdentifierToken && t2IsKeyword)
 		return true;
+
+	if (t1kind == MCF::SyntaxKind::IdentifierToken && t2kind == MCF::SyntaxKind::NumberToken)
+		return true;
+	if (t1IsKeyword && t2kind == MCF::SyntaxKind::NumberToken)
+		return true;
+
 	if (t1kind == MCF::SyntaxKind::NumberToken && t2kind == MCF::SyntaxKind::NumberToken)
 		return true;
 	if (t1kind == MCF::SyntaxKind::StringToken && t2kind == MCF::SyntaxKind::StringToken)
@@ -265,7 +283,7 @@ bool RequiresSeparators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind)
 		return true;
 	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::SingleLineCommentTrivia)
 		return true;
-	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::MultiLineCommentTriva)
+	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::MultiLineCommentTrivia)
 		return true;
 
 	return false;

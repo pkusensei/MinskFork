@@ -66,9 +66,12 @@ public:
 	auto cend() const noexcept { return _diagnostics.cend(); }
 	auto begin() noexcept { return _diagnostics.begin(); }
 	auto end() noexcept { return _diagnostics.end(); }
+	auto begin()const noexcept { return _diagnostics.begin(); }
+	auto end()const noexcept { return _diagnostics.end(); }
 
 	void AddRangeFront(DiagnosticBag& other);
 	void AddRange(DiagnosticBag& other);
+
 	void ReportInvalidNumber(TextLocation location, string_view text, const TypeSymbol& type);
 	void ReportBadCharacter(TextLocation location, char character);
 	void ReportUnterminatedString(TextLocation location);

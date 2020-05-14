@@ -98,7 +98,7 @@ char Lexer::Peek(int offset) const
 SyntaxToken Lexer::Lex()
 {
 	_start = _position;
-	_kind = SyntaxKind::BadTokenTrivia;
+	_kind = SyntaxKind::BadToken;
 	_value = NULL_VALUE;
 	auto character = Current();
 
@@ -259,6 +259,9 @@ SyntaxToken Lexer::Lex()
 		case ' ': case '\n': case '\t': case '\r':
 			ReadWhiteSpace();
 			break;
+		case '_':
+			ReadIdentifierOrKeyword();
+			break;
 		default:
 			if (std::isalpha(character))
 				ReadIdentifierOrKeyword();
@@ -334,7 +337,7 @@ void Lexer::ReadMultiLineComment()
 		}
 	}
 
-	_kind = SyntaxKind::MultiLineCommentTriva;
+	_kind = SyntaxKind::MultiLineCommentTrivia;
 }
 
 void Lexer::ReadString()
@@ -410,8 +413,9 @@ void Lexer::ReadNumberToken()
 
 void Lexer::ReadIdentifierOrKeyword()
 {
-	while (std::isalpha(Current()))
+	while (std::isalnum(Current()) || Current() == '_')
 		Next();
+
 	auto length = _position - _start;
 	auto text = _text.ToString(_start, length);
 	_kind = GetKeywordKind(text);
@@ -485,7 +489,7 @@ Parser::Parser(const SyntaxTree& tree)
 	_position(0), _diagnostics(tree.Diagnostics())
 {
 	auto lexer = Lexer(tree);
-	auto kind = SyntaxKind::BadTokenTrivia;
+	auto kind = SyntaxKind::BadToken;
 	do
 	{
 		auto token = lexer.Lex();

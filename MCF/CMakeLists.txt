@@ -7,7 +7,6 @@ add_library(MCF SHARED src/Binding.cpp
 	src/Compilation.cpp
 	src/ConsoleHelper.cpp
 	src/ControlFlowGraph.cpp
-	src/Conversion.cpp
 	src/Diagnostic.cpp
 	src/Emitter.cpp
 	src/helpers.cpp

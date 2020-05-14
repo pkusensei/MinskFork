@@ -519,13 +519,10 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 	//	}
 	//};
 
-	std::for_each(_syntaxTrees.cbegin(), _syntaxTrees.cend(),
-		[this](const auto& tree) { _diagnostics->AddRange(tree->Diagnostics()); });
-
-	_diagnostics->AddRange(GlobalScope()->Diagnostics());
-
-	if (!_diagnostics->empty())
-		return EvaluationResult(*_diagnostics, NULL_VALUE);
+	if (!GlobalScope()->Diagnostics().empty())
+	{
+		return EvaluationResult(GlobalScope()->Diagnostics(), NULL_VALUE);
+	}
 
 	auto program = GetProgram();
 	//createCfgFile(*program);

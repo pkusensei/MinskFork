@@ -7,7 +7,6 @@
 #include "BoundExpressions.h"
 #include "BoundStatements.h"
 #include "ControlFlowGraph.h"
-#include "Conversion.h"
 #include "Diagnostic.h"
 #include "helpers.h"
 #include "Lowering.h"
@@ -17,6 +16,36 @@ namespace MCF {
 
 // NOTE CRT calls this function by name
 constexpr auto ENTRY_NAME = "main";
+
+enum class ConversionEnum
+{
+	None, Identity, Implicit, Explicit
+};
+
+ConversionEnum Classify(const TypeSymbol& from, const TypeSymbol& to)
+{
+	if (from == to)
+		return ConversionEnum::Identity;
+	if (from != TYPE_VOID && to == TYPE_ANY)
+	{
+		return ConversionEnum::Implicit;
+	}
+	if (from == TYPE_ANY && to != TYPE_VOID)
+	{
+		return ConversionEnum::Explicit;
+	}
+	if (from == TYPE_INT || from == TYPE_BOOL)
+	{
+		if (to == TYPE_STRING)
+			return ConversionEnum::Explicit;
+	}
+	if (from == TYPE_STRING)
+	{
+		if (to == TYPE_INT || to == TYPE_BOOL)
+			return ConversionEnum::Explicit;
+	}
+	return ConversionEnum::None;
+}
 
 class BoundScope final
 {
@@ -120,6 +149,8 @@ private:
 	std::stack<std::pair<BoundLabel, BoundLabel>> _loopStack; //break-continue pair
 	size_t _labelCount;
 
+	Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbol* function);
+
 	void BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax);
 
 	shared_ptr<BoundStatement> BindErrorStatement();
@@ -169,7 +200,6 @@ private:
 	[[nodiscard]] static unique_ptr<BoundScope> CreateRootScope();
 
 public:
-	Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbol* function);
 
 	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
 
@@ -848,6 +878,21 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 {
 	auto parentScope = CreateParentScope(previous);
 	auto binder = Binder(isScript, std::move(parentScope), nullptr);
+
+	std::for_each(trees.cbegin(), trees.cend(),
+		[&binder](const auto tree) { binder._diagnostics->AddRange(tree->Diagnostics()); });
+
+	if (!binder._diagnostics->empty())
+	{
+		return make_unique<BoundGlobalScope>(previous,
+			std::move(binder._diagnostics),
+			nullptr, nullptr,
+			vector<shared_ptr<FunctionSymbol>>(),
+			vector<shared_ptr<VariableSymbol>>(),
+			vector<shared_ptr<BoundStatement>>()
+			);
+	}
+
 	auto statements = vector<shared_ptr<BoundStatement>>();
 	auto globalStmts = vector<const GlobalStatementSyntax*>();
 
@@ -957,6 +1002,14 @@ unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
 	unique_ptr<BoundProgram> previous, const BoundGlobalScope* globalScope)
 {
 	auto parentScope = CreateParentScope(globalScope);
+
+	if (!globalScope->Diagnostics().empty())
+	{
+		return make_unique<BoundProgram>(std::move(previous),
+			make_unique<DiagnosticBag>(globalScope->Diagnostics()),
+			nullptr, nullptr,
+			BoundProgram::FuncMap());
+	}
 
 	auto funcBodies = BoundProgram::FuncMap();
 	auto diag = make_unique<DiagnosticBag>();
