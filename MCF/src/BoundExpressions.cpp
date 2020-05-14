@@ -1,6 +1,6 @@
 #include "BoundExpressions.h"
 
-#include "helpers.h"
+#include "StringHelper.h"
 
 namespace MCF {
 

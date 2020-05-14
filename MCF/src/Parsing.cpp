@@ -3,8 +3,8 @@
 #include <fstream>
 
 #include "Diagnostic.h"
-#include "helpers.h"
 #include "ReflectionHelper.h"
+#include "StringHelper.h"
 
 namespace MCF {
 

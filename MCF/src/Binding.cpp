@@ -8,9 +8,9 @@
 #include "BoundStatements.h"
 #include "ControlFlowGraph.h"
 #include "Diagnostic.h"
-#include "helpers.h"
 #include "Lowering.h"
 #include "Parsing.h"
+#include "StringHelper.h"
 
 namespace MCF {
 
@@ -693,7 +693,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		{
 			span = syntax->CloseParenthesisToken().Span();
 		}
-		auto location = TextLocation(syntax->SynTree().Text(), span);
+		auto location = TextLocation(syntax->Tree().Text(), span);
 		_diagnostics->ReportWrongArgumentCount(
 			std::move(location), function->Name(),
 			function->Parameters().size(), syntax->Arguments().size());

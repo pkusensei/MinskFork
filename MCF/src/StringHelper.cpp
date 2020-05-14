@@ -1,4 +1,4 @@
-#include "helpers.h"
+#include "StringHelper.h"
 
 #include <algorithm>
 #include <sstream>

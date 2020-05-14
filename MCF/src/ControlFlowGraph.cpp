@@ -6,7 +6,7 @@
 #include "BoundExpressions.h"
 #include "BoundNodePrinter.h"
 #include "BoundStatements.h"
-#include "helpers.h"
+#include "StringHelper.h"
 #include "SyntaxKind.h"
 
 namespace MCF {

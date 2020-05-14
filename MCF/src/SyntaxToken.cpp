@@ -3,10 +3,10 @@
 #include <iostream>
 #include <sstream>
 
-#include "helpers.h"
 #include "ConsoleHelper.h"
 #include "Parsing.h"
 #include "SourceText.h"
+#include "StringHelper.h"
 
 namespace MCF {
 
@@ -55,7 +55,7 @@ TextSpan SyntaxNode::Span() const
 
 TextLocation SyntaxNode::Location()const
 {
-	return TextLocation(SynTree().Text(), Span());
+	return TextLocation(Tree().Text(), Span());
 }
 
 const SyntaxToken& SyntaxNode::GetLastToken() const
@@ -71,6 +71,13 @@ string SyntaxNode::ToString() const
 	std::ostringstream ss;
 	WriteTo(ss);
 	return ss.str();
+}
+
+TextSpan SyntaxTrivia::Span()const noexcept
+{
+	return Text.length() > 0 ?
+		TextSpan(Position, Text.length())
+		: TextSpan(Position, 0);
 }
 
 bool SyntaxToken::operator==(const SyntaxToken& other) const noexcept
@@ -91,10 +98,10 @@ const vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 
 SyntaxToken SyntaxToken::Clone() const
 {
-	return SyntaxToken(SynTree(), _kind, _position, _text, _value);
+	return SyntaxToken(Tree(), _kind, _position, _text, _value);
 }
 
-TextSpan SyntaxToken::Span() const
+TextSpan SyntaxToken::Span() const noexcept
 {
 	return TextSpan(_position, _text.length());
 }

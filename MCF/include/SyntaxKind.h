@@ -6,12 +6,17 @@ namespace MCF {
 
 enum class SyntaxKind
 {
-	// Tokens
-	BadTokenTrivia = 0,
-	EndOfFileToken,
+	BadToken = 0,
+
+	// Trivia
+	SkippedTextTrivia,
+	LineBreakTrivia,
 	WhitespaceTrivia,
 	SingleLineCommentTrivia,
-	MultiLineCommentTriva,
+	MultiLineCommentTrivia,
+
+	// Tokens
+	EndOfFileToken,
 	NumberToken,
 	StringToken,
 	PlusToken,
@@ -92,7 +97,7 @@ enum class SyntaxKind
 	PostfixExpression, //
 };
 
-constexpr size_t SYNTAXKIND_COUNT = 75;
+constexpr size_t SYNTAXKIND_COUNT = 77;
 
 // NOTE global constant
 extern "C" MCF_API inline const std::array<SyntaxKind, SYNTAXKIND_COUNT> & AllSyntaxKinds;

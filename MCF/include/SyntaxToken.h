@@ -36,12 +36,27 @@ public:
 	virtual TextSpan Span()const;
 	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
 
-	const SyntaxTree& SynTree()const noexcept { return _tree; }
+	const SyntaxTree& Tree()const noexcept { return _tree; }
 	TextLocation Location()const;
 	const SyntaxToken& GetLastToken()const;
 
 	void WriteTo(std::ostream& out)const { PrettyPrint(out, this); }
 	string ToString() const;
+};
+
+struct SyntaxTrivia final
+{
+	const SyntaxTree& Tree;
+	SyntaxKind Kind;
+	size_t Position;
+	string_view Text;
+
+	SyntaxTrivia(const SyntaxTree& tree, SyntaxKind kind, size_t position, string_view text)
+		:Tree(tree), Kind(kind), Position(position), Text(text)
+	{
+	}
+
+	TextSpan Span()const noexcept;
 };
 
 class MCF_API SyntaxToken final :public SyntaxNode
@@ -65,7 +80,7 @@ public:
 
 	// Inherited via SyntaxNode
 	SyntaxKind Kind() const noexcept override { return _kind; }
-	TextSpan Span()const override;
+	TextSpan Span()const noexcept override;
 	const vector<const SyntaxNode*> GetChildren() const override;
 
 	constexpr size_t Position() const noexcept { return _position; }

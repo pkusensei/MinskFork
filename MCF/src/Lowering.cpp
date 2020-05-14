@@ -7,7 +7,7 @@
 #include "BoundExpressions.h"
 #include "BoundStatements.h"
 #include "ControlFlowGraph.h"
-#include "helpers.h"
+#include "StringHelper.h"
 #include "SyntaxKind.h"
 
 namespace MCF {

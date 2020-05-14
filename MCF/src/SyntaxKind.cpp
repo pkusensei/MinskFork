@@ -4,27 +4,33 @@
 #include <stdexcept>
 
 #include "EnumHelper.h"
-#include "helpers.h"
+#include "StringHelper.h"
 
 namespace MCF {
 
 const std::array<SyntaxKind, SYNTAXKIND_COUNT>& AllSyntaxKinds
-= GetAllEnumValue<SyntaxKind, SYNTAXKIND_COUNT>(SyntaxKind::BadTokenTrivia, SyntaxKind::PostfixExpression);
+= GetAllEnumValue<SyntaxKind, SYNTAXKIND_COUNT>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
 
 string_view nameof(SyntaxKind kind) noexcept
 {
 	switch (kind)
 	{
-		case SyntaxKind::BadTokenTrivia:
-			return "BadTokenTrivia";
-		case SyntaxKind::EndOfFileToken:
-			return "EndOfFileToken";
+		case SyntaxKind::BadToken:
+			return "BadToken";
+
+		case SyntaxKind::SkippedTextTrivia:
+			return "SkippedTextTrivia";
+		case SyntaxKind::LineBreakTrivia:
+			return "LineBreakTrivia";
 		case SyntaxKind::WhitespaceTrivia:
 			return "WhitespaceTrivia";
 		case SyntaxKind::SingleLineCommentTrivia:
 			return "SingleLineCommentTrivia";
-		case SyntaxKind::MultiLineCommentTriva:
-			return "MultiLineCommentTriva";
+		case SyntaxKind::MultiLineCommentTrivia:
+			return "MultiLineCommentTrivia";
+
+		case SyntaxKind::EndOfFileToken:
+			return "EndOfFileToken";
 		case SyntaxKind::NumberToken:
 			return "NumberToken";
 		case SyntaxKind::StringToken:
@@ -263,17 +269,17 @@ string_view GetText(SyntaxKind kind)
 bool IsComment(SyntaxKind kind)noexcept
 {
 	return kind == SyntaxKind::SingleLineCommentTrivia ||
-		kind == SyntaxKind::MultiLineCommentTriva;
+		kind == SyntaxKind::MultiLineCommentTrivia;
 }
 
 bool IsTrivia(SyntaxKind kind)noexcept
 {
 	switch (kind)
 	{
-		case SyntaxKind::BadTokenTrivia:
+		case SyntaxKind::BadToken:
 		case SyntaxKind::WhitespaceTrivia:
 		case SyntaxKind::SingleLineCommentTrivia:
-		case SyntaxKind::MultiLineCommentTriva:
+		case SyntaxKind::MultiLineCommentTrivia:
 			return true;
 		default:
 			return false;

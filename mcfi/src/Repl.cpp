@@ -3,10 +3,10 @@
 #include <fstream>
 #include <iostream>
 
-#include "helpers.h"
 #include "Diagnostic.h"
 #include "IO.h"
 #include "Parsing.h"
+#include "StringHelper.h"
 
 namespace fs = std::filesystem;
 

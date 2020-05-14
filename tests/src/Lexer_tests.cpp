@@ -3,9 +3,9 @@
 #include <set>
 
 #include "Diagnostic.h"
-#include "helpers.h"
 #include "Parsing.h"
 #include "SourceText.h"
+#include "StringHelper.h"
 
 auto GetTokens()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&;
 auto GetSeparators()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&;

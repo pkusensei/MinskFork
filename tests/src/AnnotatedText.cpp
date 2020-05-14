@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <stack>
 
-#include "helpers.h"
+#include "StringHelper.h"
 
 std::string AnnotatedText::Dedent(std::string_view text)
 {

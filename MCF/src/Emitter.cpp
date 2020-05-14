@@ -35,7 +35,7 @@
 #include "BoundExpressions.h"
 #include "BoundStatements.h"
 #include "Diagnostic.h"
-#include "helpers.h"
+#include "StringHelper.h"
 
 namespace MCF {
 

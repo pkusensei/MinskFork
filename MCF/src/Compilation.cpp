@@ -13,8 +13,8 @@
 #include "ControlFlowGraph.h"
 #include "Diagnostic.h"
 #include "Emitter.h"
-#include "helpers.h"
 #include "Parsing.h"
+#include "StringHelper.h"
 
 namespace MCF {
 

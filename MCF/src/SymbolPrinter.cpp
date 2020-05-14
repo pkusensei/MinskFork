@@ -3,7 +3,7 @@
 
 #include "Symbols.h"
 #include "SyntaxKind.h"
-#include "helpers.h"
+#include "StringHelper.h"
 
 namespace MCF {
 

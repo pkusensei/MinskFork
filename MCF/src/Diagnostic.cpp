@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-#include "helpers.h"
+#include "StringHelper.h"
 #include "Symbols.h"
 #include "SyntaxKind.h"
 
