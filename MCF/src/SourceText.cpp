@@ -4,7 +4,7 @@ namespace MCF {
 
 string_view TextLine::ToString() const
 {
-	return _text.get().ToString(Span());
+	return _text->ToString(Span());
 }
 
 void SourceText::AddLine(vector<TextLine>& result, const SourceText& sourceText,

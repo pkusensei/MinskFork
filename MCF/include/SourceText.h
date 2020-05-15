@@ -59,7 +59,7 @@ public:
 class TextLine final
 {
 private:
-	std::reference_wrapper<const SourceText> _text;
+	const SourceText* _text;
 	size_t _start;
 	size_t _length;
 	size_t _lengthIncludingLineBreak;
@@ -67,14 +67,14 @@ private:
 public:
 	TextLine(const SourceText& text, size_t start, size_t length,
 		size_t lengthWithBreak)noexcept
-		:_text(text), _start(start), _length(length),
+		:_text(&text), _start(start), _length(length),
 		_lengthIncludingLineBreak(lengthWithBreak)
 	{
 	}
 
 	~TextLine() = default;
 
-	const SourceText& Text()const noexcept { return _text; }
+	constexpr const SourceText& Text()const noexcept { return *_text; }
 	constexpr size_t Start()const noexcept { return _start; }
 	constexpr size_t Length()const noexcept { return _length; }
 	constexpr size_t End()const noexcept { return _start + _length; }
@@ -138,16 +138,16 @@ public:
 class TextLocation
 {
 private:
-	std::reference_wrapper<const SourceText> _text;
+	const SourceText* _text;
 	TextSpan _span;
 
 public:
 	TextLocation(const SourceText& text, TextSpan span)
-		:_text(text), _span(std::move(span))
+		:_text(&text), _span(std::move(span))
 	{
 	}
 
-	const SourceText& Text()const noexcept { return _text; }
+	constexpr const SourceText& Text()const noexcept { return *_text; }
 	constexpr const TextSpan& Span()const noexcept { return _span; }
 
 	constexpr const fs::path& FilePath()const { return Text().FilePath(); }

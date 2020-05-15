@@ -100,7 +100,7 @@ enum class SyntaxKind
 constexpr size_t SYNTAXKIND_COUNT = 77;
 
 // NOTE global constant
-extern "C" MCF_API inline const std::array<SyntaxKind, SYNTAXKIND_COUNT> & AllSyntaxKinds;
+extern "C" MCF_API const std::array<SyntaxKind, SYNTAXKIND_COUNT> & AllSyntaxKinds;
 
 MCF_API string_view nameof(SyntaxKind kind)noexcept;
 

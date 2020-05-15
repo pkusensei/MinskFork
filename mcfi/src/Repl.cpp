@@ -626,7 +626,7 @@ bool McfRepl::RenderLine(const Document & lines, size_t index, bool resetState)c
 				break;
 		}
 
-		std::cout << MCF::TrimString(spanText);
+		std::cout << spanText;
 		MCF::ResetConsoleColor();
 	}
 

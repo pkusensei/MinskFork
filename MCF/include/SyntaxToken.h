@@ -19,14 +19,14 @@ class SyntaxTree;
 class MCF_API SyntaxNode
 {
 private:
-	std::reference_wrapper<const SyntaxTree> _tree;
+	const SyntaxTree* _tree;
 
 	static void PrettyPrint(std::ostream& out, const SyntaxNode* node,
 		string indent = "", bool isLast = true);
 
 protected:
 	explicit SyntaxNode(const SyntaxTree& tree)noexcept
-		:_tree(tree)
+		:_tree(&tree)
 	{
 	}
 
@@ -38,7 +38,7 @@ public:
 
 	virtual TextSpan FullSpan()const;
 
-	const SyntaxTree& Tree()const noexcept { return _tree; }
+	constexpr const SyntaxTree& Tree()const noexcept { return *_tree; }
 	TextLocation Location()const;
 	const SyntaxToken& GetLastToken()const;
 
@@ -48,13 +48,13 @@ public:
 
 struct MCF_API SyntaxTrivia final
 {
-	std::reference_wrapper<const SyntaxTree> Tree;
+	const SyntaxTree* Tree;
 	SyntaxKind Kind;
 	size_t Position;
 	string_view Text;
 
 	SyntaxTrivia(const SyntaxTree& tree, SyntaxKind kind, size_t position, string_view text)
-		:Tree(tree), Kind(kind), Position(position), Text(text)
+		:Tree(&tree), Kind(kind), Position(position), Text(text)
 	{
 	}
 

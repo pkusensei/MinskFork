@@ -2,7 +2,7 @@
 
 #if defined(_MSC_VER) && !defined(__clang__)
 #pragma warning(push)
-#pragma warning(disable: 4068 4100 4141 4146 4244 4245 4267 4291 4324 4458 4624)
+#pragma warning(disable: 4068 4100 4141 4146 4244 4245 4267 4291 4324 4458 4624 4702)
 #else //defined(_MSC_VER) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
