@@ -56,11 +56,7 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(shared_ptr<BoundS
 			else break;
 		}
 		case BoundNodeKind::NopStatement:
-		{
-			auto p = std::dynamic_pointer_cast<BoundNopStatement>(node);
-			if (p) return RewriteNopStatement(std::move(p));
-			else break;
-		}
+			return node;
 		case BoundNodeKind::VariableDeclaration:
 		{
 			auto p = std::dynamic_pointer_cast<BoundVariableDeclaration> (node);
@@ -92,17 +88,8 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(shared_ptr<BoundS
 			else break;
 		}
 		case BoundNodeKind::LabelStatement:
-		{
-			auto p = std::dynamic_pointer_cast<BoundLabelStatement> (node);
-			if (p) return RewriteLabelStatement(std::move(p));
-			else break;
-		}
 		case BoundNodeKind::GotoStatement:
-		{
-			auto p = std::dynamic_pointer_cast<BoundGotoStatement> (node);
-			if (p) return RewriteGotoStatement(std::move(p));
-			else break;
-		}
+			return node;
 		case BoundNodeKind::ConditionalGotoStatement:
 		{
 			auto p = std::dynamic_pointer_cast<BoundConditionalGotoStatement> (node);
@@ -261,23 +248,9 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(shared_ptr<Boun
 	switch (node->Kind())
 	{
 		case BoundNodeKind::ErrorExpression:
-		{
-			auto p = std::dynamic_pointer_cast<BoundErrorExpression>(node);
-			if (p) return RewriteErrorExpression(std::move(p));
-			else break;
-		}
 		case BoundNodeKind::LiteralExpression:
-		{
-			auto p = std::dynamic_pointer_cast<BoundLiteralExpression>(node);
-			if (p) return RewriteLiteralExpression(std::move(p));
-			else break;
-		}
 		case BoundNodeKind::VariableExpression:
-		{
-			auto p = std::dynamic_pointer_cast<BoundVariableExpression>(node);
-			if (p) return RewriteVariableExpression(std::move(p));
-			else break;
-		}
+			return node;
 		case BoundNodeKind::AssignmentExpression:
 		{
 			auto p = std::dynamic_pointer_cast<BoundAssignmentExpression>(node);
