@@ -252,6 +252,12 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteExpressionStatement(shared_
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(shared_ptr<BoundExpression> node)
 {
+	// swap out exprssion with constant value with literal expression
+	if (node->ConstantValue().HasValue())
+	{
+		return make_shared<BoundLiteralExpression>(node->ConstantValue());
+	}
+
 	switch (node->Kind())
 	{
 		case BoundNodeKind::ErrorExpression:

@@ -35,6 +35,7 @@ private:
 	void EvaluateExpressionStatement(const BoundExpressionStatement* node);
 
 	ValueType EvaluateExpression(const BoundExpression* node);
+	ValueType EvaluateLiteralExpression(const BoundLiteralExpression* node)const;
 	ValueType EvaluateVariableExpression(const BoundVariableExpression* node);
 	ValueType EvaluateAssignmentExpression(const BoundAssignmentExpression* node);
 	ValueType EvaluateUnaryExpression(const BoundUnaryExpression* node);
@@ -157,11 +158,13 @@ void Evaluator::EvaluateExpressionStatement(const BoundExpressionStatement* node
 
 ValueType Evaluator::EvaluateExpression(const BoundExpression* node)
 {
-	if (node->ConstantValue().HasValue())
-		return node->ConstantValue();
-
 	switch (node->Kind())
 	{
+		case BoundNodeKind::LiteralExpression:
+		{
+			auto p = static_cast<const BoundLiteralExpression*>(node);
+			return EvaluateLiteralExpression(p);
+		}
 		case BoundNodeKind::VariableExpression:
 		{
 			auto p = static_cast<const BoundVariableExpression*>(node);
@@ -201,6 +204,11 @@ ValueType Evaluator::EvaluateExpression(const BoundExpression* node)
 			break;
 	}
 	throw std::invalid_argument(BuildStringFrom("Invalid expression: ", nameof(node->Kind())));
+}
+
+ValueType Evaluator::EvaluateLiteralExpression(const BoundLiteralExpression* node)const
+{
+	return node->Value();
 }
 
 ValueType Evaluator::EvaluateVariableExpression(const BoundVariableExpression* node)

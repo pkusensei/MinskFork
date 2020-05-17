@@ -135,7 +135,7 @@ public:
 
 	const SyntaxToken* GetSeparator(size_t index)const
 	{
-		if (index >= size() - 1) 
+		if (index >= size() - 1)
 			throw std::out_of_range("Failed to get separator: index out of range.");
 		return static_cast<const SyntaxToken*>(_nodesAndSeparators.at(index * 2 + 1).get());
 	}
