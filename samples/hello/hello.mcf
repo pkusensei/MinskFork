@@ -1,6 +1,9 @@
 using "getname.mcf"
 
-let a: any = "hello"
+let a: any = "Hello"
 let b: any = "hello"
 print(a!=b)
-print(a)
+
+let c = "Hello"
+let name = getName()
+print(c + " " + name)

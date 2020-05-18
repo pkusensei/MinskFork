@@ -239,12 +239,6 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteExpressionStatement(shared_
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(shared_ptr<BoundExpression> node)
 {
-	// swap out exprssion with constant value with literal expression
-	if (node->ConstantValue().HasValue())
-	{
-		return make_shared<BoundLiteralExpression>(node->ConstantValue());
-	}
-
 	switch (node->Kind())
 	{
 		case BoundNodeKind::ErrorExpression:
@@ -388,6 +382,11 @@ protected:
 	shared_ptr<BoundStatement> RewriteForStatement(shared_ptr<BoundForStatement> node)override;
 	shared_ptr<BoundStatement> RewriteConditionalGotoStatement(shared_ptr<BoundConditionalGotoStatement> node)override;
 
+	shared_ptr<BoundExpression> RewriteBinaryExpression(shared_ptr<BoundBinaryExpression> node)override;
+
+public:
+	shared_ptr<BoundExpression> RewriteExpression(shared_ptr<BoundExpression> node)override;
+
 };
 
 BoundLabel Lowerer::GenerateLabel()
@@ -527,6 +526,109 @@ shared_ptr<BoundStatement> Lowerer::RewriteConditionalGotoStatement(shared_ptr<B
 	}
 
 	return BoundTreeRewriter::RewriteConditionalGotoStatement(std::move(node));
+}
+
+shared_ptr<BoundExpression> Lowerer::RewriteExpression(shared_ptr<BoundExpression> node)
+{
+	// swap out exprssion with constant value with literal expression
+	if (node->ConstantValue().HasValue())
+	{
+		return make_shared<BoundLiteralExpression>(node->ConstantValue());
+	}
+
+	return BoundTreeRewriter::RewriteExpression(std::move(node));
+}
+
+vector<shared_ptr<BoundExpression>> FlattenStrNodes(shared_ptr<BoundExpression> node)
+{
+	auto result = vector<shared_ptr<BoundExpression>>();
+	if (node->Kind() == BoundNodeKind::BinaryExpression)
+	{
+		auto b = std::dynamic_pointer_cast<BoundBinaryExpression>(node);
+		if (b->Op().Kind() == BoundBinaryOperatorKind::Addition
+			&& b->Left()->Type() == TYPE_STRING
+			&& b->Right()->Type() == TYPE_STRING)
+		{
+			auto rest = FlattenStrNodes(b->Left());
+			result.insert(result.end(), std::make_move_iterator(rest.begin()),
+				std::make_move_iterator(rest.end()));
+
+			rest = FlattenStrNodes(b->Right());
+			result.insert(result.end(), std::make_move_iterator(rest.begin()),
+				std::make_move_iterator(rest.end()));
+		}
+	} else
+	{
+		if (node->Type() != TYPE_STRING)
+			throw std::invalid_argument(
+				BuildStringFrom("Unexpected node type in string concatenation: '",
+					node->Type().Name(), "'.")
+			);
+
+		result.push_back(std::move(node));
+	}
+	return result;
+}
+
+vector<shared_ptr<BoundExpression>> FoldStrConstants(vector<shared_ptr<BoundExpression>> nodes)
+{
+	auto result = vector<shared_ptr<BoundExpression>>();
+	auto builder = string();
+
+	for (const auto& node : nodes)
+	{
+		if (node->ConstantValue() == NULL_VALUE)
+		{
+			if (!builder.empty())
+			{
+				result.push_back(make_shared<BoundLiteralExpression>(std::move(builder)));
+				builder.clear();
+			}
+			result.push_back(std::move(node));
+		} else
+		{
+			auto value = node->ConstantValue().GetValue<string>();
+			if (value.empty())
+				continue;
+
+			builder += value;
+		}
+	}
+	if (!builder.empty())
+		result.push_back(make_shared<BoundLiteralExpression>(std::move(builder)));
+
+	return result;
+}
+
+shared_ptr<BoundExpression> ConstructStrConcatExpr(vector<shared_ptr<BoundExpression>> nodes)
+{
+	if (nodes.empty())
+	{
+		throw std::invalid_argument("Cannot construct string concat expr: no nodes presented.");
+	} else if (nodes.size() == 1)
+	{
+		return std::move(nodes.back());
+	} else
+	{
+		auto right = std::move(nodes.back());
+		nodes.pop_back();
+		auto left = ConstructStrConcatExpr(std::move(nodes));
+
+		return make_shared<BoundBinaryExpression>(std::move(left),
+			BoundBinaryOperator::Bind(SyntaxKind::PlusToken, TYPE_STRING, TYPE_STRING),
+			std::move(right));
+	}
+}
+
+shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBinaryExpression> node)
+{
+	if (node->Op().Kind() == BoundBinaryOperatorKind::Addition)
+	{
+		if (node->Left()->Type() == TYPE_STRING
+			&& node->Right()->Type() == TYPE_STRING)
+			return ConstructStrConcatExpr(FoldStrConstants(FlattenStrNodes(node)));
+	}
+	return BoundTreeRewriter::RewriteBinaryExpression(std::move(node));
 }
 
 unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func, shared_ptr<BoundStatement> statement)
