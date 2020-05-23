@@ -803,8 +803,12 @@ void McfRepl::EvaluateSubmission(std::string_view text)
 		compilation->EmitTree(std::cout);
 
 	auto result = compilation->Evaluate(_variables);
-	auto diagnostics = result.Diagnostics();
-	if (diagnostics.empty())
+	auto errors = result.Diagnostics().Errors();
+
+	auto writer = MCF::IndentedTextWriter(std::cout);
+	writer.WriteDiagnostics(result.Diagnostics().All());
+
+	if (errors.empty())
 	{
 		auto value = result.Value();
 		if (value.HasValue())
@@ -816,10 +820,6 @@ void McfRepl::EvaluateSubmission(std::string_view text)
 
 		_previous = std::move(compilation);
 		SaveSubmission(text);
-	} else
-	{
-		auto writer = MCF::IndentedTextWriter(std::cout);
-		writer.WriteDiagnostics(diagnostics);
 	}
 	std::cout << '\n';
 }

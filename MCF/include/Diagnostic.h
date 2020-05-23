@@ -16,40 +16,51 @@ namespace MCF {
 
 enum class SyntaxKind;
 class TypeSymbol;
+class SyntaxNode;
 
 class Diagnostic final
 {
 private:
+	bool _isError;
 	std::optional<TextLocation> _location;
 	string _message;
 
+	Diagnostic(bool isError, std::optional<TextLocation> location, string message)
+		:_isError(isError), _location(std::move(location)), _message(std::move(message))
+	{
+	}
+
 public:
-	explicit Diagnostic(string message)
-		:_location(std::nullopt), _message(std::move(message))
-	{
-	}
-
-	Diagnostic(std::optional<TextLocation> location, string message)
-		:_location(std::move(location)), _message(std::move(message))
-	{
-	}
-
 	constexpr bool HasLocation()const noexcept { return _location.has_value(); }
 
 	constexpr const TextLocation& Location() const
 	{
 		return _location.value(); // HACK this throws
 	}
-	string_view Message() const { return _message; }
 
-	string_view ToString()const { return Message(); }
+	constexpr bool IsError()const noexcept { return _isError; }
+	constexpr bool IsWarning()const noexcept { return !_isError; }
+	string_view Message() const noexcept { return _message; }
+	string_view ToString()const noexcept { return Message(); }
+
+	static Diagnostic Error(std::optional<TextLocation> location, string message)
+	{
+		return Diagnostic(true, std::move(location), std::move(message));
+	}
+
+	static Diagnostic Warning(std::optional<TextLocation> location, string message)
+	{
+		return Diagnostic(false, std::move(location), std::move(message));
+	}
+
 };
 
 class MCF_API DiagnosticBag final
 {
 private:
 	std::deque<Diagnostic> _diagnostics;
-	void Report(std::optional<TextLocation> location, string message);
+	void ReportError(std::optional<TextLocation> location, string message);
+	void ReportWarning(std::optional<TextLocation> location, string message);
 
 public:
 	DiagnosticBag()
@@ -68,6 +79,10 @@ public:
 	auto end() noexcept { return _diagnostics.end(); }
 	auto begin()const noexcept { return _diagnostics.begin(); }
 	auto end()const noexcept { return _diagnostics.end(); }
+
+	vector<const Diagnostic*> All()const;
+	vector<const Diagnostic*> Errors()const;
+	vector<const Diagnostic*> Warnings()const;
 
 	void AddRangeFront(DiagnosticBag& other);
 	void AddRange(DiagnosticBag& other);
@@ -127,6 +142,9 @@ public:
 		size_t expectedCount, size_t actualCount);
 	void ReportVariableNotEmitted(string_view name);
 	void ReportBasicBlockNotCreatedFromLabel(string_view labelName);
+
+	void ReportUnreachableCode(TextLocation location);
+	void ReportUnreachableCode(const SyntaxNode& node);
 };
 
 }//MCF

@@ -170,7 +170,7 @@ const std::array<BoundBinaryOperator, 26> BoundBinaryOperator::operators = {
 							TYPE_ANY, TYPE_BOOL),
 };
 
-BoundConstant ComputeConstant(const BoundUnaryOperator& op, const BoundExpression& operand)
+BoundConstant Fold(const BoundUnaryOperator& op, const BoundExpression& operand)
 {
 	if (operand.ConstantValue() != NULL_VALUE)
 	{
@@ -193,7 +193,7 @@ BoundConstant ComputeConstant(const BoundUnaryOperator& op, const BoundExpressio
 	return NULL_VALUE;
 }
 
-BoundConstant ComputeConstant(const BoundExpression& left, const BoundBinaryOperator& op,
+BoundConstant Fold(const BoundExpression& left, const BoundBinaryOperator& op,
 	const BoundExpression& right)
 {
 	auto& lc = left.ConstantValue();

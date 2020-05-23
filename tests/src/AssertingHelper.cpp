@@ -27,7 +27,7 @@ AssertingHelper::AssertingHelper(const MCF::SyntaxNode* node)
 AssertingHelper::~AssertingHelper()
 {
 	if (!_hasErrors)
-		CHECK(_position == _nodes.size());
+		REQUIRE(_position == _nodes.size());
 }
 
 void AssertingHelper::AssertNode(MCF::SyntaxKind kind)
@@ -35,8 +35,8 @@ void AssertingHelper::AssertNode(MCF::SyntaxKind kind)
 	try
 	{
 		REQUIRE(_position < _nodes.size());
-		REQUIRE(kind == _nodes[_position]->Kind());
-		REQUIRE_FALSE(typeid(MCF::SyntaxToken) == typeid(decltype(*_nodes[_position])));
+		CHECK(kind == _nodes[_position]->Kind());
+		CHECK_FALSE(typeid(MCF::SyntaxToken) == typeid(decltype(*_nodes[_position])));
 		++_position;
 	} catch (const std::exception& e)
 	{
@@ -50,11 +50,11 @@ void AssertingHelper::AssertToken(MCF::SyntaxKind kind, std::string_view text)
 	try
 	{
 		REQUIRE(_position < _nodes.size());
-		REQUIRE(kind == _nodes[_position]->Kind());
+		CHECK(kind == _nodes[_position]->Kind());
 		auto& r = *_nodes[_position];
-		REQUIRE(typeid(MCF::SyntaxToken) == typeid(r));
+		CHECK(typeid(MCF::SyntaxToken) == typeid(r));
 		auto p = dynamic_cast<const MCF::SyntaxToken*>(_nodes[_position]);
-		REQUIRE(text == p->Text());
+		CHECK(text == p->Text());
 		++_position;
 	} catch (const std::exception& e)
 	{

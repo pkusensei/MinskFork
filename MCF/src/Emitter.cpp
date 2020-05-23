@@ -787,7 +787,7 @@ void Emitter::CreateBlocksFromLabels(const BoundBlockStatement& body)
 	{
 		if (it->Kind() == BoundNodeKind::LabelStatement)
 		{
-			auto node = static_cast<const BoundLabelStatement&>(*it);
+			auto& node = static_cast<const BoundLabelStatement&>(*it);
 			auto bb = llvm::BasicBlock::Create(_context, string(node.Label().Name()));
 			_labelBBMap.emplace(node.Label(), bb);
 		}
@@ -818,7 +818,7 @@ llvm::Value* Emitter::ConvertToStr(llvm::Value* value)
 DiagnosticBag Emit(const BoundProgram& program, const string& moduleName,
 	const fs::path& outPath)
 {
-	if (!program.Diagnostics().empty())
+	if (!program.Diagnostics().Errors().empty())
 		return program.Diagnostics();
 
 	auto e = Emitter(moduleName);

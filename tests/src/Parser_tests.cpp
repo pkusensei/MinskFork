@@ -12,12 +12,12 @@ std::vector<std::pair<MCF::SyntaxKind, MCF::SyntaxKind>> GetUnaryOperatorPairsDa
 TEST_CASE("Parser honors precedences in BinaryExpression", "[Parser]")
 {
 	auto data = GetBinaryOperatorPairsData();
-	for (const auto& it : data)
+	for (const auto& [k1, k2] : data)
 	{
-		auto op1Precedence = MCF::GetBinaryOperatorPrecedence(it.first);
-		auto op2Precedence = MCF::GetBinaryOperatorPrecedence(it.second);
-		auto op1Text = MCF::GetText(it.first);
-		auto op2Text = MCF::GetText(it.second);
+		auto op1Precedence = MCF::GetBinaryOperatorPrecedence(k1);
+		auto op2Precedence = MCF::GetBinaryOperatorPrecedence(k2);
+		auto op1Text = MCF::GetText(k1);
+		auto op2Text = MCF::GetText(k2);
 		auto text = MCF::BuildStringFrom("a ", op1Text, " b ", op2Text, " c");
 		auto tree = MCF::SyntaxTree::Parse(text);
 		auto expression = ParseExpression(tree.get());
@@ -29,10 +29,10 @@ TEST_CASE("Parser honors precedences in BinaryExpression", "[Parser]")
 			e.AssertNode(MCF::SyntaxKind::BinaryExpression);
 			e.AssertNode(MCF::SyntaxKind::NameExpression);
 			e.AssertToken(MCF::SyntaxKind::IdentifierToken, "a");
-			e.AssertToken(it.first, op1Text);
+			e.AssertToken(k1, op1Text);
 			e.AssertNode(MCF::SyntaxKind::NameExpression);
 			e.AssertToken(MCF::SyntaxKind::IdentifierToken, "b");
-			e.AssertToken(it.second, op2Text);
+			e.AssertToken(k2, op2Text);
 			e.AssertNode(MCF::SyntaxKind::NameExpression);
 			e.AssertToken(MCF::SyntaxKind::IdentifierToken, "c");
 		} else
@@ -40,11 +40,11 @@ TEST_CASE("Parser honors precedences in BinaryExpression", "[Parser]")
 			e.AssertNode(MCF::SyntaxKind::BinaryExpression);
 			e.AssertNode(MCF::SyntaxKind::NameExpression);
 			e.AssertToken(MCF::SyntaxKind::IdentifierToken, "a");
-			e.AssertToken(it.first, op1Text);
+			e.AssertToken(k1, op1Text);
 			e.AssertNode(MCF::SyntaxKind::BinaryExpression);
 			e.AssertNode(MCF::SyntaxKind::NameExpression);
 			e.AssertToken(MCF::SyntaxKind::IdentifierToken, "b");
-			e.AssertToken(it.second, op2Text);
+			e.AssertToken(k2, op2Text);
 			e.AssertNode(MCF::SyntaxKind::NameExpression);
 			e.AssertToken(MCF::SyntaxKind::IdentifierToken, "c");
 		}
@@ -54,12 +54,12 @@ TEST_CASE("Parser honors precedences in BinaryExpression", "[Parser]")
 TEST_CASE("Parser honors precedences in UinaryExpression", "[Parser]")
 {
 	auto data = GetUnaryOperatorPairsData();
-	for (const auto& it : data)
+	for (const auto& [k1, k2] : data)
 	{
-		auto unaryPrecedence = MCF::GetUnaryOperatorPrecedence(it.first);
-		auto binaryPrecedence = MCF::GetBinaryOperatorPrecedence(it.second);
-		auto unaryText = MCF::GetText(it.first);
-		auto binaryText = MCF::GetText(it.second);
+		auto unaryPrecedence = MCF::GetUnaryOperatorPrecedence(k1);
+		auto binaryPrecedence = MCF::GetBinaryOperatorPrecedence(k2);
+		auto unaryText = MCF::GetText(k1);
+		auto binaryText = MCF::GetText(k2);
 		auto text = MCF::BuildStringFrom(unaryText, " a ", binaryText, " b");
 		auto tree = MCF::SyntaxTree::Parse(text);
 		auto expression = ParseExpression(tree.get());
@@ -69,21 +69,21 @@ TEST_CASE("Parser honors precedences in UinaryExpression", "[Parser]")
 		{
 			e.AssertNode(MCF::SyntaxKind::BinaryExpression);
 			e.AssertNode(MCF::SyntaxKind::UnaryExpression);
-			e.AssertToken(it.first, unaryText);
+			e.AssertToken(k1, unaryText);
 			e.AssertNode(MCF::SyntaxKind::NameExpression);
 			e.AssertToken(MCF::SyntaxKind::IdentifierToken, "a");
-			e.AssertToken(it.second, binaryText);
+			e.AssertToken(k2, binaryText);
 			e.AssertNode(MCF::SyntaxKind::NameExpression);
 			e.AssertToken(MCF::SyntaxKind::IdentifierToken, "b");
 
 		} else
 		{
 			e.AssertNode(MCF::SyntaxKind::UnaryExpression);
-			e.AssertToken(it.first, unaryText);
+			e.AssertToken(k1, unaryText);
 			e.AssertNode(MCF::SyntaxKind::BinaryExpression);
 			e.AssertNode(MCF::SyntaxKind::NameExpression);
 			e.AssertToken(MCF::SyntaxKind::IdentifierToken, "a");
-			e.AssertToken(it.second, binaryText);
+			e.AssertToken(k2, binaryText);
 			e.AssertNode(MCF::SyntaxKind::NameExpression);
 			e.AssertToken(MCF::SyntaxKind::IdentifierToken, "b");
 		}
@@ -112,7 +112,7 @@ const MCF::ExpressionSyntax* ParseExpression(const MCF::SyntaxTree* tree)
 {
 	auto root = tree->Root();
 	auto& members = root->Members();
-	CHECK(1 == members.size());
+	REQUIRE(1 == members.size());
 	auto gs = dynamic_cast<MCF::GlobalStatementSyntax*>(members[0].get());
 	REQUIRE_FALSE(nullptr == gs);
 	auto s = gs->Statement();

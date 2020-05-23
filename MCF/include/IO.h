@@ -9,6 +9,7 @@ namespace MCF {
 enum class ConsoleColor;
 enum class SyntaxKind;
 
+class Diagnostic;
 class DiagnosticBag;
 class SyntaxTree;
 
@@ -43,7 +44,7 @@ public:
 	void WriteSpace();
 	void WritePunctuation(const SyntaxKind& kind);
 	void WritePunctuation(string_view text);
-	void WriteDiagnostics(DiagnosticBag& diagnostics);
+	void WriteDiagnostics(vector<const Diagnostic*> diagnostics);
 };
 
 class MCF_API IndentedTextWriter final :public TextWriter

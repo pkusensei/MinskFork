@@ -151,8 +151,8 @@ public:
 
 };
 
-BoundConstant ComputeConstant(const BoundUnaryOperator& op, const BoundExpression& operand);
-BoundConstant ComputeConstant(const BoundExpression& left, const BoundBinaryOperator& op,
+BoundConstant Fold(const BoundUnaryOperator& op, const BoundExpression& operand);
+BoundConstant Fold(const BoundExpression& left, const BoundBinaryOperator& op,
 	const BoundExpression& right);
 
 class BoundUnaryExpression final : public BoundExpression
@@ -165,7 +165,7 @@ private:
 public:
 	BoundUnaryExpression(const BoundUnaryOperator& op,
 		shared_ptr<BoundExpression> operand)
-		:_constant(ComputeConstant(op, *operand)),
+		:_constant(Fold(op, *operand)),
 		_op(op), _operand(std::move(operand))
 	{
 	}
@@ -190,7 +190,7 @@ private:
 public:
 	BoundBinaryExpression(shared_ptr<BoundExpression> left,
 		BoundBinaryOperator op, shared_ptr<BoundExpression> right)
-		:_constant(ComputeConstant(*left, op, *right)),
+		:_constant(Fold(*left, op, *right)),
 		_left(std::move(left)), _right(std::move(right)), _op(std::move(op))
 	{
 	}

@@ -7,7 +7,8 @@
 #include "AnnotatedText.h"
 
 void AssertValue(std::string_view text, const MCF::ValueType& value);
-void AssertDiagnostics(std::string_view text, std::string_view diagnosticText);
+void AssertDiagnostics(std::string_view text, std::string_view diagnosticText,
+	bool assertWarnings = false);
 
 TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 {
@@ -385,6 +386,67 @@ TEST_CASE("Evaluator reports CannotConvert UpperBound in ForStatement", "[Evalua
 	AssertDiagnostics(text, diag);
 }
 
+TEST_CASE("Evaluator warns unreachable code in IfStatement", "[Evaluator][if][unreachable]")
+{
+	auto text = R"(
+			    function test()
+                {
+                    let x = 4 * 3
+                    if x > 12
+                    {
+                        [print]("x")
+                    }
+                    else
+                    {
+                        print("x")
+                    }
+                }
+			)";
+	auto diag = R"(
+                Unreachable code detected.
+				)";
+	AssertDiagnostics(text, diag, true);
+}
+
+
+TEST_CASE("Evaluator warns unreachable code in ElseStatement", "[Evaluator][if][else][unreachable]")
+{
+	auto text = R"(
+			    function test(): int
+                {
+                    if true
+                    {
+                        return 1
+                    }
+                    else
+                    {
+                        [return] 0
+                    }
+                }
+			)";
+	auto diag = R"(
+                Unreachable code detected.
+				)";
+	AssertDiagnostics(text, diag, true);
+}
+
+TEST_CASE("Evaluator warns unreachable code in WhileStatement", "[Evaluator][while][unreachable]")
+{
+	auto text = R"(
+			    function test()
+                {
+                    while false
+                    {
+                        [continue]
+                    }
+                }
+			)";
+	auto diag = R"(
+                Unreachable code detected.
+				)";
+	AssertDiagnostics(text, diag, true);
+}
+
 TEST_CASE("Evaluator reports invalid break or continue", "[Evaluator][break][return][loop]")
 {
 	auto [text, keyword] = GENERATE(
@@ -545,11 +607,12 @@ void AssertValue(std::string_view text, const MCF::ValueType& value)
 	MCF::VarMap variables;
 	auto result = compilation->Evaluate(variables);
 
-	CHECK(result.Diagnostics().empty());
+	REQUIRE(result.Diagnostics().Errors().empty());
 	CHECK(value == result.Value());
 }
 
-void AssertDiagnostics(std::string_view text, std::string_view diagnosticText)
+void AssertDiagnostics(std::string_view text, std::string_view diagnosticText,
+	bool assertWarnings)
 {
 	auto annotatedText = AnnotatedText::Parse(text);
 	auto tree = MCF::SyntaxTree::Parse(annotatedText.Text());
@@ -560,12 +623,15 @@ void AssertDiagnostics(std::string_view text, std::string_view diagnosticText)
 
 	if (annotatedText.Spans().size() != expectedDiagnostoics.size())
 		throw std::invalid_argument("ERROR: Must mark as many spans as there are expected diagnostics");
-	CHECK(expectedDiagnostoics.size() == result.Diagnostics().size());
+
+	auto diags = assertWarnings ?
+		result.Diagnostics().All() : result.Diagnostics().Errors();
+	REQUIRE(expectedDiagnostoics.size() == diags.size());
 
 	for (size_t i = 0; i < expectedDiagnostoics.size(); ++i)
 	{
-		CHECK(expectedDiagnostoics[i] == (result.Diagnostics())[i].Message());
-		CHECK(annotatedText.Spans()[i] == (result.Diagnostics())[i].Location().Span());
+		CHECK(expectedDiagnostoics[i] == diags[i]->Message());
+		CHECK(annotatedText.Spans()[i] == diags[i]->Location().Span());
 	}
 
 }

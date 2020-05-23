@@ -72,7 +72,7 @@ int main(int argc, char** argv)
 		if (!MCF::EnableVTMode())
 			std::cerr << "Warning: Unable to enter VT processing mode.\n";
 		auto writer = MCF::IndentedTextWriter(std::cerr);
-		writer.WriteDiagnostics(result);
+		writer.WriteDiagnostics(result.All());
 		return 1;
 	}
 

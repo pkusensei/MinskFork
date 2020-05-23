@@ -16,6 +16,7 @@ namespace MCF {
 
 namespace fs = std::filesystem;
 
+class Diagnostic;
 class DiagnosticBag;
 
 class BoundGlobalScope;
@@ -28,7 +29,7 @@ extern "C" using VarMap = std::unordered_map<const VariableSymbol*, ValueType,
 class MCF_API EvaluationResult final
 {
 private:
-	DiagnosticBag& _diagnostics;
+	const DiagnosticBag& _diagnostics;
 	ValueType _value;
 
 public:
@@ -37,7 +38,7 @@ public:
 	{
 	}
 
-	constexpr DiagnosticBag& Diagnostics() const noexcept { return _diagnostics; }
+	constexpr const DiagnosticBag& Diagnostics() const noexcept { return _diagnostics; };
 	constexpr const ValueType& Value()const noexcept { return _value; }
 };
 

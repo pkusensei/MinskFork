@@ -526,9 +526,15 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 
 	auto program = GetProgram();
 	//createCfgFile(*program);
-	if (!program->Diagnostics().empty())
+
+	// NOTE program gets moved in to evaluator.
+	//      But evaluator does not keep track of diagnostics
+	//      In fact it doesn not generate any
+	//      SO before processing move all diagnostics out
+	_diagnostics->AddRange(program->Diagnostics());
+
+	if (!program->Diagnostics().Errors().empty())
 	{
-		_diagnostics->AddRange(program->Diagnostics());
 		return EvaluationResult(*_diagnostics, NULL_VALUE);
 	}
 
@@ -567,7 +573,7 @@ DiagnosticBag Compilation::Emit(const string& moduleName, const fs::path& outPat
 
 	_diagnostics->AddRange(GlobalScope()->Diagnostics());
 
-	if (!_diagnostics->empty())
+	if (!_diagnostics->Errors().empty())
 		return *_diagnostics;
 
 	auto p = GetProgram();

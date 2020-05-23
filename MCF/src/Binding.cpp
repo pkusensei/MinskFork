@@ -373,6 +373,15 @@ shared_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclara
 shared_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax* syntax)
 {
 	auto condition = BindExpression(syntax->Condition(), TYPE_BOOL);
+
+	if (condition->ConstantValue() != NULL_VALUE)
+	{
+		if (!condition->ConstantValue().GetValue<bool>())
+			_diagnostics->ReportUnreachableCode(*syntax->ThenStatement());
+		else if (syntax->ElseClause() != nullptr)
+			_diagnostics->ReportUnreachableCode(*syntax->ElseClause()->ElseStatement());
+	}
+
 	auto thenStatement = BindStatement(syntax->ThenStatement());
 	auto elseStatement =
 		syntax->ElseClause() == nullptr ?
@@ -385,6 +394,13 @@ shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax
 {
 	auto condition = BindExpression(syntax->Condition(),
 		TYPE_BOOL);
+
+	if (condition->ConstantValue() != NULL_VALUE)
+	{
+		if (!condition->ConstantValue().GetValue<bool>())
+			_diagnostics->ReportUnreachableCode(*syntax->Body());
+	}
+
 	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
 	return make_shared<BoundWhileStatement>(std::move(condition), body,
 		breakLabel, continueLabel);
