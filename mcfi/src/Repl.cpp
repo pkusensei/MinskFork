@@ -559,7 +559,7 @@ void Repl::EvaluateHelp()
 	}
 }
 
-const std::unique_ptr<MCF::Compilation> McfRepl::_emptyCompilation
+const std::unique_ptr<MCF::Compilation> McfRepl::emptyCompilation
 = std::make_unique<MCF::Compilation>(MCF::Compilation::CreateScript(nullptr, nullptr));
 
 McfRepl::McfRepl()
@@ -645,7 +645,7 @@ void McfRepl::EvaluateCls()const
 
 void McfRepl::EvaluateLs()
 {
-	auto compilation = _previous ? _previous.get() : _emptyCompilation.get();
+	auto compilation = _previous ? _previous.get() : emptyCompilation.get();
 
 	auto symbols = compilation->GetSymbols();
 	std::sort(symbols.begin(), symbols.end(),
@@ -685,7 +685,7 @@ void McfRepl::EvaluateShowProgram()
 
 void McfRepl::EvaluateDump(std::string_view name)const
 {
-	auto compilation = _previous ? _previous.get() : _emptyCompilation.get();
+	auto compilation = _previous ? _previous.get() : emptyCompilation.get();
 	auto symbols = compilation->GetSymbols();
 	auto func =
 		std::find_if(symbols.cbegin(), symbols.cend(),

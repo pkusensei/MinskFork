@@ -656,7 +656,7 @@ llvm::Value* Emitter::EmitPostfixExpression(const BoundPostfixExpression& node)
 DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputPath)
 {
 	if (!_diagnostics.empty())
-		return _diagnostics;
+		return std::move(_diagnostics);
 
 	auto result = DiagnosticBag();
 
@@ -666,7 +666,7 @@ DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputP
 		EmitFunctionBody(*func, *body);
 
 	if (!_diagnostics.empty())
-		return _diagnostics;
+		return std::move(_diagnostics);
 
 	std::error_code ec;
 	auto dest = llvm::raw_fd_ostream(outputPath.string(), ec, llvm::sys::fs::OF_None);
@@ -819,7 +819,7 @@ DiagnosticBag Emit(const BoundProgram& program, const string& moduleName,
 	const fs::path& outPath)
 {
 	if (!program.Diagnostics().Errors().empty())
-		return program.Diagnostics();
+		return std::move(program).Diagnostics();
 
 	auto e = Emitter(moduleName);
 	return e.Emit(program, outPath);

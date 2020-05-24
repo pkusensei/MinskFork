@@ -60,14 +60,14 @@ vector<const Diagnostic*> DiagnosticBag::Warnings()const
 	return result;
 }
 
-void DiagnosticBag::AddRangeFront(DiagnosticBag& other)
+void DiagnosticBag::AddRangeFront(DiagnosticBag other)
 {
 	_diagnostics.insert(_diagnostics.begin(),
 		std::make_move_iterator(other._diagnostics.begin()),
 		std::make_move_iterator(other._diagnostics.end()));
 }
 
-void DiagnosticBag::AddRange(DiagnosticBag& other)
+void DiagnosticBag::AddRange(DiagnosticBag other)
 {
 	_diagnostics.insert(_diagnostics.end(),
 		std::make_move_iterator(other._diagnostics.begin()),

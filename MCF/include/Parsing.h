@@ -156,23 +156,24 @@ class MCF_API SyntaxTree final
 private:
 
 	unique_ptr<SourceText> _text;
-	unique_ptr<DiagnosticBag> _diagnostics;
 	unique_ptr<CompilationUnitSyntax> _root;
+	unique_ptr<DiagnosticBag> _diagnostics;
 
 	vector<SyntaxTree> _usings;
 
 	template<typename ParseHandle,
 		typename = std::enable_if_t<std::is_invocable_v<ParseHandle, const SyntaxTree&>>>
 		SyntaxTree(unique_ptr<SourceText> text, ParseHandle handle)
-		:_text(std::move(text)), _diagnostics(make_unique<DiagnosticBag>())
+		:_text(std::move(text))
 	{
-		auto [root, usings] = handle(*this);
+		auto [root, usings, bag] = handle(*this);
 		_root = std::move(root);
 		_usings = std::move(usings);
+		_diagnostics = std::move(bag);
 	}
 
 	static auto ParseTree(const SyntaxTree&)->
-		std::pair<unique_ptr<CompilationUnitSyntax>, vector<SyntaxTree>>;
+		std::tuple<unique_ptr<CompilationUnitSyntax>, vector<SyntaxTree>, unique_ptr<DiagnosticBag>>;
 public:
 
 	SyntaxTree(SyntaxTree&& other);
@@ -183,7 +184,8 @@ public:
 
 	const SourceText& Text() const noexcept { return *_text; }
 	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
-	DiagnosticBag& Diagnostics() const noexcept { return *_diagnostics; }
+	const DiagnosticBag& Diagnostics() const& noexcept { return *_diagnostics; }
+	DiagnosticBag&& Diagnostics() const&& noexcept { return std::move(*_diagnostics); }
 
 	static SyntaxTree Load(const fs::path& path);
 

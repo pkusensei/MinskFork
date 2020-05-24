@@ -33,7 +33,7 @@ private:
 	ValueType _value;
 
 public:
-	EvaluationResult(DiagnosticBag& diagnostics, ValueType value)
+	EvaluationResult(const DiagnosticBag& diagnostics, ValueType value)
 		:_diagnostics(diagnostics), _value(std::move(value))
 	{
 	}
@@ -49,7 +49,7 @@ private:
 	unique_ptr<Compilation> _previous;
 	vector<unique_ptr<SyntaxTree>> _syntaxTrees;
 	unique_ptr<BoundGlobalScope> _globalScope;
-	unique_ptr<DiagnosticBag> _diagnostics; // one bag to rule them all
+	unique_ptr<DiagnosticBag> _diagnostics;
 
 	std::mutex _mtx;
 

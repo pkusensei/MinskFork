@@ -84,8 +84,8 @@ public:
 	vector<const Diagnostic*> Errors()const;
 	vector<const Diagnostic*> Warnings()const;
 
-	void AddRangeFront(DiagnosticBag& other);
-	void AddRange(DiagnosticBag& other);
+	void AddRangeFront(DiagnosticBag other);
+	void AddRange(DiagnosticBag other);
 
 	void ReportInvalidNumber(TextLocation location, string_view text, const TypeSymbol& type);
 	void ReportBadCharacter(TextLocation location, char character);

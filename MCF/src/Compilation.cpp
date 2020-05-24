@@ -24,7 +24,7 @@ class Evaluator final
 		const BoundBlockStatement*, SymbolHash, SymbolEqual>;
 
 private:
-	unique_ptr<BoundProgram> _program;
+	const BoundProgram& _program;
 	VarMap& _globals;
 	FuncMap _functions;
 	std::stack<VarMap> _locals;
@@ -47,16 +47,16 @@ private:
 	void Assign(const VariableSymbol* variable, const ValueType& value);
 
 public:
-	Evaluator(unique_ptr<BoundProgram> program, VarMap& variables);
+	Evaluator(const BoundProgram& program, VarMap& variables);
 	ValueType Evaluate();
 };
 
-Evaluator::Evaluator(unique_ptr<BoundProgram> program, VarMap& variables)
-	: _program(std::move(program)), _globals(variables)
+Evaluator::Evaluator(const BoundProgram& program, VarMap& variables)
+	: _program(program), _globals(variables)
 {
 	_locals.emplace(VarMap());
 
-	const auto* current = _program.get();
+	auto current = &_program;
 	while (current != nullptr)
 	{
 		for (const auto& [key, value] : current->Functions())
@@ -67,7 +67,7 @@ Evaluator::Evaluator(unique_ptr<BoundProgram> program, VarMap& variables)
 
 ValueType Evaluator::Evaluate()
 {
-	auto function = _program->MainFunc() ? _program->MainFunc() : _program->ScriptFunc();
+	auto function = _program.MainFunc() ? _program.MainFunc() : _program.ScriptFunc();
 	if (function == nullptr)
 		return NULL_VALUE;
 	auto body = _functions.at(function);
@@ -530,19 +530,19 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 	auto program = GetProgram();
 	//createCfgFile(*program);
 
-	// NOTE program gets moved in to evaluator.
-	//      But evaluator does not keep track of diagnostics
-	//      In fact it doesn not generate any
-	//      SO before processing move all diagnostics out
-	_diagnostics->AddRange(program->Diagnostics());
-
+	// NOTE program is generated on the fly and NOT kept anywhere.
+	//      It gets dropped by the end of this function
+	//      SO move all diagnostics out before that. 
 	if (!program->Diagnostics().Errors().empty())
 	{
+		_diagnostics->AddRange(std::move(*program).Diagnostics());
 		return EvaluationResult(*_diagnostics, NULL_VALUE);
 	}
 
-	Evaluator evaluator(std::move(program), variables);
+	Evaluator evaluator(*program, variables);
 	auto value = evaluator.Evaluate();
+
+	_diagnostics->AddRange(std::move(*program).Diagnostics());
 	return EvaluationResult(*_diagnostics, value);
 }
 
@@ -572,12 +572,15 @@ void Compilation::EmitTree(const FunctionSymbol* symbol, std::ostream& out)
 DiagnosticBag Compilation::Emit(const string& moduleName, const fs::path& outPath)
 {
 	std::for_each(_syntaxTrees.cbegin(), _syntaxTrees.cend(),
-		[this](const auto& tree) { _diagnostics->AddRange(tree->Diagnostics()); });
+		[this](const auto& tree)
+		{
+			_diagnostics->AddRange(std::move(*tree).Diagnostics());
+		});
 
-	_diagnostics->AddRange(GlobalScope()->Diagnostics());
+	_diagnostics->AddRange(std::move(*GlobalScope()).Diagnostics());
 
 	if (!_diagnostics->Errors().empty())
-		return *_diagnostics;
+		return std::move(*_diagnostics);
 
 	auto p = GetProgram();
 	return MCF::Emit(*p, moduleName, outPath);

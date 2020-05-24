@@ -39,8 +39,10 @@ public:
 	{
 	}
 
+	const DiagnosticBag& Diagnostics()const& noexcept { return *_diagnostics; }
+	DiagnosticBag&& Diagnostics()const&& noexcept { return std::move(*_diagnostics); }
+
 	constexpr const BoundGlobalScope* Previous()const noexcept { return _previous; }
-	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
 	const FunctionSymbol* MainFunc()const noexcept { return _main.get(); }
 	const FunctionSymbol* ScriptFunc()const noexcept { return _script.get(); }
 	constexpr const vector<shared_ptr<FunctionSymbol>>& Functions()const noexcept { return _functions; }
@@ -75,8 +77,10 @@ public:
 	{
 	}
 
+	const DiagnosticBag& Diagnostics()const& noexcept { return *_diagnostics; }
+	DiagnosticBag&& Diagnostics() const&& noexcept { return std::move(*_diagnostics); }
+
 	const BoundProgram* Previous()const noexcept { return _previous.get(); }
-	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
 	constexpr const FunctionSymbol* MainFunc()const noexcept { return _main; }
 	constexpr const FunctionSymbol* ScriptFunc()const noexcept { return _script; }
 	constexpr const FuncMap& Functions()const noexcept { return _functions; }

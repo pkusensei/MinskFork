@@ -142,7 +142,7 @@ void BoundScope::ResetToParent(unique_ptr<BoundScope>& current)noexcept
 class Binder final
 {
 private:
-	unique_ptr<DiagnosticBag> _diagnostics;
+	DiagnosticBag _diagnostics;
 	const bool _isScript;
 	const FunctionSymbol* _function;
 	unique_ptr<BoundScope> _scope;
@@ -201,7 +201,8 @@ private:
 
 public:
 
-	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
+	constexpr const DiagnosticBag& Diagnostics()const& noexcept { return _diagnostics; }
+	constexpr DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
 
 	static BoundGlobalScope BindGlobalScope(bool isScript,
 		const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees);
@@ -210,7 +211,7 @@ public:
 };
 
 Binder::Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbol* function)
-	: _diagnostics(make_unique<DiagnosticBag>()), _isScript(isScript),
+	: _diagnostics(), _isScript(isScript),
 	_function(function),
 	_scope(make_unique<BoundScope>(std::move(parent))),
 	_loopStack(), _labelCount(0)
@@ -242,7 +243,7 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax)
 				auto param = ParameterSymbol(paramName, *paramType);
 				parameters.push_back(std::move(param));
 			} else
-				_diagnostics->ReportParameterAlreadyDeclared(p->Location(), paramName);
+				_diagnostics.ReportParameterAlreadyDeclared(p->Location(), paramName);
 		}
 	}
 	auto type = BindTypeClause(syntax->Type())
@@ -253,7 +254,7 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax)
 	if (!function->Declaration()->Identifier().Text().empty()
 		&& !_scope->TryDeclareFunction(function))
 	{
-		_diagnostics->ReportSymbolAlreadyDeclared(syntax->Identifier().Location(),
+		_diagnostics.ReportSymbolAlreadyDeclared(syntax->Identifier().Location(),
 			function->Name());
 	}
 }
@@ -280,7 +281,7 @@ shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax* syntax, 
 				|| es->Expression()->Kind() == BoundNodeKind::CallExpression
 				|| es->Expression()->Kind() == BoundNodeKind::PostfixExpression;
 			if (!allowExpression)
-				_diagnostics->ReportInvalidExpressionStatement(syntax->Location());
+				_diagnostics.ReportInvalidExpressionStatement(syntax->Location());
 		}
 	return result;
 }
@@ -377,9 +378,9 @@ shared_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax* synt
 	if (condition->ConstantValue() != NULL_VALUE)
 	{
 		if (!condition->ConstantValue().GetValue<bool>())
-			_diagnostics->ReportUnreachableCode(*syntax->ThenStatement());
+			_diagnostics.ReportUnreachableCode(*syntax->ThenStatement());
 		else if (syntax->ElseClause() != nullptr)
-			_diagnostics->ReportUnreachableCode(*syntax->ElseClause()->ElseStatement());
+			_diagnostics.ReportUnreachableCode(*syntax->ElseClause()->ElseStatement());
 	}
 
 	auto thenStatement = BindStatement(syntax->ThenStatement());
@@ -398,7 +399,7 @@ shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax
 	if (condition->ConstantValue() != NULL_VALUE)
 	{
 		if (!condition->ConstantValue().GetValue<bool>())
-			_diagnostics->ReportUnreachableCode(*syntax->Body());
+			_diagnostics.ReportUnreachableCode(*syntax->Body());
 	}
 
 	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
@@ -452,7 +453,7 @@ shared_ptr<BoundStatement> Binder::BindBreakStatement(const BreakStatementSyntax
 {
 	if (_loopStack.empty())
 	{
-		_diagnostics->ReportInvalidBreakOrContinue(syntax->Keyword().Location(),
+		_diagnostics.ReportInvalidBreakOrContinue(syntax->Keyword().Location(),
 			syntax->Keyword().Text());
 		return BindErrorStatement();
 	}
@@ -464,7 +465,7 @@ shared_ptr<BoundStatement> Binder::BindContinueStatement(const ContinueStatement
 {
 	if (_loopStack.empty())
 	{
-		_diagnostics->ReportInvalidBreakOrContinue(syntax->Keyword().Location(),
+		_diagnostics.ReportInvalidBreakOrContinue(syntax->Keyword().Location(),
 			syntax->Keyword().Text());
 		return BindErrorStatement();
 	}
@@ -483,19 +484,19 @@ shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSynt
 			if (expression == nullptr)
 				expression = make_shared<BoundLiteralExpression>("");
 		} else if (expression != nullptr)
-			_diagnostics->ReportInvalidReturnWithValueInGlobalStatements(
+			_diagnostics.ReportInvalidReturnWithValueInGlobalStatements(
 				syntax->Expression()->Location());
 	} else
 	{
 		if (_function->Type() == TYPE_VOID)
 		{
 			if (expression != nullptr)
-				_diagnostics->ReportInvalidReturnExpression(syntax->Expression()->Location(),
+				_diagnostics.ReportInvalidReturnExpression(syntax->Expression()->Location(),
 					_function->Name());
 		} else
 		{
 			if (expression == nullptr)
-				_diagnostics->ReportMissingReturnExpression(syntax->Keyword().Location(),
+				_diagnostics.ReportMissingReturnExpression(syntax->Keyword().Location(),
 					_function->Type());
 			else
 				expression = BindConversion(syntax->Expression()->Location(),
@@ -523,7 +524,7 @@ shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax* synta
 	auto result = BindExpressionInternal(syntax);
 	if (!canBeVoid && result->Type() == TYPE_VOID)
 	{
-		_diagnostics->ReportExpressionMustHaveValue(syntax->Location());
+		_diagnostics.ReportExpressionMustHaveValue(syntax->Location());
 		return make_shared<BoundErrorExpression>();
 	}
 	return result;
@@ -612,7 +613,7 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 
 	auto variable = opt.value();
 	if (variable->IsReadOnly())
-		_diagnostics->ReportCannotAssign(syntax->EqualsToken().Location(), name);
+		_diagnostics.ReportCannotAssign(syntax->EqualsToken().Location(), name);
 	auto convertExpression = BindConversion(syntax->Expression()->Location(),
 		std::move(boundExpression), variable->Type());
 	return make_shared<BoundAssignmentExpression>(std::move(variable), std::move(convertExpression));
@@ -631,7 +632,7 @@ shared_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyn
 		return make_shared<BoundUnaryExpression>(boundOperator, std::move(boundOperand));
 	} else
 	{
-		_diagnostics->ReportUndefinedUnaryOperator(syntax->OperatorToken().Location(),
+		_diagnostics.ReportUndefinedUnaryOperator(syntax->OperatorToken().Location(),
 			syntax->OperatorToken().Text(), boundOperand->Type());
 		return make_shared<BoundErrorExpression>();
 	}
@@ -653,7 +654,7 @@ shared_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 			boundOperator, std::move(boundRight));
 	} else
 	{
-		_diagnostics->ReportUndefinedBinaryOperator(syntax->OperatorToken().Location(),
+		_diagnostics.ReportUndefinedBinaryOperator(syntax->OperatorToken().Location(),
 			syntax->OperatorToken().Text(), boundLeft->Type(), boundRight->Type());
 		return make_shared<BoundErrorExpression>();
 	}
@@ -678,7 +679,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	auto opt = _scope->TryLookupSymbol(syntax->Identifier().Text());
 	if (!opt.has_value())
 	{
-		_diagnostics->ReportUndefinedFunction(syntax->Identifier().Location(),
+		_diagnostics.ReportUndefinedFunction(syntax->Identifier().Location(),
 			syntax->Identifier().Text());
 		return make_shared<BoundErrorExpression>();
 	}
@@ -686,7 +687,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	auto function = std::dynamic_pointer_cast<FunctionSymbol>(opt.value());
 	if (function == nullptr)
 	{
-		_diagnostics->ReportNotAFunction(syntax->Identifier().Location(),
+		_diagnostics.ReportNotAFunction(syntax->Identifier().Location(),
 			syntax->Identifier().Text());
 		return make_shared<BoundErrorExpression>();
 	}
@@ -710,7 +711,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 			span = syntax->CloseParenthesisToken().Span();
 		}
 		auto location = TextLocation(syntax->Tree().Text(), span);
-		_diagnostics->ReportWrongArgumentCount(
+		_diagnostics.ReportWrongArgumentCount(
 			std::move(location), function->Name(),
 			function->Parameters().size(), syntax->Arguments().size());
 		return make_shared<BoundErrorExpression>();
@@ -739,18 +740,18 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	auto variable = opt.value();
 	if (variable->IsReadOnly())
 	{
-		_diagnostics->ReportCannotAssign(syntax->Op().Location(), name);
+		_diagnostics.ReportCannotAssign(syntax->Op().Location(), name);
 		return make_shared<BoundErrorExpression>();
 	}
 	if (boundExpression->Type() != variable->Type())
 	{
-		_diagnostics->ReportCannotConvert(syntax->Expression()->Location(),
+		_diagnostics.ReportCannotConvert(syntax->Expression()->Location(),
 			boundExpression->Type(), variable->Type());
 		return make_shared<BoundErrorExpression>();
 	}
 	if (variable->Type() != TYPE_INT)
 	{
-		_diagnostics->ReportVariableNotSupportPostfixOperator(
+		_diagnostics.ReportVariableNotSupportPostfixOperator(
 			syntax->Expression()->Location(), syntax->Op().Text(), variable->Type());
 		return make_shared<BoundErrorExpression>();
 	}
@@ -783,12 +784,12 @@ shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
 	{
 		if (expression->Type() != TYPE_ERROR
 			&& type != TYPE_ERROR)
-			_diagnostics->ReportCannotConvert(
+			_diagnostics.ReportCannotConvert(
 				std::move(diagLocation), expression->Type(), type);
 		return make_shared<BoundErrorExpression>();
 	}
 	if (!allowExplicit && conversion == ConversionEnum::Explicit)
-		_diagnostics->ReportCannotConvertImplicitly(
+		_diagnostics.ReportCannotConvertImplicitly(
 			std::move(diagLocation), expression->Type(), type);
 	if (conversion == ConversionEnum::Identity)
 		return expression;
@@ -807,7 +808,7 @@ shared_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& id
 		variable = make_shared<LocalVariableSymbol>(name, isReadOnly, type, std::move(constant));
 
 	if (declare && !_scope->TryDeclareVariable(variable))
-		_diagnostics->ReportSymbolAlreadyDeclared(identifier.Location(), name);
+		_diagnostics.ReportSymbolAlreadyDeclared(identifier.Location(), name);
 	return variable;
 }
 
@@ -817,7 +818,7 @@ std::optional<shared_ptr<VariableSymbol>> Binder::BindVariableReference(const Sy
 	auto var = _scope->TryLookupSymbol(name).value_or(nullptr);
 	if (var == nullptr)
 	{
-		_diagnostics->ReportUndefinedVariable(identifier.Location(), name);
+		_diagnostics.ReportUndefinedVariable(identifier.Location(), name);
 		return std::nullopt;
 	} else
 	{
@@ -826,7 +827,7 @@ std::optional<shared_ptr<VariableSymbol>> Binder::BindVariableReference(const Sy
 			return p;
 		else
 		{
-			_diagnostics->ReportNotAVariable(identifier.Location(), name);
+			_diagnostics.ReportNotAVariable(identifier.Location(), name);
 			return std::nullopt;
 		}
 	}
@@ -838,7 +839,7 @@ std::optional<TypeSymbol> Binder::BindTypeClause(const std::optional<TypeClauseS
 
 	auto type = LookupType(syntax->Identifier().Text());
 	if (!type.has_value())
-		_diagnostics->ReportUndefinedType(syntax->Identifier().Location(),
+		_diagnostics.ReportUndefinedType(syntax->Identifier().Location(),
 			syntax->Identifier().Text());
 	return type;
 }
@@ -896,12 +897,15 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 	auto binder = Binder(isScript, std::move(parentScope), nullptr);
 
 	std::for_each(trees.cbegin(), trees.cend(),
-		[&binder](const auto tree) { binder._diagnostics->AddRange(tree->Diagnostics()); });
+		[&binder](const auto tree)
+		{
+			binder._diagnostics.AddRange(std::move(*tree).Diagnostics());
+		});
 
-	if (!binder._diagnostics->empty())
+	if (!binder._diagnostics.empty())
 	{
 		return BoundGlobalScope(previous,
-			std::move(binder._diagnostics),
+			make_unique<DiagnosticBag>(std::move(binder).Diagnostics()),
 			nullptr, nullptr,
 			vector<shared_ptr<FunctionSymbol>>(),
 			vector<shared_ptr<VariableSymbol>>(),
@@ -972,7 +976,7 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 		{
 			if ((*it)->Type() != TYPE_VOID
 				|| !(*it)->Parameters().empty())
-				binder._diagnostics->ReportMainMustHaveCorrectSignature(
+				binder._diagnostics.ReportMainMustHaveCorrectSignature(
 					(*it)->Declaration()->Identifier().Location()
 				);
 			mainFunc = make_unique<FunctionSymbol>(**it);
@@ -981,12 +985,12 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 		{
 			if (mainFunc != nullptr)
 			{
-				binder._diagnostics->ReportCannotMixMainAndGlobalStatements(
+				binder._diagnostics.ReportCannotMixMainAndGlobalStatements(
 					mainFunc->Declaration()->Identifier().Location()
 				);
 				for (const auto& gs : firstGlobalStmtPerSynTree)
 				{
-					binder._diagnostics->ReportCannotMixMainAndGlobalStatements(
+					binder._diagnostics.ReportCannotMixMainAndGlobalStatements(
 						gs->Location());
 				}
 			} else
@@ -997,12 +1001,12 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 		}
 	}
 
-	auto& diagnostics = binder.Diagnostics();
+	auto diagnostics = std::move(binder).Diagnostics();
 	auto variables = binder._scope->GetDeclaredVariables();
 	if (previous != nullptr)
-		diagnostics.AddRangeFront(previous->Diagnostics());
+		diagnostics.AddRangeFront(std::move(*previous).Diagnostics());
 	return BoundGlobalScope(previous,
-		std::move(binder._diagnostics),
+		make_unique<DiagnosticBag>(std::move(diagnostics)),
 		std::move(mainFunc), std::move(scriptFunc),
 		std::move(functions), std::move(variables),
 		std::move(statements));
@@ -1022,7 +1026,7 @@ BoundProgram Binder::BindProgram(bool isScript,
 	if (!globalScope->Diagnostics().empty())
 	{
 		return BoundProgram(std::move(previous),
-			make_unique<DiagnosticBag>(globalScope->Diagnostics()),
+			make_unique<DiagnosticBag>(std::move(*globalScope).Diagnostics()),
 			nullptr, nullptr,
 			BoundProgram::FuncMap());
 	}
@@ -1039,12 +1043,12 @@ BoundProgram Binder::BindProgram(bool isScript,
 		if (it->Type() != TYPE_VOID
 			&& !ControlFlowGraph::AllPathsReturn(lowerBody.get()))
 		{
-			binder._diagnostics->ReportAllPathsMustReturn(
+			binder._diagnostics.ReportAllPathsMustReturn(
 				it->Declaration()->Identifier().Location());
 		}
 		funcBodies.emplace(it.get(), std::move(lowerBody));
 
-		diag->AddRange(binder.Diagnostics());
+		diag->AddRange(std::move(binder).Diagnostics());
 	}
 
 	if (globalScope->MainFunc() != nullptr && !globalScope->Statements().empty())

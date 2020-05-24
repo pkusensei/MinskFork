@@ -54,7 +54,7 @@ class Lexer final
 private:
 	const SyntaxTree& _tree;
 	const SourceText& _text;
-	DiagnosticBag& _diagnostics;
+	DiagnosticBag _diagnostics;
 
 	size_t _position;
 	size_t _start;
@@ -82,12 +82,12 @@ public:
 	explicit Lexer(const SyntaxTree& text);
 
 	[[nodiscard]] SyntaxToken Lex();
-	constexpr const DiagnosticBag& Diagnostics()const noexcept { return _diagnostics; }
+	constexpr const DiagnosticBag& Diagnostics()const& noexcept { return _diagnostics; }
+	DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
 };
 
 Lexer::Lexer(const SyntaxTree& tree)
-	:_tree(tree), _text(tree.Text()),
-	_diagnostics(tree.Diagnostics()),
+	:_tree(tree), _text(tree.Text()), _diagnostics(),
 	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(NULL_VALUE)
 {
 }
@@ -518,7 +518,7 @@ private:
 	const SourceText& _text;
 	vector<SyntaxToken> _tokens;
 	size_t _position;
-	DiagnosticBag& _diagnostics;
+	DiagnosticBag _diagnostics;
 
 	vector<SyntaxTree> _usings;
 
@@ -569,14 +569,16 @@ private:
 public:
 	explicit Parser(const SyntaxTree& tree);
 
-	constexpr const DiagnosticBag& Diagnostics()const noexcept { return _diagnostics; }
+	constexpr const DiagnosticBag& Diagnostics()const& noexcept { return _diagnostics; }
+	DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
+
 	unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
-	vector<SyntaxTree> FetchUsings()noexcept { return std::move(_usings); };
+	vector<SyntaxTree> Usings() && noexcept { return std::move(_usings); };
 };
 
 Parser::Parser(const SyntaxTree& tree)
 	:_tree(tree), _text(tree.Text()), _tokens(),
-	_position(0), _diagnostics(tree.Diagnostics())
+	_position(0), _diagnostics()
 {
 	auto badTokens = vector<SyntaxToken>();
 
@@ -620,6 +622,8 @@ Parser::Parser(const SyntaxTree& tree)
 				_tokens.push_back(std::move(token));
 		}
 	} while (kind != SyntaxKind::EndOfFileToken);
+
+	_diagnostics.AddRange(std::move(lexer).Diagnostics());
 }
 
 const SyntaxToken& Parser::Peek(int offset) const
@@ -1112,12 +1116,13 @@ SyntaxTree& SyntaxTree::operator=(SyntaxTree&& other) = default;
 SyntaxTree::~SyntaxTree() = default;
 
 auto SyntaxTree::ParseTree(const SyntaxTree& tree)->
-std::pair<unique_ptr<CompilationUnitSyntax>, vector<SyntaxTree>>
+std::tuple<unique_ptr<CompilationUnitSyntax>, vector<SyntaxTree>, unique_ptr<DiagnosticBag>>
 {
 	auto parser = Parser(tree);
 	auto root = parser.ParseCompilationUnit();
-	auto usings = parser.FetchUsings();
-	return { std::move(root), std::move(usings) };
+	auto usings = std::move(parser).Usings();
+	auto bag = make_unique<DiagnosticBag>(std::move(parser).Diagnostics());
+	return { std::move(root), std::move(usings), std::move(bag) };
 }
 
 SyntaxTree SyntaxTree::Load(const fs::path& path)
@@ -1182,11 +1187,12 @@ SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics,
 			if (token.Kind() == SyntaxKind::EndOfFileToken)
 				break;
 		}
-		return std::make_pair(std::move(root), vector<SyntaxTree>());
+		auto diags = make_unique<DiagnosticBag>(std::move(lexer).Diagnostics());
+		return std::make_tuple(std::move(root), vector<SyntaxTree>(), std::move(diags));
 	};
 
 	auto tree = SyntaxTree(std::move(text), parseTokens);
-	diagnostics.AddRange(tree.Diagnostics());
+	diagnostics.AddRange(std::move(tree).Diagnostics());
 	return std::make_pair(tokens, std::move(tree));
 }
 
