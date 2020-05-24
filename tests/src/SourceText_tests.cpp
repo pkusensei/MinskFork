@@ -17,6 +17,6 @@ TEST_CASE("SourceText includes last line", "[SourceText]")
 	{
 		auto text = MCF::SourceText::From(input);
 		auto& lines = text.Lines();
-		CHECK(lines.size() == expected);
+		REQUIRE(lines.size() == expected);
 	}
 }

@@ -602,10 +602,10 @@ TEST_CASE("Evaluator reports undefined binary operation", "[Evaluator]")
 
 void AssertValue(std::string_view text, const MCF::ValueType& value)
 {
-	auto tree = MCF::SyntaxTree::Parse(text);
+	auto tree = std::make_unique<MCF::SyntaxTree>(MCF::SyntaxTree::Parse(text));
 	auto compilation = MCF::Compilation::CreateScript(nullptr, std::move(tree));
 	MCF::VarMap variables;
-	auto result = compilation->Evaluate(variables);
+	auto result = compilation.Evaluate(variables);
 
 	REQUIRE(result.Diagnostics().Errors().empty());
 	CHECK(value == result.Value());
@@ -615,10 +615,11 @@ void AssertDiagnostics(std::string_view text, std::string_view diagnosticText,
 	bool assertWarnings)
 {
 	auto annotatedText = AnnotatedText::Parse(text);
-	auto tree = MCF::SyntaxTree::Parse(annotatedText.Text());
+	auto tree =
+		std::make_unique<MCF::SyntaxTree>(MCF::SyntaxTree::Parse(annotatedText.Text()));
 	auto compilation = MCF::Compilation::CreateScript(nullptr, std::move(tree));
 	MCF::VarMap variables;
-	auto result = compilation->Evaluate(variables);
+	auto result = compilation.Evaluate(variables);
 	auto expectedDiagnostoics = AnnotatedText::DedentLines(diagnosticText);
 
 	if (annotatedText.Spans().size() != expectedDiagnostoics.size())

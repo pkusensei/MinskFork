@@ -418,17 +418,17 @@ Compilation::Compilation(Compilation&& other) noexcept
 {
 }
 
-unique_ptr<Compilation> Compilation::Create(unique_ptr<SyntaxTree> tree)
+Compilation Compilation::Create(unique_ptr<SyntaxTree> tree)
 {
-	return unique_ptr<Compilation>(new Compilation(false, nullptr, SyntaxTree::Flatten(std::move(tree))));
+	return Compilation(false, nullptr, SyntaxTree::Flatten(std::move(tree)));
 }
 
-unique_ptr<Compilation> Compilation::CreateScript(unique_ptr<Compilation> previous,
+Compilation Compilation::CreateScript(unique_ptr<Compilation> previous,
 	unique_ptr<SyntaxTree> tree)
 {
 	auto vec = vector<unique_ptr<SyntaxTree>>();
 	vec.push_back(std::move(tree));
-	return unique_ptr<Compilation>(new Compilation(true, std::move(previous), std::move(vec)));
+	return Compilation(true, std::move(previous), std::move(vec));
 }
 
 const vector<const SyntaxTree*> Compilation::SyntaxTrees()const noexcept
@@ -445,9 +445,11 @@ const BoundGlobalScope* Compilation::GlobalScope()
 	{
 		unique_ptr<BoundGlobalScope> tmp{ nullptr };
 		if (_previous == nullptr)
-			tmp = BindGlobalScope(IsScript(), nullptr, SyntaxTrees());
+			tmp = make_unique<BoundGlobalScope>(
+				BindGlobalScope(IsScript(), nullptr, SyntaxTrees()));
 		else
-			tmp = BindGlobalScope(IsScript(), _previous->GlobalScope(), SyntaxTrees());
+			tmp = make_unique<BoundGlobalScope>(
+				BindGlobalScope(IsScript(), _previous->GlobalScope(), SyntaxTrees()));
 
 		std::unique_lock<std::mutex> lock(_mtx, std::defer_lock);
 		if (lock.try_lock() && _globalScope == nullptr)
@@ -499,7 +501,8 @@ const vector<const Symbol*> Compilation::GetSymbols()
 unique_ptr<BoundProgram> Compilation::GetProgram()
 {
 	auto previous = Previous() ? Previous()->GetProgram() : nullptr;
-	return BindProgram(IsScript(), std::move(previous), GlobalScope());
+	return make_unique<BoundProgram>(
+		BindProgram(IsScript(), std::move(previous), GlobalScope()));
 }
 
 EvaluationResult Compilation::Evaluate(VarMap& variables)

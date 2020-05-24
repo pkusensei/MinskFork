@@ -559,8 +559,8 @@ void Repl::EvaluateHelp()
 	}
 }
 
-const std::unique_ptr<MCF::Compilation> McfRepl::emptyCompilation
-= MCF::Compilation::CreateScript(nullptr, nullptr);
+const std::unique_ptr<MCF::Compilation> McfRepl::_emptyCompilation
+= std::make_unique<MCF::Compilation>(MCF::Compilation::CreateScript(nullptr, nullptr));
 
 McfRepl::McfRepl()
 	:Repl()
@@ -594,7 +594,7 @@ bool McfRepl::RenderLine(const Document & lines, size_t index, bool resetState)c
 	if (resetState)
 	{
 		auto text = MCF::StringJoin(lines.cbegin(), lines.cend(), NEW_LINE);
-		tree = MCF::SyntaxTree::Parse(text);
+		tree = std::make_unique<MCF::SyntaxTree>(MCF::SyntaxTree::Parse(text));
 	}
 
 	auto lineSpan = tree->Text().Lines()[index].Span();
@@ -645,7 +645,7 @@ void McfRepl::EvaluateCls()const
 
 void McfRepl::EvaluateLs()
 {
-	auto compilation = _previous ? _previous.get() : emptyCompilation.get();
+	auto compilation = _previous ? _previous.get() : _emptyCompilation.get();
 
 	auto symbols = compilation->GetSymbols();
 	std::sort(symbols.begin(), symbols.end(),
@@ -685,7 +685,7 @@ void McfRepl::EvaluateShowProgram()
 
 void McfRepl::EvaluateDump(std::string_view name)const
 {
-	auto compilation = _previous ? _previous.get() : emptyCompilation.get();
+	auto compilation = _previous ? _previous.get() : _emptyCompilation.get();
 	auto symbols = compilation->GetSymbols();
 	auto func =
 		std::find_if(symbols.cbegin(), symbols.cend(),
@@ -779,8 +779,8 @@ bool McfRepl::IsCompleteSubmission(std::string_view text) const
 	if (lastTwoLinesAreBlank()) return true;
 
 	auto tree = MCF::SyntaxTree::Parse(text);
-	auto last = tree->Root()->Members().empty() ?
-		nullptr : tree->Root()->Members().back().get();
+	auto last = tree.Root()->Members().empty() ?
+		nullptr : tree.Root()->Members().back().get();
 	if (last == nullptr || last->GetLastToken().IsMissing())
 		return false;
 	return true;
@@ -795,14 +795,15 @@ void McfRepl::EvaluateSubmission(std::string_view text)
 	// At the end of the day each syntax tree keeps its own copy of input string
 	auto syntaxTree = MCF::SyntaxTree::Parse(text);
 
-	auto compilation = MCF::Compilation::CreateScript(std::move(_previous), std::move(syntaxTree));
+	auto compilation = MCF::Compilation::CreateScript(std::move(_previous),
+		std::make_unique<MCF::SyntaxTree>(std::move(syntaxTree)));
 
 	if (_showTree)
-		compilation->SyntaxTrees().back()->Root()->WriteTo(std::cout);
+		compilation.SyntaxTrees().back()->Root()->WriteTo(std::cout);
 	if (_showProgram)
-		compilation->EmitTree(std::cout);
+		compilation.EmitTree(std::cout);
 
-	auto result = compilation->Evaluate(_variables);
+	auto result = compilation.Evaluate(_variables);
 	auto errors = result.Diagnostics().Errors();
 
 	auto writer = MCF::IndentedTextWriter(std::cout);
@@ -818,7 +819,7 @@ void McfRepl::EvaluateSubmission(std::string_view text)
 			MCF::ResetConsoleColor();
 		}
 
-		_previous = std::move(compilation);
+		_previous = std::make_unique<MCF::Compilation>(std::move(compilation));
 		SaveSubmission(text);
 	}
 	std::cout << '\n';

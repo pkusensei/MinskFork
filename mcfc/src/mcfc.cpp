@@ -64,8 +64,9 @@ int main(int argc, char** argv)
 	}
 	auto tree = MCF::SyntaxTree::Load(sourcePath);
 
-	auto compilation = MCF::Compilation::Create(std::move(tree));
-	auto result = compilation->Emit(moduleName, outputPath);
+	auto compilation =
+		MCF::Compilation::Create(std::make_unique<MCF::SyntaxTree>(std::move(tree)));
+	auto result = compilation.Emit(moduleName, outputPath);
 
 	if (!result.empty())
 	{

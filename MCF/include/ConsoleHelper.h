@@ -56,7 +56,7 @@ enum class KeyInputKind
 
 struct KeyInfo
 {
-	// NOTE PascalCase as interface
+	// PascalCase as interface
 	const char Key;
 	const bool IsFunctionalKey;
 	const KeyInputKind Kind;

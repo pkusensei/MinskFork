@@ -6,4 +6,4 @@ print(a!=b)
 
 let c = "Hello"
 let name = getName()
-print(c + " " + name)
+print(c + " " + name + "!")

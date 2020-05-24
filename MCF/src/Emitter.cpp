@@ -56,7 +56,7 @@ private:
 	std::unordered_map<TypeSymbol, llvm::Type*, SymbolHash, SymbolEqual> _knownTypes;
 
 	llvm::Function* _inputFunc;
-	llvm::Function* _putsFunc; 	// NOTE delegate print to C puts function
+	llvm::Function* _putsFunc; 	// delegate print to C puts function
 	llvm::Function* _rndFunc;
 	llvm::Function* _strConcatFunc;
 

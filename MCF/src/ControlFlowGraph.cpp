@@ -51,8 +51,8 @@ void ControlFlowGraph::BasicBlockBuilder::EndBlock()
 {
 	if (!_statements.empty())
 	{
-		//NOTE using id to add == support
-		//intends to have start as 1, end as 0
+		// NOTE using id to add == support
+		//      intends to have start as 1, end as 0
 		auto block = make_unique<BasicBlock>(++_blockId);
 		auto& s = block->Statements();
 		s.insert(s.end(), _statements.begin(), _statements.end());
@@ -183,7 +183,7 @@ shared_ptr<BoundExpression> ControlFlowGraph::GraphBuilder::Negate(
 			return make_shared<BoundLiteralExpression>(!value);
 		} catch (...)
 		{
-			;//NOTE discard exception
+			;// NOTE discard exception
 		}
 	}
 

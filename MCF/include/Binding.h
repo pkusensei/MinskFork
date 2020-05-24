@@ -82,10 +82,10 @@ public:
 	constexpr const FuncMap& Functions()const noexcept { return _functions; }
 };
 
-unique_ptr<BoundGlobalScope> BindGlobalScope(bool isScript,
+BoundGlobalScope BindGlobalScope(bool isScript,
 	const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees);
 
-unique_ptr<BoundProgram> BindProgram(bool isScript,
+BoundProgram BindProgram(bool isScript,
 	unique_ptr<BoundProgram> preious, const BoundGlobalScope* globalScope);
 
 }//MCF

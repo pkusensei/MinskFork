@@ -203,9 +203,9 @@ public:
 
 	DiagnosticBag& Diagnostics()const noexcept { return *_diagnostics; }
 
-	static unique_ptr<BoundGlobalScope> BindGlobalScope(bool isScript,
+	static BoundGlobalScope BindGlobalScope(bool isScript,
 		const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees);
-	static unique_ptr<BoundProgram> BindProgram(bool isScript,
+	static BoundProgram BindProgram(bool isScript,
 		unique_ptr<BoundProgram> preious, const BoundGlobalScope* globalScope);
 };
 
@@ -883,13 +883,13 @@ unique_ptr<BoundScope> Binder::CreateRootScope()
 	return result;
 }
 
-unique_ptr<BoundGlobalScope> BindGlobalScope(bool isScript,
+BoundGlobalScope BindGlobalScope(bool isScript,
 	const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees)
 {
 	return Binder::BindGlobalScope(isScript, previous, trees);
 }
 
-unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
+BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 	const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees)
 {
 	auto parentScope = CreateParentScope(previous);
@@ -900,13 +900,13 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 
 	if (!binder._diagnostics->empty())
 	{
-		return make_unique<BoundGlobalScope>(previous,
+		return BoundGlobalScope(previous,
 			std::move(binder._diagnostics),
 			nullptr, nullptr,
 			vector<shared_ptr<FunctionSymbol>>(),
 			vector<shared_ptr<VariableSymbol>>(),
 			vector<shared_ptr<BoundStatement>>()
-			);
+		);
 	}
 
 	auto statements = vector<shared_ptr<BoundStatement>>();
@@ -1001,27 +1001,27 @@ unique_ptr<BoundGlobalScope> Binder::BindGlobalScope(bool isScript,
 	auto variables = binder._scope->GetDeclaredVariables();
 	if (previous != nullptr)
 		diagnostics.AddRangeFront(previous->Diagnostics());
-	return make_unique<BoundGlobalScope>(previous,
+	return BoundGlobalScope(previous,
 		std::move(binder._diagnostics),
 		std::move(mainFunc), std::move(scriptFunc),
 		std::move(functions), std::move(variables),
 		std::move(statements));
 }
 
-unique_ptr<BoundProgram> BindProgram(bool isScript,
+BoundProgram BindProgram(bool isScript,
 	unique_ptr<BoundProgram> preious, const BoundGlobalScope* globalScope)
 {
 	return Binder::BindProgram(isScript, std::move(preious), globalScope);
 }
 
-unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
+BoundProgram Binder::BindProgram(bool isScript,
 	unique_ptr<BoundProgram> previous, const BoundGlobalScope* globalScope)
 {
 	auto parentScope = CreateParentScope(globalScope);
 
 	if (!globalScope->Diagnostics().empty())
 	{
-		return make_unique<BoundProgram>(std::move(previous),
+		return BoundProgram(std::move(previous),
 			make_unique<DiagnosticBag>(globalScope->Diagnostics()),
 			nullptr, nullptr,
 			BoundProgram::FuncMap());
@@ -1077,7 +1077,7 @@ unique_ptr<BoundProgram> Binder::BindProgram(bool isScript,
 		funcBodies.emplace(globalScope->ScriptFunc(), std::move(body));
 	}
 
-	return make_unique<BoundProgram>(std::move(previous), std::move(diag),
+	return BoundProgram(std::move(previous), std::move(diag),
 		globalScope->MainFunc(), globalScope->ScriptFunc(),
 		std::move(funcBodies));
 }

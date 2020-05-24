@@ -135,7 +135,7 @@ public:
 class McfRepl final :public Repl
 {
 private:
-	static const std::unique_ptr<MCF::Compilation> emptyCompilation;
+	static const std::unique_ptr<MCF::Compilation> _emptyCompilation;
 
 	bool _loadingSubmission;
 	std::unique_ptr<MCF::Compilation> _previous{ nullptr };

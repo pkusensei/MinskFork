@@ -49,7 +49,7 @@ private:
 	unique_ptr<Compilation> _previous;
 	vector<unique_ptr<SyntaxTree>> _syntaxTrees;
 	unique_ptr<BoundGlobalScope> _globalScope;
-	unique_ptr<DiagnosticBag> _diagnostics; //NOTE one bag to rule them all
+	unique_ptr<DiagnosticBag> _diagnostics; // one bag to rule them all
 
 	std::mutex _mtx;
 
@@ -66,8 +66,8 @@ public:
 	Compilation& operator=(const Compilation&) = delete;
 	~Compilation();
 
-	[[nodiscard]] static unique_ptr<Compilation> Create(unique_ptr<SyntaxTree> tree);
-	[[nodiscard]] static unique_ptr<Compilation> CreateScript(unique_ptr<Compilation> previous,
+	[[nodiscard]] static Compilation Create(unique_ptr<SyntaxTree> tree);
+	[[nodiscard]] static Compilation CreateScript(unique_ptr<Compilation> previous,
 		unique_ptr<SyntaxTree> tree);
 
 	constexpr bool IsScript()const noexcept { return _isScript; }

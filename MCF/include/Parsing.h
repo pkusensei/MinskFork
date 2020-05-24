@@ -159,10 +159,8 @@ private:
 	unique_ptr<DiagnosticBag> _diagnostics;
 	unique_ptr<CompilationUnitSyntax> _root;
 
-	vector<unique_ptr<SyntaxTree>> _usings;
+	vector<SyntaxTree> _usings;
 
-	// HACK
-	// this is very hacky
 	template<typename ParseHandle,
 		typename = std::enable_if_t<std::is_invocable_v<ParseHandle, const SyntaxTree&>>>
 		SyntaxTree(unique_ptr<SourceText> text, ParseHandle handle)
@@ -174,7 +172,7 @@ private:
 	}
 
 	static auto ParseTree(const SyntaxTree&)->
-		std::pair<unique_ptr<CompilationUnitSyntax>, vector<unique_ptr<SyntaxTree>>>;
+		std::pair<unique_ptr<CompilationUnitSyntax>, vector<SyntaxTree>>;
 public:
 
 	SyntaxTree(SyntaxTree&& other);
@@ -187,17 +185,17 @@ public:
 	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
 	DiagnosticBag& Diagnostics() const noexcept { return *_diagnostics; }
 
-	static unique_ptr<SyntaxTree> Load(const fs::path& path);
+	static SyntaxTree Load(const fs::path& path);
 
-	static unique_ptr<SyntaxTree> Parse(string_view text);
-	static unique_ptr<SyntaxTree> Parse(unique_ptr<SourceText> text);
-	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
+	static SyntaxTree Parse(string_view text);
+	static SyntaxTree Parse(unique_ptr<SourceText> text);
+	static std::pair<vector<SyntaxToken>, SyntaxTree>
 		ParseTokens(string_view text, bool includeEndOfFile = false);
-	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
+	static std::pair<vector<SyntaxToken>, SyntaxTree>
 		ParseTokens(string_view text, DiagnosticBag& diagnostics, bool includeEndOfFile = false);
-	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
+	static std::pair<vector<SyntaxToken>, SyntaxTree>
 		ParseTokens(unique_ptr<SourceText> text, bool includeEndOfFile = false);
-	static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
+	static std::pair<vector<SyntaxToken>, SyntaxTree>
 		ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics, bool includeEndOfFile = false);
 
 	static vector<unique_ptr<SyntaxTree>> Flatten(unique_ptr<SyntaxTree> tree);
