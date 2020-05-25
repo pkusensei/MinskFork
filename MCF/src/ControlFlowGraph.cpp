@@ -44,7 +44,7 @@ private:
 	void StartBlock() { EndBlock(); }
 
 public:
-	vector<unique_ptr<BasicBlock>> Build(const BoundBlockStatement* block);
+	[[nodiscard]] vector<unique_ptr<BasicBlock>> Build(const BoundBlockStatement* block);
 };
 
 void ControlFlowGraph::BasicBlockBuilder::EndBlock()
@@ -112,7 +112,8 @@ public:
 		_end(make_unique<BasicBlock>(0, false, true))
 	{
 	}
-	ControlFlowGraph Build(vector<unique_ptr<BasicBlock>>& blocks);
+
+	[[nodiscard]] ControlFlowGraph Build(vector<unique_ptr<BasicBlock>>& blocks);
 };
 
 void ControlFlowGraph::GraphBuilder::Connect(BasicBlock& from, BasicBlock& to,

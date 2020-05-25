@@ -151,8 +151,8 @@ public:
 
 };
 
-BoundConstant Fold(const BoundUnaryOperator& op, const BoundExpression& operand);
-BoundConstant Fold(const BoundExpression& left, const BoundBinaryOperator& op,
+[[nodiscard]] BoundConstant Fold(const BoundUnaryOperator& op, const BoundExpression& operand);
+[[nodiscard]] BoundConstant Fold(const BoundExpression& left, const BoundBinaryOperator& op,
 	const BoundExpression& right);
 
 class BoundUnaryExpression final : public BoundExpression

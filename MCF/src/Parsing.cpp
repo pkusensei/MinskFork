@@ -83,7 +83,7 @@ public:
 
 	[[nodiscard]] SyntaxToken Lex();
 	constexpr const DiagnosticBag& Diagnostics()const& noexcept { return _diagnostics; }
-	DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
+	[[nodiscard]] DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
 };
 
 Lexer::Lexer(const SyntaxTree& tree)
@@ -138,7 +138,7 @@ void Lexer::ReadTrivia(bool leading)
 
 		switch (Current())
 		{
-			case'\0':
+			case '\0':
 				done = true;
 				break;
 			case '/':
@@ -570,10 +570,10 @@ public:
 	explicit Parser(const SyntaxTree& tree);
 
 	constexpr const DiagnosticBag& Diagnostics()const& noexcept { return _diagnostics; }
-	DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
+	[[nodiscard]] DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
 
-	unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
-	vector<SyntaxTree> Usings() && noexcept { return std::move(_usings); };
+	[[nodiscard]] unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
+	[[nodiscard]] vector<SyntaxTree> Usings() && noexcept { return std::move(_usings); }
 };
 
 Parser::Parser(const SyntaxTree& tree)
@@ -675,7 +675,7 @@ unique_ptr<MemberSyntax> Parser::ParseMember()
 {
 	if (Current().Kind() == SyntaxKind::FunctionKeyword)
 		return ParseFunctionDeclaration();
-	else if (Current().Kind() == SyntaxKind::UsingKeyworld)
+	else if (Current().Kind() == SyntaxKind::UsingKeyword)
 		return ParseUsingDirective();
 	return ParseGlobalStatement();
 }
@@ -735,7 +735,7 @@ unique_ptr<MemberSyntax> Parser::ParseGlobalStatement()
 
 unique_ptr<MemberSyntax> Parser::ParseUsingDirective()
 {
-	auto keyword = MatchToken(SyntaxKind::UsingKeyworld);
+	auto keyword = MatchToken(SyntaxKind::UsingKeyword);
 	auto fileNameToken = MatchToken(SyntaxKind::StringToken);
 
 	auto filename = fileNameToken.Value().GetValue<string>();

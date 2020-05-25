@@ -202,11 +202,11 @@ private:
 public:
 
 	constexpr const DiagnosticBag& Diagnostics()const& noexcept { return _diagnostics; }
-	constexpr DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
+	[[nodiscard]] constexpr DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
 
-	static BoundGlobalScope BindGlobalScope(bool isScript,
+	[[nodiscard]] static BoundGlobalScope BindGlobalScope(bool isScript,
 		const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees);
-	static BoundProgram BindProgram(bool isScript,
+	[[nodiscard]] static BoundProgram BindProgram(bool isScript,
 		unique_ptr<BoundProgram> preious, const BoundGlobalScope* globalScope);
 };
 

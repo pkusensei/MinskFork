@@ -72,7 +72,7 @@ case SyntaxKind::kind: return #kind;
 		NAME(VarKeyword);
 		NAME(WhileKeyword);
 		NAME(DoKeyword);
-		NAME(UsingKeyworld);
+		NAME(UsingKeyword);
 
 		NAME(CompilationUnit);
 		NAME(FunctionDeclaration);
@@ -140,7 +140,7 @@ SyntaxKind GetKeywordKind(string_view text) noexcept
 	else if (text == "do")
 		return SyntaxKind::DoKeyword;
 	else if (text == "using")
-		return SyntaxKind::UsingKeyworld;
+		return SyntaxKind::UsingKeyword;
 	else return SyntaxKind::IdentifierToken;
 }
 
@@ -189,7 +189,7 @@ string_view GetText(SyntaxKind kind)
 		case SyntaxKind::VarKeyword: return "var";
 		case SyntaxKind::WhileKeyword: return "while";
 		case SyntaxKind::DoKeyword: return "do";
-		case SyntaxKind::UsingKeyworld: return "using";
+		case SyntaxKind::UsingKeyword: return "using";
 		default: return string_view();
 	}
 }

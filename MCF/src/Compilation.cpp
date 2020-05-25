@@ -48,7 +48,7 @@ private:
 
 public:
 	Evaluator(const BoundProgram& program, VarMap& variables);
-	ValueType Evaluate();
+	[[nodiscard]] ValueType Evaluate();
 };
 
 Evaluator::Evaluator(const BoundProgram& program, VarMap& variables)

@@ -174,6 +174,7 @@ private:
 
 	static auto ParseTree(const SyntaxTree&)->
 		std::tuple<unique_ptr<CompilationUnitSyntax>, vector<SyntaxTree>, unique_ptr<DiagnosticBag>>;
+
 public:
 
 	SyntaxTree(SyntaxTree&& other);
@@ -185,22 +186,25 @@ public:
 	const SourceText& Text() const noexcept { return *_text; }
 	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
 	const DiagnosticBag& Diagnostics() const& noexcept { return *_diagnostics; }
-	DiagnosticBag&& Diagnostics() const&& noexcept { return std::move(*_diagnostics); }
+	[[nodiscard]] DiagnosticBag&& Diagnostics() const&& noexcept { return std::move(*_diagnostics); }
 
-	static SyntaxTree Load(const fs::path& path);
+	[[nodiscard]] static SyntaxTree Load(const fs::path& path);
 
-	static SyntaxTree Parse(string_view text);
-	static SyntaxTree Parse(unique_ptr<SourceText> text);
-	static std::pair<vector<SyntaxToken>, SyntaxTree>
+	[[nodiscard]] static SyntaxTree Parse(string_view text);
+	[[nodiscard]] static SyntaxTree Parse(unique_ptr<SourceText> text);
+
+	[[nodiscard]] static std::pair<vector<SyntaxToken>, SyntaxTree>
 		ParseTokens(string_view text, bool includeEndOfFile = false);
-	static std::pair<vector<SyntaxToken>, SyntaxTree>
-		ParseTokens(string_view text, DiagnosticBag& diagnostics, bool includeEndOfFile = false);
-	static std::pair<vector<SyntaxToken>, SyntaxTree>
+	[[nodiscard]] static std::pair<vector<SyntaxToken>, SyntaxTree>
+		ParseTokens(string_view text, DiagnosticBag& diagnostics,
+			bool includeEndOfFile = false);
+	[[nodiscard]] static std::pair<vector<SyntaxToken>, SyntaxTree>
 		ParseTokens(unique_ptr<SourceText> text, bool includeEndOfFile = false);
-	static std::pair<vector<SyntaxToken>, SyntaxTree>
-		ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics, bool includeEndOfFile = false);
+	[[nodiscard]] static std::pair<vector<SyntaxToken>, SyntaxTree>
+		ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics,
+			bool includeEndOfFile = false);
 
-	static vector<unique_ptr<SyntaxTree>> Flatten(unique_ptr<SyntaxTree> tree);
+	[[nodiscard]] static vector<unique_ptr<SyntaxTree>> Flatten(unique_ptr<SyntaxTree> tree);
 
 };
 

@@ -40,7 +40,7 @@ public:
 	}
 
 	const DiagnosticBag& Diagnostics()const& noexcept { return *_diagnostics; }
-	DiagnosticBag&& Diagnostics()const&& noexcept { return std::move(*_diagnostics); }
+	[[nodiscard]] DiagnosticBag&& Diagnostics()const&& noexcept { return std::move(*_diagnostics); }
 
 	constexpr const BoundGlobalScope* Previous()const noexcept { return _previous; }
 	const FunctionSymbol* MainFunc()const noexcept { return _main.get(); }
@@ -78,7 +78,7 @@ public:
 	}
 
 	const DiagnosticBag& Diagnostics()const& noexcept { return *_diagnostics; }
-	DiagnosticBag&& Diagnostics() const&& noexcept { return std::move(*_diagnostics); }
+	[[nodiscard]] DiagnosticBag&& Diagnostics() const&& noexcept { return std::move(*_diagnostics); }
 
 	const BoundProgram* Previous()const noexcept { return _previous.get(); }
 	constexpr const FunctionSymbol* MainFunc()const noexcept { return _main; }
@@ -86,10 +86,10 @@ public:
 	constexpr const FuncMap& Functions()const noexcept { return _functions; }
 };
 
-BoundGlobalScope BindGlobalScope(bool isScript,
+[[nodiscard]] BoundGlobalScope BindGlobalScope(bool isScript,
 	const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees);
 
-BoundProgram BindProgram(bool isScript,
+[[nodiscard]] BoundProgram BindProgram(bool isScript,
 	unique_ptr<BoundProgram> preious, const BoundGlobalScope* globalScope);
 
 }//MCF

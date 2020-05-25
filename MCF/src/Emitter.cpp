@@ -109,7 +109,8 @@ private:
 	void InitKnownTypes();
 	void InitExternFunctions();
 	void InitTarget();
-	llvm::AllocaInst* CreateEntryBlockAlloca(llvm::Type* type, string_view varName)const;
+	[[nodiscard]] llvm::AllocaInst* CreateEntryBlockAlloca(llvm::Type* type,
+		string_view varName)const;
 	void CreateBlocksFromLabels(const BoundBlockStatement& body);
 	void FixPrevLabel();
 
@@ -118,8 +119,7 @@ private:
 public:
 	explicit Emitter(const string& moduleName);
 
-	constexpr DiagnosticBag& Diagnostics() noexcept { return _diagnostics; }
-	DiagnosticBag Emit(const BoundProgram& program, const fs::path& outputPath);
+	[[nodiscard]] DiagnosticBag Emit(const BoundProgram& program, const fs::path& outputPath);
 };
 
 Emitter::Emitter(const string& moduleName)
@@ -497,6 +497,7 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 
 	switch (node.Op().Kind())
 	{
+		// TODO should these be macro-ed? 
 		case BoundBinaryOperatorKind::Addition:
 			return binary(llvm::Instruction::Add);
 		case BoundBinaryOperatorKind::Subtraction:

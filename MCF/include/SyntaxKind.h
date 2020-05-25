@@ -63,7 +63,7 @@ enum class SyntaxKind
 	VarKeyword,
 	WhileKeyword,
 	DoKeyword,
-	UsingKeyworld, //
+	UsingKeyword, //
 
 	// Nodes
 	CompilationUnit,

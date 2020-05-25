@@ -37,8 +37,8 @@ public:
 
 	void WriteTo(std::ostream& out)const;
 
-	static ControlFlowGraph Create(const BoundBlockStatement* body);
-	static bool AllPathsReturn(const BoundBlockStatement* body);
+	[[nodiscard]] static ControlFlowGraph Create(const BoundBlockStatement* body);
+	[[nodiscard]] static bool AllPathsReturn(const BoundBlockStatement* body);
 };
 
 class ControlFlowGraph::BasicBlock final

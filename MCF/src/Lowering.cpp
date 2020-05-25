@@ -487,7 +487,7 @@ shared_ptr<BoundExpression> Lowerer::RewriteExpression(shared_ptr<BoundExpressio
 	return BoundTreeRewriter::RewriteExpression(std::move(node));
 }
 
-vector<shared_ptr<BoundExpression>> FlattenStrNodes(shared_ptr<BoundExpression> node)
+[[nodiscard]] vector<shared_ptr<BoundExpression>> FlattenStrNodes(shared_ptr<BoundExpression> node)
 {
 	auto result = vector<shared_ptr<BoundExpression>>();
 	if (node->Kind() == BoundNodeKind::BinaryExpression)
@@ -518,7 +518,7 @@ vector<shared_ptr<BoundExpression>> FlattenStrNodes(shared_ptr<BoundExpression> 
 	return result;
 }
 
-vector<shared_ptr<BoundExpression>> FoldStrConstants(vector<shared_ptr<BoundExpression>> nodes)
+[[nodiscard]] vector<shared_ptr<BoundExpression>> FoldStrConstants(vector<shared_ptr<BoundExpression>> nodes)
 {
 	auto result = vector<shared_ptr<BoundExpression>>();
 	auto builder = string();
@@ -548,7 +548,7 @@ vector<shared_ptr<BoundExpression>> FoldStrConstants(vector<shared_ptr<BoundExpr
 	return result;
 }
 
-shared_ptr<BoundExpression> ConstructStrConcatExpr(vector<shared_ptr<BoundExpression>> nodes)
+[[nodiscard]] shared_ptr<BoundExpression> ConstructStrConcatExpr(vector<shared_ptr<BoundExpression>> nodes)
 {
 	if (nodes.empty())
 	{
@@ -579,7 +579,7 @@ shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBin
 	return BoundTreeRewriter::RewriteBinaryExpression(std::move(node));
 }
 
-unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func, shared_ptr<BoundStatement> statement)
+[[nodiscard]] unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func, shared_ptr<BoundStatement> statement)
 {
 	auto result = vector<shared_ptr<BoundStatement>>();
 	auto stack = std::stack<shared_ptr<BoundStatement>>();
@@ -615,7 +615,7 @@ unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func, shared_ptr<B
 	return make_unique<BoundBlockStatement>(std::move(result));
 }
 
-unique_ptr<BoundBlockStatement> RemoveDeadCode(unique_ptr<BoundBlockStatement> node)
+[[nodiscard]] unique_ptr<BoundBlockStatement> RemoveDeadCode(unique_ptr<BoundBlockStatement> node)
 {
 	auto cfg = ControlFlowGraph::Create(node.get());
 	auto reachableStmts = std::unordered_set<const BoundStatement*>();

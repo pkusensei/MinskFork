@@ -53,7 +53,7 @@ private:
 
 	std::mutex _mtx;
 
-	unique_ptr<BoundProgram> GetProgram();
+	[[nodiscard]] unique_ptr<BoundProgram> GetProgram();
 
 	explicit Compilation(bool isScript, unique_ptr<Compilation> previous = nullptr,
 		vector<unique_ptr<SyntaxTree>> trees = {});
@@ -75,7 +75,7 @@ public:
 	const Compilation* Previous()const noexcept { return _previous.get(); }
 	const vector<const SyntaxTree*> SyntaxTrees()const noexcept;
 
-	const BoundGlobalScope* GlobalScope();
+	[[nodiscard]] const BoundGlobalScope* GlobalScope();
 	const vector<shared_ptr<FunctionSymbol>>& Functions();
 	const vector<shared_ptr<VariableSymbol>>& Variables();
 	const vector<const Symbol*> GetSymbols();
