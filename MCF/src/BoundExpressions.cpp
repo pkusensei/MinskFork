@@ -6,62 +6,52 @@ namespace MCF {
 
 string_view nameof(BoundUnaryOperatorKind kind)
 {
+#define NAME(kind) \
+case BoundUnaryOperatorKind::kind: return #kind;
+
 	switch (kind)
 	{
-		case BoundUnaryOperatorKind::Identity:
-			return "Identity";
-		case BoundUnaryOperatorKind::Negation:
-			return "Negation";
-		case BoundUnaryOperatorKind::LogicalNegation:
-			return "LogicalNegation";
-		case BoundUnaryOperatorKind::OnesComplement:
-			return "OnesComplement";
+		NAME(Identity);
+		NAME(Negation);
+		NAME(LogicalNegation);
+		NAME(OnesComplement);
 
 		default:
 			return string_view();
 	}
+
+#undef NAME
 }
 
 string_view nameof(BoundBinaryOperatorKind kind)
 {
+#define NAME(kind) \
+case BoundBinaryOperatorKind::kind: return #kind;
+
 	switch (kind)
 	{
-		case BoundBinaryOperatorKind::Addition:
-			return "Addition";
-		case BoundBinaryOperatorKind::Subtraction:
-			return "Subtraction";
-		case BoundBinaryOperatorKind::Multiplication:
-			return "Multiplication";
-		case BoundBinaryOperatorKind::Division:
-			return "Division";
-		case BoundBinaryOperatorKind::Modulus:
-			return "Modulus";
-		case BoundBinaryOperatorKind::LogicalAnd:
-			return "LogicalAnd";
-		case BoundBinaryOperatorKind::LogicalOr:
-			return "LogicalOr";
-		case BoundBinaryOperatorKind::BitwiseAnd:
-			return "BitwiseAnd";
-		case BoundBinaryOperatorKind::BitwiseOr:
-			return "BitwiseOr";
-		case BoundBinaryOperatorKind::BitwiseXor:
-			return "BitwiseXor";
-		case BoundBinaryOperatorKind::Equals:
-			return "Equals";
-		case BoundBinaryOperatorKind::NotEquals:
-			return "NotEquals";
-		case BoundBinaryOperatorKind::Less:
-			return "Less";
-		case BoundBinaryOperatorKind::LessOrEquals:
-			return "LessOrEquals";
-		case BoundBinaryOperatorKind::Greater:
-			return "Greater";
-		case BoundBinaryOperatorKind::GreaterOrEquals:
-			return "GreaterOrEquals";
+		NAME(Addition);
+		NAME(Subtraction);
+		NAME(Multiplication);
+		NAME(Division);
+		NAME(Modulus);
+		NAME(LogicalAnd);
+		NAME(LogicalOr);
+		NAME(BitwiseAnd);
+		NAME(BitwiseOr);
+		NAME(BitwiseXor);
+		NAME(Equals);
+		NAME(NotEquals);
+		NAME(Less);
+		NAME(LessOrEquals);
+		NAME(Greater);
+		NAME(GreaterOrEquals);
 
 		default:
 			return string_view();
 	}
+
+#undef NAME
 }
 
 string_view nameof(BoundPostfixOperatorEnum kind)

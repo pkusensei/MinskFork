@@ -288,62 +288,32 @@ shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax* syntax, 
 
 shared_ptr<BoundStatement> Binder::BindStatementInternal(const StatementSyntax* syntax)
 {
+#define BIND_STMT(kind) \
+case SyntaxKind::kind:                                 \
+{                                                      \
+	auto p = static_cast<const kind##Syntax*>(syntax); \
+	return Bind##kind(p);                              \
+}
+
 	switch (syntax->Kind())
 	{
-		case SyntaxKind::BlockStatement:
-		{
-			auto p = static_cast<const BlockStatementSyntax*>(syntax);
-			return BindBlockStatement(p);
-		}
-		case SyntaxKind::VariableDeclaration:
-		{
-			auto p = static_cast<const VariableDeclarationSyntax*>(syntax);
-			return BindVariableDeclaration(p);
-		}
-		case SyntaxKind::IfStatement:
-		{
-			auto p = static_cast<const IfStatementSyntax*>(syntax);
-			return BindIfStatement(p);
-		}
-		case SyntaxKind::WhileStatement:
-		{
-			auto p = static_cast<const WhileStatementSyntax*>(syntax);
-			return BindWhileStatement(p);
-		}
-		case SyntaxKind::DoWhileStatement:
-		{
-			auto p = static_cast<const DoWhileStatementSyntax*>(syntax);
-			return BindDoWhileStatement(p);
-		}
-		case SyntaxKind::ForStatement:
-		{
-			auto p = static_cast<const ForStatementSyntax*>(syntax);
-			return BindForStatement(p);
-		}
-		case SyntaxKind::BreakStatement:
-		{
-			auto p = static_cast<const BreakStatementSyntax*>(syntax);
-			return BindBreakStatement(p);
-		}
-		case SyntaxKind::ContinueStatement:
-		{
-			auto p = static_cast<const ContinueStatementSyntax*>(syntax);
-			return BindContinueStatement(p);
-		}
-		case SyntaxKind::ReturnStatement:
-		{
-			auto p = static_cast<const ReturnStatementSyntax*>(syntax);
-			return BindReturnStatement(p);
-		}
-		case SyntaxKind::ExpressionStatement:
-		{
-			auto p = static_cast<const ExpressionStatementSyntax*>(syntax);
-			return BindExpressionStatement(p);
-		}
+		BIND_STMT(BlockStatement);
+		BIND_STMT(VariableDeclaration);
+		BIND_STMT(IfStatement);
+		BIND_STMT(WhileStatement);
+		BIND_STMT(DoWhileStatement);
+		BIND_STMT(ForStatement);
+		BIND_STMT(BreakStatement);
+		BIND_STMT(ContinueStatement);
+		BIND_STMT(ReturnStatement);
+		BIND_STMT(ExpressionStatement);
+
 		default:
 			break;
 	}
 	throw std::invalid_argument(BuildStringFrom("Unexpected syntax: ", nameof(syntax->Kind())));
+
+#undef BIND_STMT
 }
 
 shared_ptr<BoundStatement> Binder::BindBlockStatement(const BlockStatementSyntax* syntax)
@@ -532,53 +502,30 @@ shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax* synta
 
 shared_ptr<BoundExpression> Binder::BindExpressionInternal(const ExpressionSyntax* syntax)
 {
+#define BIND_EXPR(kind) \
+case SyntaxKind::kind:                                 \
+{                                                      \
+	auto p = static_cast<const kind##Syntax*>(syntax); \
+	return Bind##kind(p);                              \
+}
+
 	switch (syntax->Kind())
 	{
-		case SyntaxKind::ParenthesizedExpression:
-		{
-			auto p = static_cast<const ParenthesizedExpressionSyntax*>(syntax);
-			return BindParenthesizedExpression(p);
-		}
-		case SyntaxKind::LiteralExpression:
-		{
-			auto p = static_cast<const LiteralExpressionSyntax*>(syntax);
-			return BindLiteralExpression(p);
-		}
-		case SyntaxKind::NameExpression:
-		{
-			auto p = static_cast<const NameExpressionSyntax*>(syntax);
-			return BindNameExpression(p);
-		}
-		case SyntaxKind::AssignmentExpression:
-		{
-			auto p = static_cast<const AssignmentExpressionSyntax*>(syntax);
-			return BindAssignmentExpression(p);
-		}
-		case SyntaxKind::UnaryExpression:
-		{
-			auto p = static_cast<const UnaryExpressionSyntax*>(syntax);
-			return BindUnaryExpression(p);
-		}
-		case SyntaxKind::BinaryExpression:
-		{
-			auto p = static_cast<const BinaryExpressionSyntax*>(syntax);
-			return BindBinaryExpression(p);
-		}
-		case SyntaxKind::CallExpression:
-		{
-			auto p = static_cast<const CallExpressionSyntax*>(syntax);
-			return BindCallExpression(p);
-		}
-		case SyntaxKind::PostfixExpression:
-		{
-			auto p = static_cast<const PostfixExpressionSyntax*>(syntax);
-			return BindPostfixExpression(p);
-		}
+		BIND_EXPR(ParenthesizedExpression);
+		BIND_EXPR(LiteralExpression);
+		BIND_EXPR(NameExpression);
+		BIND_EXPR(AssignmentExpression);
+		BIND_EXPR(UnaryExpression);
+		BIND_EXPR(BinaryExpression);
+		BIND_EXPR(CallExpression);
+		BIND_EXPR(PostfixExpression);
+
 		default:
 			break;
 	}
 	throw std::invalid_argument(BuildStringFrom("Invalid expression: ", nameof(syntax->Kind())));
 
+#undef BIND_EXPR
 }
 
 shared_ptr<BoundExpression> Binder::BindParenthesizedExpression(const ParenthesizedExpressionSyntax* syntax)

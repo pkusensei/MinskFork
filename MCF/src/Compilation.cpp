@@ -158,52 +158,30 @@ void Evaluator::EvaluateExpressionStatement(const BoundExpressionStatement* node
 
 ValueType Evaluator::EvaluateExpression(const BoundExpression* node)
 {
+#define EVAL_EXPR(kind) \
+case BoundNodeKind::kind:                           \
+{                                                   \
+	auto p = static_cast<const Bound##kind*>(node); \
+	return Evaluate##kind(p);           	        \
+}
+
 	switch (node->Kind())
 	{
-		case BoundNodeKind::LiteralExpression:
-		{
-			auto p = static_cast<const BoundLiteralExpression*>(node);
-			return EvaluateLiteralExpression(p);
-		}
-		case BoundNodeKind::VariableExpression:
-		{
-			auto p = static_cast<const BoundVariableExpression*>(node);
-			return EvaluateVariableExpression(p);
-		}
-		case BoundNodeKind::AssignmentExpression:
-		{
-			auto p = static_cast<const BoundAssignmentExpression*>(node);
-			return EvaluateAssignmentExpression(p);
-		}
-		case BoundNodeKind::UnaryExpression:
-		{
-			auto p = static_cast<const BoundUnaryExpression*>(node);
-			return EvaluateUnaryExpression(p);
-		}
-		case BoundNodeKind::BinaryExpression:
-		{
-			auto p = static_cast<const BoundBinaryExpression*>(node);
-			return EvaluateBinaryExpression(p);
-		}
-		case BoundNodeKind::CallExpression:
-		{
-			auto p = static_cast<const BoundCallExpression*>(node);
-			return EvaluateCallExpression(p);
-		}
-		case BoundNodeKind::ConversionExpression:
-		{
-			auto p = static_cast<const BoundConversionExpression*>(node);
-			return EvaluateConversionExpression(p);
-		}
-		case BoundNodeKind::PostfixExpression:
-		{
-			auto p = static_cast<const BoundPostfixExpression*>(node);
-			return EvaluatePostfixExpression(p);
-		}
+		EVAL_EXPR(LiteralExpression);
+		EVAL_EXPR(VariableExpression);
+		EVAL_EXPR(AssignmentExpression);
+		EVAL_EXPR(UnaryExpression);
+		EVAL_EXPR(BinaryExpression);
+		EVAL_EXPR(CallExpression);
+		EVAL_EXPR(ConversionExpression);
+		EVAL_EXPR(PostfixExpression);
+
 		default:
 			break;
 	}
 	throw std::invalid_argument(BuildStringFrom("Invalid expression: ", nameof(node->Kind())));
+
+#undef EVAL_EXPR
 }
 
 ValueType Evaluator::EvaluateLiteralExpression(const BoundLiteralExpression* node)const

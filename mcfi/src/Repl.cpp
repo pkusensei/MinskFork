@@ -602,24 +602,20 @@ bool McfRepl::RenderLine(const Document & lines, size_t index, bool resetState)c
 
 	for (const auto& span : classSpans)
 	{
+
+#define MATCH_COLOR(kind, color) \
+case Classification::kind: \
+MCF::SetConsoleColor(MCF::ConsoleColor::color); break;
+
 		auto spanText = tree->Text().ToString(span.Span);
 		switch (span.ClassEnum)
 		{
-			case Classification::Keyword:
-				MCF::SetConsoleColor(MCF::ConsoleColor::Blue);
-				break;
-			case Classification::Identifier:
-				MCF::SetConsoleColor(MCF::ConsoleColor::DarkYellow);
-				break;
-			case Classification::Number:
-				MCF::SetConsoleColor(MCF::ConsoleColor::Cyan);
-				break;
-			case Classification::String:
-				MCF::SetConsoleColor(MCF::ConsoleColor::Magenta);
-				break;
-			case Classification::Comment:
-				MCF::SetConsoleColor(MCF::ConsoleColor::Green);
-				break;
+			MATCH_COLOR(Keyword, Blue);
+			MATCH_COLOR(Identifier, DarkYellow);
+			MATCH_COLOR(Number, Cyan);
+			MATCH_COLOR(String, Magenta);
+			MATCH_COLOR(Comment, Green);
+
 			case Classification::Text:
 			default:
 				MCF::SetConsoleColor(MCF::ConsoleColor::DarkGray);
@@ -628,6 +624,9 @@ bool McfRepl::RenderLine(const Document & lines, size_t index, bool resetState)c
 
 		std::cout << spanText;
 		MCF::ResetConsoleColor();
+
+#undef MATCH_COLOR
+
 	}
 
 	return false;

@@ -37,7 +37,7 @@ private:
 	void WriteBinaryExpression(const BoundBinaryExpression& node);
 	void WriteCallExpression(const BoundCallExpression& node);
 	void WriteConversionExpression(const BoundConversionExpression& node);
-	void WritePosifixExpression(const BoundPostfixExpression& node);
+	void WritePostfixExpression(const BoundPostfixExpression& node);
 
 public:
 	constexpr explicit BoundNodePrinter(std::ostream& out)noexcept
@@ -56,131 +56,47 @@ void Write(const BoundNode& node, std::ostream& out)
 
 void BoundNodePrinter::Write(const BoundNode& node)
 {
+#define WRITE_NODE(kind) \
+case BoundNodeKind::kind: \
+{\
+	auto& p = static_cast<const Bound##kind&>(node); \
+	Write##kind(p); break;                           \
+}
+
 	switch (node.Kind())
 	{
-		case BoundNodeKind::BlockStatement:
-		{
-			auto& p = static_cast<const BoundBlockStatement&>(node);
-			WriteBlockStatement(p);
-			break;
-		}
 		case BoundNodeKind::NopStatement:
 			WriteNopStatement();
 			break;
-		case BoundNodeKind::VariableDeclaration:
-		{
-			auto& p = static_cast<const BoundVariableDeclaration&>(node);
-			WriteVariableDeclaration(p);
-			break;
-		}
-		case BoundNodeKind::IfStatement:
-		{
-			auto& p = static_cast<const BoundIfStatement&>(node);
-			WriteIfStatement(p);
-			break;
-		}
-		case BoundNodeKind::WhileStatement:
-		{
-			auto& p = static_cast<const BoundWhileStatement&>(node);
-			WriteWhileStatement(p);
-			break;
-		}
-		case BoundNodeKind::DoWhileStatement:
-		{
-			auto& p = static_cast<const BoundDoWhileStatement&>(node);
-			WriteDoWhileStatement(p);
-			break;
-		}
-		case BoundNodeKind::ForStatement:
-		{
-			auto& p = static_cast<const BoundForStatement&>(node);
-			WriteForStatement(p);
-			break;
-		}
-		case BoundNodeKind::LabelStatement:
-		{
-			auto& p = static_cast<const BoundLabelStatement&>(node);
-			WriteLabelStatement(p);
-			break;
-		}
-		case BoundNodeKind::GotoStatement:
-		{
-			auto& p = static_cast<const BoundGotoStatement&>(node);
-			WriteGotoStatement(p);
-			break;
-		}
-		case BoundNodeKind::ConditionalGotoStatement:
-		{
-			auto& p = static_cast<const BoundConditionalGotoStatement&>(node);
-			WriteConditionalGotoStatement(p);
-			break;
-		}
-		case BoundNodeKind::ReturnStatement:
-		{
-			auto& p = static_cast<const BoundReturnStatement&>(node);
-			WriteReturnStatement(p);
-			break;
-		}
-		case BoundNodeKind::ExpressionStatement:
-		{
-			auto& p = static_cast<const BoundExpressionStatement&>(node);
-			WriteExpressionStatement(p);
-			break;
-		}
 		case BoundNodeKind::ErrorExpression:
 			WriteErrorExpression();
 			break;
-		case BoundNodeKind::LiteralExpression:
-		{
-			auto& p = static_cast<const BoundLiteralExpression&>(node);
-			WriteLiteralExpression(p);
-			break;
-		}
-		case BoundNodeKind::VariableExpression:
-		{
-			auto& p = static_cast<const BoundVariableExpression&>(node);
-			WriteVariableExpression(p);
-			break;
-		}
-		case BoundNodeKind::AssignmentExpression:
-		{
-			auto& p = static_cast<const BoundAssignmentExpression&>(node);
-			WriteAssignmentExpression(p);
-			break;
-		}
-		case BoundNodeKind::UnaryExpression:
-		{
-			auto& p = static_cast<const BoundUnaryExpression&>(node);
-			WriteUnaryExpression(p);
-			break;
-		}
-		case BoundNodeKind::BinaryExpression:
-		{
-			auto& p = static_cast<const BoundBinaryExpression&>(node);
-			WriteBinaryExpression(p);
-			break;
-		}
-		case BoundNodeKind::CallExpression:
-		{
-			auto& p = static_cast<const BoundCallExpression&>(node);
-			WriteCallExpression(p);
-			break;
-		}
-		case BoundNodeKind::ConversionExpression:
-		{
-			auto& p = static_cast<const BoundConversionExpression&>(node);
-			WriteConversionExpression(p);
-			break;
-		}
-		case BoundNodeKind::PostfixExpression:
-		{
-			auto& p = static_cast<const BoundPostfixExpression&>(node);
-			WritePosifixExpression(p);
-			break;
-		}
+
+			WRITE_NODE(BlockStatement);
+			WRITE_NODE(VariableDeclaration);
+			WRITE_NODE(IfStatement);
+			WRITE_NODE(WhileStatement);
+			WRITE_NODE(DoWhileStatement);
+			WRITE_NODE(ForStatement);
+			WRITE_NODE(LabelStatement);
+			WRITE_NODE(GotoStatement);
+			WRITE_NODE(ConditionalGotoStatement);
+			WRITE_NODE(ReturnStatement);
+			WRITE_NODE(ExpressionStatement);
+			WRITE_NODE(LiteralExpression);
+			WRITE_NODE(VariableExpression);
+			WRITE_NODE(AssignmentExpression);
+			WRITE_NODE(UnaryExpression);
+			WRITE_NODE(BinaryExpression);
+			WRITE_NODE(CallExpression);
+			WRITE_NODE(ConversionExpression);
+			WRITE_NODE(PostfixExpression);
+
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected node: ", nameof(node.Kind())));
 	}
+
+#undef WRITE_NODE
 }
 
 void BoundNodePrinter::WriteNestedStatement(const BoundStatement& node)
@@ -432,7 +348,7 @@ void BoundNodePrinter::WriteConversionExpression(const BoundConversionExpression
 	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
 }
 
-void BoundNodePrinter::WritePosifixExpression(const BoundPostfixExpression& node)
+void BoundNodePrinter::WritePostfixExpression(const BoundPostfixExpression& node)
 {
 	_writer.WriteIdentifier(node.Variable()->Name());
 	_writer.WritePunctuation(node.OperatorKind() == BoundPostfixOperatorEnum::Increment ?

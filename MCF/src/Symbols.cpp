@@ -22,21 +22,22 @@ string Symbol::ToString() const
 
 string_view nameof(SymbolKind kind)
 {
+#define NAME(kind)\
+case SymbolKind::kind: return #kind;
+
 	switch (kind)
 	{
-		case SymbolKind::Function:
-			return "Function";
-		case SymbolKind::GlobalVariable:
-			return "GlobalVariable";
-		case SymbolKind::LocalVariable:
-			return "LocalVariable";
-		case SymbolKind::Parameter:
-			return "Parameter";
-		case SymbolKind::Type:
-			return "Type";
+		NAME(Function);
+		NAME(GlobalVariable);
+		NAME(LocalVariable);
+		NAME(Parameter);
+		NAME(Type);
+
 		default:
 			return string_view();
 	}
+
+#undef NAME
 }
 
 const std::array<FunctionSymbol, 3>& GetAllBuiltinFunctions()

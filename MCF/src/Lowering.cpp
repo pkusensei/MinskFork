@@ -47,71 +47,37 @@ public:
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(shared_ptr<BoundStatement> node)
 {
+#define REWRITE_STMT(kind) \
+case BoundNodeKind::kind:                                  \
+{                                                          \
+	auto p = std::dynamic_pointer_cast<Bound##kind>(node); \
+	if (p) return Rewrite##kind(std::move(p));             \
+	else break;                                            \
+}
+
 	switch (node->Kind())
 	{
-		case BoundNodeKind::BlockStatement:
-		{
-			auto p = std::dynamic_pointer_cast<BoundBlockStatement>(node);
-			if (p) return RewriteBlockStatement(std::move(p));
-			else break;
-		}
 		case BoundNodeKind::NopStatement:
-			return node;
-		case BoundNodeKind::VariableDeclaration:
-		{
-			auto p = std::dynamic_pointer_cast<BoundVariableDeclaration> (node);
-			if (p) return RewriteVariableDeclaration(std::move(p));
-			else break;
-		}
-		case BoundNodeKind::IfStatement:
-		{
-			auto p = std::dynamic_pointer_cast<BoundIfStatement> (node);
-			if (p) return RewriteIfStatement(std::move(p));
-			else break;
-		}
-		case BoundNodeKind::WhileStatement:
-		{
-			auto p = std::dynamic_pointer_cast<BoundWhileStatement> (node);
-			if (p) return RewriteWhileStatement(std::move(p));
-			else break;
-		}
-		case BoundNodeKind::DoWhileStatement:
-		{
-			auto p = std::dynamic_pointer_cast<BoundDoWhileStatement> (node);
-			if (p) return RewriteDoWhileStatement(std::move(p));
-			else break;
-		}
-		case BoundNodeKind::ForStatement:
-		{
-			auto p = std::dynamic_pointer_cast<BoundForStatement> (node);
-			if (p) return RewriteForStatement(std::move(p));
-			else break;
-		}
 		case BoundNodeKind::LabelStatement:
 		case BoundNodeKind::GotoStatement:
 			return node;
-		case BoundNodeKind::ConditionalGotoStatement:
-		{
-			auto p = std::dynamic_pointer_cast<BoundConditionalGotoStatement> (node);
-			if (p) return RewriteConditionalGotoStatement(std::move(p));
-			else break;
-		}
-		case BoundNodeKind::ReturnStatement:
-		{
-			auto p = std::dynamic_pointer_cast<BoundReturnStatement>(node);
-			if (p) return RewriteReturnStatement(std::move(p));
-			else break;
-		}
-		case BoundNodeKind::ExpressionStatement:
-		{
-			auto p = std::dynamic_pointer_cast<BoundExpressionStatement>(node);
-			if (p) return RewriteExpressionStatement(std::move(p));
-			else break;
-		}
+
+			REWRITE_STMT(BlockStatement);
+			REWRITE_STMT(VariableDeclaration);
+			REWRITE_STMT(IfStatement);
+			REWRITE_STMT(WhileStatement);
+			REWRITE_STMT(DoWhileStatement);
+			REWRITE_STMT(ForStatement);
+			REWRITE_STMT(ConditionalGotoStatement);
+			REWRITE_STMT(ReturnStatement);
+			REWRITE_STMT(ExpressionStatement);
+
 		default:
 			break;
 	}
 	throw std::invalid_argument(BuildStringFrom("Unexpected node: ", nameof(node->Kind())));
+
+#undef REWRITE_STMT
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(shared_ptr<BoundBlockStatement> node)
@@ -239,52 +205,34 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteExpressionStatement(shared_
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(shared_ptr<BoundExpression> node)
 {
+#define REWRITE_EXPR(kind) \
+case BoundNodeKind::kind:                                  \
+{                                                          \
+	auto p = std::dynamic_pointer_cast<Bound##kind>(node); \
+	if (p) return Rewrite##kind(std::move(p));             \
+	else break;                                            \
+}
+
 	switch (node->Kind())
 	{
 		case BoundNodeKind::ErrorExpression:
 		case BoundNodeKind::LiteralExpression:
 		case BoundNodeKind::VariableExpression:
 			return node;
-		case BoundNodeKind::AssignmentExpression:
-		{
-			auto p = std::dynamic_pointer_cast<BoundAssignmentExpression>(node);
-			if (p) return RewriteAssignmentExpression(std::move(p));
-			else break;
-		}
-		case BoundNodeKind::UnaryExpression:
-		{
-			auto p = std::dynamic_pointer_cast<BoundUnaryExpression>(node);
-			if (p) return RewriteUnaryExpression(std::move(p));
-			else break;
-		}
-		case BoundNodeKind::BinaryExpression:
-		{
-			auto p = std::dynamic_pointer_cast<BoundBinaryExpression>(node);
-			if (p) return RewriteBinaryExpression(std::move(p));
-			else break;
-		}
-		case BoundNodeKind::CallExpression:
-		{
-			auto p = std::dynamic_pointer_cast<BoundCallExpression>(node);
-			if (p) return RewriteCallExpression(std::move(p));
-			else break;
-		}
-		case BoundNodeKind::ConversionExpression:
-		{
-			auto p = std::dynamic_pointer_cast<BoundConversionExpression>(node);
-			if (p) return RewriteConversionExpression(std::move(p));
-			else break;
-		}
-		case BoundNodeKind::PostfixExpression:
-		{
-			auto p = std::dynamic_pointer_cast<BoundPostfixExpression>(node);
-			if (p) return RewritePostfixExpression(std::move(p));
-			else break;
-		}
+
+			REWRITE_EXPR(AssignmentExpression);
+			REWRITE_EXPR(UnaryExpression);
+			REWRITE_EXPR(BinaryExpression);
+			REWRITE_EXPR(CallExpression);
+			REWRITE_EXPR(ConversionExpression);
+			REWRITE_EXPR(PostfixExpression);
+
 		default:
 			break;
 	}
 	throw std::invalid_argument(BuildStringFrom("Unexpected node: ", nameof(node->Kind())));
+
+#undef REWRITE_EXPR
 }
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteErrorExpression(shared_ptr<BoundErrorExpression> node)

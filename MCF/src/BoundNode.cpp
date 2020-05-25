@@ -9,55 +9,39 @@ namespace MCF {
 
 string_view nameof(BoundNodeKind  kind)
 {
+#define NAME(kind) \
+case BoundNodeKind::kind: return #kind;
+
 	switch (kind)
 	{
-		case BoundNodeKind::BlockStatement:
-			return "BlockStatement";
-		case BoundNodeKind::NopStatement:
-			return "NopStatement";
-		case BoundNodeKind::VariableDeclaration:
-			return "VariableDeclaration";
-		case BoundNodeKind::IfStatement:
-			return "IfStatement";
-		case BoundNodeKind::WhileStatement:
-			return "WhileStatement";
-		case BoundNodeKind::DoWhileStatement:
-			return "DoWhileStatement";
-		case BoundNodeKind::ForStatement:
-			return "ForStatement";
-		case BoundNodeKind::LabelStatement:
-			return "LabelStatement";
-		case BoundNodeKind::GotoStatement:
-			return "GotoStatement";
-		case BoundNodeKind::ConditionalGotoStatement:
-			return "ConditionalGotoStatement";
-		case BoundNodeKind::ReturnStatement:
-			return "ReturnStatement";
-		case BoundNodeKind::ExpressionStatement:
-			return "ExpressionStatement";
+		NAME(BlockStatement);
+		NAME(NopStatement);
+		NAME(VariableDeclaration);
+		NAME(IfStatement);
+		NAME(WhileStatement);
+		NAME(DoWhileStatement);
+		NAME(ForStatement);
+		NAME(LabelStatement);
+		NAME(GotoStatement);
+		NAME(ConditionalGotoStatement);
+		NAME(ReturnStatement);
+		NAME(ExpressionStatement);
 
-		case BoundNodeKind::ErrorExpression:
-			return "ErrorExpression";
-		case BoundNodeKind::LiteralExpression:
-			return "LiteralExpression";
-		case BoundNodeKind::VariableExpression:
-			return "VariableExpression";
-		case BoundNodeKind::AssignmentExpression:
-			return "AssignmentExpression";
-		case BoundNodeKind::UnaryExpression:
-			return "UnaryExpression";
-		case BoundNodeKind::BinaryExpression:
-			return "BinaryExpression";
-		case BoundNodeKind::CallExpression:
-			return "CallExpression";
-		case BoundNodeKind::ConversionExpression:
-			return "ConversionExpression";
-		case BoundNodeKind::PostfixExpression:
-			return "PostfixExpression";
+		NAME(ErrorExpression);
+		NAME(LiteralExpression);
+		NAME(VariableExpression);
+		NAME(AssignmentExpression);
+		NAME(UnaryExpression);
+		NAME(BinaryExpression);
+		NAME(CallExpression);
+		NAME(ConversionExpression);
+		NAME(PostfixExpression);
 
 		default:
 			return string_view();
 	}
+
+#undef NAME
 }
 
 void BoundNode::WriteTo(std::ostream& out) const

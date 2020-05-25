@@ -13,172 +13,100 @@ const std::array<SyntaxKind, SYNTAXKIND_COUNT>& AllSyntaxKinds
 
 string_view nameof(SyntaxKind kind) noexcept
 {
+#define NAME(kind) \
+case SyntaxKind::kind: return #kind;
+
 	switch (kind)
 	{
-		case SyntaxKind::BadToken:
-			return "BadToken";
+		NAME(BadToken);
 
-		case SyntaxKind::SkippedTextTrivia:
-			return "SkippedTextTrivia";
-		case SyntaxKind::LineBreakTrivia:
-			return "LineBreakTrivia";
-		case SyntaxKind::WhitespaceTrivia:
-			return "WhitespaceTrivia";
-		case SyntaxKind::SingleLineCommentTrivia:
-			return "SingleLineCommentTrivia";
-		case SyntaxKind::MultiLineCommentTrivia:
-			return "MultiLineCommentTrivia";
+		NAME(SkippedTextTrivia);
+		NAME(LineBreakTrivia);
+		NAME(WhitespaceTrivia);
+		NAME(SingleLineCommentTrivia);
+		NAME(MultiLineCommentTrivia);
 
-		case SyntaxKind::EndOfFileToken:
-			return "EndOfFileToken";
-		case SyntaxKind::NumberToken:
-			return "NumberToken";
-		case SyntaxKind::StringToken:
-			return "StringToken";
-		case SyntaxKind::PlusToken:
-			return "PlusToken";
-		case SyntaxKind::MinusToken:
-			return "MinusToken";
-		case SyntaxKind::StarToken:
-			return "StarToken";
-		case SyntaxKind::SlashToken:
-			return "SlashToken";
-		case SyntaxKind::PercentToken:
-			return "PercentToken";
-		case SyntaxKind::BangToken:
-			return "BangToken";
-		case SyntaxKind::PlusPlusToken:
-			return "PlusPlusToken";
-		case SyntaxKind::MinusMinusToken:
-			return "MinusMinusToken";
-		case SyntaxKind::EqualsToken:
-			return "EqualsToken";
-		case SyntaxKind::TildeToken:
-			return "TildeToken";
-		case SyntaxKind::HatToken:
-			return "HatToken";
-		case SyntaxKind::AmpersandToken:
-			return "AmpersandToken";
-		case SyntaxKind::AmpersandAmpersandToken:
-			return "AmpersandAmpersandToken";
-		case SyntaxKind::PipeToken:
-			return "PipeToken";
-		case SyntaxKind::PipePipeToken:
-			return "PipePipeToken";
-		case SyntaxKind::EqualsEqualsToken:
-			return "EqualsEqualsToken";
-		case SyntaxKind::BangEqualsToken:
-			return "BangEqualsToken";
-		case SyntaxKind::LessToken:
-			return "LessToken";
-		case SyntaxKind::LessOrEqualsToken:
-			return "LessOrEqualsToken";
-		case SyntaxKind::GreaterToken:
-			return "GreaterToken";
-		case SyntaxKind::GreaterOrEqualsToken:
-			return "GreaterOrEqualsToken";
-		case SyntaxKind::OpenParenthesisToken:
-			return "OpenParenthesisToken";
-		case SyntaxKind::CloseParenthesisToken:
-			return "CloseParenthesisToken";
-		case SyntaxKind::OpenBraceToken:
-			return "OpenBraceToken";
-		case SyntaxKind::CloseBraceToken:
-			return "CloseBraceToken";
-		case SyntaxKind::ColonToken:
-			return "ColonToken";
-		case SyntaxKind::CommaToken:
-			return "CommaToken";
-		case SyntaxKind::IdentifierToken:
-			return "IdentifierToken";
+		NAME(EndOfFileToken);
+		NAME(NumberToken);
+		NAME(StringToken);
+		NAME(PlusToken);
+		NAME(MinusToken);
+		NAME(StarToken);
+		NAME(SlashToken);
+		NAME(PercentToken);
+		NAME(BangToken);
+		NAME(PlusPlusToken);
+		NAME(MinusMinusToken);
+		NAME(EqualsToken);
+		NAME(TildeToken);
+		NAME(HatToken);
+		NAME(AmpersandToken);
+		NAME(AmpersandAmpersandToken);
+		NAME(PipeToken);
+		NAME(PipePipeToken);
+		NAME(EqualsEqualsToken);
+		NAME(BangEqualsToken);
+		NAME(LessToken);
+		NAME(LessOrEqualsToken);
+		NAME(GreaterToken);
+		NAME(GreaterOrEqualsToken);
+		NAME(OpenParenthesisToken);
+		NAME(CloseParenthesisToken);
+		NAME(OpenBraceToken);
+		NAME(CloseBraceToken);
+		NAME(ColonToken);
+		NAME(CommaToken);
+		NAME(IdentifierToken);
 
-		case SyntaxKind::BreakKeyword:
-			return "BreakKeyword";
-		case SyntaxKind::ContinueKeyword:
-			return "ContinueKeyword";
-		case SyntaxKind::ElseKeyword:
-			return "ElseKeyword";
-		case SyntaxKind::FalseKeyword:
-			return "FalseKeyword";
-		case SyntaxKind::ForKeyword:
-			return "ForKeyword";
-		case SyntaxKind::FunctionKeyword:
-			return "FunctionKeyword";
-		case SyntaxKind::IfKeyword:
-			return "IfKeyword";
-		case SyntaxKind::LetKeyword:
-			return "LetKeyword";
-		case SyntaxKind::ReturnKeyword:
-			return "ReturnKeyword";
-		case SyntaxKind::ToKeyword:
-			return "ToKeyword";
-		case SyntaxKind::TrueKeyword:
-			return "TrueKeyword";
-		case SyntaxKind::VarKeyword:
-			return "VarKeyword";
-		case SyntaxKind::WhileKeyword:
-			return "WhileKeyword";
-		case SyntaxKind::DoKeyword:
-			return "DoKeyword";
-		case SyntaxKind::UsingKeyworld:
-			return "UsingKeyword";
+		NAME(BreakKeyword);
+		NAME(ContinueKeyword);
+		NAME(ElseKeyword);
+		NAME(FalseKeyword);
+		NAME(ForKeyword);
+		NAME(FunctionKeyword);
+		NAME(IfKeyword);
+		NAME(LetKeyword);
+		NAME(ReturnKeyword);
+		NAME(ToKeyword);
+		NAME(TrueKeyword);
+		NAME(VarKeyword);
+		NAME(WhileKeyword);
+		NAME(DoKeyword);
+		NAME(UsingKeyworld);
 
-		case SyntaxKind::CompilationUnit:
-			return "CompilationUnit";
-		case SyntaxKind::FunctionDeclaration:
-			return "FunctionDeclaration";
-		case SyntaxKind::GlobalStatement:
-			return "GlobalStatement";
-		case SyntaxKind::Parameter:
-			return "Parameter";
-		case SyntaxKind::TypeClause:
-			return "TypeClause";
-		case SyntaxKind::ElseClause:
-			return "ElseClause";
-		case SyntaxKind::UsingDirective:
-			return "UsingDirective";
+		NAME(CompilationUnit);
+		NAME(FunctionDeclaration);
+		NAME(GlobalStatement);
+		NAME(Parameter);
+		NAME(TypeClause);
+		NAME(ElseClause);
+		NAME(UsingDirective);
 
-		case SyntaxKind::BlockStatement:
-			return "BlockStatement";
-		case SyntaxKind::VariableDeclaration:
-			return "VariableDeclaration";
-		case SyntaxKind::IfStatement:
-			return "IfStatement";
-		case SyntaxKind::WhileStatement:
-			return "WhileStatement";
-		case SyntaxKind::DoWhileStatement:
-			return "DoWhileStatement";
-		case SyntaxKind::ForStatement:
-			return "ForStatement";
-		case SyntaxKind::BreakStatement:
-			return "BreakStatement";
-		case SyntaxKind::ContinueStatement:
-			return "ContinueStatement";
-		case SyntaxKind::ReturnStatement:
-			return "ReturnStatement";
-		case SyntaxKind::ExpressionStatement:
-			return "ExpressionStatement";
+		NAME(BlockStatement);
+		NAME(VariableDeclaration);
+		NAME(IfStatement);
+		NAME(WhileStatement);
+		NAME(DoWhileStatement);
+		NAME(ForStatement);
+		NAME(BreakStatement);
+		NAME(ContinueStatement);
+		NAME(ReturnStatement);
+		NAME(ExpressionStatement);
 
-		case SyntaxKind::LiteralExpression:
-			return "LiteralExpression";
-		case SyntaxKind::NameExpression:
-			return "NameExpression";
-		case SyntaxKind::UnaryExpression:
-			return "UnaryExpression";
-		case SyntaxKind::BinaryExpression:
-			return "BinaryExpression";
-		case SyntaxKind::ParenthesizedExpression:
-			return "ParenthesizedExpression";
-		case SyntaxKind::CallExpression:
-			return "CallExpression";
-		case SyntaxKind::AssignmentExpression:
-			return "AssignmentExpression";
-		case SyntaxKind::PostfixExpression:
-			return "PostfixExpression";
+		NAME(LiteralExpression);
+		NAME(NameExpression);
+		NAME(UnaryExpression);
+		NAME(BinaryExpression);
+		NAME(ParenthesizedExpression);
+		NAME(CallExpression);
+		NAME(AssignmentExpression);
+		NAME(PostfixExpression);
 
 		default:
 			return string_view();
 	}
+
+#undef NAME
 }
 
 SyntaxKind GetKeywordKind(string_view text) noexcept

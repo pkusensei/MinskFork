@@ -755,6 +755,10 @@ unique_ptr<MemberSyntax> Parser::ParseUsingDirective()
 
 unique_ptr<StatementSyntax> Parser::ParseStatement()
 {
+#define PARSE_STMT(keyword) \
+case SyntaxKind::keyword##Keyword: \
+	return Parse##keyword##Statement();
+
 	switch (Current().Kind())
 	{
 		case SyntaxKind::OpenBraceToken:
@@ -762,23 +766,20 @@ unique_ptr<StatementSyntax> Parser::ParseStatement()
 		case SyntaxKind::LetKeyword:
 		case SyntaxKind::VarKeyword:
 			return ParseVariableDeclaration();
-		case SyntaxKind::IfKeyword:
-			return ParseIfStatement();
-		case SyntaxKind::WhileKeyword:
-			return ParseWhileStatement();
 		case SyntaxKind::DoKeyword:
 			return ParseDoWhileStatement();
-		case SyntaxKind::ForKeyword:
-			return ParseForStatement();
-		case SyntaxKind::BreakKeyword:
-			return ParseBreakStatement();
-		case SyntaxKind::ContinueKeyword:
-			return ParseContinueStatement();
-		case SyntaxKind::ReturnKeyword:
-			return ParseReturnStatement();
+
+			PARSE_STMT(If);
+			PARSE_STMT(While);
+			PARSE_STMT(For);
+			PARSE_STMT(Break);
+			PARSE_STMT(Continue);
+			PARSE_STMT(Return);
+
 		default:
 			return ParseExpressionStatement();
 	}
+#undef PARSE_STMT
 }
 
 unique_ptr<BlockStatementSyntax> Parser::ParseBlockStatement()

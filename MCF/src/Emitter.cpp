@@ -196,32 +196,27 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 
 void Emitter::EmitStatement(const BoundStatement& node)
 {
+#define EMIT_STMT(kind) \
+case BoundNodeKind::kind: Emit##kind(static_cast<const Bound##kind&>(node)); break;
+
 	switch (node.Kind())
 	{
 		case BoundNodeKind::NopStatement:
 			EmitNopStatement();
 			break;
-		case BoundNodeKind::VariableDeclaration:
-			EmitVariableDeclaration(static_cast<const BoundVariableDeclaration&>(node));
-			break;
-		case BoundNodeKind::LabelStatement:
-			EmitLabelStatement(static_cast<const BoundLabelStatement&>(node));
-			break;
-		case BoundNodeKind::GotoStatement:
-			EmitGotoStatement(static_cast<const BoundGotoStatement&>(node));
-			break;
-		case BoundNodeKind::ConditionalGotoStatement:
-			EmitConditionalGotoStatement(static_cast<const BoundConditionalGotoStatement&>(node));
-			break;
-		case BoundNodeKind::ReturnStatement:
-			EmitReturnStatement(static_cast<const BoundReturnStatement&>(node));
-			break;
-		case BoundNodeKind::ExpressionStatement:
-			EmitExpressionStatement(static_cast<const BoundExpressionStatement&>(node));
-			break;
+
+			EMIT_STMT(VariableDeclaration);
+			EMIT_STMT(LabelStatement);
+			EMIT_STMT(GotoStatement);
+			EMIT_STMT(ConditionalGotoStatement);
+			EMIT_STMT(ReturnStatement);
+			EMIT_STMT(ExpressionStatement);
+
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected node: ", nameof(node.Kind())));
 	}
+
+#undef EMIT_STMT
 }
 
 void Emitter::EmitNopStatement()
@@ -312,27 +307,25 @@ void Emitter::EmitExpressionStatement(const BoundExpressionStatement& node)
 
 llvm::Value* Emitter::EmitExpression(const BoundExpression& node)
 {
+#define EMIT_EXPR(kind) \
+case BoundNodeKind::kind: return Emit##kind(static_cast<const Bound##kind&>(node));
+
 	switch (node.Kind())
 	{
-		case BoundNodeKind::LiteralExpression:
-			return EmitLiteralExpression(static_cast<const BoundLiteralExpression&>(node));
-		case BoundNodeKind::VariableExpression:
-			return EmitVariableExpression(static_cast<const BoundVariableExpression&>(node));
-		case BoundNodeKind::AssignmentExpression:
-			return EmitAssignmentExpression(static_cast<const BoundAssignmentExpression&>(node));
-		case BoundNodeKind::UnaryExpression:
-			return EmitUnaryExpression(static_cast<const BoundUnaryExpression&>(node));
-		case BoundNodeKind::BinaryExpression:
-			return EmitBinaryExpression(static_cast<const BoundBinaryExpression&>(node));
-		case BoundNodeKind::CallExpression:
-			return EmitCallExpression(static_cast<const BoundCallExpression&>(node));
-		case BoundNodeKind::ConversionExpression:
-			return EmitConversionExpression(static_cast<const BoundConversionExpression&>(node));
-		case BoundNodeKind::PostfixExpression:
-			return EmitPostfixExpression(static_cast<const BoundPostfixExpression&>(node));
+		EMIT_EXPR(LiteralExpression);
+		EMIT_EXPR(VariableExpression);
+		EMIT_EXPR(AssignmentExpression);
+		EMIT_EXPR(UnaryExpression);
+		EMIT_EXPR(BinaryExpression);
+		EMIT_EXPR(CallExpression);
+		EMIT_EXPR(ConversionExpression);
+		EMIT_EXPR(PostfixExpression);
+
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected node: ", nameof(node.Kind())));
 	}
+
+#undef EMIT_EXPR
 }
 
 llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)

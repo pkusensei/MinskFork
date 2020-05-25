@@ -35,42 +35,27 @@ void Write(const Symbol& symbol, std::ostream& out)
 
 void SymbolPrinter::Write(const Symbol& symbol)
 {
+#define WRITE_SYMBOL(kind) \
+case SymbolKind::kind:                                  \
+{                                                       \
+	auto& p = static_cast<const kind##Symbol&>(symbol); \
+	Write##kind(p); break;                              \
+}
+
 	switch (symbol.Kind())
 	{
-		case SymbolKind::Function:
-		{
-			auto& p = static_cast<const FunctionSymbol&>(symbol);
-			WriteFunction(p);
-			break;
-		}
-		case SymbolKind::GlobalVariable:
-		{
-			auto& p = static_cast<const GlobalVariableSymbol&>(symbol);
-			WriteGlobalVariable(p);
-			break;
-		}
-		case SymbolKind::LocalVariable:
-		{
-			auto& p = static_cast<const LocalVariableSymbol&>(symbol);
-			WriteLocalVariable(p);
-			break;
-		}
-		case SymbolKind::Parameter:
-		{
-			auto& p = static_cast<const ParameterSymbol&>(symbol);
-			WriteParameter(p);
-			break;
-		}
-		case SymbolKind::Type:
-		{
-			auto& p = static_cast<const TypeSymbol&>(symbol);
-			WriteType(p);
-			break;
-		}
+		WRITE_SYMBOL(Function);
+		WRITE_SYMBOL(GlobalVariable);
+		WRITE_SYMBOL(LocalVariable);
+		WRITE_SYMBOL(Parameter);
+		WRITE_SYMBOL(Type);
+
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected symbol: "
 				, nameof(symbol.Kind())));
 	}
+
+#undef WRITE_SYMBOL
 }
 
 void SymbolPrinter::WriteFunction(const FunctionSymbol& symbol)
