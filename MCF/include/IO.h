@@ -44,6 +44,7 @@ public:
 	void WriteSpace();
 	void WritePunctuation(const SyntaxKind& kind);
 	void WritePunctuation(string_view text);
+	void WriteDiagnostics(const DiagnosticBag& diagnostics);
 	void WriteDiagnostics(vector<const Diagnostic*> diagnostics);
 };
 

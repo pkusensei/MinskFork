@@ -78,6 +78,16 @@ void TextWriter::WritePunctuation(string_view text)
 	ResetColor();
 }
 
+void TextWriter::WriteDiagnostics(const DiagnosticBag& diagnostics)
+{
+	auto result = vector<const Diagnostic*>();
+	std::transform(diagnostics.cbegin(), diagnostics.cend(),
+		std::back_inserter(result),
+		[](const auto& d) { return &d; });
+
+	WriteDiagnostics(std::move(result));
+}
+
 void TextWriter::WriteDiagnostics(vector<const Diagnostic*> diagnostics)
 {
 	auto second = std::partition(diagnostics.begin(), diagnostics.end(),

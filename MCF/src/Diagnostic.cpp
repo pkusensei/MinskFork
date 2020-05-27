@@ -26,38 +26,10 @@ const Diagnostic& DiagnosticBag::operator[](size_t idx) const
 	return _diagnostics.at(idx);
 }
 
-vector<const Diagnostic*> DiagnosticBag::All()const
+bool DiagnosticBag::HasErrors()const
 {
-	auto result = vector<const Diagnostic*>();
-	std::transform(_diagnostics.cbegin(), _diagnostics.cend(),
-		std::back_inserter(result),
-		[](const auto& d) { return &d; });
-
-	return result;
-}
-
-vector<const Diagnostic*> DiagnosticBag::Errors()const
-{
-	auto result = vector<const Diagnostic*>();
-
-	for (const auto& d : _diagnostics)
-	{
-		if (d.IsError())
-			result.push_back(&d);
-	}
-	return result;
-}
-
-vector<const Diagnostic*> DiagnosticBag::Warnings()const
-{
-	auto result = vector<const Diagnostic*>();
-
-	for (const auto& d : _diagnostics)
-	{
-		if (d.IsWarning())
-			result.push_back(&d);
-	}
-	return result;
+	return std::any_of(_diagnostics.cbegin(), _diagnostics.cend(),
+		[](const auto& d) { return d.IsError(); });
 }
 
 void DiagnosticBag::AddRangeFront(DiagnosticBag other)

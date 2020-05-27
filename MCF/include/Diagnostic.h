@@ -80,9 +80,7 @@ public:
 	auto begin()const noexcept { return _diagnostics.begin(); }
 	auto end()const noexcept { return _diagnostics.end(); }
 
-	[[nodiscard]] vector<const Diagnostic*> All()const;
-	[[nodiscard]] vector<const Diagnostic*> Errors()const;
-	[[nodiscard]] vector<const Diagnostic*> Warnings()const;
+	bool HasErrors()const;
 
 	void AddRangeFront(DiagnosticBag other);
 	void AddRange(DiagnosticBag other);

@@ -803,12 +803,11 @@ void McfRepl::EvaluateSubmission(std::string_view text)
 		compilation.EmitTree(std::cout);
 
 	auto result = compilation.Evaluate(_variables);
-	auto errors = result.Diagnostics().Errors();
 
 	auto writer = MCF::IndentedTextWriter(std::cout);
-	writer.WriteDiagnostics(result.Diagnostics().All());
+	writer.WriteDiagnostics(result.Diagnostics());
 
-	if (errors.empty())
+	if (!result.Diagnostics().HasErrors())
 	{
 		auto value = result.Value();
 		if (value.HasValue())

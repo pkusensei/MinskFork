@@ -511,7 +511,7 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 	// NOTE program is generated on the fly and NOT kept anywhere.
 	//      It gets dropped by the end of this function
 	//      SO move all diagnostics out before that. 
-	if (!program->Diagnostics().Errors().empty())
+	if (program->Diagnostics().HasErrors())
 	{
 		_diagnostics->AddRange(std::move(*program).Diagnostics());
 		return EvaluationResult(*_diagnostics, NULL_VALUE);
@@ -557,7 +557,7 @@ DiagnosticBag Compilation::Emit(const string& moduleName, const fs::path& outPat
 
 	_diagnostics->AddRange(std::move(*GlobalScope()).Diagnostics());
 
-	if (!_diagnostics->Errors().empty())
+	if (_diagnostics->HasErrors())
 		return std::move(*_diagnostics);
 
 	auto p = GetProgram();

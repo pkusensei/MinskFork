@@ -812,7 +812,7 @@ llvm::Value* Emitter::ConvertToStr(llvm::Value* value)
 DiagnosticBag Emit(const BoundProgram& program, const string& moduleName,
 	const fs::path& outPath)
 {
-	if (!program.Diagnostics().Errors().empty())
+	if (program.Diagnostics().HasErrors())
 		return std::move(program).Diagnostics();
 
 	auto e = Emitter(moduleName);

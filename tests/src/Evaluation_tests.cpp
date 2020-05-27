@@ -7,8 +7,7 @@
 #include "AnnotatedText.h"
 
 void AssertValue(std::string_view text, const MCF::ValueType& value);
-void AssertDiagnostics(std::string_view text, std::string_view diagnosticText,
-	bool assertWarnings = false);
+void AssertDiagnostics(std::string_view text, std::string_view diagnosticText);
 
 TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 {
@@ -405,7 +404,7 @@ TEST_CASE("Evaluator warns unreachable code in IfStatement", "[Evaluator][if][un
 	auto diag = R"(
                 Unreachable code detected.
 				)";
-	AssertDiagnostics(text, diag, true);
+	AssertDiagnostics(text, diag);
 }
 
 
@@ -427,7 +426,7 @@ TEST_CASE("Evaluator warns unreachable code in ElseStatement", "[Evaluator][if][
 	auto diag = R"(
                 Unreachable code detected.
 				)";
-	AssertDiagnostics(text, diag, true);
+	AssertDiagnostics(text, diag);
 }
 
 TEST_CASE("Evaluator warns unreachable code in WhileStatement", "[Evaluator][while][unreachable]")
@@ -444,7 +443,7 @@ TEST_CASE("Evaluator warns unreachable code in WhileStatement", "[Evaluator][whi
 	auto diag = R"(
                 Unreachable code detected.
 				)";
-	AssertDiagnostics(text, diag, true);
+	AssertDiagnostics(text, diag);
 }
 
 TEST_CASE("Evaluator reports invalid break or continue", "[Evaluator][break][return][loop]")
@@ -607,12 +606,11 @@ void AssertValue(std::string_view text, const MCF::ValueType& value)
 	MCF::VarMap variables;
 	auto result = compilation.Evaluate(variables);
 
-	REQUIRE(result.Diagnostics().Errors().empty());
+	REQUIRE_FALSE(result.Diagnostics().HasErrors());
 	CHECK(value == result.Value());
 }
 
-void AssertDiagnostics(std::string_view text, std::string_view diagnosticText,
-	bool assertWarnings)
+void AssertDiagnostics(std::string_view text, std::string_view diagnosticText)
 {
 	auto annotatedText = AnnotatedText::Parse(text);
 	auto tree =
@@ -625,14 +623,13 @@ void AssertDiagnostics(std::string_view text, std::string_view diagnosticText,
 	if (annotatedText.Spans().size() != expectedDiagnostoics.size())
 		throw std::invalid_argument("ERROR: Must mark as many spans as there are expected diagnostics");
 
-	auto diags = assertWarnings ?
-		result.Diagnostics().All() : result.Diagnostics().Errors();
+	auto& diags = result.Diagnostics();
 	REQUIRE(expectedDiagnostoics.size() == diags.size());
 
 	for (size_t i = 0; i < expectedDiagnostoics.size(); ++i)
 	{
-		CHECK(expectedDiagnostoics[i] == diags[i]->Message());
-		CHECK(annotatedText.Spans()[i] == diags[i]->Location().Span());
+		CHECK(expectedDiagnostoics[i] == diags[i].Message());
+		CHECK(annotatedText.Spans()[i] == diags[i].Location().Span());
 	}
 
 }
