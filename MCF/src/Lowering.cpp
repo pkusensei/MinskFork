@@ -487,6 +487,8 @@ shared_ptr<BoundExpression> Lowerer::RewriteExpression(shared_ptr<BoundExpressio
 	return BoundTreeRewriter::RewriteExpression(std::move(node));
 }
 
+namespace {
+
 [[nodiscard]] vector<shared_ptr<BoundExpression>> FlattenStrNodes(shared_ptr<BoundExpression> node)
 {
 	auto result = vector<shared_ptr<BoundExpression>>();
@@ -567,6 +569,8 @@ shared_ptr<BoundExpression> Lowerer::RewriteExpression(shared_ptr<BoundExpressio
 			std::move(right));
 	}
 }
+
+} //namespace
 
 shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBinaryExpression> node)
 {

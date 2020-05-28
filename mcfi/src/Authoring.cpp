@@ -4,6 +4,8 @@
 
 using namespace MCF;
 
+namespace {
+
 Classification Classify(SyntaxKind kind)
 {
 	auto isKeyword = IsKeyword(kind);
@@ -71,6 +73,8 @@ void ClassifyNode(const SyntaxNode* node, const TextSpan& span,
 	std::for_each(children.cbegin(), children.cend(),
 		[&span, &result](const auto p) { ClassifyNode(p, span, result); });
 }
+
+} //namespace
 
 std::vector<ClassifiedSpan> Classify(const SyntaxTree& tree, const TextSpan& span)
 {

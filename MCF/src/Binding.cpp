@@ -14,6 +14,7 @@
 
 namespace MCF {
 
+namespace {
 // NOTE CRT calls this function by name
 constexpr auto ENTRY_NAME = "main";
 
@@ -46,6 +47,8 @@ ConversionEnum Classify(const TypeSymbol& from, const TypeSymbol& to)
 	}
 	return ConversionEnum::None;
 }
+
+} //namespace
 
 class BoundScope final
 {

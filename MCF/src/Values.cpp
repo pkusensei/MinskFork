@@ -1,5 +1,7 @@
 #include "Values.h"
 
+#include <iostream>
+
 #include "Symbols.h"
 
 namespace MCF {

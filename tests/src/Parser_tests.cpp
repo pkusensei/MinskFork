@@ -5,9 +5,11 @@
 
 #include "AssertingHelper.h"
 
+namespace {
 const MCF::ExpressionSyntax* ParseExpression(const MCF::SyntaxTree& tree);
 std::vector<std::pair<MCF::SyntaxKind, MCF::SyntaxKind>> GetBinaryOperatorPairsData();
 std::vector<std::pair<MCF::SyntaxKind, MCF::SyntaxKind>> GetUnaryOperatorPairsData();
+} //namespace
 
 TEST_CASE("Parser honors precedences in BinaryExpression", "[Parser]")
 {
@@ -108,6 +110,8 @@ TEST_CASE("Parser honors precedences in PostfixExpression", "[Parser]")
 	e.AssertToken(MCF::SyntaxKind::IdentifierToken, "b");
 }
 
+namespace {
+
 const MCF::ExpressionSyntax* ParseExpression(const MCF::SyntaxTree& tree)
 {
 	auto root = tree.Root();
@@ -141,3 +145,5 @@ std::vector<std::pair<MCF::SyntaxKind, MCF::SyntaxKind>> GetUnaryOperatorPairsDa
 			result.emplace_back(unary, binary);
 	return result;
 }
+
+} //namespace

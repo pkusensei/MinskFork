@@ -9,6 +9,8 @@
 
 namespace MCF {
 
+namespace {
+
 constexpr auto CSI = "\x1b[";
 constexpr auto BRIGHT = "1;";
 constexpr auto DEFAULT = "0;";
@@ -21,6 +23,8 @@ constexpr auto BLUE = "34m";
 constexpr auto MAGENTA = "35m";
 constexpr auto CYAN = "36m";
 constexpr auto WHITE = "37m";
+
+} //namespace
 
 bool EnableVTMode()
 {

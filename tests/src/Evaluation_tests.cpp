@@ -6,8 +6,10 @@
 
 #include "AnnotatedText.h"
 
+namespace {
 void AssertValue(std::string_view text, const MCF::ValueType& value);
 void AssertDiagnostics(std::string_view text, std::string_view diagnosticText);
+}
 
 TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 {
@@ -599,6 +601,8 @@ TEST_CASE("Evaluator reports undefined binary operation", "[Evaluator]")
 	AssertDiagnostics(text, diag);
 }
 
+namespace {
+
 void AssertValue(std::string_view text, const MCF::ValueType& value)
 {
 	auto tree = std::make_unique<MCF::SyntaxTree>(MCF::SyntaxTree::Parse(text));
@@ -632,4 +636,5 @@ void AssertDiagnostics(std::string_view text, std::string_view diagnosticText)
 		CHECK(annotatedText.Spans()[i] == diags[i].Location().Span());
 	}
 
+}
 }

@@ -39,7 +39,9 @@
 
 namespace MCF {
 
+namespace {
 constexpr auto INT_BITS = sizeof(IntegerType) * 8;
+} //namespace
 
 class Emitter
 {

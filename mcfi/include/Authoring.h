@@ -27,4 +27,5 @@ struct ClassifiedSpan
 	}
 };
 
-std::vector<ClassifiedSpan> Classify(const MCF::SyntaxTree& tree, const MCF::TextSpan& span);
+std::vector<ClassifiedSpan> Classify(const MCF::SyntaxTree& tree,
+	const MCF::TextSpan& span);

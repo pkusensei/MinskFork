@@ -7,6 +7,7 @@
 #include "SourceText.h"
 #include "StringHelper.h"
 
+namespace {
 auto GetTokens()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&;
 auto GetSeparators()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&;
 auto GetTokenData()->std::vector<std::pair<MCF::SyntaxKind, std::string_view>>;
@@ -16,6 +17,7 @@ auto GetTokenPairsWithSeparator()->std::vector<std::tuple<
 	MCF::SyntaxKind, std::string_view, MCF::SyntaxKind, std::string_view,
 	MCF::SyntaxKind, std::string_view>>;
 bool RequiresSeparators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind);
+} //namespace
 
 TEST_CASE("Lexer covers all tokens", "[Lexer]")
 {
@@ -148,6 +150,8 @@ TEST_CASE("GetText_RoundTrip")
 		}
 	}
 }
+
+namespace {
 
 auto GetTokens()->const std::vector<std::pair<MCF::SyntaxKind, std::string_view>>&
 {
@@ -306,3 +310,5 @@ bool RequiresSeparators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind)
 
 	return false;
 }
+
+} //namespace

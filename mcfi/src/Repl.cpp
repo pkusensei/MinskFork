@@ -12,6 +12,8 @@
 
 namespace fs = std::filesystem;
 
+namespace {
+
 constexpr auto NEW_LINE = '\n';
 
 fs::path GetSubmissionDir()
@@ -36,6 +38,8 @@ std::string ReadTextFromFile(const fs::path& path)
 	text << std::ifstream(path).rdbuf();
 	return text.str();
 }
+
+} //namespace
 
 struct Repl::MetaCommand
 {
@@ -451,6 +455,8 @@ bool Repl::RenderLine(const Document& lines, size_t index, bool resetState)const
 	return resetState;
 }
 
+namespace {
+
 std::vector<std::string> ParseArgs(std::string_view input)
 {
 	auto args = std::vector<std::string>();
@@ -496,6 +502,8 @@ std::vector<std::string> ParseArgs(std::string_view input)
 
 	return args;
 }
+
+} //namespace
 
 void Repl::EvaluateMetaCommand(std::string_view input)
 {
