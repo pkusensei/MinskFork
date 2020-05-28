@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <mutex>
 #include <random>
 #include <stack>
 #include <unordered_set>
@@ -387,15 +388,6 @@ Compilation::Compilation(bool isScript,
 	_syntaxTrees = std::move(vec);
 }
 
-Compilation::~Compilation() = default;
-
-Compilation::Compilation(Compilation&& other) noexcept
-	:_previous(std::move(other._previous)), _syntaxTrees(std::move(other._syntaxTrees)),
-	_globalScope(std::move(other._globalScope)), _diagnostics(std::move(other._diagnostics)),
-	_mtx()
-{
-}
-
 Compilation Compilation::Create(unique_ptr<SyntaxTree> tree)
 {
 	return Compilation(false, nullptr, SyntaxTree::Flatten(std::move(tree)));
@@ -417,6 +409,9 @@ const vector<const SyntaxTree*> Compilation::SyntaxTrees()const noexcept
 	return result;
 }
 
+Compilation::Compilation(Compilation&& other) = default;
+Compilation::~Compilation() = default;
+
 const BoundGlobalScope* Compilation::GlobalScope()
 {
 	while (_globalScope == nullptr)
@@ -429,7 +424,8 @@ const BoundGlobalScope* Compilation::GlobalScope()
 			tmp = make_unique<BoundGlobalScope>(
 				BindGlobalScope(IsScript(), _previous->GlobalScope(), SyntaxTrees()));
 
-		std::unique_lock<std::mutex> lock(_mtx, std::defer_lock);
+		std::mutex mtx;
+		std::unique_lock<std::mutex> lock(mtx, std::defer_lock);
 		if (lock.try_lock() && _globalScope == nullptr)
 			_globalScope.swap(tmp);
 	}

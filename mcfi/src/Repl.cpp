@@ -52,7 +52,7 @@ struct Repl::MetaCommand
 	MethodType Method;
 
 	MetaCommand(std::string_view name, std::string_view description,
-		MethodType method, size_t arity = 0)
+				MethodType method, size_t arity = 0)
 		:Name(name), Description(description), Arity(arity), Method(std::move(method))
 	{
 	}
@@ -176,7 +176,7 @@ Repl::Repl()
 	}
 
 	_metaCommands.emplace_back("help", "Shows help.",
-		[this] { EvaluateHelp(); });
+							   [this] { EvaluateHelp(); });
 }
 
 void Repl::Run()
@@ -220,7 +220,7 @@ std::string Repl::EditSubmission()
 }
 
 void Repl::HandleKey(const MCF::KeyInfo& key,
-	Document& document, SubmissionView& view)
+					 Document& document, SubmissionView& view)
 {
 	if (key.IsFunctionalKey)
 	{
@@ -377,7 +377,7 @@ void Repl::HandleDelete(Document& document, SubmissionView& view)
 
 		auto nextLine = document[view.CurrentLine() + 1];
 		document.SetAt(view.CurrentLine(),
-			document[view.CurrentLine()] + nextLine);
+					   document[view.CurrentLine()] + nextLine);
 		document.RemoveAt(view.CurrentLine() + 1);
 		return;
 	}
@@ -403,7 +403,7 @@ void Repl::HandleTab(Document& document, SubmissionView& view)
 	auto remainingSpaces = tabWidth - start % tabWidth;
 	auto line = document[view.CurrentLine()];
 	document.SetAt(view.CurrentLine(),
-		line.insert(start, std::string(remainingSpaces, ' ')));
+				   line.insert(start, std::string(remainingSpaces, ' ')));
 	view.CurrentCharacter(view.CurrentCharacter() + remainingSpaces);
 }
 
@@ -425,7 +425,7 @@ void Repl::HandlePageDown(Document& document, SubmissionView& view)
 }
 
 void Repl::UpdateDocumentFromHistory(Document& document,
-	SubmissionView& view)
+									 SubmissionView& view)
 {
 	if (_submissionHistory.empty()) return;
 
@@ -510,7 +510,7 @@ void Repl::EvaluateMetaCommand(std::string_view input)
 	auto args = ParseArgs(input);
 	const auto& name = args.front();
 	auto command = std::find_if(_metaCommands.cbegin(), _metaCommands.cend(),
-		[&name](const auto& it) { return name == it.Name; });
+								[&name](const auto& it) { return name == it.Name; });
 	if (command == _metaCommands.cend())
 	{
 		MCF::SetConsoleColor(MCF::ConsoleColor::Red);
@@ -536,11 +536,11 @@ void Repl::EvaluateMetaCommand(std::string_view input)
 void Repl::EvaluateHelp()
 {
 	auto maxNameLength = std::max_element(_metaCommands.cbegin(), _metaCommands.cend(),
-		[](const auto& a, const auto& b) { return a.Name.length() < b.Name.length(); })
+										  [](const auto& a, const auto& b) { return a.Name.length() < b.Name.length(); })
 		->Name.length();
 
 	std::sort(_metaCommands.begin(), _metaCommands.end(),
-		[](const auto& a, const auto& b) { return a.Name < b.Name; });
+			  [](const auto& a, const auto& b) { return a.Name < b.Name; });
 
 	auto writer = MCF::TextWriter(std::cout);
 	for (const auto& it : _metaCommands)
@@ -574,21 +574,21 @@ McfRepl::McfRepl()
 	:Repl()
 {
 	_metaCommands.emplace_back("exit", "Exits the REPL.",
-		[this] { EvaluateExit(); });
+							   [this] { EvaluateExit(); });
 	_metaCommands.emplace_back("cls", "Clears the screen.",
-		[this] { EvaluateCls(); });
+							   [this] { EvaluateCls(); });
 	_metaCommands.emplace_back("ls", "Lists all symbols",
-		[this] { EvaluateLs(); });
+							   [this] { EvaluateLs(); });
 	_metaCommands.emplace_back("showTree", "Shows the parse tree.",
-		[this] { EvaluateShowTree(); });
+							   [this] { EvaluateShowTree(); });
 	_metaCommands.emplace_back("showProgram", "Shows the bound tree.",
-		[this] { EvaluateShowProgram(); });
+							   [this] { EvaluateShowProgram(); });
 	_metaCommands.emplace_back("reset", "Clears all previous submissions.",
-		[this] { EvaluateReset(); });
+							   [this] { EvaluateReset(); });
 	_metaCommands.emplace_back("dump", "Shows bound tree of a given function.",
-		[this](std::string_view name) { EvaluateDump(name); }, 1);
+							   [this](std::string_view name) { EvaluateDump(name); }, 1);
 	_metaCommands.emplace_back("load", "Loads a script file",
-		[this](std::string_view path) { EvaluateLoad(path); }, 1);
+							   [this](std::string_view path) { EvaluateLoad(path); }, 1);
 
 	LoadSubmissions();
 }
@@ -602,7 +602,7 @@ bool McfRepl::RenderLine(const Document & lines, size_t index, bool resetState)c
 	if (resetState)
 	{
 		auto text = MCF::StringJoin(lines.cbegin(), lines.cend(), NEW_LINE);
-		tree = std::make_unique<MCF::SyntaxTree>(MCF::SyntaxTree::Parse(text));
+		tree = MCF::SyntaxTree::Parse(text);
 	}
 
 	auto lineSpan = tree->Text().Lines()[index].Span();
@@ -656,19 +656,19 @@ void McfRepl::EvaluateLs()
 
 	auto symbols = compilation->GetSymbols();
 	std::sort(symbols.begin(), symbols.end(),
-		[](const auto& a, const auto& b)
-		{
-			if (a->Kind() == b->Kind())
-				return a->Name() < b->Name();
-			else
-				return a->Kind() < b->Kind();
-		});
+			  [](const auto& a, const auto& b)
+			  {
+				  if (a->Kind() == b->Kind())
+					  return a->Name() < b->Name();
+				  else
+					  return a->Kind() < b->Kind();
+			  });
 	std::for_each(symbols.cbegin(), symbols.cend(),
-		[](const auto& it)
-		{
-			it->WriteTo(std::cout);
-			std::cout << '\n';
-		});
+				  [](const auto& it)
+				  {
+					  it->WriteTo(std::cout);
+					  std::cout << '\n';
+				  });
 }
 
 void McfRepl::EvaluateReset()
@@ -696,11 +696,11 @@ void McfRepl::EvaluateDump(std::string_view name)const
 	auto symbols = compilation->GetSymbols();
 	auto func =
 		std::find_if(symbols.cbegin(), symbols.cend(),
-			[name](const auto& it)
-			{
-				return it->Kind() == MCF::SymbolKind::Function
-					&& it->Name() == name;
-			});
+					 [name](const auto& it)
+					 {
+						 return it->Kind() == MCF::SymbolKind::Function
+							 && it->Name() == name;
+					 });
 	if (func == symbols.cend())
 	{
 		MCF::SetConsoleColor(MCF::ConsoleColor::Red);
@@ -786,8 +786,8 @@ bool McfRepl::IsCompleteSubmission(std::string_view text) const
 	if (lastTwoLinesAreBlank()) return true;
 
 	auto tree = MCF::SyntaxTree::Parse(text);
-	auto last = tree.Root()->Members().empty() ?
-		nullptr : tree.Root()->Members().back().get();
+	auto last = tree->Root()->Members().empty() ?
+		nullptr : tree->Root()->Members().back().get();
 	if (last == nullptr || last->GetLastToken().IsMissing())
 		return false;
 	return true;
@@ -803,7 +803,7 @@ void McfRepl::EvaluateSubmission(std::string_view text)
 	auto syntaxTree = MCF::SyntaxTree::Parse(text);
 
 	auto compilation = MCF::Compilation::CreateScript(std::move(_previous),
-		std::make_unique<MCF::SyntaxTree>(std::move(syntaxTree)));
+													  std::move(syntaxTree));
 
 	if (_showTree)
 		compilation.SyntaxTrees().back()->Root()->WriteTo(std::cout);

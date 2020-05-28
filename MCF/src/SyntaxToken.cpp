@@ -11,7 +11,7 @@
 namespace MCF {
 
 void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
-	string indent, bool isLast)
+							 string indent, bool isLast)
 {
 	if (node == nullptr)
 		return;
@@ -85,6 +85,31 @@ void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
 	}
 }
 
+const SyntaxNode* SyntaxNode::Parent()const
+{
+	return _tree->GetParent(*this);
+}
+
+vector<const SyntaxNode*> SyntaxNode::Ancestors()const
+{
+	auto result = AncestorsAndSelf();
+	result.erase(result.cbegin());
+	return result;
+}
+
+vector<const SyntaxNode*> SyntaxNode::AncestorsAndSelf()const
+{
+	auto result = vector<const SyntaxNode*>();
+	auto node = this;
+	while (node != nullptr)
+	{
+		result.push_back(node);
+		node = node->Parent();
+	}
+
+	return result;
+}
+
 TextSpan SyntaxNode::Span() const
 {
 	auto children = GetChildren();
@@ -147,7 +172,7 @@ const vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 SyntaxToken SyntaxToken::Clone() const
 {
 	return SyntaxToken(Tree(), _kind, _position, _text, _value,
-		_leadingTrivia, _trailingTrivia);
+					   _leadingTrivia, _trailingTrivia);
 }
 
 TextSpan SyntaxToken::Span() const

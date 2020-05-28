@@ -133,6 +133,11 @@ public:
 	{
 		return SourceText(std::move(text), std::move(path));
 	}
+	static SourceText From(string_view text, fs::path path = {})
+	{
+		return SourceText(string(text), std::move(path));
+	}
+
 };
 
 class TextLocation

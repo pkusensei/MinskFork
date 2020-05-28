@@ -4,6 +4,8 @@
 
 namespace MCF {
 
+class SyntaxNode;
+
 enum class BoundNodeKind
 {
 	// Statements
@@ -37,10 +39,20 @@ string_view nameof(BoundNodeKind kind);
 
 class BoundNode
 {
+private:
+	const SyntaxNode* _syntax;
+
+protected:
+	BoundNode(const SyntaxNode* syntax)
+		:_syntax(syntax)
+	{
+	}
+
 public:
 	virtual ~BoundNode() = default;
 	virtual BoundNodeKind Kind() const noexcept = 0;
 
+	constexpr const SyntaxNode* Syntax()const noexcept { return _syntax; }
 	void WriteTo(std::ostream& out)const;
 	string ToString() const;
 };

@@ -35,10 +35,13 @@ public:
 	virtual SyntaxKind Kind() const noexcept = 0;
 	virtual TextSpan Span()const;
 	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
+	
+	constexpr const SyntaxTree& Tree()const noexcept { return *_tree; }
+	const SyntaxNode* Parent()const;
+	vector<const SyntaxNode*> Ancestors()const;
+	vector<const SyntaxNode*> AncestorsAndSelf()const;
 
 	virtual TextSpan FullSpan()const;
-
-	constexpr const SyntaxTree& Tree()const noexcept { return *_tree; }
 	TextLocation Location()const;
 	const SyntaxToken& GetLastToken()const;
 

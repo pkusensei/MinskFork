@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <optional>
+#include <unordered_map>
 
 #include "SyntaxStatements.h"
 
@@ -56,7 +57,7 @@ private:
 
 public:
 	ParameterSyntax(const SyntaxTree& tree,
-		SyntaxToken identifier, TypeClauseSyntax type)
+					SyntaxToken identifier, TypeClauseSyntax type)
 		:SyntaxNode(tree),
 		_identifier(std::move(identifier)), _type(std::move(type))
 	{
@@ -83,11 +84,11 @@ private:
 
 public:
 	FunctionDeclarationSyntax(const SyntaxTree& tree, SyntaxToken funcKeyword, SyntaxToken identifier,
-		SyntaxToken openParenthesisToken,
-		SeparatedSyntaxList<ParameterSyntax> params,
-		SyntaxToken closeParenthesisToken,
-		std::optional<TypeClauseSyntax> type,
-		unique_ptr<BlockStatementSyntax> body)
+							  SyntaxToken openParenthesisToken,
+							  SeparatedSyntaxList<ParameterSyntax> params,
+							  SyntaxToken closeParenthesisToken,
+							  std::optional<TypeClauseSyntax> type,
+							  unique_ptr<BlockStatementSyntax> body)
 		:MemberSyntax(tree),
 		_funcKeyword(std::move(funcKeyword)), _identifier(std::move(identifier)),
 		_openParenthesisToken(std::move(openParenthesisToken)),
@@ -137,7 +138,7 @@ private:
 
 public:
 	CompilationUnitSyntax(const SyntaxTree& tree, vector<unique_ptr<MemberSyntax>> members,
-		SyntaxToken endOfFile)
+						  SyntaxToken endOfFile)
 		:SyntaxNode(tree),
 		_members(std::move(members)), _endOfFileToken(std::move(endOfFile))
 	{
@@ -159,7 +160,12 @@ private:
 	unique_ptr<CompilationUnitSyntax> _root;
 	unique_ptr<DiagnosticBag> _diagnostics;
 
-	vector<SyntaxTree> _usings;
+	// NOTE by the time _parents gets "filled in" in GetParent()
+	//      AST is already constructed and should remain const
+	//      _parents serves as a side-effect, not directly related to AST
+	mutable std::unordered_map<const SyntaxNode*, const SyntaxNode*> _parents;
+
+	vector<unique_ptr<SyntaxTree>> _usings;
 
 	template<typename ParseHandle,
 		typename = std::enable_if_t<std::is_invocable_v<ParseHandle, const SyntaxTree&>>>
@@ -173,7 +179,7 @@ private:
 	}
 
 	static auto ParseTree(const SyntaxTree&)->
-		std::tuple<unique_ptr<CompilationUnitSyntax>, vector<SyntaxTree>, unique_ptr<DiagnosticBag>>;
+		std::tuple<unique_ptr<CompilationUnitSyntax>, vector<unique_ptr<SyntaxTree>>, unique_ptr<DiagnosticBag>>;
 
 public:
 
@@ -188,21 +194,23 @@ public:
 	const DiagnosticBag& Diagnostics() const& noexcept { return *_diagnostics; }
 	[[nodiscard]] DiagnosticBag&& Diagnostics() const&& noexcept { return std::move(*_diagnostics); }
 
-	[[nodiscard]] static SyntaxTree Load(const fs::path& path);
+	const SyntaxNode* GetParent(const SyntaxNode& node)const;
 
-	[[nodiscard]] static SyntaxTree Parse(string_view text);
-	[[nodiscard]] static SyntaxTree Parse(unique_ptr<SourceText> text);
+	[[nodiscard]] static unique_ptr<SyntaxTree> Load(const fs::path& path);
+
+	[[nodiscard]] static unique_ptr<SyntaxTree> Parse(string_view text);
+	[[nodiscard]] static unique_ptr<SyntaxTree> Parse(unique_ptr<SourceText> text);
 
 	[[nodiscard]] static std::pair<vector<SyntaxToken>, SyntaxTree>
 		ParseTokens(string_view text, bool includeEndOfFile = false);
 	[[nodiscard]] static std::pair<vector<SyntaxToken>, SyntaxTree>
 		ParseTokens(string_view text, DiagnosticBag& diagnostics,
-			bool includeEndOfFile = false);
+					bool includeEndOfFile = false);
 	[[nodiscard]] static std::pair<vector<SyntaxToken>, SyntaxTree>
 		ParseTokens(unique_ptr<SourceText> text, bool includeEndOfFile = false);
 	[[nodiscard]] static std::pair<vector<SyntaxToken>, SyntaxTree>
 		ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics,
-			bool includeEndOfFile = false);
+					bool includeEndOfFile = false);
 
 	[[nodiscard]] static vector<unique_ptr<SyntaxTree>> Flatten(unique_ptr<SyntaxTree> tree);
 

@@ -1,6 +1,7 @@
 #include "ControlFlowGraph.h"
 
 #include <algorithm>
+#include <cassert>
 #include <sstream>
 
 #include "BoundExpressions.h"
@@ -85,7 +86,7 @@ ControlFlowGraph::BasicBlockBuilder::Build(const BoundBlockStatement* block)
 				break;
 			default:
 				throw std::invalid_argument(BuildStringFrom("Unexpected statement: "
-					, nameof(statement->Kind())));
+															, nameof(statement->Kind())));
 		}
 	}
 	EndBlock();
@@ -102,7 +103,7 @@ private:
 	unique_ptr<BasicBlock> _end;
 
 	void Connect(BasicBlock& from, BasicBlock& to,
-		const std::optional<shared_ptr<BoundExpression>>& condition = std::nullopt);
+				 const std::optional<shared_ptr<BoundExpression>>& condition = std::nullopt);
 	void RemoveBlock(vector<unique_ptr<BasicBlock>>& blocks, BasicBlock& block);
 	shared_ptr<BoundExpression> Negate(const shared_ptr<BoundExpression>& condition)const;
 
@@ -117,7 +118,7 @@ public:
 };
 
 void ControlFlowGraph::GraphBuilder::Connect(BasicBlock& from, BasicBlock& to,
-	const std::optional<shared_ptr<BoundExpression>>& condition)
+											 const std::optional<shared_ptr<BoundExpression>>& condition)
 {
 	auto ptr = condition.value_or(nullptr);
 	auto p = std::dynamic_pointer_cast<BoundLiteralExpression>(ptr);
@@ -150,7 +151,7 @@ void VectorErase_If(vector<T>& vec, Pred pred)
 }
 
 void ControlFlowGraph::GraphBuilder::RemoveBlock(vector<unique_ptr<BasicBlock>>& blocks,
-	BasicBlock& block)
+												 BasicBlock& block)
 {
 	auto capturePtrToErase = [](const auto* p)
 	{
@@ -175,21 +176,17 @@ void ControlFlowGraph::GraphBuilder::RemoveBlock(vector<unique_ptr<BasicBlock>>&
 shared_ptr<BoundExpression> ControlFlowGraph::GraphBuilder::Negate(
 	const shared_ptr<BoundExpression>& condition) const
 {
-	if (condition->Kind() == BoundNodeKind::LiteralExpression)
-	{
-		try
-		{
-			auto p = static_cast<const BoundLiteralExpression*>(condition.get());
-			auto value = p->Value().ToBoolean();
-			return make_shared<BoundLiteralExpression>(!value);
-		} catch (...)
-		{
-			;// NOTE discard exception
-		}
-	}
+	assert(condition->Type() == TYPE_BOOL);
 
 	auto op = BoundUnaryOperator::Bind(SyntaxKind::BangToken, TYPE_BOOL);
-	return make_shared<BoundUnaryExpression>(op, condition);
+	assert(op.IsUseful());
+
+	auto s = condition->Syntax();
+	auto negated = make_shared<BoundUnaryExpression>(s, op, std::move(condition));
+
+	if (negated->ConstantValue().HasValue())
+		return make_shared<BoundLiteralExpression>(s, negated->ConstantValue());
+	return negated;
 }
 
 ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBlock>>& blocks)
@@ -257,7 +254,7 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 				}
 				default:
 					throw std::invalid_argument(BuildStringFrom("Unexpected statement: "
-						, nameof(statement->Kind())));
+																, nameof(statement->Kind())));
 			}
 		}
 	}
@@ -315,8 +312,8 @@ void ControlFlowGraph::WriteTo(std::ostream& out) const
 }
 
 ControlFlowGraph::ControlFlowGraph(BasicBlock* start, BasicBlock* end,
-	vector<unique_ptr<BasicBlock>>& blocks,
-	vector<unique_ptr<BasicBlockBranch>>& branches)
+								   vector<unique_ptr<BasicBlock>>& blocks,
+								   vector<unique_ptr<BasicBlockBranch>>& branches)
 	:_start(start), _end(end), _blocks(std::move(blocks)),
 	_branches(std::move(branches))
 {

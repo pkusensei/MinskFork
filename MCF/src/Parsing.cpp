@@ -1,6 +1,7 @@
 #include "Parsing.h"
 
 #include <fstream>
+#include <mutex>
 
 #include "Diagnostic.h"
 #include "ReflectionHelper.h"
@@ -122,7 +123,7 @@ SyntaxToken Lexer::Lex()
 		tkText = _text.ToString(tkStart, tkLength);
 
 	return SyntaxToken(_tree, tkKind, tkStart, tkText, std::move(tkValue),
-		std::move(leading), std::move(trailing));
+					   std::move(leading), std::move(trailing));
 }
 
 void Lexer::ReadTrivia(bool leading)
@@ -497,7 +498,7 @@ void Lexer::ReadNumberToken()
 	{
 		auto span = TextSpan(_start, length);
 		_diagnostics.ReportInvalidNumber(TextLocation(_text, std::move(span)),
-			text, TYPE_INT);
+										 text, TYPE_INT);
 	}
 }
 
@@ -520,7 +521,7 @@ private:
 	size_t _position;
 	DiagnosticBag _diagnostics;
 
-	vector<SyntaxTree> _usings;
+	vector<unique_ptr<SyntaxTree>> _usings;
 
 	const SyntaxToken& Peek(int offset = 0) const;
 	const SyntaxToken& Current() const;
@@ -573,7 +574,7 @@ public:
 	[[nodiscard]] DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
 
 	[[nodiscard]] unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
-	[[nodiscard]] vector<SyntaxTree> Usings() && noexcept { return std::move(_usings); }
+	[[nodiscard]] vector<unique_ptr<SyntaxTree>> Usings() && noexcept { return std::move(_usings); }
 };
 
 Parser::Parser(const SyntaxTree& tree)
@@ -606,7 +607,7 @@ Parser::Parser(const SyntaxTree& tree)
 					}
 
 					leading.emplace(leading.cbegin() + index,
-						tree, SyntaxKind::SkippedTextTrivia, tk.Position(), tk.Text());
+									tree, SyntaxKind::SkippedTextTrivia, tk.Position(), tk.Text());
 					++index;
 
 					for (const auto& tt : tk.TrailingTrivia())
@@ -617,7 +618,7 @@ Parser::Parser(const SyntaxTree& tree)
 				}
 				badTokens.clear();
 				_tokens.emplace_back(token.Tree(), token.Kind(), token.Position(), token.Text(),
-					token.Value(), std::move(leading), token.TrailingTrivia());
+									 token.Value(), std::move(leading), token.TrailingTrivia());
 			} else
 				_tokens.push_back(std::move(token));
 		}
@@ -653,7 +654,7 @@ SyntaxToken Parser::MatchToken(SyntaxKind kind)
 		return NextToken().Clone();
 	_diagnostics.ReportUnexpectedToken(current.Location(), current.Kind(), kind);
 	return SyntaxToken(_tree, kind, current.Position(), string(), NULL_VALUE,
-		vector<SyntaxTrivia>(), vector<SyntaxTrivia>());
+					   vector<SyntaxTrivia>(), vector<SyntaxTrivia>());
 }
 
 vector<unique_ptr<MemberSyntax>> Parser::ParseMembers()
@@ -702,8 +703,8 @@ SeparatedSyntaxList<ParameterSyntax> Parser::ParseParameterList()
 	auto parseNextParameter = true;
 
 	while (parseNextParameter
-		&& Current().Kind() != SyntaxKind::CloseParenthesisToken
-		&& Current().Kind() != SyntaxKind::EndOfFileToken)
+		   && Current().Kind() != SyntaxKind::CloseParenthesisToken
+		   && Current().Kind() != SyntaxKind::EndOfFileToken)
 	{
 		auto param = ParseParameter();
 		nodes.push_back(std::move(param));
@@ -788,7 +789,7 @@ unique_ptr<BlockStatementSyntax> Parser::ParseBlockStatement()
 	auto openBraceToken = MatchToken(SyntaxKind::OpenBraceToken);
 
 	while (Current().Kind() != SyntaxKind::EndOfFileToken
-		&& Current().Kind() != SyntaxKind::CloseBraceToken)
+		   && Current().Kind() != SyntaxKind::CloseBraceToken)
 	{
 		auto startToken = Current();
 
@@ -952,7 +953,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 	{
 		left = ParsePrimaryExpression();
 		while (Current().Kind() == SyntaxKind::PlusPlusToken
-			|| Current().Kind() == SyntaxKind::MinusMinusToken)
+			   || Current().Kind() == SyntaxKind::MinusMinusToken)
 		{
 			if (left->Kind() != SyntaxKind::ParenthesizedExpression
 				&& left->Kind() != SyntaxKind::PostfixExpression
@@ -987,20 +988,20 @@ unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(unique_ptr<Expressio
 		auto pre = static_cast<ParenthesizedExpressionSyntax*>(expression.get());
 		auto ae = static_cast<const AssignmentExpressionSyntax*>(pre->Expression());
 		return make_unique<PostfixExpressionSyntax>(_tree, ae->IdentifierToken(),
-			operatorToken, std::move(expression));
+													operatorToken, std::move(expression));
 	} else if (expression->Kind() == SyntaxKind::PostfixExpression)
 	{
 		auto pfe = static_cast<PostfixExpressionSyntax*>(expression.get());
 		return make_unique<PostfixExpressionSyntax>(_tree, pfe->IdentifierToken(),
-			operatorToken, std::move(expression));
+													operatorToken, std::move(expression));
 	} else if (expression->Kind() == SyntaxKind::NameExpression)
 	{
 		auto ne = static_cast<NameExpressionSyntax*>(expression.get());
 		return make_unique<PostfixExpressionSyntax>(_tree, ne->IdentifierToken(),
-			operatorToken, std::move(expression));
+													operatorToken, std::move(expression));
 	} else
 		throw std::invalid_argument(BuildStringFrom("Unexpected expression: ",
-			nameof(expression->Kind())));
+													nameof(expression->Kind())));
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParsePrimaryExpression()
@@ -1076,8 +1077,8 @@ SeparatedSyntaxList<ExpressionSyntax> Parser::ParseArguments()
 	auto parseNextArgument = true;
 
 	while (parseNextArgument
-		&& Current().Kind() != SyntaxKind::CloseParenthesisToken
-		&& Current().Kind() != SyntaxKind::EndOfFileToken)
+		   && Current().Kind() != SyntaxKind::CloseParenthesisToken
+		   && Current().Kind() != SyntaxKind::EndOfFileToken)
 	{
 		auto expression = ParseExpression();
 		nodesAndSeparators.push_back(std::move(expression));
@@ -1117,7 +1118,7 @@ SyntaxTree& SyntaxTree::operator=(SyntaxTree&& other) = default;
 SyntaxTree::~SyntaxTree() = default;
 
 auto SyntaxTree::ParseTree(const SyntaxTree& tree)->
-std::tuple<unique_ptr<CompilationUnitSyntax>, vector<SyntaxTree>, unique_ptr<DiagnosticBag>>
+std::tuple<unique_ptr<CompilationUnitSyntax>, vector<unique_ptr<SyntaxTree>>, unique_ptr<DiagnosticBag>>
 {
 	auto parser = Parser(tree);
 	auto root = parser.ParseCompilationUnit();
@@ -1126,7 +1127,54 @@ std::tuple<unique_ptr<CompilationUnitSyntax>, vector<SyntaxTree>, unique_ptr<Dia
 	return { std::move(root), std::move(usings), std::move(bag) };
 }
 
-SyntaxTree SyntaxTree::Load(const fs::path& path)
+namespace {
+
+void CreateParentsMap(std::unordered_map<const SyntaxNode*, const SyntaxNode*>& result,
+					  const SyntaxNode* node)
+{
+	for (const auto child : node->GetChildren())
+	{
+		result.emplace(child, node);
+		CreateParentsMap(result, child);
+	}
+}
+
+auto CreateParentsMap(const CompilationUnitSyntax* root)
+->std::unordered_map<const SyntaxNode*, const SyntaxNode*>
+{
+	auto result = std::unordered_map<const SyntaxNode*, const SyntaxNode*>();
+	result.emplace(root, nullptr);
+	CreateParentsMap(result, root);
+	return result;
+}
+
+} // namespace
+
+const SyntaxNode* SyntaxTree::GetParent(const SyntaxNode& node)const
+{
+	while (_parents.empty())
+	{
+		auto tmp = CreateParentsMap(_root.get());
+
+		std::mutex mtx;
+		auto lock = std::unique_lock<std::mutex>(mtx, std::defer_lock);
+
+		if (lock.try_lock() && _parents.empty())
+			_parents.swap(tmp);
+	}
+
+	return _parents.at(&node);
+}
+
+
+// NOTE const SyntaxTree* is kept in BoundNodes to map BoundNode to SyntaxNode.
+//      But SyntaxTree gets moved around after its construction.
+//      To keep such record validate, SyntaxTree has to be kept on the heap
+//      so that its address remains constant.
+//      Also, ParseTokens() methods are directed to tests
+//      which do not require such record of SyntaxTree yet.
+
+unique_ptr<SyntaxTree> SyntaxTree::Load(const fs::path& path)
 {
 	auto file = std::ifstream(path);
 	auto ss = std::stringstream();
@@ -1135,28 +1183,28 @@ SyntaxTree SyntaxTree::Load(const fs::path& path)
 	return Parse(std::move(sourceText));
 }
 
-SyntaxTree SyntaxTree::Parse(string_view text)
+unique_ptr<SyntaxTree> SyntaxTree::Parse(string_view text)
 {
-	auto sourceText = make_unique<SourceText>(SourceText::From(string(text)));
+	auto sourceText = make_unique<SourceText>(SourceText::From(text));
 	return Parse(std::move(sourceText));
 }
 
-SyntaxTree SyntaxTree::Parse(unique_ptr<SourceText> text)
+unique_ptr<SyntaxTree> SyntaxTree::Parse(unique_ptr<SourceText> text)
 {
-	return SyntaxTree(std::move(text), ParseTree);
+	return unique_ptr<SyntaxTree>(new SyntaxTree(std::move(text), ParseTree));
 }
 
 std::pair<vector<SyntaxToken>, SyntaxTree>
 SyntaxTree::ParseTokens(string_view text, bool includeEndOfFile)
 {
-	auto source = make_unique<SourceText>(SourceText::From(string(text)));
+	auto source = make_unique<SourceText>(SourceText::From(text));
 	return ParseTokens(std::move(source), includeEndOfFile);
 }
 
 std::pair<vector<SyntaxToken>, SyntaxTree>
 SyntaxTree::ParseTokens(string_view text, DiagnosticBag& diagnostics, bool includeEndOfFile)
 {
-	auto source = make_unique<SourceText>(SourceText::From(string(text)));
+	auto source = make_unique<SourceText>(SourceText::From(text));
 	return ParseTokens(std::move(source), diagnostics, includeEndOfFile);
 }
 
@@ -1181,7 +1229,7 @@ SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics,
 			auto token = lexer.Lex();
 			if (token.Kind() == SyntaxKind::EndOfFileToken)
 				root = make_unique<CompilationUnitSyntax>(tree,
-					vector<unique_ptr<MemberSyntax>>(), token.Clone());
+														  vector<unique_ptr<MemberSyntax>>(), token.Clone());
 
 			if (token.Kind() != SyntaxKind::EndOfFileToken || includeEndOfFile)
 				tokens.push_back(std::move(token));
@@ -1189,7 +1237,7 @@ SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics,
 				break;
 		}
 		auto diags = make_unique<DiagnosticBag>(std::move(lexer).Diagnostics());
-		return std::make_tuple(std::move(root), vector<SyntaxTree>(), std::move(diags));
+		return std::make_tuple(std::move(root), vector<unique_ptr<SyntaxTree>>(), std::move(diags));
 	};
 
 	auto tree = SyntaxTree(std::move(text), parseTokens);
@@ -1201,18 +1249,14 @@ vector<unique_ptr<SyntaxTree>> SyntaxTree::Flatten(unique_ptr<SyntaxTree> tree)
 {
 	auto result = vector<unique_ptr<SyntaxTree>>();
 
-	// Different bahaviors of move ctors between unique_ptr and SyntaxTree
-	// i.e. moved-from unique_ptr == nullptr
-	// whereas SyntaxTree needs a check as such.
-	// Otherwise the flatten process introcudes an empty unique_ptr<SyntaxTree>
-	if (tree == nullptr || tree->_text == nullptr)
+	if (tree == nullptr)
 		return result;
 
 	for (auto& u : tree->_usings)
 	{
-		auto trees = Flatten(make_unique<SyntaxTree>(std::move(u)));
+		auto trees = Flatten(std::move(u));
 		result.insert(result.end(), std::make_move_iterator(trees.begin()),
-			std::make_move_iterator(trees.end()));
+					  std::make_move_iterator(trees.end()));
 	}
 
 	result.push_back(std::move(tree));

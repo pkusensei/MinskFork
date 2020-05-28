@@ -1,7 +1,6 @@
 #pragma once
 
 #include <filesystem>
-#include <mutex>
 #include <unordered_map>
 
 #include "Symbols.h"
@@ -51,24 +50,22 @@ private:
 	unique_ptr<BoundGlobalScope> _globalScope;
 	unique_ptr<DiagnosticBag> _diagnostics;
 
-	std::mutex _mtx;
-
 	[[nodiscard]] unique_ptr<BoundProgram> GetProgram();
 
 	explicit Compilation(bool isScript, unique_ptr<Compilation> previous = nullptr,
-		vector<unique_ptr<SyntaxTree>> trees = {});
+						 vector<unique_ptr<SyntaxTree>> trees = {});
 
 public:
 
-	Compilation(Compilation&& other) noexcept;
-	Compilation& operator=(Compilation&& other) = delete;
+	Compilation(Compilation&& other);
+	Compilation& operator=(Compilation&&) = delete;
 	Compilation(const Compilation&) = delete;
 	Compilation& operator=(const Compilation&) = delete;
 	~Compilation();
 
 	[[nodiscard]] static Compilation Create(unique_ptr<SyntaxTree> tree);
 	[[nodiscard]] static Compilation CreateScript(unique_ptr<Compilation> previous,
-		unique_ptr<SyntaxTree> tree);
+												  unique_ptr<SyntaxTree> tree);
 
 	constexpr bool IsScript()const noexcept { return _isScript; }
 	Compilation* Previous() noexcept { return _previous.get(); }

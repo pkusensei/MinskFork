@@ -22,7 +22,7 @@ TEST_CASE("Parser honors precedences in BinaryExpression", "[Parser]")
 		auto op2Text = MCF::GetText(k2);
 		auto text = MCF::BuildStringFrom("a ", op1Text, " b ", op2Text, " c");
 		auto tree = MCF::SyntaxTree::Parse(text);
-		auto expression = ParseExpression(tree);
+		auto expression = ParseExpression(*tree);
 		auto e = AssertingHelper(expression);
 
 		if (op1Precedence >= op2Precedence)
@@ -64,7 +64,7 @@ TEST_CASE("Parser honors precedences in UinaryExpression", "[Parser]")
 		auto binaryText = MCF::GetText(k2);
 		auto text = MCF::BuildStringFrom(unaryText, " a ", binaryText, " b");
 		auto tree = MCF::SyntaxTree::Parse(text);
-		auto expression = ParseExpression(tree);
+		auto expression = ParseExpression(*tree);
 		auto e = AssertingHelper(expression);
 
 		if (unaryPrecedence >= binaryPrecedence)
@@ -96,7 +96,7 @@ TEST_CASE("Parser honors precedences in PostfixExpression", "[Parser]")
 {
 	std::string text = "a---b";
 	auto tree = MCF::SyntaxTree::Parse(text);
-	auto expression = ParseExpression(tree);
+	auto expression = ParseExpression(*tree);
 	auto e = AssertingHelper(expression);
 
 	e.AssertNode(MCF::SyntaxKind::BinaryExpression);

@@ -95,7 +95,8 @@ TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 		{ "{var x = 41 x++ return x }", 42 },
 		{ "{var x = 3 return x---5 }", -3 },
 
-			}));
+												}));
+
 	SECTION("One evaluation")
 	{
 		AssertValue(input, expected);
@@ -605,7 +606,7 @@ namespace {
 
 void AssertValue(std::string_view text, const MCF::ValueType& value)
 {
-	auto tree = std::make_unique<MCF::SyntaxTree>(MCF::SyntaxTree::Parse(text));
+	auto tree = MCF::SyntaxTree::Parse(text);
 	auto compilation = MCF::Compilation::CreateScript(nullptr, std::move(tree));
 	MCF::VarMap variables;
 	auto result = compilation.Evaluate(variables);
@@ -617,8 +618,7 @@ void AssertValue(std::string_view text, const MCF::ValueType& value)
 void AssertDiagnostics(std::string_view text, std::string_view diagnosticText)
 {
 	auto annotatedText = AnnotatedText::Parse(text);
-	auto tree =
-		std::make_unique<MCF::SyntaxTree>(MCF::SyntaxTree::Parse(annotatedText.Text()));
+	auto tree = MCF::SyntaxTree::Parse(annotatedText.Text());
 	auto compilation = MCF::Compilation::CreateScript(nullptr, std::move(tree));
 	MCF::VarMap variables;
 	auto result = compilation.Evaluate(variables);
