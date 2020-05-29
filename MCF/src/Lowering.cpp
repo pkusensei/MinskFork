@@ -15,10 +15,31 @@ namespace MCF {
 
 namespace {
 
-shared_ptr<BoundBlockStatement> Block(const SyntaxNode* syntax,
-									  vector<shared_ptr<BoundStatement>> statements)
+template<typename Elem, typename T, typename... Args>
+auto MakeVec(T&& t, Args&&... args)
 {
-	return make_shared<BoundBlockStatement>(syntax, std::move(statements));
+	using Base = typename Elem::element_type;
+	using Derived = typename std::remove_reference_t<T>::element_type;
+	static_assert(std::is_base_of_v<Base, Derived>);
+
+	auto result = vector<Elem>();
+	result.push_back(std::forward<T>(t));
+
+	if constexpr (sizeof...(Args) > 0)
+	{
+		auto r = MakeVec<Elem>(std::forward<Args>(args)...);
+		result.insert(result.end(),
+					  std::make_move_iterator(r.begin()), std::make_move_iterator(r.end()));
+	}
+	return result;
+}
+
+template<typename... Args>
+shared_ptr<BoundBlockStatement> Block(const SyntaxNode* syntax,
+									  Args&&... statements)
+{
+	auto vec = MakeVec<shared_ptr<BoundStatement>>(std::forward<Args>(statements)...);
+	return make_shared<BoundBlockStatement>(syntax, std::move(vec));
 }
 
 shared_ptr<BoundVariableDeclaration> VariableDeclaration(const SyntaxNode* syntax,
@@ -96,6 +117,7 @@ shared_ptr<BoundBinaryExpression> Binary(const SyntaxNode* syntax,
 										 shared_ptr<BoundExpression> right)
 {
 	auto op = BoundBinaryOperator::Bind(kind, left->Type(), right->Type());
+	assert(op.IsUseful());
 	return make_shared<BoundBinaryExpression>(syntax, std::move(left),
 											  std::move(op), std::move(right));
 }
@@ -306,8 +328,10 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteForStatement(shared_ptr<Bou
 		&& body == node->Body())
 		return node;
 	auto s = node->Syntax();
-	return make_shared<BoundForStatement>(s, node->Variable(), std::move(lowerBound),
-										  std::move(upperBound), body, node->BreakLabel(), node->ContinueLabel());
+	return make_shared<BoundForStatement>(s, node->Variable(),
+										  std::move(lowerBound), std::move(upperBound),
+										  std::move(body),
+										  node->BreakLabel(), node->ContinueLabel());
 }
 
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteLabelStatement(shared_ptr<BoundLabelStatement> node)
@@ -497,19 +521,19 @@ BoundLabel Lowerer::GenerateLabel()
 	return BoundLabel(std::move(name));
 }
 
-
 shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStatement> node)
 {
 	if (node->ElseStatement() == nullptr)
 	{
 		auto endLabel = GenerateLabel();
+
+		// NOTE the evaluation order of function arguments is unspecified
+		//      A std::move here might invalidate any BoundLabel
 		auto result = Block(
 			node->Syntax(),
-			{
-				GotoFalse(node->Syntax(), endLabel, node->Condition()),
-				node->ThenStatement(),
-				Label(node->Syntax(),std::move(endLabel))
-			}
+			GotoFalse(node->Syntax(), endLabel, node->Condition()),
+			node->ThenStatement(),
+			Label(node->Syntax(), endLabel)
 		);
 		return RewriteStatement(std::move(result));
 	} else
@@ -518,14 +542,12 @@ shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStateme
 		auto endLabel = GenerateLabel();
 		auto result = Block(
 			node->Syntax(),
-			{
-				GotoFalse(node->Syntax(), elseLabel, node->Condition()),
-				node->ThenStatement(),
-				Goto(node->Syntax(), endLabel),
-				Label(node->Syntax(), elseLabel),
-				node->ElseStatement(),
-				Label(node->Syntax(), endLabel)
-			}
+			GotoFalse(node->Syntax(), elseLabel, node->Condition()),
+			node->ThenStatement(),
+			Goto(node->Syntax(), endLabel),
+			Label(node->Syntax(), elseLabel),
+			node->ElseStatement(),
+			Label(node->Syntax(), endLabel)
 		);
 
 		return RewriteStatement(std::move(result));
@@ -537,14 +559,12 @@ shared_ptr<BoundStatement> Lowerer::RewriteWhileStatement(shared_ptr<BoundWhileS
 	auto bodyLabel = GenerateLabel();
 	auto result = Block(
 		node->Syntax(),
-		{
-			Goto(node->Syntax(), node->ContinueLabel()),
-			Label(node->Syntax(), bodyLabel),
-			node->Body(),
-			Label(node->Syntax(), node->ContinueLabel()),
-			GotoTrue(node->Syntax(), std::move(bodyLabel), node->Condition()),
-			Label(node->Syntax(), node->BreakLabel())
-		}
+		Goto(node->Syntax(), node->ContinueLabel()),
+		Label(node->Syntax(), bodyLabel),
+		node->Body(),
+		Label(node->Syntax(), node->ContinueLabel()),
+		GotoTrue(node->Syntax(), bodyLabel, node->Condition()),
+		Label(node->Syntax(), node->BreakLabel())
 	);
 
 	return RewriteStatement(std::move(result));
@@ -555,13 +575,11 @@ shared_ptr<BoundStatement> Lowerer::RewriteDoWhileStatement(shared_ptr<BoundDoWh
 	auto bodyLabel = GenerateLabel();
 	auto result = Block(
 		node->Syntax(),
-		{
-			Label(node->Syntax(), bodyLabel),
-			node->Body(),
-			Label(node->Syntax(), node->ContinueLabel()),
-			GotoTrue(node->Syntax(), std::move(bodyLabel), node->Condition()),
-			Label(node->Syntax(), node->BreakLabel())
-		}
+		Label(node->Syntax(), bodyLabel),
+		node->Body(),
+		Label(node->Syntax(), node->ContinueLabel()),
+		GotoTrue(node->Syntax(), bodyLabel, node->Condition()),
+		Label(node->Syntax(), node->BreakLabel())
 	);
 
 	return RewriteStatement(std::move(result));
@@ -573,29 +591,25 @@ shared_ptr<BoundStatement> Lowerer::RewriteForStatement(shared_ptr<BoundForState
 	auto upperBound = ConstantDeclaration(node->Syntax(), "upperBound", node->UpperBound());
 	auto result = Block(
 		node->Syntax(),
-		{
-			lowerBound,
-			upperBound,
-			While(node->Syntax(),
-				  LessOrEqual(
+		lowerBound,
+		upperBound,
+		While(node->Syntax(),
+			  LessOrEqual(
+				  node->Syntax(),
+				  Variable(node->Syntax(), lowerBound),
+				  Variable(node->Syntax(), upperBound)
+			  ),
+			  Block(
+				  node->Syntax(),
+				  node->Body(),
+				  Label(node->Syntax(), node->ContinueLabel()),
+				  Increment(
 					  node->Syntax(),
-					  Variable(node->Syntax(), lowerBound),
-					  Variable(node->Syntax(),std::move(upperBound))
-				  ),
-				  Block(
-					  node->Syntax(),
-					  {
-						  node->Body(),
-						  Label(node->Syntax(), node->ContinueLabel()),
-						  Increment(
-							  node->Syntax(),
-							  Variable(node->Syntax(), std::move(lowerBound))
-						  )
-					  }
-				  ),
-				  node->BreakLabel(),
-				  GenerateLabel())
-		}
+					  Variable(node->Syntax(), lowerBound)
+				  )
+			  ),
+			  node->BreakLabel(),
+			  GenerateLabel())
 	);
 
 	return RewriteStatement(std::move(result));

@@ -1010,16 +1010,8 @@ BoundProgram Binder::BindProgram(bool isScript,
 		diag->AddRange(std::move(binder).Diagnostics());
 	}
 
-	const SyntaxNode* cu = nullptr;
-	if (!globalScope->Statements().empty())
-	{
-		auto& f = globalScope->Statements().front();
-		auto s = f->Syntax();
-		auto vec = s->AncestorsAndSelf();
-		cu = vec.back();
-	}
-	//auto cu = globalScope->Statements().empty() ? nullptr
-	//	: globalScope->Statements().front()->Syntax()->AncestorsAndSelf().back();
+	auto cu = globalScope->Statements().empty() ? nullptr
+		: globalScope->Statements().front()->Syntax()->AncestorsAndSelf().back();
 
 	if (globalScope->MainFunc() != nullptr && !globalScope->Statements().empty())
 	{

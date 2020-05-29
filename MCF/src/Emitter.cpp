@@ -112,7 +112,7 @@ private:
 	void InitExternFunctions();
 	void InitTarget();
 	[[nodiscard]] llvm::AllocaInst* CreateEntryBlockAlloca(llvm::Type* type,
-		string_view varName)const;
+														   string_view varName)const;
 	void CreateBlocksFromLabels(const BoundBlockStatement& body);
 	void FixPrevLabel();
 
@@ -140,13 +140,16 @@ void Emitter::EmitFunctionDeclaration(const FunctionSymbol& function)
 {
 	auto retType = _knownTypes.at(function.Type());
 	auto args = vector<llvm::Type*>();
-	std::transform(function.Parameters().cbegin(), function.Parameters().cend(),
-		std::back_inserter(args),
-		[this](const auto& p) { return _knownTypes.at(p.Type()); });
+
+	std::for_each(function.Parameters().cbegin(), function.Parameters().cend(),
+				  [this, &args](const auto& p)
+				  {
+					  args.push_back(_knownTypes.at(p.Type()));
+				  });
 
 	auto f = llvm::FunctionType::get(retType, args, false);
 	llvm::Function::Create(f, llvm::Function::ExternalLinkage,
-		string(function.Name()), *_module);
+						   string(function.Name()), *_module);
 }
 
 void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStatement& body)
@@ -348,8 +351,12 @@ llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)
 		auto charType = _charType;
 
 		auto chars = vector<llvm::Constant*>();
-		std::transform(v.cbegin(), v.cend(), std::back_inserter(chars),
-			[charType](const auto c) { return llvm::ConstantInt::get(charType, c); });
+		std::for_each(v.cbegin(), v.cend(),
+					  [charType, &chars](const auto c)
+					  {
+						  chars.push_back(llvm::ConstantInt::get(charType, c));
+					  });
+
 		chars.push_back(llvm::ConstantInt::get(charType, 0));
 
 		auto strType = llvm::ArrayType::get(charType, chars.size());
@@ -420,9 +427,10 @@ llvm::Value* Emitter::EmitUnaryExpression(const BoundUnaryExpression& node)
 			return _builder.Insert(op);
 		}
 		default:
-			throw std::invalid_argument(BuildStringFrom("Unexpected unary operator ",
-				GetText(node.Op().SynKind()),
-				'(', node.Operand()->Type().Name(), ").")
+			throw std::invalid_argument(
+				BuildStringFrom("Unexpected unary operator ",
+								GetText(node.Op().SynKind()),
+								'(', node.Operand()->Type().Name(), ").")
 			);
 	}
 }
@@ -451,7 +459,7 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 			auto rstr = ConvertToStr(rhs);
 			return _builder.CreateCall(_strEqualFunc, { lstr, rstr });
 		} else if (node.Left()->Type() == TYPE_STRING
-			&& node.Right()->Type() == TYPE_STRING)
+				   && node.Right()->Type() == TYPE_STRING)
 		{
 			// NOTE strings are stored either in
 			// a) runtime container
@@ -479,7 +487,7 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 			value = _builder.CreateCall(_strEqualFunc, { lstr, rstr });
 			return compareToFalse(value);
 		} else if (node.Left()->Type() == TYPE_STRING
-			&& node.Right()->Type() == TYPE_STRING)
+				   && node.Right()->Type() == TYPE_STRING)
 		{
 			value = _builder.CreateCall(_strEqualFunc, { lhs, rhs });
 			return compareToFalse(value);
@@ -534,10 +542,11 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 			return compare(llvm::CmpInst::Predicate::ICMP_SGE);
 
 		default:
-			throw std::invalid_argument(BuildStringFrom("Unexpected binary operator ",
-				GetText(node.Op().SynKind()),
-				'(', node.Left()->Type().Name(), ", ",
-				node.Right()->Type().Name(), ")")
+			throw std::invalid_argument(
+				BuildStringFrom("Unexpected binary operator ",
+								GetText(node.Op().SynKind()),
+								'(', node.Left()->Type().Name(), ", ",
+								node.Right()->Type().Name(), ")")
 			);
 	}
 }
@@ -569,7 +578,8 @@ llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 	if (callee->arg_size() != node.Arguments().size())
 	{
 		_diagnostics.ReportWrongArgumentCountEmitted(node.Function()->Name(),
-			node.Arguments().size(), callee->arg_size());
+													 node.Arguments().size(),
+													 callee->arg_size());
 		return nullptr;
 	}
 
@@ -608,9 +618,11 @@ llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& 
 		// NOTE implicit conversions
 		//      int -> bool non-zero -> true
 		//      bool -> int
-		throw std::invalid_argument(BuildStringFrom("Unexpected convertion from '",
-			node.Expression()->Type().Name(), "' to '",
-			node.Type().Name(), "'."));
+		throw std::invalid_argument(
+			BuildStringFrom("Unexpected convertion from '",
+							node.Expression()->Type().Name(),
+							"' to '", node.Type().Name(), "'.")
+		);
 	}
 }
 
@@ -773,7 +785,7 @@ void Emitter::InitTarget()
 llvm::AllocaInst* Emitter::CreateEntryBlockAlloca(llvm::Type* type, string_view varName)const
 {
 	auto builder = llvm::IRBuilder<>(&_function->getEntryBlock(),
-		_function->getEntryBlock().begin());
+									 _function->getEntryBlock().begin());
 	return builder.CreateAlloca(type, 0, string(varName));
 }
 
@@ -812,7 +824,7 @@ llvm::Value* Emitter::ConvertToStr(llvm::Value* value)
 }
 
 DiagnosticBag Emit(const BoundProgram& program, const string& moduleName,
-	const fs::path& outPath)
+				   const fs::path& outPath)
 {
 	if (program.Diagnostics().HasErrors())
 		return std::move(program).Diagnostics();
