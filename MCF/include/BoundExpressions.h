@@ -242,6 +242,33 @@ public:
 	constexpr const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
 };
 
+class BoundCompoundAssignmentExpression final :public BoundExpression
+{
+private:
+	shared_ptr<VariableSymbol> _variable;
+	shared_ptr<BoundExpression> _expression;
+	BoundBinaryOperator _op;
+
+public:
+	explicit BoundCompoundAssignmentExpression(const SyntaxNode* syntax,
+											   shared_ptr<VariableSymbol> variable,
+											   BoundBinaryOperator op,
+											   shared_ptr<BoundExpression> expression)
+		:BoundExpression(syntax),
+		_variable(std::move(variable)), _expression(std::move(expression)),
+		_op(std::move(op))
+	{
+	}
+
+	// Inherited via BoundExpression
+	BoundNodeKind Kind() const noexcept override { return BoundNodeKind::CompoundAssignmentExpression; }
+	const TypeSymbol& Type() const  override { return _expression->Type(); }
+
+	constexpr const shared_ptr<VariableSymbol>& Variable()const noexcept { return _variable; }
+	constexpr const BoundBinaryOperator& Op()const noexcept { return _op; }
+	constexpr const shared_ptr<BoundExpression>& Expression()const noexcept { return _expression; }
+};
+
 class BoundLiteralExpression final : public BoundExpression
 {
 private:

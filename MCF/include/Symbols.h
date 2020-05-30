@@ -116,8 +116,8 @@ private:
 	BoundConstant _constant;
 
 public:
-	VariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
-		BoundConstant constant) noexcept
+	explicit VariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
+							BoundConstant constant) noexcept
 		:Symbol(name),
 		_isReadOnly(isReadOnly), _type(type),
 		_constant(isReadOnly ? std::move(constant) : NULL_VALUE)
@@ -133,8 +133,8 @@ public:
 class GlobalVariableSymbol final :public VariableSymbol
 {
 public:
-	GlobalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
-		BoundConstant constant)noexcept
+	explicit GlobalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
+								  BoundConstant constant)noexcept
 		:VariableSymbol(name, isReadOnly, type, std::move(constant))
 	{
 	}
@@ -145,8 +145,8 @@ public:
 class LocalVariableSymbol :public VariableSymbol
 {
 public:
-	LocalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
-		BoundConstant constant)noexcept
+	explicit LocalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
+								 BoundConstant constant)noexcept
 		:VariableSymbol(name, isReadOnly, type, std::move(constant))
 	{
 	}
@@ -157,7 +157,7 @@ public:
 class ParameterSymbol final : public LocalVariableSymbol
 {
 public:
-	ParameterSymbol(string_view name, TypeSymbol type)noexcept
+	explicit ParameterSymbol(string_view name, TypeSymbol type)noexcept
 		:LocalVariableSymbol(name, true, type, NULL_VALUE)
 	{
 	}
@@ -173,9 +173,10 @@ private:
 	const FunctionDeclarationSyntax* _declaration;
 
 public:
-	FunctionSymbol(string_view name, vector<ParameterSymbol> params,
-		TypeSymbol type, const FunctionDeclarationSyntax* declaration)
-		:Symbol(name), _params(std::move(params)), _type(type), _declaration(declaration)
+	explicit FunctionSymbol(string_view name, vector<ParameterSymbol> params,
+							TypeSymbol type, const FunctionDeclarationSyntax* declaration)
+		:Symbol(name), 
+		_params(std::move(params)), _type(type), _declaration(declaration)
 	{
 	}
 	FunctionSymbol(string_view name, vector<ParameterSymbol> params, TypeSymbol type)
@@ -195,14 +196,14 @@ public:
 };
 
 inline const auto BUILTIN_INPUT = FunctionSymbol("input",
-	vector<ParameterSymbol>(),
-	TYPE_STRING);
+												 vector<ParameterSymbol>(),
+												 TYPE_STRING);
 inline const auto BUILTIN_PRINT = FunctionSymbol("print",
-	vector<ParameterSymbol>{ParameterSymbol("text", TYPE_ANY)},
-	TYPE_VOID);
+												 vector<ParameterSymbol>{ParameterSymbol("text", TYPE_ANY)},
+												 TYPE_VOID);
 inline const auto BUILTIN_RND = FunctionSymbol("rnd",
-	vector<ParameterSymbol>{ParameterSymbol("max", TYPE_INT)},
-	TYPE_INT);
+											   vector<ParameterSymbol>{ParameterSymbol("max", TYPE_INT)},
+											   TYPE_INT);
 
 const std::array<FunctionSymbol, 3>& GetAllBuiltinFunctions();
 

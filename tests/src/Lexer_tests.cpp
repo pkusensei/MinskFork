@@ -23,8 +23,8 @@ TEST_CASE("Lexer covers all tokens", "[Lexer]")
 {
 	auto tokenKinds = std::vector<MCF::SyntaxKind>();
 	std::copy_if(MCF::AllSyntaxKinds.cbegin(), MCF::AllSyntaxKinds.cend(),
-		std::back_inserter(tokenKinds),
-		[](const auto k) { return MCF::IsToken(k); });
+				 std::back_inserter(tokenKinds),
+				 [](const auto k) { return MCF::IsToken(k); });
 
 	std::set<MCF::SyntaxKind> untestedTokenKinds(tokenKinds.cbegin(), tokenKinds.cend());
 	untestedTokenKinds.erase(MCF::SyntaxKind::BadToken);
@@ -126,7 +126,7 @@ TEST_CASE("Lexer lexes token pairs with separators", "[Lexer]")
 TEST_CASE("Lexer lexes identifiers", "[Lexer]")
 {
 	auto name = GENERATE(as<std::string_view>{},
-		"foo", "foo42", "foo_42", "_foo");
+						 "foo", "foo42", "foo_42", "_foo");
 
 	auto [tokens, _] = MCF::SyntaxTree::ParseTokens(name);
 
@@ -272,6 +272,31 @@ bool RequiresSeparators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind)
 	if (t1kind == MCF::SyntaxKind::EqualsToken && t2kind == MCF::SyntaxKind::EqualsEqualsToken)
 		return true;
 
+	if (t1kind == MCF::SyntaxKind::PlusToken && t2kind == MCF::SyntaxKind::EqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::PlusToken && t2kind == MCF::SyntaxKind::EqualsEqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::PlusToken && t2kind == MCF::SyntaxKind::PlusEqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::MinusToken && t2kind == MCF::SyntaxKind::EqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::MinusToken && t2kind == MCF::SyntaxKind::EqualsEqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::MinusToken && t2kind == MCF::SyntaxKind::MinusEqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::StarToken && t2kind == MCF::SyntaxKind::EqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::StarToken && t2kind == MCF::SyntaxKind::EqualsEqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::EqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::EqualsEqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::PercentToken && t2kind == MCF::SyntaxKind::EqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::PercentToken && t2kind == MCF::SyntaxKind::EqualsEqualsToken)
+		return true;
+
 	if (t1kind == MCF::SyntaxKind::LessToken && t2kind == MCF::SyntaxKind::EqualsToken)
 		return true;
 	if (t1kind == MCF::SyntaxKind::LessToken && t2kind == MCF::SyntaxKind::EqualsEqualsToken)
@@ -283,9 +308,13 @@ bool RequiresSeparators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind)
 
 	if (t1kind == MCF::SyntaxKind::PlusToken && t2kind == MCF::SyntaxKind::PlusToken)
 		return true;
+	if (t1kind == MCF::SyntaxKind::PlusToken && t2kind == MCF::SyntaxKind::PlusEqualsToken)
+		return true;
 	if (t1kind == MCF::SyntaxKind::PlusToken && t2kind == MCF::SyntaxKind::PlusPlusToken)
 		return true;
 	if (t1kind == MCF::SyntaxKind::MinusToken && t2kind == MCF::SyntaxKind::MinusToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::MinusToken && t2kind == MCF::SyntaxKind::MinusEqualsToken)
 		return true;
 	if (t1kind == MCF::SyntaxKind::MinusToken && t2kind == MCF::SyntaxKind::MinusMinusToken)
 		return true;
@@ -294,15 +323,41 @@ bool RequiresSeparators(MCF::SyntaxKind t1kind, MCF::SyntaxKind t2kind)
 		return true;
 	if (t1kind == MCF::SyntaxKind::AmpersandToken && t2kind == MCF::SyntaxKind::AmpersandAmpersandToken)
 		return true;
+
+	if (t1kind == MCF::SyntaxKind::AmpersandToken && t2kind == MCF::SyntaxKind::EqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::AmpersandToken && t2kind == MCF::SyntaxKind::EqualsEqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::AmpersandToken && t2kind == MCF::SyntaxKind::AmpersandEqualsToken)
+		return true;
+
 	if (t1kind == MCF::SyntaxKind::PipeToken && t2kind == MCF::SyntaxKind::PipeToken)
 		return true;
 	if (t1kind == MCF::SyntaxKind::PipeToken && t2kind == MCF::SyntaxKind::PipePipeToken)
+		return true;
+
+	if (t1kind == MCF::SyntaxKind::PipeToken && t2kind == MCF::SyntaxKind::EqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::PipeToken && t2kind == MCF::SyntaxKind::EqualsEqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::PipeToken && t2kind == MCF::SyntaxKind::PipeEqualsToken)
+		return true;
+
+	if (t1kind == MCF::SyntaxKind::HatToken && t2kind == MCF::SyntaxKind::EqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::HatToken && t2kind == MCF::SyntaxKind::EqualsEqualsToken)
 		return true;
 
 	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::SlashToken)
 		return true;
 	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::StarToken)
 		return true;
+
+	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::SlashEqualsToken)
+		return true;
+	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::StarEqualsToken)
+		return true;
+
 	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::SingleLineCommentTrivia)
 		return true;
 	if (t1kind == MCF::SyntaxKind::SlashToken && t2kind == MCF::SyntaxKind::MultiLineCommentTrivia)

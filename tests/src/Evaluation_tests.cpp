@@ -15,7 +15,7 @@ TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 {
 	auto [input, expected] = GENERATE(
 		table<std::string_view, MCF::ValueType>({
-		{"1", 1},
+		{ "1", 1 },
 		{ "+34", 34 },
 		{ "-42", -42 },
 		{ "~1", -2 },
@@ -52,8 +52,8 @@ TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 		{ "true && true", true },
 		{ "false || false", false },
 		{ "false | false", 0 }, // false
-		{ "false | true", 1 }, // true
-		{ "true | false", 1 },
+		{ "false | true", 1 },  // true
+		{ "true | false", 1 },  // NOTE (bool & bool) evaluates to int
 		{ "true | true", 1 },
 		{ "false & false", 0 },
 		{ "false & true", 0 },
@@ -91,6 +91,19 @@ TEST_CASE("Evaluator computes correct values", "[Evaluator]")
 		{ "{var a = 0 do a = a + 1 while a < 10 return a}", 10 },
 		{ "{ var i = 0 while i < 5 { i = i + 1 if i == 5 continue } return i }", 5 },
 		{ "{ var i = 0 do { i = i + 1 if i == 5 continue } while i < 5 return i }", 5 },
+		{ "{ var a = 1 a += (2 + 3) return a }", 6 },
+		{ "{ var a = 1 a -= (2 + 3) return a }", -4 },
+		{ "{ var a = 1 a *= (2 + 3) return a }", 5 },
+		{ "{ var a = 1 a /= (2 + 3) return a }", 0 },
+		{ "{ var a = true a &= (false) return a }", 0 }, 
+		{ "{ var a = true a |= (false) return a }", 1 },
+		{ "{ var a = true a ^= (true) return a }", 0 },
+		{ "{ var a = 1 a |= 0 return a }", 1 },
+		{ "{ var a = 1 a &= 3 return a }", 1 },
+		{ "{ var a = 1 a &= 0 return a }", 0 },
+		{ "{ var a = 1 a ^= 0 return a }", 1 },
+		{ "{ var a = 1 var b = 2 var c = 3 a += b += c return a }", 6 },
+		{ "{ var a = 1 var b = 2 var c = 3 a += b += c return b }", 5 },
 
 		{ "{var x = 41 x++ return x }", 42 },
 		{ "{var x = 3 return x---5 }", -3 },

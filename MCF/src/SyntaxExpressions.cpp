@@ -6,7 +6,7 @@ namespace MCF {
 
 const vector<const SyntaxNode*> AssignmentExpressionSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_identifierToken, _equalsToken, _expression);
+	return MakeVecOfRaw<SyntaxNode>(_identifierToken, _assignmentToken, _expression);
 }
 
 const vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const

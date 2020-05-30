@@ -31,6 +31,7 @@ case BoundNodeKind::kind: return #kind;
 		NAME(LiteralExpression);
 		NAME(VariableExpression);
 		NAME(AssignmentExpression);
+		NAME(CompoundAssignmentExpression);
 		NAME(UnaryExpression);
 		NAME(BinaryExpression);
 		NAME(CallExpression);

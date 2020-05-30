@@ -27,6 +27,7 @@ enum class BoundNodeKind
 	LiteralExpression,
 	VariableExpression,
 	AssignmentExpression,
+	CompoundAssignmentExpression,
 	UnaryExpression,
 	BinaryExpression,
 	CallExpression,

@@ -192,6 +192,7 @@ protected:
 	virtual shared_ptr<BoundExpression> RewriteLiteralExpression(shared_ptr<BoundLiteralExpression> node);
 	virtual shared_ptr<BoundExpression> RewriteVariableExpression(shared_ptr<BoundVariableExpression> node);
 	virtual shared_ptr<BoundExpression> RewriteAssignmentExpression(shared_ptr<BoundAssignmentExpression> node);
+	virtual shared_ptr<BoundExpression> RewriteCompoundAssignmentExpression(shared_ptr<BoundCompoundAssignmentExpression> node);
 	virtual shared_ptr<BoundExpression> RewriteUnaryExpression(shared_ptr<BoundUnaryExpression> node);
 	virtual shared_ptr<BoundExpression> RewriteBinaryExpression(shared_ptr<BoundBinaryExpression> node);
 	virtual shared_ptr<BoundExpression> RewriteCallExpression(shared_ptr<BoundCallExpression> node);
@@ -392,6 +393,7 @@ case BoundNodeKind::kind:                                  \
 			return node;
 
 			REWRITE_EXPR(AssignmentExpression);
+			REWRITE_EXPR(CompoundAssignmentExpression);
 			REWRITE_EXPR(UnaryExpression);
 			REWRITE_EXPR(BinaryExpression);
 			REWRITE_EXPR(CallExpression);
@@ -428,6 +430,21 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteAssignmentExpression(share
 		return node;
 	auto s = node->Syntax();
 	return make_shared<BoundAssignmentExpression>(s, node->Variable(), std::move(expression));
+}
+
+shared_ptr<BoundExpression> BoundTreeRewriter::RewriteCompoundAssignmentExpression(shared_ptr<BoundCompoundAssignmentExpression> node)
+{
+	auto variable = make_shared<BoundVariableExpression>(node->Syntax(),
+														 node->Variable());
+	auto binary = make_shared<BoundBinaryExpression>(node->Syntax(),
+													 std::move(variable),
+													 node->Op(),
+													 node->Expression());
+	auto assignment = make_shared<BoundAssignmentExpression>(node->Syntax(),
+															 node->Variable(),
+															 std::move(binary));
+
+	return RewriteAssignmentExpression(std::move(assignment));
 }
 
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteUnaryExpression(shared_ptr<BoundUnaryExpression> node)
@@ -741,7 +758,8 @@ shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBin
 	return BoundTreeRewriter::RewriteBinaryExpression(std::move(node));
 }
 
-[[nodiscard]] unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func, shared_ptr<BoundStatement> statement)
+[[nodiscard]] unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func, 
+													  shared_ptr<BoundStatement> statement)
 {
 	auto result = vector<shared_ptr<BoundStatement>>();
 	auto stack = std::stack<shared_ptr<BoundStatement>>();
@@ -801,7 +819,8 @@ shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBin
 	return make_unique<BoundBlockStatement>(node->Syntax(), std::move(result));
 }
 
-unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func, shared_ptr<BoundStatement> statement)
+unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func, 
+									  shared_ptr<BoundStatement> statement)
 {
 	auto lowerer = Lowerer();
 	auto result = lowerer.RewriteStatement(std::move(statement));

@@ -30,19 +30,27 @@ case SyntaxKind::kind: return #kind;
 		NAME(NumberToken);
 		NAME(StringToken);
 		NAME(PlusToken);
+		NAME(PlusEqualsToken);
 		NAME(MinusToken);
+		NAME(MinusEqualsToken);
 		NAME(StarToken);
+		NAME(StarEqualsToken);
 		NAME(SlashToken);
+		NAME(SlashEqualsToken);
 		NAME(PercentToken);
+		NAME(PercentEqualsToken);
 		NAME(BangToken);
 		NAME(PlusPlusToken);
 		NAME(MinusMinusToken);
 		NAME(EqualsToken);
 		NAME(TildeToken);
 		NAME(HatToken);
+		NAME(HatEqualsToken);
 		NAME(AmpersandToken);
+		NAME(AmpersandEqualsToken);
 		NAME(AmpersandAmpersandToken);
 		NAME(PipeToken);
+		NAME(PipeEqualsToken);
 		NAME(PipePipeToken);
 		NAME(EqualsEqualsToken);
 		NAME(BangEqualsToken);
@@ -97,6 +105,7 @@ case SyntaxKind::kind: return #kind;
 		NAME(NameExpression);
 		NAME(UnaryExpression);
 		NAME(BinaryExpression);
+		NAME(CompoundAssignmentExpression);
 		NAME(ParenthesizedExpression);
 		NAME(CallExpression);
 		NAME(AssignmentExpression);
@@ -149,19 +158,27 @@ string_view GetText(SyntaxKind kind)
 	switch (kind)
 	{
 		case SyntaxKind::PlusToken: return "+";
+		case SyntaxKind::PlusEqualsToken: return "+=";
 		case SyntaxKind::MinusToken: return "-";
+		case SyntaxKind::MinusEqualsToken: return "-=";
 		case SyntaxKind::StarToken: return "*";
+		case SyntaxKind::StarEqualsToken: return "*=";
 		case SyntaxKind::SlashToken: return "/";
+		case SyntaxKind::SlashEqualsToken: return "/=";
 		case SyntaxKind::PercentToken: return "%";
+		case SyntaxKind::PercentEqualsToken: return "%=";
 		case SyntaxKind::BangToken: return "!";
 		case SyntaxKind::PlusPlusToken: return "++";
 		case SyntaxKind::MinusMinusToken: return "--";
 		case SyntaxKind::EqualsToken: return "=";
 		case SyntaxKind::TildeToken: return "~";
 		case SyntaxKind::HatToken: return "^";
+		case SyntaxKind::HatEqualsToken: return "^=";
 		case SyntaxKind::AmpersandToken: return "&";
+		case SyntaxKind::AmpersandEqualsToken: return "&=";
 		case SyntaxKind::AmpersandAmpersandToken: return "&&";
 		case SyntaxKind::PipeToken: return "|";
+		case SyntaxKind::PipeEqualsToken: return "|=";
 		case SyntaxKind::PipePipeToken: return "||";
 		case SyntaxKind::EqualsEqualsToken: return "==";
 		case SyntaxKind::BangEqualsToken: return "!=";
@@ -298,6 +315,32 @@ const vector<SyntaxKind>& GetBinaryOperatorKinds()
 	};
 	static const auto result = build();
 	return result;
+}
+
+SyntaxKind GetBinaryOperatorOfAssignmentOperator(SyntaxKind kind)
+{
+	switch (kind)
+	{
+		case SyntaxKind::PlusEqualsToken:
+			return SyntaxKind::PlusToken;
+		case SyntaxKind::MinusEqualsToken:
+			return SyntaxKind::MinusToken;
+		case SyntaxKind::StarEqualsToken:
+			return SyntaxKind::StarToken;
+		case SyntaxKind::SlashEqualsToken:
+			return SyntaxKind::SlashToken;
+		case SyntaxKind::PercentEqualsToken:
+			return SyntaxKind::PercentToken;
+		case SyntaxKind::AmpersandEqualsToken:
+			return SyntaxKind::AmpersandToken;
+		case SyntaxKind::PipeEqualsToken:
+			return SyntaxKind::PipeToken;
+		case SyntaxKind::HatEqualsToken:
+			return SyntaxKind::HatToken;
+		default:
+			throw std::invalid_argument(
+				BuildStringFrom("Unexpected syntax: '", nameof(kind), "'."));
+	}
 }
 
 }//MCF

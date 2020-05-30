@@ -283,6 +283,7 @@ shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax* syntax, 
 			auto allowExpression = es->Expression()->Kind() == BoundNodeKind::ErrorExpression
 				|| es->Expression()->Kind() == BoundNodeKind::AssignmentExpression
 				|| es->Expression()->Kind() == BoundNodeKind::CallExpression
+				|| es->Expression()->Kind() == BoundNodeKind::CompoundAssignmentExpression
 				|| es->Expression()->Kind() == BoundNodeKind::PostfixExpression;
 			if (!allowExpression)
 				_diagnostics.ReportInvalidExpressionStatement(syntax->Location());
@@ -568,11 +569,37 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 
 	auto variable = opt.value();
 	if (variable->IsReadOnly())
-		_diagnostics.ReportCannotAssign(syntax->EqualsToken().Location(), name);
-	auto convertExpression = BindConversion(syntax->Expression()->Location(),
-											std::move(boundExpression), variable->Type());
-	return make_shared<BoundAssignmentExpression>(syntax,
-												  std::move(variable), std::move(convertExpression));
+		_diagnostics.ReportCannotAssign(syntax->AssignmentToken().Location(), name);
+
+	if (syntax->AssignmentToken().Kind() != SyntaxKind::EqualsToken)
+	{
+		auto equivalentOpKind =
+			GetBinaryOperatorOfAssignmentOperator(syntax->AssignmentToken().Kind());
+		auto op = BoundBinaryOperator::Bind(equivalentOpKind,
+											variable->Type(),
+											boundExpression->Type());
+		if (!op.IsUseful())
+		{
+			_diagnostics.ReportUndefinedBinaryOperator(syntax->AssignmentToken().Location(),
+													   syntax->AssignmentToken().Text(),
+													   variable->Type(),
+													   boundExpression->Type());
+			return make_shared<BoundErrorExpression>(syntax);
+		}
+		auto convertExpression = BindConversion(syntax->Expression()->Location(),
+												std::move(boundExpression), variable->Type());
+		return make_shared<BoundCompoundAssignmentExpression>(syntax,
+															  std::move(variable),
+															  std::move(op),
+															  std::move(convertExpression));
+	} else
+	{
+		auto convertExpression = BindConversion(syntax->Expression()->Location(),
+												std::move(boundExpression), variable->Type());
+		return make_shared<BoundAssignmentExpression>(syntax,
+													  std::move(variable),
+													  std::move(convertExpression));
+	}
 }
 
 shared_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyntax* syntax)

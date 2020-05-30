@@ -20,19 +20,27 @@ enum class SyntaxKind
 	NumberToken,
 	StringToken,
 	PlusToken,
+	PlusEqualsToken,
 	MinusToken,
+	MinusEqualsToken,
 	StarToken,
+	StarEqualsToken,
 	SlashToken,
+	SlashEqualsToken,
 	PercentToken, //
+	PercentEqualsToken,
 	BangToken,
 	PlusPlusToken, //
 	MinusMinusToken, //
 	EqualsToken,
 	TildeToken,
 	HatToken,
+	HatEqualsToken,
 	AmpersandToken,
+	AmpersandEqualsToken,
 	AmpersandAmpersandToken,
 	PipeToken,
+	PipeEqualsToken,
 	PipePipeToken,
 	EqualsEqualsToken,
 	BangEqualsToken,
@@ -91,13 +99,14 @@ enum class SyntaxKind
 	NameExpression,
 	UnaryExpression,
 	BinaryExpression,
+	CompoundAssignmentExpression,
 	ParenthesizedExpression,
 	AssignmentExpression,
 	CallExpression,
 	PostfixExpression, //
 };
 
-constexpr size_t SYNTAXKIND_COUNT = 77;
+constexpr size_t SYNTAXKIND_COUNT = 86;
 
 // NOTE global constant
 extern "C" MCF_API const std::array<SyntaxKind, SYNTAXKIND_COUNT> & AllSyntaxKinds;
@@ -116,5 +125,7 @@ MCF_API int GetUnaryOperatorPrecedence(SyntaxKind kind)noexcept;
 MCF_API int GetBinaryOperatorPrecedence(SyntaxKind kind)noexcept;
 MCF_API const vector<SyntaxKind>& GetUnaryOperatorKinds();
 MCF_API const vector<SyntaxKind>& GetBinaryOperatorKinds();
+
+SyntaxKind GetBinaryOperatorOfAssignmentOperator(SyntaxKind kind);
 
 }//MCF

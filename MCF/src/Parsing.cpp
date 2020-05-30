@@ -286,6 +286,10 @@ void Lexer::ReadToken()
 			{
 				Next(2);
 				_kind = SyntaxKind::PlusPlusToken;
+			} else if (Lookahead() == '=')
+			{
+				Next(2);
+				_kind = SyntaxKind::PlusEqualsToken;
 			} else
 			{
 				Next();
@@ -295,26 +299,51 @@ void Lexer::ReadToken()
 		case '-':
 			if (Lookahead() == '-')
 			{
+				// NOTE "---" works as "-- -" so that "3---5" is -3
 				Next(2);
 				_kind = SyntaxKind::MinusMinusToken;
+			} else if (Lookahead() == '=')
+			{
+				Next(2);
+				_kind = SyntaxKind::MinusEqualsToken;
 			} else
 			{
-				// NOTE "---" works as "-- -" so that "3---5" is -3
 				Next();
 				_kind = SyntaxKind::MinusToken;
 			}
 			break;
 		case '*':
-			Next();
-			_kind = SyntaxKind::StarToken;
+			if (Lookahead() == '=')
+			{
+				Next(2);
+				_kind = SyntaxKind::StarEqualsToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::StarToken;
+			}
 			break;
 		case '/':
-			Next();
-			_kind = SyntaxKind::SlashToken;
+			if (Lookahead() == '=')
+			{
+				Next(2);
+				_kind = SyntaxKind::SlashEqualsToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::SlashToken;
+			}
 			break;
 		case '%':
-			Next();
-			_kind = SyntaxKind::PercentToken;
+			if (Lookahead() == '=')
+			{
+				Next(2);
+				_kind = SyntaxKind::PercentEqualsToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::PercentToken;
+			}
 			break;
 		case '(':
 			Next();
@@ -345,14 +374,25 @@ void Lexer::ReadToken()
 			_kind = SyntaxKind::TildeToken;
 			break;
 		case '^':
-			Next();
-			_kind = SyntaxKind::HatToken;
+			if (Lookahead() == '=')
+			{
+				Next(2);
+				_kind = SyntaxKind::HatEqualsToken;
+			} else
+			{
+				Next();
+				_kind = SyntaxKind::HatToken;
+			}
 			break;
 		case '&':
 			if (Lookahead() == '&')
 			{
 				Next(2);
 				_kind = SyntaxKind::AmpersandAmpersandToken;
+			} else if (Lookahead() == '=')
+			{
+				Next(2);
+				_kind = SyntaxKind::AmpersandEqualsToken;
 			} else
 			{
 				Next();
@@ -364,6 +404,10 @@ void Lexer::ReadToken()
 			{
 				Next(2);
 				_kind = SyntaxKind::PipePipeToken;
+			} else if (Lookahead() == '=')
+			{
+				Next(2);
+				_kind = SyntaxKind::PipeEqualsToken;
 			} else
 			{
 				Next();
@@ -926,14 +970,28 @@ unique_ptr<ExpressionSyntax> Parser::ParseExpression()
 
 unique_ptr<ExpressionSyntax> Parser::ParseAssignmentExpression()
 {
-	if (Peek(0).Kind() == SyntaxKind::IdentifierToken
-		&& Peek(1).Kind() == SyntaxKind::EqualsToken)
+	if (Peek(0).Kind() == SyntaxKind::IdentifierToken)
 	{
-		auto identifierToken = NextToken();
-		auto operatorToken = NextToken();
-		auto right = ParseAssignmentExpression();
-		return make_unique<AssignmentExpressionSyntax>(
-			_tree, identifierToken, operatorToken, std::move(right));
+		switch (Peek(1).Kind())
+		{
+			case SyntaxKind::PlusEqualsToken:
+			case SyntaxKind::MinusEqualsToken:
+			case SyntaxKind::StarEqualsToken:
+			case SyntaxKind::SlashEqualsToken:
+			case SyntaxKind::AmpersandEqualsToken:
+			case SyntaxKind::PipeEqualsToken:
+			case SyntaxKind::HatEqualsToken:
+			case SyntaxKind::EqualsToken:
+			{
+				auto identifierToken = NextToken();
+				auto operatorToken = NextToken();
+				auto right = ParseAssignmentExpression();
+				return make_unique<AssignmentExpressionSyntax>(
+					_tree, identifierToken, operatorToken, std::move(right));
+			}
+			default:
+				break;
+		}
 	}
 	return ParseBinaryExpression();
 }
