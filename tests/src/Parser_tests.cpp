@@ -117,11 +117,16 @@ const MCF::ExpressionSyntax* ParseExpression(const MCF::SyntaxTree& tree)
 	auto root = tree.Root();
 	auto& members = root->Members();
 	REQUIRE(1 == members.size());
-	auto gs = dynamic_cast<MCF::GlobalStatementSyntax*>(members[0].get());
-	REQUIRE_FALSE(nullptr == gs);
+
+	auto p = members[0].get();
+	REQUIRE_FALSE(nullptr == p);
+	REQUIRE(p->Kind() == MCF::SyntaxKind::GlobalStatement);
+
+	auto gs = static_cast<MCF::GlobalStatementSyntax*>(p);
 	auto s = gs->Statement();
-	auto es = dynamic_cast<const MCF::ExpressionStatementSyntax*>(s);
-	REQUIRE_FALSE(nullptr == es);
+	REQUIRE(s->Kind() == MCF::SyntaxKind::ExpressionStatement);
+
+	auto es = static_cast<const MCF::ExpressionStatementSyntax*>(s);
 	return es->Expression();
 }
 

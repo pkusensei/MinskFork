@@ -17,10 +17,12 @@ void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
 		return;
 
 	auto isToConsole = out.rdbuf() == std::cout.rdbuf();
-	auto token = dynamic_cast<const SyntaxToken*>(node);
+	auto isToken = IsToken(node->Kind());
 
-	if (token != nullptr)
+	if (isToken)
 	{
+		auto token = static_cast<const SyntaxToken*>(node);
+
 		for (const auto& tr : token->LeadingTrivia())
 		{
 			if (isToConsole)
@@ -34,8 +36,8 @@ void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
 		}
 	}
 
-	auto hasTrailingTrivia = token != nullptr
-		&& !token->TrailingTrivia().empty();
+	auto hasTrailingTrivia = isToken
+		&& !static_cast<const SyntaxToken*>(node)->TrailingTrivia().empty();
 
 	auto tkMarker = !hasTrailingTrivia && isLast ? "+--" : "---";
 
@@ -45,12 +47,16 @@ void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
 	out << tkMarker;
 
 	if (isToConsole)
-		SetConsoleColor(token ? ConsoleColor::Blue : ConsoleColor::Cyan);
+		SetConsoleColor(isToken ? ConsoleColor::Blue : ConsoleColor::Cyan);
 	out << nameof(node->Kind());
 
-	if (token && token->Value().HasValue())
+	if (isToken)
 	{
-		out << " " << token->Value();
+		auto token = static_cast<const SyntaxToken*>(node);
+		if (token->Value().HasValue())
+		{
+			out << " " << token->Value();
+		}
 	}
 
 	if (isToConsole)
@@ -58,8 +64,10 @@ void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
 
 	out << NEW_LINE;
 
-	if (token != nullptr)
+	if (isToken)
 	{
+		auto token = static_cast<const SyntaxToken*>(node);
+
 		for (const auto& tr : token->TrailingTrivia())
 		{
 			auto isLastTrailingTrivia = tr == token->TrailingTrivia().back();
@@ -133,8 +141,8 @@ TextLocation SyntaxNode::Location()const
 
 const SyntaxToken& SyntaxNode::GetLastToken() const
 {
-	auto p = dynamic_cast<const SyntaxToken*>(this);
-	if (p) return *p;
+	if (IsToken(Kind()))
+		return *static_cast<const SyntaxToken*>(this);
 
 	return GetChildren().back()->GetLastToken();
 }

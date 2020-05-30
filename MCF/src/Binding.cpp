@@ -68,15 +68,18 @@ private:
 		return false;
 	}
 
-	template<typename T, typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
-	const vector<shared_ptr<T>> GetDeclaredSymbols() const
+	template<typename T, typename Pred,
+		typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
+		const vector<shared_ptr<T>> GetDeclaredSymbols(Pred&& pred) const
 	{
 		auto result = vector<shared_ptr<T>>();
 		for (const auto& [_, symbol] : _symbols)
 		{
-			auto p = std::dynamic_pointer_cast<T>(symbol);
-			if (p)
+			if (std::forward<Pred>(pred)(symbol))
+			{
+				auto p = std::static_pointer_cast<T>(symbol);
 				result.push_back(std::move(p));
+			}
 		}
 		return result;
 	}
@@ -101,7 +104,7 @@ public:
 
 	const BoundScope* Parent()const noexcept { return _parent.get(); }
 
-	std::optional<shared_ptr<Symbol>> TryLookupSymbol(string_view name)const;
+	shared_ptr<Symbol> TryLookupSymbol(string_view name)const;
 
 	bool TryDeclareVariable(shared_ptr<VariableSymbol> variable)
 	{
@@ -114,26 +117,35 @@ public:
 
 	const vector<shared_ptr<VariableSymbol>> GetDeclaredVariables()const
 	{
-		return GetDeclaredSymbols<VariableSymbol>();
+		auto pred = [](const auto& ptr)
+		{
+			return ptr->IsVariableSymbol();
+		};
+		return GetDeclaredSymbols<VariableSymbol>(pred);
 	}
 	const vector<shared_ptr<FunctionSymbol>> GetDeclaredFunctions()const
 	{
-		return GetDeclaredSymbols<FunctionSymbol>();
+		auto pred = [](const auto& ptr)
+		{
+			return ptr->Kind() == SymbolKind::Function;
+		};
+
+		return GetDeclaredSymbols<FunctionSymbol>(pred);
 	}
 
 	static void ResetToParent(unique_ptr<BoundScope>& current)noexcept;
 };
 
-std::optional<shared_ptr<Symbol>> BoundScope::TryLookupSymbol(string_view name)const
+shared_ptr<Symbol> BoundScope::TryLookupSymbol(string_view name)const
 {
-	try
+	auto it = _symbols.find(name);
+	if (it == _symbols.cend())
 	{
-		return _symbols.at(name);
-	} catch (const std::out_of_range&)
-	{
-		if (_parent == nullptr) return std::nullopt;
+		if (_parent == nullptr)
+			return nullptr;
 		return _parent->TryLookupSymbol(name);
 	}
+	return it->second;
 }
 
 void BoundScope::ResetToParent(unique_ptr<BoundScope>& current)noexcept
@@ -195,7 +207,7 @@ private:
 		const TypeSymbol& type, bool allowExplicit = false);
 	shared_ptr<VariableSymbol> BindVariableDeclaration(const SyntaxToken& identifier,
 													   bool isReadOnly, const TypeSymbol& type, BoundConstant constant = NULL_VALUE);
-	std::optional<shared_ptr<VariableSymbol>> BindVariableReference(const SyntaxToken& identifier);
+	shared_ptr<VariableSymbol> BindVariableReference(const SyntaxToken& identifier);
 	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
 	std::optional<TypeSymbol> LookupType(string_view name)const;
 
@@ -552,10 +564,10 @@ shared_ptr<BoundExpression> Binder::BindNameExpression(const NameExpressionSynta
 	if (syntax->IdentifierToken().IsMissing()) // NOTE this token was injected by Parser::MatchToken
 		return make_shared<BoundErrorExpression>(syntax);
 
-	auto opt = BindVariableReference(syntax->IdentifierToken());
-	if (!opt.has_value())
+	auto var = BindVariableReference(syntax->IdentifierToken());
+	if (var == nullptr)
 		return make_shared<BoundErrorExpression>(syntax);
-	return make_shared<BoundVariableExpression>(syntax, opt.value());
+	return make_shared<BoundVariableExpression>(syntax, std::move(var));
 }
 
 shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExpressionSyntax* syntax)
@@ -563,11 +575,10 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 	auto name = syntax->IdentifierToken().Text();
 	auto boundExpression = BindExpression(syntax->Expression());
 
-	auto opt = BindVariableReference(syntax->IdentifierToken());
-	if (!opt.has_value())
+	auto variable = BindVariableReference(syntax->IdentifierToken());
+	if (variable == nullptr)
 		return boundExpression;
 
-	auto variable = opt.value();
 	if (variable->IsReadOnly())
 		_diagnostics.ReportCannotAssign(syntax->AssignmentToken().Location(), name);
 
@@ -659,21 +670,22 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		boundArguments.push_back(BindExpression(p));
 	}
 
-	auto opt = _scope->TryLookupSymbol(syntax->Identifier().Text());
-	if (!opt.has_value())
+	auto sp = _scope->TryLookupSymbol(syntax->Identifier().Text());
+	if (sp == nullptr)
 	{
 		_diagnostics.ReportUndefinedFunction(syntax->Identifier().Location(),
 											 syntax->Identifier().Text());
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 
-	auto function = std::dynamic_pointer_cast<FunctionSymbol>(opt.value());
-	if (function == nullptr)
+	if (sp->Kind() != SymbolKind::Function)
 	{
 		_diagnostics.ReportNotAFunction(syntax->Identifier().Location(),
 										syntax->Identifier().Text());
 		return make_shared<BoundErrorExpression>(syntax);
 	}
+
+	auto function = std::static_pointer_cast<FunctionSymbol>(std::move(sp));
 
 	if (syntax->Arguments().size() != function->Parameters().size())
 	{
@@ -716,11 +728,10 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	auto name = syntax->IdentifierToken().Text();
 	auto boundExpression = BindExpression(syntax->Expression());
 
-	auto opt = BindVariableReference(syntax->IdentifierToken());
-	if (!opt.has_value())
+	auto variable = BindVariableReference(syntax->IdentifierToken());
+	if (variable == nullptr)
 		return make_shared<BoundErrorExpression>(syntax);
 
-	auto variable = opt.value();
 	if (variable->IsReadOnly())
 	{
 		_diagnostics.ReportCannotAssign(syntax->Op().Location(), name);
@@ -798,23 +809,23 @@ shared_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& id
 	return variable;
 }
 
-std::optional<shared_ptr<VariableSymbol>> Binder::BindVariableReference(const SyntaxToken& identifier)
+shared_ptr<VariableSymbol> Binder::BindVariableReference(const SyntaxToken& identifier)
 {
 	auto name = identifier.Text();
-	auto var = _scope->TryLookupSymbol(name).value_or(nullptr);
+	auto var = _scope->TryLookupSymbol(name);
 	if (var == nullptr)
 	{
 		_diagnostics.ReportUndefinedVariable(identifier.Location(), name);
-		return std::nullopt;
+		return nullptr;
 	} else
 	{
-		auto p = std::dynamic_pointer_cast<VariableSymbol>(var);
-		if (p)
-			return p;
-		else
+		if (var->IsVariableSymbol())
+		{
+			return std::static_pointer_cast<VariableSymbol>(std::move(var));
+		} else
 		{
 			_diagnostics.ReportNotAVariable(identifier.Location(), name);
-			return std::nullopt;
+			return nullptr;
 		}
 	}
 }

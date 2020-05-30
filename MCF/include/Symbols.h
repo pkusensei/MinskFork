@@ -53,6 +53,12 @@ public:
 		return !(*this == other);
 	}
 
+	bool IsVariableSymbol()const noexcept
+	{
+		return Kind() == SymbolKind::GlobalVariable
+			|| Kind() == SymbolKind::LocalVariable
+			|| Kind() == SymbolKind::Parameter;
+	}
 };
 
 struct MCF_API SymbolHash
@@ -175,7 +181,7 @@ private:
 public:
 	explicit FunctionSymbol(string_view name, vector<ParameterSymbol> params,
 							TypeSymbol type, const FunctionDeclarationSyntax* declaration)
-		:Symbol(name), 
+		:Symbol(name),
 		_params(std::move(params)), _type(type), _declaration(declaration)
 	{
 	}

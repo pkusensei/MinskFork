@@ -121,19 +121,15 @@ void ControlFlowGraph::GraphBuilder::Connect(BasicBlock& from, BasicBlock& to,
 											 const std::optional<shared_ptr<BoundExpression>>& condition)
 {
 	auto ptr = condition.value_or(nullptr);
-	auto p = std::dynamic_pointer_cast<BoundLiteralExpression>(ptr);
-	if (p)
+	if (ptr && ptr->Kind() == BoundNodeKind::LiteralExpression)
 	{
-		try
+		auto p = std::static_pointer_cast<BoundLiteralExpression>(ptr);
+		if (p->Value().Type() == TYPE_BOOL
+			&& p->Value().ToBoolean())
 		{
-			auto value = p->Value().ToBoolean();
-			if (value)
-				ptr = nullptr;
-			else return;
-		} catch (...)
-		{
+			ptr = nullptr;
+		} else
 			return;
-		}
 	}
 
 	auto branch = make_unique<BasicBlockBranch>(&from, &to, ptr);

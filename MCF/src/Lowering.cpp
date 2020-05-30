@@ -209,11 +209,10 @@ public:
 shared_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(shared_ptr<BoundStatement> node)
 {
 #define REWRITE_STMT(kind) \
-case BoundNodeKind::kind:                                  \
-{                                                          \
-	auto p = std::dynamic_pointer_cast<Bound##kind>(node); \
-	if (p) return Rewrite##kind(std::move(p));             \
-	else break;                                            \
+case BoundNodeKind::kind:                                            \
+{                                                                    \
+	auto p = std::static_pointer_cast<Bound##kind>(std::move(node)); \
+	return Rewrite##kind(std::move(p));                              \
 }
 
 	switch (node->Kind())
@@ -378,11 +377,10 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteExpressionStatement(shared_
 shared_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(shared_ptr<BoundExpression> node)
 {
 #define REWRITE_EXPR(kind) \
-case BoundNodeKind::kind:                                  \
-{                                                          \
-	auto p = std::dynamic_pointer_cast<Bound##kind>(node); \
-	if (p) return Rewrite##kind(std::move(p));             \
-	else break;                                            \
+case BoundNodeKind::kind:                                            \
+{                                                                    \
+	auto p = std::static_pointer_cast<Bound##kind>(std::move(node)); \
+	return Rewrite##kind(std::move(p));                              \
 }
 
 	switch (node->Kind())
@@ -758,7 +756,7 @@ shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBin
 	return BoundTreeRewriter::RewriteBinaryExpression(std::move(node));
 }
 
-[[nodiscard]] unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func, 
+[[nodiscard]] unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func,
 													  shared_ptr<BoundStatement> statement)
 {
 	auto result = vector<shared_ptr<BoundStatement>>();
@@ -819,7 +817,7 @@ shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBin
 	return make_unique<BoundBlockStatement>(node->Syntax(), std::move(result));
 }
 
-unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func, 
+unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func,
 									  shared_ptr<BoundStatement> statement)
 {
 	auto lowerer = Lowerer();

@@ -531,15 +531,12 @@ void Compilation::EmitTree(std::ostream& out)
 void Compilation::EmitTree(const FunctionSymbol* symbol, std::ostream& out)
 {
 	auto program = GetProgram();
-	try
+	auto it = program->Functions().find(symbol);
+	if (it != program->Functions().cend())
 	{
-		auto& body = program->Functions().at(symbol);
 		symbol->WriteTo(out);
 		out << '\n';
-		body->WriteTo(out);
-	} catch (const std::out_of_range&)
-	{
-		return;
+		it->second->WriteTo(out);
 	}
 }
 

@@ -29,7 +29,7 @@ Classification Classify(SyntaxKind kind)
 }
 
 void AddClassification(SyntaxKind elementKind, const TextSpan& elementSpan,
-	const TextSpan& span, std::vector<ClassifiedSpan>& result)
+					   const TextSpan& span, std::vector<ClassifiedSpan>& result)
 {
 	if (!elementSpan.OverlapsWith(span))
 		return;
@@ -43,35 +43,38 @@ void AddClassification(SyntaxKind elementKind, const TextSpan& elementSpan,
 }
 
 void ClassifyTrivia(const SyntaxTrivia& tr, const TextSpan& span,
-	std::vector<ClassifiedSpan>& result)
+					std::vector<ClassifiedSpan>& result)
 {
 	AddClassification(tr.Kind, tr.Span(), span, result);
 }
 
 void ClassifyToken(const SyntaxToken& token, const TextSpan& span,
-	std::vector<ClassifiedSpan>& result)
+				   std::vector<ClassifiedSpan>& result)
 {
 	std::for_each(token.LeadingTrivia().cbegin(), token.LeadingTrivia().cend(),
-		[&span, &result](const auto& lt) { ClassifyTrivia(lt, span, result); });
+				  [&span, &result](const auto& lt) { ClassifyTrivia(lt, span, result); });
 
 	AddClassification(token.Kind(), token.Span(), span, result);
 
 	std::for_each(token.TrailingTrivia().cbegin(), token.TrailingTrivia().cend(),
-		[&span, &result](const auto& rt) { ClassifyTrivia(rt, span, result); });
+				  [&span, &result](const auto& rt) { ClassifyTrivia(rt, span, result); });
 }
 
 void ClassifyNode(const SyntaxNode* node, const TextSpan& span,
-	std::vector<ClassifiedSpan>& result)
+				  std::vector<ClassifiedSpan>& result)
 {
 	if (node == nullptr || !node->FullSpan().OverlapsWith(span))
 		return;
 
-	if (auto token = dynamic_cast<const SyntaxToken*>(node))
+	if (IsToken(node->Kind()))
+	{
+		auto token = static_cast<const SyntaxToken*>(node);
 		ClassifyToken(*token, span, result);
+	}
 
 	auto children = node->GetChildren();
 	std::for_each(children.cbegin(), children.cend(),
-		[&span, &result](const auto p) { ClassifyNode(p, span, result); });
+				  [&span, &result](const auto p) { ClassifyNode(p, span, result); });
 }
 
 } //namespace
