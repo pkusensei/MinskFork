@@ -117,16 +117,16 @@ inline const auto TYPE_VOID = TypeSymbol("void");
 class MCF_API VariableSymbol : public Symbol
 {
 private:
-	bool _isReadOnly;
-	TypeSymbol _type;
 	BoundConstant _constant;
+	TypeSymbol _type;
+	bool _isReadOnly;
 
 public:
 	explicit VariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
 							BoundConstant constant) noexcept
 		:Symbol(name),
-		_isReadOnly(isReadOnly), _type(type),
-		_constant(isReadOnly ? std::move(constant) : NULL_VALUE)
+		_constant(isReadOnly ? std::move(constant) : NULL_VALUE),
+		_type(std::move(type)), _isReadOnly(isReadOnly)
 	{
 	}
 
@@ -141,7 +141,7 @@ class GlobalVariableSymbol final :public VariableSymbol
 public:
 	explicit GlobalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
 								  BoundConstant constant)noexcept
-		:VariableSymbol(name, isReadOnly, type, std::move(constant))
+		:VariableSymbol(name, isReadOnly, std::move(type), std::move(constant))
 	{
 	}
 
@@ -153,7 +153,7 @@ class LocalVariableSymbol :public VariableSymbol
 public:
 	explicit LocalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
 								 BoundConstant constant)noexcept
-		:VariableSymbol(name, isReadOnly, type, std::move(constant))
+		:VariableSymbol(name, isReadOnly, std::move(type), std::move(constant))
 	{
 	}
 
@@ -164,7 +164,7 @@ class ParameterSymbol final : public LocalVariableSymbol
 {
 public:
 	explicit ParameterSymbol(string_view name, TypeSymbol type)noexcept
-		:LocalVariableSymbol(name, true, type, NULL_VALUE)
+		:LocalVariableSymbol(name, true, std::move(type), NULL_VALUE)
 	{
 	}
 
@@ -180,9 +180,10 @@ private:
 
 public:
 	explicit FunctionSymbol(string_view name, vector<ParameterSymbol> params,
-							TypeSymbol type, const FunctionDeclarationSyntax* declaration)
+							TypeSymbol type,
+							const FunctionDeclarationSyntax* declaration)noexcept
 		:Symbol(name),
-		_params(std::move(params)), _type(type), _declaration(declaration)
+		_params(std::move(params)), _type(std::move(type)), _declaration(declaration)
 	{
 	}
 	FunctionSymbol(string_view name, vector<ParameterSymbol> params, TypeSymbol type)

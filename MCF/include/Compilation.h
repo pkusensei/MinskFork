@@ -28,12 +28,12 @@ extern "C" using VarMap = std::unordered_map<const VariableSymbol*, ValueType,
 class MCF_API EvaluationResult final
 {
 private:
-	const DiagnosticBag& _diagnostics;
 	ValueType _value;
+	const DiagnosticBag& _diagnostics;
 
 public:
 	EvaluationResult(const DiagnosticBag& diagnostics, ValueType value)
-		:_diagnostics(diagnostics), _value(std::move(value))
+		: _value(std::move(value)), _diagnostics(diagnostics)
 	{
 	}
 
@@ -44,11 +44,11 @@ public:
 class MCF_API Compilation final
 {
 private:
-	bool _isScript;
-	unique_ptr<Compilation> _previous;
 	vector<unique_ptr<SyntaxTree>> _syntaxTrees;
+	unique_ptr<Compilation> _previous;
 	unique_ptr<BoundGlobalScope> _globalScope;
 	unique_ptr<DiagnosticBag> _diagnostics;
+	bool _isScript;
 
 	[[nodiscard]] unique_ptr<BoundProgram> GetProgram();
 

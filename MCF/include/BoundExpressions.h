@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdexcept>
+
 #include "BoundNode.h"
 #include "Symbols.h"
 #include "SyntaxKind.h"
@@ -47,7 +49,7 @@ string_view nameof(BoundPostfixOperatorEnum kind);
 class BoundExpression :public BoundNode
 {
 protected:
-	explicit BoundExpression(const SyntaxNode* syntax)
+	explicit BoundExpression(const SyntaxNode* syntax)noexcept
 		:BoundNode(syntax)
 	{
 	}
@@ -60,7 +62,7 @@ public:
 class BoundErrorExpression final :public BoundExpression
 {
 public:
-	explicit BoundErrorExpression(const SyntaxNode* syntax)
+	explicit BoundErrorExpression(const SyntaxNode* syntax)noexcept
 		:BoundExpression(syntax)
 	{
 	}
@@ -73,26 +75,26 @@ public:
 class BoundUnaryOperator final
 {
 private:
-	SyntaxKind _syntaxKind;
-	BoundUnaryOperatorKind _kind;
 	TypeSymbol _operandType;
 	TypeSymbol _resultType;
+	SyntaxKind _syntaxKind;
+	BoundUnaryOperatorKind _kind;
 	bool _isUseful = true;
 
 	BoundUnaryOperator(SyntaxKind synKind, BoundUnaryOperatorKind kind,
-					   const TypeSymbol& operandType, const TypeSymbol& resultType)
-		:_syntaxKind(synKind), _kind(kind),
-		_operandType(operandType), _resultType(resultType)
+					   const TypeSymbol& operandType, const TypeSymbol& resultType)noexcept
+		: _operandType(operandType), _resultType(resultType),
+		_syntaxKind(synKind), _kind(kind)
 	{
 	}
 
 	BoundUnaryOperator(SyntaxKind synKind,
-					   BoundUnaryOperatorKind kind, const TypeSymbol& operandType)
+					   BoundUnaryOperatorKind kind, const TypeSymbol& operandType)noexcept
 		: BoundUnaryOperator(synKind, kind, operandType, operandType)
 	{
 	}
 
-	BoundUnaryOperator()
+	BoundUnaryOperator()noexcept
 		: BoundUnaryOperator(SyntaxKind::BadToken, BoundUnaryOperatorKind::Identity,
 							 TYPE_ERROR)
 	{
@@ -114,33 +116,33 @@ public:
 class BoundBinaryOperator final
 {
 private:
-	SyntaxKind _syntaxKind;
-	BoundBinaryOperatorKind _kind;
 	TypeSymbol _leftType;
 	TypeSymbol _rightType;
 	TypeSymbol _resultType;
+	SyntaxKind _syntaxKind;
+	BoundBinaryOperatorKind _kind;
 	bool _isUseful = true;
 
 	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind,
-						const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result)
-		:_syntaxKind(synKind), _kind(kind), _leftType(left), _rightType(right),
-		_resultType(result)
+						const TypeSymbol& left, const TypeSymbol& right, const TypeSymbol& result)noexcept
+		:_leftType(left), _rightType(right), _resultType(result),
+		_syntaxKind(synKind), _kind(kind)
 	{
 	}
 
 	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind,
-						const TypeSymbol& operandType, const TypeSymbol& resultType)
+						const TypeSymbol& operandType, const TypeSymbol& resultType)noexcept
 		: BoundBinaryOperator(synKind, kind, operandType, operandType, resultType)
 	{
 	}
 
 	BoundBinaryOperator(SyntaxKind synKind, BoundBinaryOperatorKind kind,
-						const TypeSymbol& type)
+						const TypeSymbol& type)noexcept
 		: BoundBinaryOperator(synKind, kind, type, type, type)
 	{
 	}
 
-	BoundBinaryOperator()
+	BoundBinaryOperator()noexcept
 		: BoundBinaryOperator(SyntaxKind::BadToken, BoundBinaryOperatorKind::Addition,
 							  TYPE_ERROR)
 	{
@@ -169,17 +171,17 @@ public:
 class BoundUnaryExpression final : public BoundExpression
 {
 private:
-	BoundConstant _constant;
 	BoundUnaryOperator _op;
+	BoundConstant _constant;
 	shared_ptr<BoundExpression> _operand;
 
 public:
 	explicit BoundUnaryExpression(const SyntaxNode* syntax,
 								  const BoundUnaryOperator& op,
-								  shared_ptr<BoundExpression> operand)
+								  shared_ptr<BoundExpression> operand)noexcept
 		:BoundExpression(syntax),
-		_constant(Fold(op, *operand)),
-		_op(op), _operand(std::move(operand))
+		_op(op), _constant(Fold(op, *operand)),
+		_operand(std::move(operand))
 	{
 	}
 
@@ -195,17 +197,19 @@ public:
 class BoundBinaryExpression final : public BoundExpression
 {
 private:
+	BoundBinaryOperator _op;
 	BoundConstant _constant;
 	shared_ptr<BoundExpression> _left;
 	shared_ptr<BoundExpression> _right;
-	BoundBinaryOperator _op;
 
 public:
-	explicit BoundBinaryExpression(const SyntaxNode* syntax, shared_ptr<BoundExpression> left,
-								   BoundBinaryOperator op, shared_ptr<BoundExpression> right)
+	explicit BoundBinaryExpression(const SyntaxNode* syntax,
+								   shared_ptr<BoundExpression> left,
+								   BoundBinaryOperator op,
+								   shared_ptr<BoundExpression> right)noexcept
 		:BoundExpression(syntax),
-		_constant(Fold(*left, op, *right)),
-		_left(std::move(left)), _right(std::move(right)), _op(std::move(op))
+		_op(std::move(op)), _constant(Fold(*left, op, *right)),
+		_left(std::move(left)), _right(std::move(right))
 	{
 	}
 
@@ -228,7 +232,7 @@ private:
 public:
 	explicit BoundAssignmentExpression(const SyntaxNode* syntax,
 									   shared_ptr<VariableSymbol> variable,
-									   shared_ptr<BoundExpression> expression)
+									   shared_ptr<BoundExpression> expression)noexcept
 		:BoundExpression(syntax),
 		_variable(std::move(variable)), _expression(std::move(expression))
 	{
@@ -245,18 +249,18 @@ public:
 class BoundCompoundAssignmentExpression final :public BoundExpression
 {
 private:
+	BoundBinaryOperator _op;
 	shared_ptr<VariableSymbol> _variable;
 	shared_ptr<BoundExpression> _expression;
-	BoundBinaryOperator _op;
 
 public:
 	explicit BoundCompoundAssignmentExpression(const SyntaxNode* syntax,
 											   shared_ptr<VariableSymbol> variable,
 											   BoundBinaryOperator op,
-											   shared_ptr<BoundExpression> expression)
+											   shared_ptr<BoundExpression> expression)noexcept
 		:BoundExpression(syntax),
-		_variable(std::move(variable)), _expression(std::move(expression)),
-		_op(std::move(op))
+		_op(std::move(op)),
+		_variable(std::move(variable)), _expression(std::move(expression))
 	{
 	}
 
@@ -272,14 +276,16 @@ public:
 class BoundLiteralExpression final : public BoundExpression
 {
 private:
-	TypeSymbol _type;
 	BoundConstant _constant;
+	TypeSymbol _type;
 
 public:
 	explicit BoundLiteralExpression(const SyntaxNode* syntax, ValueType value)
 		:BoundExpression(syntax),
-		_type(value.Type()), _constant(std::move(value))
+		_constant(std::move(value)), _type(_constant.Type())
 	{
+		if (!value.HasValue())
+			throw std::invalid_argument("Unexpected literal: " + value.ToString());
 	}
 
 	// Inherited via BoundExpression
@@ -297,7 +303,7 @@ private:
 
 public:
 	explicit BoundVariableExpression(const SyntaxNode* syntax,
-									 shared_ptr<VariableSymbol> variable)
+									 shared_ptr<VariableSymbol> variable)noexcept
 		:BoundExpression(syntax),
 		_variable(std::move(variable))
 	{
@@ -314,15 +320,15 @@ public:
 class BoundCallExpression final :public BoundExpression
 {
 private:
-	shared_ptr<FunctionSymbol> _function;
 	vector<shared_ptr<BoundExpression>> _arguments;
+	shared_ptr<FunctionSymbol> _function;
 
 public:
 	explicit BoundCallExpression(const SyntaxNode* syntax,
 								 shared_ptr<FunctionSymbol> function,
-								 vector<shared_ptr<BoundExpression>> arguments)
+								 vector<shared_ptr<BoundExpression>> arguments)noexcept
 		:BoundExpression(syntax),
-		_function(std::move(function)), _arguments(std::move(arguments))
+		_arguments(std::move(arguments)), _function(std::move(function))
 	{
 	}
 
@@ -343,7 +349,7 @@ private:
 public:
 	explicit BoundConversionExpression(const SyntaxNode* syntax,
 									   const TypeSymbol& type,
-									   shared_ptr<BoundExpression> expression)
+									   shared_ptr<BoundExpression> expression)noexcept
 		:BoundExpression(syntax),
 		_type(type), _expression(std::move(expression))
 	{
@@ -360,16 +366,16 @@ class BoundPostfixExpression final :public BoundExpression
 {
 private:
 	shared_ptr<VariableSymbol> _variable;
-	BoundPostfixOperatorEnum _kind;
 	shared_ptr<BoundExpression> _expression;
+	BoundPostfixOperatorEnum _kind;
 
 public:
 	explicit BoundPostfixExpression(const SyntaxNode* syntax,
 									shared_ptr<VariableSymbol> variable,
 									BoundPostfixOperatorEnum kind,
-									shared_ptr<BoundExpression> expression)
+									shared_ptr<BoundExpression> expression)noexcept
 		:BoundExpression(syntax),
-		_variable(std::move(variable)), _kind(kind), _expression(std::move(expression))
+		_variable(std::move(variable)), _expression(std::move(expression)), _kind(kind)
 	{
 	}
 

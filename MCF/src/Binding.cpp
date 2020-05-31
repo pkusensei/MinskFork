@@ -158,11 +158,11 @@ class Binder final
 {
 private:
 	DiagnosticBag _diagnostics;
-	const bool _isScript;
+	std::stack<std::pair<BoundLabel, BoundLabel>> _loopStack; //break-continue pair
 	const FunctionSymbol* _function;
 	unique_ptr<BoundScope> _scope;
-	std::stack<std::pair<BoundLabel, BoundLabel>> _loopStack; //break-continue pair
 	size_t _labelCount;
+	bool _isScript;
 
 	Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbol* function);
 
@@ -226,10 +226,10 @@ public:
 };
 
 Binder::Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbol* function)
-	: _diagnostics(), _isScript(isScript),
+	:_diagnostics(), _loopStack(),
 	_function(function),
 	_scope(make_unique<BoundScope>(std::move(parent))),
-	_loopStack(), _labelCount(0)
+	_labelCount(0), _isScript(isScript)
 {
 	if (function != nullptr)
 		for (const auto& p : function->Parameters())

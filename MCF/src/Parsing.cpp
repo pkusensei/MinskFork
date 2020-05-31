@@ -53,14 +53,14 @@ const vector<const SyntaxNode*> CompilationUnitSyntax::GetChildren() const
 class Lexer final
 {
 private:
+	DiagnosticBag _diagnostics;
 	const SyntaxTree& _tree;
 	const SourceText& _text;
-	DiagnosticBag _diagnostics;
 
+	ValueType _value;
 	size_t _position;
 	size_t _start;
 	SyntaxKind _kind;
-	ValueType _value;
 
 	vector<SyntaxTrivia> _trivias;
 
@@ -88,8 +88,8 @@ public:
 };
 
 Lexer::Lexer(const SyntaxTree& tree)
-	:_tree(tree), _text(tree.Text()), _diagnostics(),
-	_position(0), _start(0), _kind(SyntaxKind::BadToken), _value(NULL_VALUE)
+	:_tree(tree), _text(tree.Text()),
+	_value(NULL_VALUE), _position(0), _start(0), _kind(SyntaxKind::BadToken)
 {
 }
 
@@ -559,11 +559,11 @@ void Lexer::ReadIdentifierOrKeyword()
 class Parser final
 {
 private:
+	DiagnosticBag _diagnostics;
+	vector<SyntaxToken> _tokens;
 	const SyntaxTree& _tree;
 	const SourceText& _text;
-	vector<SyntaxToken> _tokens;
 	size_t _position;
-	DiagnosticBag _diagnostics;
 
 	vector<unique_ptr<SyntaxTree>> _usings;
 
@@ -622,8 +622,7 @@ public:
 };
 
 Parser::Parser(const SyntaxTree& tree)
-	:_tree(tree), _text(tree.Text()), _tokens(),
-	_position(0), _diagnostics()
+	:_tree(tree), _text(tree.Text()), _position(0)
 {
 	auto badTokens = vector<SyntaxToken>();
 
@@ -763,7 +762,7 @@ SeparatedSyntaxList<ParameterSyntax> Parser::ParseParameterList()
 		}
 	}
 
-	return SeparatedSyntaxList<ParameterSyntax>(nodes);
+	return SeparatedSyntaxList<ParameterSyntax>(std::move(nodes));
 }
 
 unique_ptr<ParameterSyntax> Parser::ParseParameter()
@@ -1151,7 +1150,7 @@ SeparatedSyntaxList<ExpressionSyntax> Parser::ParseArguments()
 		}
 	}
 
-	return SeparatedSyntaxList<ExpressionSyntax>(nodesAndSeparators);
+	return SeparatedSyntaxList<ExpressionSyntax>(std::move(nodesAndSeparators));
 }
 
 unique_ptr<ExpressionSyntax> Parser::ParseNameExpression()

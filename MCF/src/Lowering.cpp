@@ -23,6 +23,7 @@ auto MakeVec(T&& t, Args&&... args)
 	static_assert(std::is_base_of_v<Base, Derived>);
 
 	auto result = vector<Elem>();
+	result.reserve(1 + sizeof...(Args));
 	result.push_back(std::forward<T>(t));
 
 	if constexpr (sizeof...(Args) > 0)

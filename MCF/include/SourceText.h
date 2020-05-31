@@ -66,7 +66,7 @@ private:
 
 public:
 	TextLine(const SourceText& text, size_t start, size_t length,
-		size_t lengthWithBreak)noexcept
+			 size_t lengthWithBreak)noexcept
 		:_text(&text), _start(start), _length(length),
 		_lengthIncludingLineBreak(lengthWithBreak)
 	{
@@ -102,7 +102,7 @@ private:
 	vector<TextLine> _lines;
 
 	static void AddLine(vector<TextLine>& result, const SourceText& sourceText,
-		size_t position, size_t lineStart, size_t lineBreakWidth);
+						size_t position, size_t lineStart, size_t lineBreakWidth);
 	static size_t GetLineBreakWidth(string_view text, size_t position);
 	static vector<TextLine> ParseLines(const SourceText& sourceText, string_view text);
 
@@ -143,12 +143,12 @@ public:
 class TextLocation
 {
 private:
-	const SourceText* _text;
 	TextSpan _span;
+	const SourceText* _text;
 
 public:
 	TextLocation(const SourceText& text, TextSpan span)
-		:_text(&text), _span(std::move(span))
+		:_span(std::move(span)), _text(&text)
 	{
 	}
 

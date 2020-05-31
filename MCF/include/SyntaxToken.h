@@ -22,7 +22,7 @@ private:
 	const SyntaxTree* _tree;
 
 	static void PrettyPrint(std::ostream& out, const SyntaxNode* node,
-		string indent = "", bool isLast = true);
+							string indent = "", bool isLast = true);
 
 protected:
 	explicit SyntaxNode(const SyntaxTree& tree)noexcept
@@ -35,7 +35,7 @@ public:
 	virtual SyntaxKind Kind() const noexcept = 0;
 	virtual TextSpan Span()const;
 	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
-	
+
 	constexpr const SyntaxTree& Tree()const noexcept { return *_tree; }
 	const SyntaxNode* Parent()const;
 	vector<const SyntaxNode*> Ancestors()const;
@@ -76,10 +76,10 @@ struct MCF_API SyntaxTrivia final
 class MCF_API SyntaxToken final :public SyntaxNode
 {
 private:
-	SyntaxKind _kind;
-	size_t _position;
-	string_view _text;
 	ValueType _value;
+	string_view _text;
+	size_t _position;
+	SyntaxKind _kind;
 	vector<SyntaxTrivia> _leadingTrivia;
 	vector<SyntaxTrivia> _trailingTrivia;
 
@@ -87,9 +87,10 @@ public:
 	SyntaxToken(const SyntaxTree& tree, SyntaxKind kind, size_t position,
 				string_view text, ValueType value,
 				vector<SyntaxTrivia> leadingTrivia,
-				vector<SyntaxTrivia> trailingTrivia)
-		:SyntaxNode(tree), _kind(kind), _position(position),
-		_text(text), _value(std::move(value)),
+				vector<SyntaxTrivia> trailingTrivia)noexcept
+		:SyntaxNode(tree),
+		_value(std::move(value)), _text(text),
+		_position(position), _kind(kind),
 		_leadingTrivia(std::move(leadingTrivia)),
 		_trailingTrivia(std::move(trailingTrivia))
 	{
@@ -121,7 +122,7 @@ private:
 	vector<unique_ptr<SyntaxNode>> _nodesAndSeparators;
 
 public:
-	explicit SeparatedSyntaxList(vector<unique_ptr<SyntaxNode>>& list)noexcept
+	explicit SeparatedSyntaxList(vector<unique_ptr<SyntaxNode>> list)noexcept
 		:_nodesAndSeparators(std::move(list))
 	{
 	}

@@ -103,7 +103,7 @@ private:
 	unique_ptr<BasicBlock> _end;
 
 	void Connect(BasicBlock& from, BasicBlock& to,
-				 const std::optional<shared_ptr<BoundExpression>>& condition = std::nullopt);
+				 shared_ptr<BoundExpression> condition = nullptr);
 	void RemoveBlock(vector<unique_ptr<BasicBlock>>& blocks, BasicBlock& block);
 	shared_ptr<BoundExpression> Negate(const shared_ptr<BoundExpression>& condition)const;
 
@@ -118,21 +118,19 @@ public:
 };
 
 void ControlFlowGraph::GraphBuilder::Connect(BasicBlock& from, BasicBlock& to,
-											 const std::optional<shared_ptr<BoundExpression>>& condition)
+											 shared_ptr<BoundExpression> condition)
 {
-	auto ptr = condition.value_or(nullptr);
-	if (ptr && ptr->Kind() == BoundNodeKind::LiteralExpression)
+	if (condition && condition->Kind() == BoundNodeKind::LiteralExpression)
 	{
-		auto p = std::static_pointer_cast<BoundLiteralExpression>(ptr);
-		if (p->Value().Type() == TYPE_BOOL
-			&& p->Value().ToBoolean())
+		auto p = std::static_pointer_cast<BoundLiteralExpression>(condition);
+		if (p->Value().Type() == TYPE_BOOL && p->Value().ToBoolean())
 		{
-			ptr = nullptr;
+			condition = nullptr;
 		} else
 			return;
 	}
 
-	auto branch = make_unique<BasicBlockBranch>(&from, &to, ptr);
+	auto branch = make_unique<BasicBlockBranch>(&from, &to, std::move(condition));
 	_branches.push_back(std::move(branch));
 	auto& last = _branches.back();
 	from.Outgoing().push_back(last.get());
@@ -232,8 +230,8 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 						cgs->Condition() : negatedCondition;
 					auto elseCondition = cgs->JumpIfTrue() ?
 						negatedCondition : cgs->Condition();
-					Connect(*current, *thenBlock, thenCondition);
-					Connect(*current, *elseBlock, elseCondition);
+					Connect(*current, *thenBlock, std::move(thenCondition));
+					Connect(*current, *elseBlock, std::move(elseCondition));
 					break;
 				}
 				case BoundNodeKind::ReturnStatement:
@@ -273,7 +271,7 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 	auto end = _end.get();
 	blocks.insert(blocks.begin(), std::move(_start));
 	blocks.push_back(std::move(_end));
-	return ControlFlowGraph(start, end, blocks, _branches);
+	return ControlFlowGraph(start, end, std::move(blocks), std::move(_branches));
 }
 
 void ControlFlowGraph::WriteTo(std::ostream& out) const
@@ -305,14 +303,6 @@ void ControlFlowGraph::WriteTo(std::ostream& out) const
 		out << "    N" << fromId << " -> N" << toId << " [label = " << label << "]" << NEW_LINE;
 	}
 	out << '}' << NEW_LINE;
-}
-
-ControlFlowGraph::ControlFlowGraph(BasicBlock* start, BasicBlock* end,
-								   vector<unique_ptr<BasicBlock>>& blocks,
-								   vector<unique_ptr<BasicBlockBranch>>& branches)
-	:_start(start), _end(end), _blocks(std::move(blocks)),
-	_branches(std::move(branches))
-{
 }
 
 ControlFlowGraph ControlFlowGraph::Create(const BoundBlockStatement* body)

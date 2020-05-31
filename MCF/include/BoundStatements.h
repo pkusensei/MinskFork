@@ -11,7 +11,7 @@ class BoundExpression;
 class BoundStatement :public BoundNode
 {
 protected:
-	explicit BoundStatement(const SyntaxNode* syntax)
+	explicit BoundStatement(const SyntaxNode* syntax)noexcept
 		:BoundNode(syntax)
 	{
 	}
@@ -24,7 +24,7 @@ private:
 
 public:
 	explicit BoundBlockStatement(const SyntaxNode* syntax,
-								 vector<shared_ptr<BoundStatement>> statements)
+								 vector<shared_ptr<BoundStatement>> statements)noexcept
 		:BoundStatement(syntax),
 		_statements(std::move(statements))
 	{
@@ -39,7 +39,7 @@ public:
 class BoundNopStatement final :public BoundStatement
 {
 public:
-	explicit BoundNopStatement(const SyntaxNode* syntax)
+	explicit BoundNopStatement(const SyntaxNode* syntax)noexcept
 		:BoundStatement(syntax)
 	{
 	}
@@ -57,7 +57,7 @@ private:
 public:
 	explicit BoundVariableDeclaration(const SyntaxNode* syntax,
 									  shared_ptr<VariableSymbol> variable,
-									  shared_ptr<BoundExpression> initializer)
+									  shared_ptr<BoundExpression> initializer)noexcept
 		:BoundStatement(syntax),
 		_variable(std::move(variable)), _initializer(std::move(initializer))
 	{
@@ -81,7 +81,7 @@ public:
 	explicit BoundIfStatement(const SyntaxNode* syntax,
 							  shared_ptr<BoundExpression> condition,
 							  shared_ptr<BoundStatement> thenStatement,
-							  shared_ptr<BoundStatement> elseStatement)
+							  shared_ptr<BoundStatement> elseStatement)noexcept
 		:BoundStatement(syntax),
 		_condition(std::move(condition)), _thenStatement(std::move(thenStatement)),
 		_elseStatement(std::move(elseStatement))
@@ -104,7 +104,8 @@ private:
 
 protected:
 	explicit BoundLoopStatement(const SyntaxNode* syntax,
-								const BoundLabel& breakLabel, const BoundLabel& continueLabel)
+								BoundLabel breakLabel,
+								BoundLabel continueLabel)noexcept
 		:BoundStatement(syntax),
 		_breakLabel(std::move(breakLabel)), _continueLabel(std::move(continueLabel))
 	{
@@ -148,7 +149,8 @@ public:
 	explicit BoundDoWhileStatement(const SyntaxNode* syntax,
 								   shared_ptr<BoundStatement> body,
 								   shared_ptr<BoundExpression> condition,
-								   BoundLabel breakLabel, BoundLabel continueLabel)
+								   BoundLabel breakLabel,
+								   BoundLabel continueLabel)noexcept
 		: BoundLoopStatement(syntax, std::move(breakLabel), std::move(continueLabel)),
 		_body(std::move(body)), _condition(std::move(condition))
 	{
@@ -175,7 +177,8 @@ public:
 							   shared_ptr<BoundExpression> lowerBound,
 							   shared_ptr<BoundExpression> upperBound,
 							   shared_ptr<BoundStatement> body,
-							   BoundLabel breakLabel, BoundLabel continueLabel)
+							   BoundLabel breakLabel,
+							   BoundLabel continueLabel)noexcept
 		: BoundLoopStatement(syntax, std::move(breakLabel), std::move(continueLabel)),
 		_variable(std::move(variable)), _lowerBound(std::move(lowerBound)),
 		_upperBound(std::move(upperBound)), _body(std::move(body))
@@ -197,7 +200,7 @@ private:
 	BoundLabel _label;
 
 public:
-	explicit BoundLabelStatement(const SyntaxNode* syntax, BoundLabel label)
+	explicit BoundLabelStatement(const SyntaxNode* syntax, BoundLabel label)noexcept
 		:BoundStatement(syntax),
 		_label(std::move(label))
 	{
@@ -215,7 +218,7 @@ private:
 	BoundLabel _label;
 
 public:
-	explicit BoundGotoStatement(const SyntaxNode* syntax, BoundLabel label)
+	explicit BoundGotoStatement(const SyntaxNode* syntax, BoundLabel label)noexcept
 		:BoundStatement(syntax),
 		_label(std::move(label))
 	{
@@ -238,7 +241,7 @@ public:
 	explicit BoundConditionalGotoStatement(const SyntaxNode* syntax,
 										   BoundLabel label,
 										   shared_ptr<BoundExpression> condition,
-										   bool jumpIfTrue = true)
+										   bool jumpIfTrue = true)noexcept
 		:BoundStatement(syntax),
 		_label(std::move(label)), _condition(std::move(condition)),
 		_jumpIfTrue(std::move(jumpIfTrue))

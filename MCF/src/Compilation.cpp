@@ -25,11 +25,11 @@ class Evaluator final
 		const BoundBlockStatement*, SymbolHash, SymbolEqual>;
 
 private:
-	const BoundProgram& _program;
-	VarMap& _globals;
+	ValueType _lastValue;
 	FuncMap _functions;
 	std::stack<VarMap> _locals;
-	ValueType _lastValue;
+	const BoundProgram& _program;
+	VarMap& _globals;
 
 	ValueType EvaluateStatement(const BoundBlockStatement* body);
 	void EvaluateVariableDeclaration(const BoundVariableDeclaration* node);
@@ -222,8 +222,8 @@ ValueType Evaluator::EvaluateUnaryExpression(const BoundUnaryExpression* node)
 		case BoundUnaryOperatorKind::OnesComplement:
 			return ~operand.GetValue<IntegerType>();
 		default:
-			throw std::invalid_argument(BuildStringFrom("Invalid unary operator "
-				, nameof(node->Op().Kind())));
+			throw std::invalid_argument(BuildStringFrom("Invalid unary operator ",
+														nameof(node->Op().Kind())));
 	}
 }
 
@@ -275,8 +275,8 @@ ValueType Evaluator::EvaluateBinaryExpression(const BoundBinaryExpression* node)
 			return left.GetValue<IntegerType>() >= right.GetValue<IntegerType>();
 
 		default:
-			throw std::invalid_argument(BuildStringFrom("Invalid binary operator "
-				, nameof(node->Op().Kind())));
+			throw std::invalid_argument(BuildStringFrom("Invalid binary operator ",
+														nameof(node->Op().Kind())));
 	}
 }
 
@@ -371,10 +371,11 @@ void Evaluator::Assign(const VariableSymbol* variable, const ValueType& value)
 }
 
 Compilation::Compilation(bool isScript,
-	unique_ptr<Compilation> previous,
-	vector<unique_ptr<SyntaxTree>> trees)
-	:_isScript(isScript), _previous(std::move(previous)), _syntaxTrees(),
-	_globalScope(nullptr), _diagnostics(make_unique<DiagnosticBag>())
+						 unique_ptr<Compilation> previous,
+						 vector<unique_ptr<SyntaxTree>> trees)
+	: _previous(std::move(previous)),
+	_diagnostics(make_unique<DiagnosticBag>()),
+	_isScript(isScript)
 {
 	auto vec = vector<unique_ptr<SyntaxTree>>();
 	while (!trees.empty())
@@ -383,7 +384,7 @@ Compilation::Compilation(bool isScript,
 		trees.pop_back();
 		auto flat = SyntaxTree::Flatten(std::move(tree));
 		vec.insert(vec.end(), std::make_move_iterator(flat.begin()),
-			std::make_move_iterator(flat.end()));
+				   std::make_move_iterator(flat.end()));
 	}
 	_syntaxTrees = std::move(vec);
 }
@@ -394,7 +395,7 @@ Compilation Compilation::Create(unique_ptr<SyntaxTree> tree)
 }
 
 Compilation Compilation::CreateScript(unique_ptr<Compilation> previous,
-	unique_ptr<SyntaxTree> tree)
+									  unique_ptr<SyntaxTree> tree)
 {
 	auto vec = vector<unique_ptr<SyntaxTree>>();
 	vec.push_back(std::move(tree));
@@ -405,7 +406,7 @@ const vector<const SyntaxTree*> Compilation::SyntaxTrees()const noexcept
 {
 	auto result = vector<const SyntaxTree*>();
 	std::transform(_syntaxTrees.cbegin(), _syntaxTrees.cend(), std::back_inserter(result),
-		[](const auto& tree) { return tree.get(); });
+				   [](const auto& tree) { return tree.get(); });
 	return result;
 }
 
@@ -543,10 +544,10 @@ void Compilation::EmitTree(const FunctionSymbol* symbol, std::ostream& out)
 DiagnosticBag Compilation::Emit(const string& moduleName, const fs::path& outPath)
 {
 	std::for_each(_syntaxTrees.cbegin(), _syntaxTrees.cend(),
-		[this](const auto& tree)
-		{
-			_diagnostics->AddRange(std::move(*tree).Diagnostics());
-		});
+				  [this](const auto& tree)
+				  {
+					  _diagnostics->AddRange(std::move(*tree).Diagnostics());
+				  });
 
 	_diagnostics->AddRange(std::move(*GlobalScope()).Diagnostics());
 

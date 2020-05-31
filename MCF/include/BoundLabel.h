@@ -11,7 +11,7 @@ private:
 
 public:
 	explicit BoundLabel(string name) noexcept :_name(std::move(name)) {}
-	explicit BoundLabel() :BoundLabel(string()) {}
+	explicit BoundLabel() noexcept :BoundLabel(string()) {}
 
 	bool operator==(const BoundLabel& other) const noexcept { return _name == other._name; }
 	bool operator!=(const BoundLabel& other) const noexcept { return !(*this == other); }

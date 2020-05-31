@@ -44,7 +44,7 @@ private:
 	const SyntaxNode* _syntax;
 
 protected:
-	BoundNode(const SyntaxNode* syntax)
+	BoundNode(const SyntaxNode* syntax)noexcept
 		:_syntax(syntax)
 	{
 	}

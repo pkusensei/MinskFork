@@ -103,10 +103,11 @@ enum class SyntaxKind
 	ParenthesizedExpression,
 	AssignmentExpression,
 	CallExpression,
-	PostfixExpression, //
+	PostfixExpression,
 };
 
-constexpr size_t SYNTAXKIND_COUNT = 86;
+constexpr size_t SYNTAXKIND_COUNT
+= 1 + std::underlying_type_t<SyntaxKind>(SyntaxKind::PostfixExpression);
 
 // NOTE global constant
 extern "C" MCF_API const std::array<SyntaxKind, SYNTAXKIND_COUNT> & AllSyntaxKinds;

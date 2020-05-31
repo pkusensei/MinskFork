@@ -52,14 +52,14 @@ public:
 class ParameterSyntax final :public SyntaxNode
 {
 private:
-	SyntaxToken _identifier;
 	TypeClauseSyntax _type;
+	SyntaxToken _identifier;
 
 public:
 	ParameterSyntax(const SyntaxTree& tree,
 					SyntaxToken identifier, TypeClauseSyntax type)
 		:SyntaxNode(tree),
-		_identifier(std::move(identifier)), _type(std::move(type))
+		_type(std::move(type)), _identifier(std::move(identifier))
 	{
 	}
 
@@ -74,12 +74,12 @@ public:
 class FunctionDeclarationSyntax final :public MemberSyntax
 {
 private:
+	std::optional<TypeClauseSyntax> _type;
 	SyntaxToken _funcKeyword;
 	SyntaxToken _identifier;
 	SyntaxToken _openParenthesisToken;
-	SeparatedSyntaxList<ParameterSyntax> _parameters;
 	SyntaxToken _closeParenthesisToken;
-	std::optional<TypeClauseSyntax> _type;
+	SeparatedSyntaxList<ParameterSyntax> _parameters;
 	unique_ptr<BlockStatementSyntax> _body;
 
 public:
@@ -90,11 +90,12 @@ public:
 							  std::optional<TypeClauseSyntax> type,
 							  unique_ptr<BlockStatementSyntax> body)
 		:MemberSyntax(tree),
+		_type(std::move(type)),
 		_funcKeyword(std::move(funcKeyword)), _identifier(std::move(identifier)),
 		_openParenthesisToken(std::move(openParenthesisToken)),
-		_parameters(std::move(params)),
 		_closeParenthesisToken(std::move(closeParenthesisToken)),
-		_type(std::move(type)), _body(std::move(body))
+		_parameters(std::move(params)),
+		_body(std::move(body))
 	{
 	}
 
@@ -133,14 +134,14 @@ public:
 class CompilationUnitSyntax final :public SyntaxNode
 {
 private:
-	vector<unique_ptr<MemberSyntax>> _members;
 	SyntaxToken _endOfFileToken;
+	vector<unique_ptr<MemberSyntax>> _members;
 
 public:
 	CompilationUnitSyntax(const SyntaxTree& tree, vector<unique_ptr<MemberSyntax>> members,
 						  SyntaxToken endOfFile)
 		:SyntaxNode(tree),
-		_members(std::move(members)), _endOfFileToken(std::move(endOfFile))
+		_endOfFileToken(std::move(endOfFile)), _members(std::move(members))
 	{
 	}
 
@@ -156,16 +157,16 @@ class MCF_API SyntaxTree final
 {
 private:
 
-	unique_ptr<SourceText> _text;
-	unique_ptr<CompilationUnitSyntax> _root;
-	unique_ptr<DiagnosticBag> _diagnostics;
-
 	// NOTE by the time _parents gets "filled in" in GetParent()
 	//      AST is already constructed and should remain const
 	//      _parents serves as a side-effect, not directly related to AST
 	mutable std::unordered_map<const SyntaxNode*, const SyntaxNode*> _parents;
 
 	vector<unique_ptr<SyntaxTree>> _usings;
+
+	unique_ptr<SourceText> _text;
+	unique_ptr<CompilationUnitSyntax> _root;
+	unique_ptr<DiagnosticBag> _diagnostics;
 
 	template<typename ParseHandle,
 		typename = std::enable_if_t<std::is_invocable_v<ParseHandle, const SyntaxTree&>>>

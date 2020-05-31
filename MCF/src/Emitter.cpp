@@ -51,11 +51,10 @@ private:
 	unique_ptr<llvm::Module> _module;
 	llvm::TargetMachine* _targetMachine;
 
+	std::unordered_map<TypeSymbol, llvm::Type*, SymbolHash, SymbolEqual> _knownTypes;
 	llvm::Type* _boolType;
 	llvm::Type* _charType;
 	llvm::Type* _intType;
-
-	std::unordered_map<TypeSymbol, llvm::Type*, SymbolHash, SymbolEqual> _knownTypes;
 
 	llvm::Function* _inputFunc;
 	llvm::Function* _putsFunc; 	// delegate print to C puts function

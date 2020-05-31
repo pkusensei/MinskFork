@@ -7,7 +7,7 @@ namespace MCF {
 class ExpressionSyntax :public SyntaxNode
 {
 protected:
-	explicit ExpressionSyntax(const SyntaxTree& tree)
+	explicit ExpressionSyntax(const SyntaxTree& tree)noexcept
 		:SyntaxNode(tree)
 	{
 	}
@@ -23,10 +23,12 @@ private:
 public:
 	AssignmentExpressionSyntax(const SyntaxTree& tree,
 							   SyntaxToken identifier,
-							   SyntaxToken assignment, unique_ptr<ExpressionSyntax> expression)
+							   SyntaxToken assignment,
+							   unique_ptr<ExpressionSyntax> expression)noexcept
 		:ExpressionSyntax(tree),
 		_identifierToken(std::move(identifier)),
-		_assignmentToken(std::move(assignment)), _expression(std::move(expression))
+		_assignmentToken(std::move(assignment)),
+		_expression(std::move(expression))
 	{
 	}
 
@@ -48,7 +50,7 @@ private:
 public:
 	UnaryExpressionSyntax(const SyntaxTree& tree,
 						  SyntaxToken operatorToken,
-						  unique_ptr<ExpressionSyntax> operand)
+						  unique_ptr<ExpressionSyntax> operand)noexcept
 		:ExpressionSyntax(tree),
 		_operatorToken(std::move(operatorToken)), _operand(std::move(operand))
 	{
@@ -73,7 +75,7 @@ public:
 	BinaryExpressionSyntax(const SyntaxTree& tree,
 						   unique_ptr<ExpressionSyntax> left,
 						   SyntaxToken operatorToken,
-						   unique_ptr<ExpressionSyntax> right)
+						   unique_ptr<ExpressionSyntax> right)noexcept
 		:ExpressionSyntax(tree),
 		_operatorToken(std::move(operatorToken)),
 		_left(std::move(left)), _right(std::move(right))
@@ -100,7 +102,7 @@ public:
 	ParenthesizedExpressionSyntax(const SyntaxTree& tree,
 								  SyntaxToken open,
 								  unique_ptr<ExpressionSyntax> expression,
-								  SyntaxToken close)
+								  SyntaxToken close)noexcept
 		:ExpressionSyntax(tree),
 		_openParenthesisToken(std::move(open)),
 		_closeParenthesisToken(std::move(close)),
@@ -125,7 +127,7 @@ private:
 
 public:
 	LiteralExpressionSyntax(const SyntaxTree& tree,
-							SyntaxToken literalToken, ValueType value)
+							SyntaxToken literalToken, ValueType value)noexcept
 		:ExpressionSyntax(tree),
 		_literalToken(std::move(literalToken)), _value(std::move(value))
 	{
@@ -149,7 +151,7 @@ private:
 	SyntaxToken _identifierToken;
 
 public:
-	NameExpressionSyntax(const SyntaxTree& tree, SyntaxToken identifier)
+	NameExpressionSyntax(const SyntaxTree& tree, SyntaxToken identifier)noexcept
 		:ExpressionSyntax(tree),
 		_identifierToken(std::move(identifier))
 	{
@@ -167,20 +169,20 @@ class CallExpressionSyntax final :public ExpressionSyntax
 private:
 	SyntaxToken _identifier;
 	SyntaxToken _openParenthesisToken;
-	SeparatedSyntaxList<ExpressionSyntax> _arguments;
 	SyntaxToken _closeParenthesisToken;
+	SeparatedSyntaxList<ExpressionSyntax> _arguments;
 
 public:
 	CallExpressionSyntax(const SyntaxTree& tree,
 						 SyntaxToken identifier,
 						 SyntaxToken open,
 						 SeparatedSyntaxList<ExpressionSyntax> arguments,
-						 SyntaxToken close)
+						 SyntaxToken close)noexcept
 		:ExpressionSyntax(tree),
 		_identifier(std::move(identifier)),
 		_openParenthesisToken(std::move(open)),
-		_arguments(std::move(arguments)),
-		_closeParenthesisToken(std::move(close))
+		_closeParenthesisToken(std::move(close)),
+		_arguments(std::move(arguments))
 	{
 	}
 
@@ -203,7 +205,7 @@ private:
 
 public:
 	PostfixExpressionSyntax(const SyntaxTree& tree, SyntaxToken identifier, SyntaxToken op,
-							unique_ptr<ExpressionSyntax> expression)
+							unique_ptr<ExpressionSyntax> expression)noexcept
 		:ExpressionSyntax(tree),
 		_identifier(std::move(identifier)), _op(std::move(op)),
 		_expression(std::move(expression))

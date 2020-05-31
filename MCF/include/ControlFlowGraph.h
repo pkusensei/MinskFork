@@ -20,14 +20,18 @@ public:
 	class GraphBuilder;
 
 private:
-	BasicBlock* _start;
-	BasicBlock* _end;
 	vector<unique_ptr<BasicBlock>> _blocks;
 	vector<unique_ptr<BasicBlockBranch>> _branches;
+	BasicBlock* _start;
+	BasicBlock* _end;
 
-	ControlFlowGraph(BasicBlock* start, BasicBlock* end,
-		vector<unique_ptr<BasicBlock>>& blocks,
-		vector<unique_ptr<BasicBlockBranch>>& branches);
+	explicit ControlFlowGraph(BasicBlock* start, BasicBlock* end,
+							  vector<unique_ptr<BasicBlock>> blocks,
+							  vector<unique_ptr<BasicBlockBranch>> branches)noexcept
+		:_blocks(std::move(blocks)), _branches(std::move(branches)),
+		_start(start), _end(end)
+	{
+	}
 
 public:
 	constexpr BasicBlock* Start()const noexcept { return _start; }
@@ -44,13 +48,13 @@ public:
 class ControlFlowGraph::BasicBlock final
 {
 private:
-	int _id;
-	bool _isStart;
-	bool _isEnd;
-
 	vector<BoundStatement*> _statements;
 	vector<BasicBlockBranch*> _incoming;
 	vector<BasicBlockBranch*> _outgoing;
+
+	int _id;
+	bool _isStart;
+	bool _isEnd;
 
 public:
 	explicit BasicBlock(int id = 0, bool isStart = false, bool isEnd = false)noexcept
@@ -75,14 +79,14 @@ public:
 class ControlFlowGraph::BasicBlockBranch final
 {
 private:
+	shared_ptr<BoundExpression> _condition;
 	BasicBlock* _from;
 	BasicBlock* _to;
-	shared_ptr<BoundExpression> _condition;
 
 public:
 	BasicBlockBranch(BasicBlock* from, BasicBlock* to,
-		const shared_ptr<BoundExpression>& condition = nullptr)
-		:_from(from), _to(to), _condition(condition)
+					 shared_ptr<BoundExpression> condition = nullptr)noexcept
+		:_condition(condition), _from(from), _to(to)
 	{
 	}
 
