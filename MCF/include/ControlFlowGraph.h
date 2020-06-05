@@ -86,7 +86,7 @@ private:
 public:
 	BasicBlockBranch(BasicBlock* from, BasicBlock* to,
 					 shared_ptr<BoundExpression> condition = nullptr)noexcept
-		:_condition(condition), _from(from), _to(to)
+		:_condition(std::move(condition)), _from(from), _to(to)
 	{
 	}
 
@@ -99,7 +99,10 @@ public:
 	{
 		return _from == other._from && _to == other._to;
 	}
-	constexpr bool operator!=(const BasicBlockBranch& other)const noexcept { return !(*this == other); }
+	constexpr bool operator!=(const BasicBlockBranch& other)const noexcept
+	{
+		return !(*this == other);
+	}
 
 };
 

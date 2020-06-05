@@ -73,7 +73,7 @@ struct MCF_API SyntaxTrivia final
 	}
 };
 
-class MCF_API SyntaxToken final :public SyntaxNode
+class MCF_API [[nodiscard]] SyntaxToken final :public SyntaxNode
 {
 private:
 	ValueType _value;

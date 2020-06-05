@@ -75,7 +75,7 @@ std::ostream& operator<<(std::ostream& out, const ValueType& value)
 	if (value.HasValue())
 		out << value.ToString();
 	else
-		out << "Not valid value or type." << NEW_LINE;
+		out << "Not valid value or type.";
 	return out;
 }
 

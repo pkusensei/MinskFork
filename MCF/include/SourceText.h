@@ -65,8 +65,8 @@ private:
 	size_t _lengthIncludingLineBreak;
 
 public:
-	TextLine(const SourceText& text, size_t start, size_t length,
-			 size_t lengthWithBreak)noexcept
+	constexpr TextLine(const SourceText& text, size_t start, size_t length,
+					   size_t lengthWithBreak)noexcept
 		:_text(&text), _start(start), _length(length),
 		_lengthIncludingLineBreak(lengthWithBreak)
 	{
@@ -82,11 +82,11 @@ public:
 	{
 		return _lengthIncludingLineBreak;
 	}
-	constexpr TextSpan Span()const
+	constexpr TextSpan Span()const noexcept
 	{
 		return TextSpan(_start, _length);
 	}
-	constexpr TextSpan SpanIncludingLineBreak()const
+	constexpr TextSpan SpanIncludingLineBreak()const noexcept
 	{
 		return TextSpan(_start, _lengthIncludingLineBreak);
 	}
@@ -94,7 +94,7 @@ public:
 
 };
 
-class MCF_API SourceText final
+class MCF_API [[nodiscard]] SourceText final
 {
 private:
 	string _text;
@@ -106,20 +106,20 @@ private:
 	static size_t GetLineBreakWidth(string_view text, size_t position);
 	static vector<TextLine> ParseLines(const SourceText& sourceText, string_view text);
 
-	explicit SourceText(string text, fs::path filePath = {})
+	explicit SourceText(string text, fs::path filePath = {})noexcept
 		:_text(std::move(text)), _filePath(std::move(filePath))
 	{
 		_lines = ParseLines(*this, _text);
 	}
 
 public:
-	constexpr const fs::path& FilePath()const { return _filePath; }
-	constexpr const vector<TextLine>& Lines()const { return _lines; }
+	constexpr const fs::path& FilePath()const noexcept { return _filePath; }
+	constexpr const vector<TextLine>& Lines()const noexcept { return _lines; }
 	size_t Length()const noexcept { return _text.length(); }
 	char operator[](size_t sub) const { return _text.at(sub); }
 	size_t GetLineIndex(size_t position)const noexcept;
 
-	string_view ToString()const { return _text; }
+	string_view ToString()const noexcept { return _text; }
 	constexpr string_view ToString(size_t start, size_t length)const
 	{
 		return ToString().substr(start, length);
@@ -129,7 +129,7 @@ public:
 		return ToString(span.Start(), span.Length());
 	}
 
-	static SourceText From(string text, fs::path path = {})
+	static SourceText From(string text, fs::path path = {})noexcept
 	{
 		return SourceText(std::move(text), std::move(path));
 	}
@@ -147,7 +147,7 @@ private:
 	const SourceText* _text;
 
 public:
-	TextLocation(const SourceText& text, TextSpan span)
+	TextLocation(const SourceText& text, TextSpan span)noexcept
 		:_span(std::move(span)), _text(&text)
 	{
 	}
@@ -155,7 +155,7 @@ public:
 	constexpr const SourceText& Text()const noexcept { return *_text; }
 	constexpr const TextSpan& Span()const noexcept { return _span; }
 
-	constexpr const fs::path& FilePath()const { return Text().FilePath(); }
+	constexpr const fs::path& FilePath()const noexcept { return Text().FilePath(); }
 	size_t StartLine()const noexcept
 	{
 		return Text().GetLineIndex(Span().Start());
@@ -166,13 +166,12 @@ public:
 	}
 	constexpr size_t StartCharacter() const
 	{
-		return Span().Start() - Text().Lines()[StartLine()].Start();
+		return Span().Start() - Text().Lines().at(StartLine()).Start();
 	}
 	constexpr size_t EndCharacter() const
 	{
-		return Span().End() > Text().Lines()[EndLine()].End() ?
-			Span().End() - Text().Lines()[EndLine()].End()
-			: 0;
+		return Span().End() > Text().Lines().at(EndLine()).End() ?
+			Span().End() - Text().Lines().at(EndLine()).End() : 0;
 	}
 
 };

@@ -120,7 +120,7 @@ private:
 public:
 	explicit Emitter(const string& moduleName);
 
-	[[nodiscard]] DiagnosticBag Emit(const BoundProgram& program, const fs::path& outputPath);
+	DiagnosticBag Emit(const BoundProgram& program, const fs::path& outputPath);
 };
 
 Emitter::Emitter(const string& moduleName)

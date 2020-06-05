@@ -85,7 +85,7 @@ private:
 	}
 
 public:
-	explicit BoundScope(unique_ptr<BoundScope> parent = nullptr)
+	explicit BoundScope(unique_ptr<BoundScope> parent = nullptr)noexcept
 		: _parent(std::move(parent))
 	{
 	}
@@ -219,10 +219,12 @@ public:
 	constexpr const DiagnosticBag& Diagnostics()const& noexcept { return _diagnostics; }
 	[[nodiscard]] constexpr DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
 
-	[[nodiscard]] static BoundGlobalScope BindGlobalScope(bool isScript,
-														  const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees);
-	[[nodiscard]] static BoundProgram BindProgram(bool isScript,
-												  unique_ptr<BoundProgram> preious, const BoundGlobalScope* globalScope);
+	static BoundGlobalScope BindGlobalScope(bool isScript,
+											const BoundGlobalScope* previous,
+											const vector<const SyntaxTree*>& trees);
+	static BoundProgram BindProgram(bool isScript,
+									unique_ptr<BoundProgram> preious,
+									const BoundGlobalScope* globalScope);
 };
 
 Binder::Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbol* function)

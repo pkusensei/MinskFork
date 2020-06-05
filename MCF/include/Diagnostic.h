@@ -18,7 +18,7 @@ enum class SyntaxKind;
 class TypeSymbol;
 class SyntaxNode;
 
-class Diagnostic final
+class [[nodiscard]] Diagnostic final
 {
 private:
 	string _message;
@@ -33,10 +33,7 @@ private:
 public:
 	constexpr bool HasLocation()const noexcept { return _location.has_value(); }
 
-	constexpr const TextLocation& Location() const
-	{
-		return _location.value(); // HACK this throws
-	}
+	MCF_API const TextLocation& Location() const;
 
 	constexpr bool IsError()const noexcept { return _isError; }
 	constexpr bool IsWarning()const noexcept { return !_isError; }
@@ -55,7 +52,7 @@ public:
 
 };
 
-class MCF_API DiagnosticBag final
+class MCF_API [[nodiscard]] DiagnosticBag final
 {
 private:
 	std::deque<Diagnostic> _diagnostics;

@@ -3,10 +3,39 @@
 #include <array>
 #include <stdexcept>
 
-#include "EnumHelper.h"
 #include "StringHelper.h"
 
 namespace MCF {
+
+template<typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+T& operator++(T& value)
+{
+	auto tmp = std::underlying_type_t<T>(value);
+	value = static_cast<T>(tmp + 1);
+	return value;
+}
+
+template<typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+T& operator++(T& value, int)
+{
+	return ++value;
+}
+
+//collects all enum values into one vector
+template<typename T, size_t N, typename = std::enable_if_t<std::is_enum_v<T>>>
+const auto& GetAllEnumValue(T start, T end)
+{
+	auto build = [start, end]()constexpr
+	{
+		auto result = std::array<T, N>();
+		for (auto [i, e] = std::make_pair(0, start); e != end; ++i, ++e)
+			result.at(i) = e;
+		result.at(N - 1) = end;
+		return result;
+	};
+	static const auto enums = build();
+	return enums;
+}
 
 const std::array<SyntaxKind, SYNTAXKIND_COUNT>& AllSyntaxKinds
 = GetAllEnumValue<SyntaxKind, SYNTAXKIND_COUNT>(SyntaxKind::BadToken, SyntaxKind::PostfixExpression);
@@ -213,8 +242,8 @@ string_view GetText(SyntaxKind kind)
 
 bool IsComment(SyntaxKind kind)noexcept
 {
-	return kind == SyntaxKind::SingleLineCommentTrivia ||
-		kind == SyntaxKind::MultiLineCommentTrivia;
+	return kind == SyntaxKind::SingleLineCommentTrivia
+		|| kind == SyntaxKind::MultiLineCommentTrivia;
 }
 
 bool IsTrivia(SyntaxKind kind)noexcept
@@ -292,7 +321,7 @@ const vector<SyntaxKind>& GetUnaryOperatorKinds()
 	auto build = []()
 	{
 		auto result = vector<SyntaxKind>();
-		for (const auto& it : AllSyntaxKinds)
+		for (const auto it : AllSyntaxKinds)
 			if (GetUnaryOperatorPrecedence(it) > 0)
 				result.emplace_back(it);
 		result.shrink_to_fit();
@@ -307,7 +336,7 @@ const vector<SyntaxKind>& GetBinaryOperatorKinds()
 	auto build = []()
 	{
 		auto result = vector<SyntaxKind>();
-		for (const auto& it : AllSyntaxKinds)
+		for (const auto it : AllSyntaxKinds)
 			if (GetBinaryOperatorPrecedence(it) > 0)
 				result.emplace_back(it);
 		result.shrink_to_fit();

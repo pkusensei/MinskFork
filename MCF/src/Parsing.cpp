@@ -82,7 +82,7 @@ private:
 public:
 	explicit Lexer(const SyntaxTree& text);
 
-	[[nodiscard]] SyntaxToken Lex();
+	SyntaxToken Lex();
 	constexpr const DiagnosticBag& Diagnostics()const& noexcept { return _diagnostics; }
 	[[nodiscard]] DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
 };

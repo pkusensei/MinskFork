@@ -10,6 +10,6 @@ class BoundBlockStatement;
 class FunctionSymbol;
 
 [[nodiscard]] unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func,
-	shared_ptr<BoundStatement> statement);
+													shared_ptr<BoundStatement> statement);
 
 }//MCF

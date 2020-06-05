@@ -25,7 +25,7 @@ class SyntaxTree;
 extern "C" using VarMap = std::unordered_map<const VariableSymbol*, ValueType,
 	SymbolHash, SymbolEqual>;
 
-class MCF_API EvaluationResult final
+class MCF_API [[nodiscard]] EvaluationResult final
 {
 private:
 	ValueType _value;
@@ -41,7 +41,7 @@ public:
 	constexpr const ValueType& Value()const noexcept { return _value; }
 };
 
-class MCF_API Compilation final
+class MCF_API [[nodiscard]] Compilation final
 {
 private:
 	vector<unique_ptr<SyntaxTree>> _syntaxTrees;
@@ -63,9 +63,9 @@ public:
 	Compilation& operator=(const Compilation&) = delete;
 	~Compilation();
 
-	[[nodiscard]] static Compilation Create(unique_ptr<SyntaxTree> tree);
-	[[nodiscard]] static Compilation CreateScript(unique_ptr<Compilation> previous,
-												  unique_ptr<SyntaxTree> tree);
+	static Compilation Create(unique_ptr<SyntaxTree> tree);
+	static Compilation CreateScript(unique_ptr<Compilation> previous,
+									unique_ptr<SyntaxTree> tree);
 
 	constexpr bool IsScript()const noexcept { return _isScript; }
 	Compilation* Previous() noexcept { return _previous.get(); }
@@ -77,10 +77,10 @@ public:
 	const vector<shared_ptr<VariableSymbol>>& Variables();
 	const vector<const Symbol*> GetSymbols();
 
-	[[nodiscard]] EvaluationResult Evaluate(VarMap& variables);
+	EvaluationResult Evaluate(VarMap& variables);
 	void EmitTree(std::ostream& out);
 	void EmitTree(const FunctionSymbol* symbol, std::ostream& out);
-	[[nodiscard]] DiagnosticBag Emit(const string& moduleName, const fs::path& outPath);
+	DiagnosticBag Emit(const string& moduleName, const fs::path& outPath);
 };
 
 }//MCF

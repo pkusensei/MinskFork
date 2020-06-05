@@ -12,7 +12,7 @@ class BoundBlockStatement;
 class DiagnosticBag;
 class SyntaxTree;
 
-class BoundGlobalScope final
+class [[nodiscard]] BoundGlobalScope final
 {
 private:
 	vector<shared_ptr<FunctionSymbol>> _functions;
@@ -52,7 +52,7 @@ public:
 	constexpr const vector<shared_ptr<BoundStatement>>& Statements()const noexcept { return _statements; }
 };
 
-class BoundProgram final
+class [[nodiscard]] BoundProgram final
 {
 public:
 	using FuncMap = std::unordered_map<const FunctionSymbol*, unique_ptr<BoundBlockStatement>,
@@ -88,12 +88,12 @@ public:
 	constexpr const FuncMap& Functions()const noexcept { return _functions; }
 };
 
-[[nodiscard]] BoundGlobalScope BindGlobalScope(bool isScript,
-											   const BoundGlobalScope* previous,
-											   const vector<const SyntaxTree*>& trees);
+BoundGlobalScope BindGlobalScope(bool isScript,
+								 const BoundGlobalScope* previous,
+								 const vector<const SyntaxTree*>& trees);
 
-[[nodiscard]] BoundProgram BindProgram(bool isScript,
-									   unique_ptr<BoundProgram> preious,
-									   const BoundGlobalScope* globalScope);
+BoundProgram BindProgram(bool isScript,
+						 unique_ptr<BoundProgram> preious,
+						 const BoundGlobalScope* globalScope);
 
 }//MCF

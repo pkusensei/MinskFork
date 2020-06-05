@@ -153,7 +153,7 @@ public:
 	constexpr const SyntaxToken& EndOfFileToken()const noexcept { return _endOfFileToken; }
 };
 
-class MCF_API SyntaxTree final
+class MCF_API [[nodiscard]] SyntaxTree final
 {
 private:
 

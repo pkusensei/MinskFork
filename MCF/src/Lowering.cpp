@@ -16,10 +16,10 @@ namespace MCF {
 namespace {
 
 template<typename Elem, typename T, typename... Args>
-auto MakeVec(T&& t, Args&&... args)
+[[nodiscard]] auto MakeVec(T&& t, Args&&... args)
 {
 	using Base = typename Elem::element_type;
-	using Derived = typename std::remove_reference_t<T>::element_type;
+	using Derived = typename std::decay_t<T>::element_type;
 	static_assert(std::is_base_of_v<Base, Derived>);
 
 	auto result = vector<Elem>();
