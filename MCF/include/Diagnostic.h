@@ -25,7 +25,7 @@ private:
 	std::optional<TextLocation> _location;
 	bool _isError;
 
-	Diagnostic(bool isError, std::optional<TextLocation> location, string message)noexcept
+	explicit Diagnostic(bool isError, std::optional<TextLocation> location, string message)noexcept
 		:_message(std::move(message)), _location(std::move(location)), _isError(isError)
 	{
 	}
@@ -60,10 +60,6 @@ private:
 	void ReportWarning(std::optional<TextLocation> location, string message);
 
 public:
-	DiagnosticBag()
-		:_diagnostics(std::deque<Diagnostic>())
-	{
-	}
 
 	void clear()noexcept { _diagnostics.clear(); }
 	size_t size() const noexcept { return _diagnostics.size(); }

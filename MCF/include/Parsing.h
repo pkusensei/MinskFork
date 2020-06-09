@@ -183,9 +183,11 @@ private:
 		std::tuple<unique_ptr<CompilationUnitSyntax>, vector<unique_ptr<SyntaxTree>>, unique_ptr<DiagnosticBag>>;
 
 public:
-
-	SyntaxTree(SyntaxTree&& other);
-	SyntaxTree& operator=(SyntaxTree&& other);
+	
+	// Pin the tree in memory 
+	// so that SyntaxNodes keep a valid const SyntaxTree*
+	SyntaxTree(SyntaxTree&& other) = delete;
+	SyntaxTree& operator=(SyntaxTree&& other) = delete;
 	SyntaxTree(const SyntaxTree&) = delete;
 	SyntaxTree& operator=(const SyntaxTree&) = delete;
 	~SyntaxTree();
@@ -202,14 +204,14 @@ public:
 	[[nodiscard]] static unique_ptr<SyntaxTree> Parse(string_view text);
 	[[nodiscard]] static unique_ptr<SyntaxTree> Parse(unique_ptr<SourceText> text);
 
-	[[nodiscard]] static std::pair<vector<SyntaxToken>, SyntaxTree>
+	[[nodiscard]] static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 		ParseTokens(string_view text, bool includeEndOfFile = false);
-	[[nodiscard]] static std::pair<vector<SyntaxToken>, SyntaxTree>
+	[[nodiscard]] static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 		ParseTokens(string_view text, DiagnosticBag& diagnostics,
 					bool includeEndOfFile = false);
-	[[nodiscard]] static std::pair<vector<SyntaxToken>, SyntaxTree>
+	[[nodiscard]] static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 		ParseTokens(unique_ptr<SourceText> text, bool includeEndOfFile = false);
-	[[nodiscard]] static std::pair<vector<SyntaxToken>, SyntaxTree>
+	[[nodiscard]] static std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 		ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics,
 					bool includeEndOfFile = false);
 

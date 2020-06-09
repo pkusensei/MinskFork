@@ -1170,8 +1170,6 @@ unique_ptr<CompilationUnitSyntax> Parser::ParseCompilationUnit()
 /// These defaulted methods stay here 
 /// so that compiler sees delcaration of SourceText & DiagnosticBag
 /// when instantiating  
-SyntaxTree::SyntaxTree(SyntaxTree&& other) = default;
-SyntaxTree& SyntaxTree::operator=(SyntaxTree&& other) = default;
 SyntaxTree::~SyntaxTree() = default;
 
 auto SyntaxTree::ParseTree(const SyntaxTree& tree)->
@@ -1251,28 +1249,28 @@ unique_ptr<SyntaxTree> SyntaxTree::Parse(unique_ptr<SourceText> text)
 	return unique_ptr<SyntaxTree>(new SyntaxTree(std::move(text), ParseTree));
 }
 
-std::pair<vector<SyntaxToken>, SyntaxTree>
+std::pair<vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 SyntaxTree::ParseTokens(string_view text, bool includeEndOfFile)
 {
 	auto source = make_unique<SourceText>(SourceText::From(text));
 	return ParseTokens(std::move(source), includeEndOfFile);
 }
 
-std::pair<vector<SyntaxToken>, SyntaxTree>
+std::pair <vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 SyntaxTree::ParseTokens(string_view text, DiagnosticBag& diagnostics, bool includeEndOfFile)
 {
 	auto source = make_unique<SourceText>(SourceText::From(text));
 	return ParseTokens(std::move(source), diagnostics, includeEndOfFile);
 }
 
-std::pair<vector<SyntaxToken>, SyntaxTree>
+std::pair <vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 SyntaxTree::ParseTokens(unique_ptr<SourceText> text, bool includeEndOfFile)
 {
 	auto _ = DiagnosticBag();
 	return ParseTokens(std::move(text), _, includeEndOfFile);
 }
 
-std::pair<vector<SyntaxToken>, SyntaxTree>
+std::pair <vector<SyntaxToken>, unique_ptr<SyntaxTree>>
 SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics, bool includeEndOfFile)
 {
 	auto tokens = vector<SyntaxToken>();
@@ -1297,8 +1295,8 @@ SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics,
 		return std::make_tuple(std::move(root), vector<unique_ptr<SyntaxTree>>(), std::move(diags));
 	};
 
-	auto tree = SyntaxTree(std::move(text), parseTokens);
-	diagnostics.AddRange(std::move(tree).Diagnostics());
+	auto tree = unique_ptr<SyntaxTree>(new SyntaxTree(std::move(text), parseTokens));
+	diagnostics.AddRange(std::move(tree)->Diagnostics());
 	return std::make_pair(tokens, std::move(tree));
 }
 
