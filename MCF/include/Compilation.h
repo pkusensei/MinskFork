@@ -1,7 +1,6 @@
 #pragma once
 
 #include <filesystem>
-#include <unordered_map>
 
 #include "Symbols.h"
 
@@ -22,8 +21,8 @@ class BoundGlobalScope;
 class BoundProgram;
 class SyntaxTree;
 
-extern "C" using VarMap = std::unordered_map<const VariableSymbol*, ValueType,
-	SymbolHash, SymbolEqual>;
+extern "C" using VarMap = SymbolMap<const VariableSymbol*, ValueType,
+	SymbolEqual>;
 
 class MCF_API [[nodiscard]] EvaluationResult final
 {

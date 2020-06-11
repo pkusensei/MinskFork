@@ -21,8 +21,8 @@ namespace MCF {
 
 class Evaluator final
 {
-	using FuncMap = std::unordered_map<const FunctionSymbol*,
-		const BoundBlockStatement*, SymbolHash, SymbolEqual>;
+	using FuncMap = SymbolMap<const FunctionSymbol*, const BoundBlockStatement*,
+		SymbolEqual>;
 
 private:
 	ValueType _lastValue;

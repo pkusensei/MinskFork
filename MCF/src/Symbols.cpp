@@ -1,7 +1,6 @@
 #include "Symbols.h"
 
 #include <sstream>
-#include <unordered_map>
 
 #include "Parsing.h"
 #include "SymbolPrinter.h"

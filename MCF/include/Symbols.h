@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <unordered_map>
 
 #include "Values.h"
 
@@ -61,35 +62,41 @@ public:
 	}
 };
 
-struct MCF_API SymbolHash
+template<typename T>
+struct SymbolHash
 {
-	template<typename Ptr,
-		typename = std::enable_if_t<!std::is_base_of_v<Symbol, Ptr>>>
-		size_t operator()(const Ptr& p)const noexcept
-	{
-		return std::hash<string_view>{}(p->Name());
-	}
-
-	size_t operator()(const Symbol& s)const noexcept
+	auto operator()(const T& s)const noexcept
+		->std::enable_if_t<std::is_base_of_v<Symbol, T>, size_t>
 	{
 		return std::hash<string_view>{}(s.Name());
 	}
 };
 
-struct SymbolEqual
+template<typename T>
+struct SymbolHash<T*>
 {
-	template<typename P1, typename P2,
-		typename = std::enable_if_t<!std::is_base_of_v<Symbol, P1> && !std::is_base_of_v<Symbol, P2>>>
-		bool operator()(const P1& p1, const P2& p2)const noexcept
+	auto operator()(const T* p)const noexcept
+		->typename std::enable_if_t<std::is_base_of_v<Symbol, T>, size_t>
+	{
+		return std::hash<string_view>{}(p->Name());
+	}
+};
+
+template<typename...>
+struct SymbolEqual;
+
+template<typename T>
+struct SymbolEqual<T*>
+{
+	auto operator()(const T* p1, const T* p2)const noexcept
+		->typename std::enable_if_t<std::is_base_of_v<Symbol, T>, bool>
 	{
 		return (*p1) == (*p2);
 	}
-
-	bool operator()(const Symbol& lhs, const Symbol& rhs) const noexcept
-	{
-		return lhs == rhs;
-	}
 };
+
+template<typename Key, typename Value, template<typename...>typename KeyEqual = std::equal_to>
+using SymbolMap = std::unordered_map<Key, Value, SymbolHash<Key>, KeyEqual<Key>>;
 
 enum class TypeEnum
 {

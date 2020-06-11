@@ -1,7 +1,5 @@
 #pragma once
 
-#include <unordered_map>
-
 #include "Symbols.h"
 
 namespace MCF {
@@ -55,8 +53,8 @@ public:
 class [[nodiscard]] BoundProgram final
 {
 public:
-	using FuncMap = std::unordered_map<const FunctionSymbol*, unique_ptr<BoundBlockStatement>,
-		SymbolHash, SymbolEqual>;
+	using FuncMap = SymbolMap<const FunctionSymbol*, unique_ptr<BoundBlockStatement>,
+		SymbolEqual>;
 
 private:
 	FuncMap _functions;
