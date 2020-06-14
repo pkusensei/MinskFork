@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Diagnostic.h"
 #include "Symbols.h"
 
 namespace MCF {
@@ -40,7 +41,7 @@ public:
 	}
 
 	const DiagnosticBag& Diagnostics()const& noexcept { return *_diagnostics; }
-	[[nodiscard]] DiagnosticBag&& Diagnostics()const&& noexcept { return std::move(*_diagnostics); }
+	DiagnosticBag Diagnostics()const&& noexcept { return std::move(*_diagnostics); }
 
 	constexpr const BoundGlobalScope* Previous()const noexcept { return _previous; }
 	const FunctionSymbol* MainFunc()const noexcept { return _main.get(); }
@@ -78,7 +79,7 @@ public:
 	}
 
 	const DiagnosticBag& Diagnostics()const& noexcept { return *_diagnostics; }
-	[[nodiscard]] DiagnosticBag&& Diagnostics() const&& noexcept { return std::move(*_diagnostics); }
+	DiagnosticBag Diagnostics() const&& noexcept { return std::move(*_diagnostics); }
 
 	const BoundProgram* Previous()const noexcept { return _previous.get(); }
 	constexpr const FunctionSymbol* MainFunc()const noexcept { return _main; }

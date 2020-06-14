@@ -6,7 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
 	${CMAKE_SOURCE_DIR}/build/${CMAKE_BUILD_TYPE})
 
 if(MSVC)
-  add_compile_options(/W4 /WX)
+  add_compile_options(/W4 /WX /permissive-)
 else()
   add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()

@@ -3,7 +3,6 @@
 #include <fstream>
 #include <mutex>
 
-#include "Diagnostic.h"
 #include "ReflectionHelper.h"
 #include "StringHelper.h"
 
@@ -84,7 +83,7 @@ public:
 
 	SyntaxToken Lex();
 	constexpr const DiagnosticBag& Diagnostics()const& noexcept { return _diagnostics; }
-	[[nodiscard]] DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
+	DiagnosticBag Diagnostics() && noexcept { return std::move(_diagnostics); }
 };
 
 Lexer::Lexer(const SyntaxTree& tree)
@@ -615,7 +614,7 @@ public:
 	explicit Parser(const SyntaxTree& tree);
 
 	constexpr const DiagnosticBag& Diagnostics()const& noexcept { return _diagnostics; }
-	[[nodiscard]] DiagnosticBag&& Diagnostics() && noexcept { return std::move(_diagnostics); }
+	DiagnosticBag Diagnostics() && noexcept { return std::move(_diagnostics); }
 
 	[[nodiscard]] unique_ptr<CompilationUnitSyntax> ParseCompilationUnit();
 	[[nodiscard]] vector<unique_ptr<SyntaxTree>> Usings() && noexcept { return std::move(_usings); }

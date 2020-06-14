@@ -2,11 +2,10 @@
 
 #if defined(_MSC_VER) && !defined(__clang__)
 #pragma warning(push)
-#pragma warning(disable: 4068 4100 4141 4146 4244 4245 4267 4291 4324 4458 4624 4702)
+#pragma warning(disable: 4100 4141 4146 4244 4245 4267 4324 4458 4624)
 #else //defined(_MSC_VER) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wlanguage-extension-token"
 #endif //defined(_MSC_VER) && !defined(__clang__)
 
 #include <llvm/ADT/APInt.h>
@@ -34,7 +33,6 @@
 #include "Binding.h"
 #include "BoundExpressions.h"
 #include "BoundStatements.h"
-#include "Diagnostic.h"
 #include "StringHelper.h"
 
 namespace MCF {

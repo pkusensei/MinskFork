@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdexcept>
+
 #include "Symbols.h"
 #include "SyntaxKind.h"
 

@@ -3,7 +3,6 @@
 #include <fstream>
 #include <iostream>
 
-#include "Diagnostic.h"
 #include "IO.h"
 #include "Parsing.h"
 #include "StringHelper.h"

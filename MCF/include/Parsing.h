@@ -4,6 +4,7 @@
 #include <optional>
 #include <unordered_map>
 
+#include "Diagnostic.h"
 #include "SyntaxStatements.h"
 
 // To suppress annoying MSVC warnings about exporting classes/functions
@@ -183,7 +184,7 @@ private:
 		std::tuple<unique_ptr<CompilationUnitSyntax>, vector<unique_ptr<SyntaxTree>>, unique_ptr<DiagnosticBag>>;
 
 public:
-	
+
 	// Pin the tree in memory 
 	// so that SyntaxNodes keep a valid const SyntaxTree*
 	SyntaxTree(SyntaxTree&& other) = delete;
@@ -195,7 +196,7 @@ public:
 	const SourceText& Text() const noexcept { return *_text; }
 	const CompilationUnitSyntax* Root()const noexcept { return _root.get(); }
 	const DiagnosticBag& Diagnostics() const& noexcept { return *_diagnostics; }
-	[[nodiscard]] DiagnosticBag&& Diagnostics() const&& noexcept { return std::move(*_diagnostics); }
+	DiagnosticBag Diagnostics() const&& noexcept { return std::move(*_diagnostics); }
 
 	const SyntaxNode* GetParent(const SyntaxNode& node)const;
 

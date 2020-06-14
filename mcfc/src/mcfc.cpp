@@ -4,7 +4,6 @@
 
 #include "ConsoleHelper.h"
 #include "Compilation.h"
-#include "Diagnostic.h"
 #include "IO.h"
 #include "Parsing.h"
 

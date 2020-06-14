@@ -1,7 +1,6 @@
 #include <catch2/catch.hpp>
 
 #include "Compilation.h"
-#include "Diagnostic.h"
 #include "Parsing.h"
 
 #include "AnnotatedText.h"

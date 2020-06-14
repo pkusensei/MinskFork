@@ -1,7 +1,6 @@
 #include "IO.h"
 
 #include "ConsoleHelper.h"
-#include "Diagnostic.h"
 #include "Parsing.h"
 
 namespace MCF {

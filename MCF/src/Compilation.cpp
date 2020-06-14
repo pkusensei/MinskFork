@@ -12,7 +12,6 @@
 #include "BoundExpressions.h"
 #include "BoundStatements.h"
 #include "ControlFlowGraph.h"
-#include "Diagnostic.h"
 #include "Emitter.h"
 #include "Parsing.h"
 #include "StringHelper.h"

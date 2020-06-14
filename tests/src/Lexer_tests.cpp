@@ -2,7 +2,6 @@
 
 #include <set>
 
-#include "Diagnostic.h"
 #include "Parsing.h"
 #include "SourceText.h"
 #include "StringHelper.h"

@@ -4,7 +4,6 @@
 
 #include <stack>
 
-#include "Diagnostic.h"
 #include "SourceText.h"
 #include "SyntaxToken.h"
 
