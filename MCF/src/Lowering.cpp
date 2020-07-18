@@ -511,11 +511,6 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewritePostfixExpression(shared_p
 
 class Lowerer final :public BoundTreeRewriter
 {
-private:
-	size_t _labelCount{ 0 };
-
-	[[nodiscard]] BoundLabel GenerateLabel();
-
 protected:
 	shared_ptr<BoundStatement> RewriteIfStatement(shared_ptr<BoundIfStatement> node)override;
 	shared_ptr<BoundStatement> RewriteWhileStatement(shared_ptr<BoundWhileStatement> node)override;
@@ -530,18 +525,11 @@ public:
 
 };
 
-BoundLabel Lowerer::GenerateLabel()
-{
-	++_labelCount;
-	string name("Label" + std::to_string(_labelCount));
-	return BoundLabel(std::move(name));
-}
-
 shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStatement> node)
 {
 	if (node->ElseStatement() == nullptr)
 	{
-		auto endLabel = GenerateLabel();
+		auto endLabel = BoundLabel("end");
 
 		// NOTE the evaluation order of function arguments is unspecified
 		//      A std::move here might invalidate any BoundLabel
@@ -554,8 +542,8 @@ shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStateme
 		return RewriteStatement(std::move(result));
 	} else
 	{
-		auto elseLabel = GenerateLabel();
-		auto endLabel = GenerateLabel();
+		auto elseLabel = BoundLabel("else");
+		auto endLabel = BoundLabel("end");
 		auto result = Block(
 			node->Syntax(),
 			GotoFalse(node->Syntax(), elseLabel, node->Condition()),
@@ -572,7 +560,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStateme
 
 shared_ptr<BoundStatement> Lowerer::RewriteWhileStatement(shared_ptr<BoundWhileStatement> node)
 {
-	auto bodyLabel = GenerateLabel();
+	auto bodyLabel = BoundLabel("body");
 	auto result = Block(
 		node->Syntax(),
 		Goto(node->Syntax(), node->ContinueLabel()),
@@ -588,7 +576,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteWhileStatement(shared_ptr<BoundWhileS
 
 shared_ptr<BoundStatement> Lowerer::RewriteDoWhileStatement(shared_ptr<BoundDoWhileStatement> node)
 {
-	auto bodyLabel = GenerateLabel();
+	auto bodyLabel = BoundLabel("body");
 	auto result = Block(
 		node->Syntax(),
 		Label(node->Syntax(), bodyLabel),
@@ -625,7 +613,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteForStatement(shared_ptr<BoundForState
 				  )
 			  ),
 			  node->BreakLabel(),
-			  GenerateLabel())
+			  BoundLabel("while"))
 	);
 
 	return RewriteStatement(std::move(result));

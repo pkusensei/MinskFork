@@ -284,8 +284,8 @@ public:
 		:BoundExpression(syntax),
 		_constant(std::move(value)), _type(_constant.Type())
 	{
-		if (!value.HasValue())
-			throw std::invalid_argument("Unexpected literal: " + value.ToString());
+		if (!_constant.HasValue())
+			throw std::invalid_argument("Unexpected literal: " + _constant.ToString());
 	}
 
 	// Inherited via BoundExpression

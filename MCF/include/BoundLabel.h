@@ -1,17 +1,32 @@
 #pragma once
 
+#ifdef _DEBUG
+#include <atomic>
+#endif // _DEBUG
+
 #include "common.h"
 
 namespace MCF {
 
-class BoundLabel final
+class [[nodiscard]] BoundLabel final
 {
 private:
 	string _name;
 
+#ifdef _DEBUG
+	inline static std::atomic_size_t _count{ 0 };
+#endif // _DEBUG
+
 public:
-	explicit BoundLabel(string name) noexcept :_name(std::move(name)) {}
-	explicit BoundLabel() noexcept :BoundLabel(string()) {}
+
+	explicit BoundLabel(string name)
+		:_name(std::move(name))
+	{
+#ifdef _DEBUG
+		_name += std::to_string(_count.fetch_add(1));
+#endif // _DEBUG
+	}
+	explicit BoundLabel() :BoundLabel(string()) {}
 
 	bool operator==(const BoundLabel& other) const noexcept { return _name == other._name; }
 	bool operator!=(const BoundLabel& other) const noexcept { return !(*this == other); }
