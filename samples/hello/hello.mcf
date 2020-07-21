@@ -1,9 +1,7 @@
-using "getname.mcf"
-
-let a: any = "Hello"
-let b: any = "hello"
-print(a!=b)
-
-let c = "Hello"
-let name = getName()
-print(c + " " + name + "!")
+function main() {
+    var x = 4
+    x = 42
+    print (x)
+    var y = input()
+    print(y)
+}

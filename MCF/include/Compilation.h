@@ -79,7 +79,8 @@ public:
 	EvaluationResult Evaluate(VarMap& variables);
 	void EmitTree(std::ostream& out);
 	void EmitTree(const FunctionSymbol* symbol, std::ostream& out);
-	DiagnosticBag Emit(const string& moduleName, const fs::path& outPath);
+	DiagnosticBag Emit(const string& moduleName, const fs::path& srcPath,
+					   const fs::path& outPath);
 };
 
 }//MCF
