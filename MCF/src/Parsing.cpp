@@ -273,9 +273,8 @@ void Lexer::ReadToken()
 	_start = _position;
 	_kind = SyntaxKind::BadToken;
 	_value = NULL_VALUE;
-	auto c = Current();
 
-	switch (c)
+	switch (auto c = Current(); c)
 	{
 		case '\0':
 			_kind = SyntaxKind::EndOfFileToken;
@@ -489,8 +488,7 @@ void Lexer::ReadString()
 
 	while (!done)
 	{
-		auto c = Current();
-		switch (c)
+		switch (auto c = Current(); c)
 		{
 			case '\0': case '\r': case '\n':
 			{
@@ -1211,9 +1209,7 @@ const SyntaxNode* SyntaxTree::GetParent(const SyntaxNode& node)const
 		auto tmp = CreateParentsMap(_root.get());
 
 		std::mutex mtx;
-		auto lock = std::unique_lock<std::mutex>(mtx, std::defer_lock);
-
-		if (lock.try_lock() && _parents.empty())
+		if (std::scoped_lock lock{ mtx }; _parents.empty())
 			_parents.swap(tmp);
 	}
 

@@ -425,8 +425,7 @@ const BoundGlobalScope* Compilation::GlobalScope()
 				BindGlobalScope(IsScript(), _previous->GlobalScope(), SyntaxTrees()));
 
 		std::mutex mtx;
-		std::unique_lock<std::mutex> lock(mtx, std::defer_lock);
-		if (lock.try_lock() && _globalScope == nullptr)
+		if (std::scoped_lock lock{ mtx }; _globalScope == nullptr)
 			_globalScope.swap(tmp);
 	}
 	return _globalScope.get();

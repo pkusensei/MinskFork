@@ -120,6 +120,7 @@ llvm::DIType* DebugInfo::GetType(const TypeSymbol& ts)
 			DITypes.emplace(ts, t);
 		} else if (ts == TYPE_VOID)
 		{
+			// HACK what to do with void? 
 			t = DIBuilder.createBasicType("void", INT_BITS,
 										  llvm::dwarf::DW_ATE_signed);
 			DITypes.emplace(ts, t);
@@ -986,7 +987,16 @@ DiagnosticBag Emit(const BoundProgram& program, const string& moduleName,
 		return std::move(program).Diagnostics();
 
 	auto e = Emitter(moduleName, srcPath);
-	return e.Emit(program, outPath);
+	auto d = e.Emit(program, outPath);
+
+	// Let's link against C++ "lib" and runtime
+	string cmd = "clang-cl.exe -fuse-ld=lld -Z7 -MTd /std:c++17 ";
+	cmd += srcPath.parent_path().parent_path().append("lib.cpp").string();
+	cmd += " " + outPath.string();
+	cmd += " -o " + srcPath.parent_path().append(moduleName + ".exe").string();
+	std::system(cmd.c_str());
+
+	return d;
 }
 
 } //MCF
