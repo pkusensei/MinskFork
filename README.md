@@ -35,8 +35,6 @@ cd Debug
 mcfc.exe -p ..\..\samples\hello\hello.mcf
 ```
 
-Then navigate to [./samples/hello/](./samples/hello/) directory and execute [build.cmd](./samples/hello/build.cmd).
-
 ### Design Difference
 
 Although this fork stays as close to the original as possible, there are some choices specifically made to be different from Minsk. 
@@ -51,7 +49,7 @@ Although this fork stays as close to the original as possible, there are some ch
 
     Because why not. Still this is very much wading through the muddy waters of the huge LLVM world. Right now it only emits functions into an .obj file and not so shockingly needs to link against C runtime to turn into an executable. A sample is in the [./samples/hello/](./samples/hello/) directory. 
 
-    Peeking through [./samples/lib.cpp](./samples/lib.cpp), it is obvious that a lot of heavy lifting, e.g. console input and string operations, is delegated to C++ code. It sounds very much like cheating. Then again in Minsk such work is done by utilizing .Net assemblies. 
+    Peeking through `WriteLibFile()` inside [Emitter.cpp](./MCF/src/Emitter.cpp), it is obvious that a lot of heavy lifting, e.g. console IO and string operations, is delegated to C++ code through linking. It sounds very much like cheating. Then again in Minsk such work is done by utilizing .NET assemblies. 
 
     Another disadvantage here is that all runtime generated strings, either from calling `input()` or concatenating strings are currently stored in a C++ container. Without proper GC it might get bloated up rather quickly. 
 

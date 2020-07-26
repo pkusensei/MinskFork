@@ -1,5 +1,7 @@
 #include "Emitter.h"
 
+#include <fstream>
+
 #if defined(_MSC_VER) && !defined(__clang__)
 #pragma warning(push)
 #pragma warning(disable: 4100 4141 4146 4244 4245 4267 4324 4458 4624)
@@ -980,6 +982,99 @@ llvm::Value* Emitter::ConvertToStr(llvm::Value* value)
 		throw std::invalid_argument("Cannot convert type to str.");
 }
 
+namespace {
+
+void WriteLibFile(const fs::path& libPath)
+{
+	static constexpr auto libContent = R"(
+#include <iostream>
+#include <memory>
+#include <random>
+#include <string>
+#include <unordered_set>
+
+using IntegerType = int;
+
+struct UniqueStringHash
+{
+    size_t operator()(const std::unique_ptr<std::string> &s) const noexcept
+    {
+        return std::hash<std::string>{}(*s);
+    }
+};
+
+struct UniqueStringEqual
+{
+    bool operator()(const std::unique_ptr<std::string> &s1,
+                    const std::unique_ptr<std::string> &s2) const noexcept
+    {
+        return (*s1) == (*s2);
+    }
+};
+
+static auto strs = std::unordered_set<std::unique_ptr<std::string>,
+                                      UniqueStringHash, UniqueStringEqual>();
+
+extern "C" const char *boolToStr(bool v)
+{
+    std::string result = v ? "True" : "False";
+    auto [it, _] = strs.insert(std::make_unique<std::string>(std::move(result)));
+    return (*it)->c_str();
+}
+
+extern "C" const char *intToStr(IntegerType v)
+{
+    auto result = std::to_string(v);
+    auto [it, _] = strs.insert(std::make_unique<std::string>(std::move(result)));
+    return (*it)->c_str();
+}
+
+extern "C" bool strToBool(const char *s) noexcept
+{
+    return std::strcmp(s, "true") == 0 || std::strcmp(s, "True") == 0;
+}
+
+extern "C" IntegerType strToInt(const char *s)
+{
+    return std::stoi(s);
+}
+
+extern "C" const char *input()
+{
+    auto result = std::string();
+    std::getline(std::cin, result);
+    auto [it, _] = strs.insert(std::make_unique<std::string>(std::move(result)));
+    return (*it)->c_str();
+}
+
+extern "C" IntegerType rnd(IntegerType max)
+{
+    static auto rd = std::random_device();
+    auto mt = std::mt19937(rd());
+    auto dist = std::uniform_int_distribution<IntegerType>(0, max);
+
+    return dist(mt);
+}
+
+extern "C" const char *strConcat(const char *s1, const char *s2)
+{
+    auto result = std::string(s1) + s2;
+    auto [it, _] = strs.insert(std::make_unique<std::string>(std::move(result)));
+    return (*it)->c_str();
+}
+
+extern "C" bool strEqual(const char *a, const char *b) noexcept
+{
+    return std::strcmp(a, b) == 0;
+}
+)";
+
+	std::ofstream out{ libPath };
+	out << libContent;
+}
+
+}// namespace
+
 DiagnosticBag Emit(const BoundProgram& program, const string& moduleName,
 				   const fs::path& srcPath, const fs::path& outPath)
 {
@@ -989,9 +1084,12 @@ DiagnosticBag Emit(const BoundProgram& program, const string& moduleName,
 	auto e = Emitter(moduleName, srcPath);
 	auto d = e.Emit(program, outPath);
 
+	auto libPath = srcPath.parent_path().append("lib.cpp");
+	WriteLibFile(libPath);
+
 	// Let's link against C++ "lib" and runtime
 	string cmd = "clang-cl.exe -fuse-ld=lld -Z7 -MTd /std:c++17 ";
-	cmd += srcPath.parent_path().parent_path().append("lib.cpp").string();
+	cmd += libPath.string();
 	cmd += " " + outPath.string();
 	cmd += " -o " + srcPath.parent_path().append(moduleName + ".exe").string();
 	std::system(cmd.c_str());

@@ -26,3 +26,4 @@ build/
 *.obj
 *.exe
 *.pdb
+samples/*/lib.cpp
