@@ -44,6 +44,17 @@ target_link_libraries(
 target_include_directories(
 	${PROJECT_NAME} PRIVATE ${LLVM_INCLUDE_DIRS})
 
+#[[ HACK
+    There's probably a bug between 
+    MSVC's implementation of aligned new operator (c++17)
+	and
+	LLVM calling deallocate_buffer(void *Ptr, size_t Size, size_t Alignment)
+	/Zc:alignedNew- is to make adding llvm::DIBuilder not crash the whole thing
+]]
+if(MSVC)
+	target_compile_options(${PROJECT_NAME} PRIVATE /Zc:alignedNew-)
+endif()
+
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_compile_definitions(
 	${PROJECT_NAME} PRIVATE 
