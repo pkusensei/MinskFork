@@ -1,5 +1,6 @@
 #include "Compilation.h"
 
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <mutex>
@@ -313,7 +314,7 @@ ValueType Evaluator::EvaluateCallExpression(const BoundCallExpression* node)
 		auto locals = VarMap();
 		for (size_t i = 0; i < node->Arguments().size(); ++i)
 		{
-			auto& param = node->Function()->Parameters()[i];
+			auto& param = node->Function()->Parameters.at(i);
 			auto value = EvaluateExpression(node->Arguments()[i].get());
 			locals.emplace(&param, std::move(value));
 		}
@@ -450,21 +451,22 @@ const vector<const Symbol*> Compilation::GetSymbols()
 	{
 		for (const auto& func : submission->Functions())
 		{
-			auto [_, success] = seenNames.insert(func->Name());
+			auto [_, success] = seenNames.insert(func->Name);
 			if (success)
 				result.push_back(func.get());
 		}
 		for (const auto& var : submission->Variables())
 		{
-			auto [_, success] = seenNames.insert(var->Name());
+			auto [_, success] = seenNames.insert(var->Name);
 			if (success)
 				result.push_back(var.get());
 		}
-		for (const auto& builtin : GetAllBuiltinFunctions())
+		for (const auto builtin : AllBuiltinFunctions)
 		{
-			auto [_, success] = seenNames.insert(builtin.Name());
+			assert(builtin && "Built-in functions should have been declared.");
+			auto [_, success] = seenNames.insert(builtin->Name);
 			if (success)
-				result.push_back(&builtin);
+				result.push_back(builtin);
 		}
 		submission = submission->Previous();
 	}

@@ -52,7 +52,7 @@ case SymbolKind::kind:                                  \
 
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected symbol: "
-				, nameof(symbol.Kind())));
+														, nameof(symbol.Kind())));
 	}
 
 #undef WRITE_SYMBOL
@@ -62,64 +62,64 @@ void SymbolPrinter::WriteFunction(const FunctionSymbol& symbol)
 {
 	_writer.WriteKeyword(SyntaxKind::FunctionKeyword);
 	_writer.WriteSpace();
-	_writer.WriteIdentifier(symbol.Name());
+	_writer.WriteIdentifier(symbol.Name);
 	_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
 
-	for (size_t i = 0; i < symbol.Parameters().size(); ++i)
+	for (size_t i = 0; i < symbol.Parameters.size(); ++i)
 	{
 		if (i > 0)
 		{
 			_writer.WriteKeyword(SyntaxKind::CommaToken);
 			_writer.WriteSpace();
 		}
-		Write(symbol.Parameters()[i]);
+		Write(symbol.Parameters.at(i));
 	}
 
 	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
 
-	if (symbol.Type() != TYPE_VOID)
+	if (symbol.Type != TYPE_VOID)
 	{
 		_writer.WritePunctuation(SyntaxKind::ColonToken);
 		_writer.WriteSpace();
-		WriteType(symbol.Type());
+		WriteType(symbol.Type);
 	}
 }
 
 void SymbolPrinter::WriteGlobalVariable(const GlobalVariableSymbol& symbol)
 {
-	_writer.WriteKeyword(symbol.IsReadOnly() ? SyntaxKind::LetKeyword : SyntaxKind::VarKeyword);
+	_writer.WriteKeyword(symbol.IsReadOnly ? SyntaxKind::LetKeyword : SyntaxKind::VarKeyword);
 	_writer.WriteSpace();
-	_writer.WriteIdentifier(symbol.Name());
+	_writer.WriteIdentifier(symbol.Name);
 	_writer.WritePunctuation(SyntaxKind::ColonToken);
 	_writer.WriteSpace();
-	auto type = symbol.Type();
+	auto type = symbol.Type;
 	Write(type);
 }
 
 void SymbolPrinter::WriteLocalVariable(const LocalVariableSymbol& symbol)
 {
-	_writer.WriteKeyword(symbol.IsReadOnly() ?
-		SyntaxKind::LetKeyword : SyntaxKind::VarKeyword);
+	_writer.WriteKeyword(symbol.IsReadOnly ?
+						 SyntaxKind::LetKeyword : SyntaxKind::VarKeyword);
 	_writer.WriteSpace();
-	_writer.WriteIdentifier(symbol.Name());
+	_writer.WriteIdentifier(symbol.Name);
 	_writer.WritePunctuation(SyntaxKind::ColonToken);
 	_writer.WriteSpace();
-	auto type = symbol.Type();
+	auto type = symbol.Type;
 	Write(type);
 }
 
 void SymbolPrinter::WriteParameter(const ParameterSymbol& symbol)
 {
-	_writer.WriteIdentifier(symbol.Name());
+	_writer.WriteIdentifier(symbol.Name);
 	_writer.WritePunctuation(SyntaxKind::ColonToken);
 	_writer.WriteSpace();
-	auto type = symbol.Type();
+	auto type = symbol.Type;
 	Write(type);
 }
 
 void SymbolPrinter::WriteType(const TypeSymbol& symbol)
 {
-	_writer.WriteIdentifier(symbol.Name());
+	_writer.WriteIdentifier(symbol.Name);
 }
 
 }//MCF

@@ -4,7 +4,7 @@
 
 namespace MCF {
 
-class Symbol;
+struct Symbol;
 
 void Write(const Symbol& symbol, std::ostream& out);
 

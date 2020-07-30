@@ -59,7 +59,7 @@ private:
 	template<typename T, typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
 	bool TryDeclareSymbol(shared_ptr<T> symbol)
 	{
-		auto name = symbol->Name();
+		auto name = symbol->Name;
 		if (_symbols.find(name) == _symbols.end() && !name.empty())
 		{
 			_symbols.emplace(name, std::move(symbol));
@@ -234,7 +234,7 @@ Binder::Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbo
 	_labelCount(0), _isScript(isScript)
 {
 	if (function != nullptr)
-		for (const auto& p : function->Parameters())
+		for (const auto& p : function->Parameters)
 		{
 			shared_ptr<VariableSymbol> v = make_shared<ParameterSymbol>(p);
 			_scope->TryDeclareVariable(std::move(v));
@@ -268,11 +268,11 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax& syntax)
 	auto function = make_shared<FunctionSymbol>(syntax.Identifier.Text,
 												std::move(parameters), type, &syntax);
 
-	if (!function->Declaration()->Identifier.Text.empty()
+	if (!function->Declaration->Identifier.Text.empty()
 		&& !_scope->TryDeclareFunction(function))
 	{
 		_diagnostics.ReportSymbolAlreadyDeclared(syntax.Identifier.Location(),
-												 function->Name());
+												 function->Name);
 	}
 }
 
@@ -476,19 +476,19 @@ shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSynt
 				syntax.Expression->Location());
 	} else
 	{
-		if (_function->Type() == TYPE_VOID)
+		if (_function->Type == TYPE_VOID)
 		{
 			if (expression != nullptr)
 				_diagnostics.ReportInvalidReturnExpression(syntax.Expression->Location(),
-														   _function->Name());
+														   _function->Name);
 		} else
 		{
 			if (expression == nullptr)
 				_diagnostics.ReportMissingReturnExpression(syntax.Keyword.Location(),
-														   _function->Type());
+														   _function->Type);
 			else
 				expression = BindConversion(syntax.Expression->Location(),
-											std::move(expression), _function->Type());
+											std::move(expression), _function->Type);
 		}
 	}
 	return make_shared<BoundReturnStatement>(syntax, std::move(expression));
@@ -576,7 +576,7 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 	if (variable == nullptr)
 		return boundExpression;
 
-	if (variable->IsReadOnly())
+	if (variable->IsReadOnly)
 		_diagnostics.ReportCannotAssign(syntax.AssignmentToken.Location(), name);
 
 	if (syntax.AssignmentToken.Kind() != SyntaxKind::EqualsToken)
@@ -584,18 +584,18 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 		auto equivalentOpKind =
 			GetBinaryOperatorOfAssignmentOperator(syntax.AssignmentToken.Kind());
 		auto op = BoundBinaryOperator::Bind(equivalentOpKind,
-											variable->Type(),
+											variable->Type,
 											boundExpression->Type());
 		if (!op.IsUseful())
 		{
 			_diagnostics.ReportUndefinedBinaryOperator(syntax.AssignmentToken.Location(),
 													   syntax.AssignmentToken.Text,
-													   variable->Type(),
+													   variable->Type,
 													   boundExpression->Type());
 			return make_shared<BoundErrorExpression>(syntax);
 		}
 		auto convertExpression = BindConversion(syntax.Expression->Location(),
-												std::move(boundExpression), variable->Type());
+												std::move(boundExpression), variable->Type);
 		return make_shared<BoundCompoundAssignmentExpression>(syntax,
 															  std::move(variable),
 															  std::move(op),
@@ -603,7 +603,7 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 	} else
 	{
 		auto convertExpression = BindConversion(syntax.Expression->Location(),
-												std::move(boundExpression), variable->Type());
+												std::move(boundExpression), variable->Type);
 		return make_shared<BoundAssignmentExpression>(syntax,
 													  std::move(variable),
 													  std::move(convertExpression));
@@ -684,14 +684,14 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 
 	auto function = std::static_pointer_cast<FunctionSymbol>(std::move(sp));
 
-	if (syntax.Arguments.size() != function->Parameters().size())
+	if (syntax.Arguments.size() != function->Parameters.size())
 	{
 		TextSpan span;
-		if (syntax.Arguments.size() > function->Parameters().size())
+		if (syntax.Arguments.size() > function->Parameters.size())
 		{
 			const SyntaxNode* firstExceedingNode = nullptr;
-			if (function->Parameters().size() > 0)
-				firstExceedingNode = syntax.Arguments.GetSeparator(function->Parameters().size() - 1);
+			if (function->Parameters.size() > 0)
+				firstExceedingNode = syntax.Arguments.GetSeparator(function->Parameters.size() - 1);
 			else
 				firstExceedingNode = syntax.Arguments[0];
 			auto lastExceedingArg = syntax.Arguments[syntax.Arguments.size() - 1];
@@ -704,8 +704,8 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		}
 		auto location = TextLocation(syntax.Tree().Text(), span);
 		_diagnostics.ReportWrongArgumentCount(
-			std::move(location), function->Name(),
-			function->Parameters().size(), syntax.Arguments.size());
+			std::move(location), function->Name,
+			function->Parameters.size(), syntax.Arguments.size());
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 
@@ -713,8 +713,8 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	{
 		auto argLocation = syntax.Arguments[i]->Location();
 		auto& arg = boundArguments[i];
-		auto param = function->Parameters()[i];
-		boundArguments.at(i) = BindConversion(argLocation, arg, param.Type());
+		auto& param = function->Parameters.at(i);
+		boundArguments.at(i) = BindConversion(argLocation, arg, param.Type);
 	}
 
 	return make_shared<BoundCallExpression>(syntax, function, boundArguments);
@@ -729,21 +729,21 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	if (variable == nullptr)
 		return make_shared<BoundErrorExpression>(syntax);
 
-	if (variable->IsReadOnly())
+	if (variable->IsReadOnly)
 	{
 		_diagnostics.ReportCannotAssign(syntax.Op.Location(), name);
 		return make_shared<BoundErrorExpression>(syntax);
 	}
-	if (boundExpression->Type() != variable->Type())
+	if (boundExpression->Type() != variable->Type)
 	{
 		_diagnostics.ReportCannotConvert(syntax.Expression->Location(),
-										 boundExpression->Type(), variable->Type());
+										 boundExpression->Type(), variable->Type);
 		return make_shared<BoundErrorExpression>(syntax);
 	}
-	if (variable->Type() != TYPE_INT)
+	if (variable->Type != TYPE_INT)
 	{
 		_diagnostics.ReportVariableNotSupportPostfixOperator(
-			syntax.Expression->Location(), syntax.Op.Text, variable->Type());
+			syntax.Expression->Location(), syntax.Op.Text, variable->Type);
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 	switch (syntax.Op.Kind())
@@ -873,8 +873,12 @@ unique_ptr<BoundScope> Binder::CreateParentScope(const BoundGlobalScope* previou
 unique_ptr<BoundScope> Binder::CreateRootScope()
 {
 	auto result = make_unique<BoundScope>(nullptr);
-	for (const auto& f : GetAllBuiltinFunctions())
-		result->TryDeclareFunction(make_shared<FunctionSymbol>(f));
+	for (const auto f : AllBuiltinFunctions)
+	{
+		assert(f && "Built-in functions should have been declared.");
+
+		result->TryDeclareFunction(make_shared<FunctionSymbol>(*f));
+	}
 	return result;
 }
 
@@ -965,13 +969,13 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 	} else
 	{
 		auto it = std::find_if(functions.cbegin(), functions.cend(),
-							   [](const auto& it) { return it->Name() == ENTRY_NAME; });
+							   [](const auto& it) { return it->Name == ENTRY_NAME; });
 		if (it != functions.cend())
 		{
-			if ((*it)->Type() != TYPE_VOID
-				|| !(*it)->Parameters().empty())
+			if ((*it)->Type != TYPE_VOID
+				|| !(*it)->Parameters.empty())
 				binder._diagnostics.ReportMainMustHaveCorrectSignature(
-					(*it)->Declaration()->Identifier.Location()
+					(*it)->Declaration->Identifier.Location()
 				);
 			mainFunc = make_unique<FunctionSymbol>(**it);
 		}
@@ -980,7 +984,7 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 			if (mainFunc != nullptr)
 			{
 				binder._diagnostics.ReportCannotMixMainAndGlobalStatements(
-					mainFunc->Declaration()->Identifier.Location()
+					mainFunc->Declaration->Identifier.Location()
 				);
 				for (const auto& gs : firstGlobalStmtPerSynTree)
 				{
@@ -1031,14 +1035,14 @@ BoundProgram Binder::BindProgram(bool isScript,
 	for (const auto& it : globalScope->Functions())
 	{
 		auto binder = Binder(isScript, std::make_unique<BoundScope>(*parentScope), it.get());
-		auto body = binder.BindStatement(*it->Declaration()->Body);
+		auto body = binder.BindStatement(*it->Declaration->Body);
 		auto lowerBody = Lower(*it, std::move(body));
 
-		if (it->Type() != TYPE_VOID
+		if (it->Type != TYPE_VOID
 			&& !ControlFlowGraph::AllPathsReturn(lowerBody.get()))
 		{
 			binder._diagnostics.ReportAllPathsMustReturn(
-				it->Declaration()->Identifier.Location());
+				it->Declaration->Identifier.Location());
 		}
 		funcBodies.emplace(it.get(), std::move(lowerBody));
 

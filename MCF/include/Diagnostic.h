@@ -15,7 +15,7 @@
 namespace MCF {
 
 enum class SyntaxKind;
-class TypeSymbol;
+struct TypeSymbol;
 struct SyntaxNode;
 
 class [[nodiscard]] Diagnostic final

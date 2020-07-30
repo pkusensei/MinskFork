@@ -7,7 +7,7 @@ namespace MCF {
 class BoundStatement;
 class BoundBlockStatement;
 
-class FunctionSymbol;
+struct FunctionSymbol;
 
 [[nodiscard]] unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func,
 													shared_ptr<BoundStatement> statement);

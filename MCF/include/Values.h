@@ -12,7 +12,7 @@
 
 namespace MCF {
 
-class TypeSymbol;
+struct TypeSymbol;
 
 class MCF_API ValueType final
 {

@@ -682,7 +682,7 @@ namespace {
 		if (node->Type() != TYPE_STRING)
 			throw std::invalid_argument(
 				BuildStringFrom("Unexpected node type in string concatenation: '",
-								node->Type().Name(), "'.")
+								node->Type().Name, "'.")
 			);
 
 		result.push_back(std::move(node));
@@ -787,7 +787,7 @@ shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBin
 		return s.Kind() != BoundNodeKind::ReturnStatement
 			&& s.Kind() != BoundNodeKind::GotoStatement;
 	};
-	if (func.Type() == TYPE_VOID)
+	if (func.Type == TYPE_VOID)
 	{
 		if (result.empty() || canFallThrough(*result.back()))
 			result.push_back(make_shared<BoundReturnStatement>(s, nullptr));

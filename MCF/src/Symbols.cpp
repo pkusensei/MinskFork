@@ -39,12 +39,4 @@ case SymbolKind::kind: return #kind;
 #undef NAME
 }
 
-const std::array<FunctionSymbol, 3>& GetAllBuiltinFunctions()
-{
-	static const auto funcs = std::array{
-		BUILTIN_INPUT, BUILTIN_PRINT, BUILTIN_RND
-	};
-	return funcs;
-}
-
 }//MCF

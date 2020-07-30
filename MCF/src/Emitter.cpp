@@ -71,11 +71,11 @@ struct DebugInfo
 llvm::DISubroutineType* DebugInfo::CreateFunctionType(const FunctionSymbol& fs)
 {
 	llvm::SmallVector<llvm::Metadata*, 8> types;
-	auto t = GetType(fs.Type());
+	auto t = GetType(fs.Type);
 	types.push_back(t);
 
-	for (const auto& p : fs.Parameters())
-		types.push_back(GetType(p.Type()));
+	for (const auto& p : fs.Parameters)
+		types.push_back(GetType(p.Type));
 
 	return DIBuilder.createSubroutineType(DIBuilder.getOrCreateTypeArray(types));
 }
@@ -128,7 +128,7 @@ llvm::DIType* DebugInfo::GetType(const TypeSymbol& ts)
 			DITypes.emplace(ts, t);
 		} else
 		{
-			throw std::invalid_argument(BuildStringFrom("Invalid Type: ", ts.Name()));
+			throw std::invalid_argument(BuildStringFrom("Invalid Type: ", ts.Name));
 		}
 
 		assert(t && "Should return valid llvm::DIType*.");
@@ -232,34 +232,34 @@ Emitter::Emitter(const string& moduleName, const fs::path& src)
 
 void Emitter::EmitFunctionDeclaration(const FunctionSymbol& function)
 {
-	auto retType = _knownTypes.at(function.Type());
+	auto retType = _knownTypes.at(function.Type);
 	auto args = vector<llvm::Type*>();
 
-	std::for_each(function.Parameters().cbegin(), function.Parameters().cend(),
+	std::for_each(function.Parameters.cbegin(), function.Parameters.cend(),
 				  [this, &args](const auto& p)
 				  {
-					  args.push_back(_knownTypes.at(p.Type()));
+					  args.push_back(_knownTypes.at(p.Type));
 				  });
 
 	auto f = llvm::FunctionType::get(retType, args, false);
 	llvm::Function::Create(f, llvm::Function::ExternalLinkage,
-						   string(function.Name()), *_module);
+						   string(function.Name), *_module);
 }
 
 void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStatement& body)
 {
-	auto func = _module->getFunction(string(fs.Name()));
+	auto func = _module->getFunction(string(fs.Name));
 	if (func == nullptr)
 	{
-		_diagnostics.ReportFunctionDeclarationNotEmitted(fs.Name());
+		_diagnostics.ReportFunctionDeclarationNotEmitted(fs.Name);
 		return;
 	} else if (!func->empty())
 	{
-		_diagnostics.ReportFunctionViolateODR(fs.Name());
+		_diagnostics.ReportFunctionViolateODR(fs.Name);
 		return;
 	}
 
-	assert((fs.Parameters().size() == func->arg_size())
+	assert((fs.Parameters.size() == func->arg_size())
 		   && "Invalid number of arguments.");
 
 	auto entry = llvm::BasicBlock::Create(_context, "entry", func);
@@ -276,10 +276,10 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 	_labelBBMap.clear();
 
 	// TODO inserted main() has no declaration
-	auto lineNumber = fs.Declaration()->Location().StartLine();
+	auto lineNumber = fs.Declaration->Location().StartLine();
 	auto scopeLine = lineNumber;
 	auto sp = _debugInfo->DIBuilder.createFunction(
-		fcontext, string(fs.Name()), llvm::StringRef(), unit, lineNumber,
+		fcontext, string(fs.Name), llvm::StringRef(), unit, lineNumber,
 		_debugInfo->CreateFunctionType(fs), scopeLine,
 		llvm::DINode::FlagPrototyped, llvm::DISubprogram::SPFlagDefinition);
 	_function->setSubprogram(sp);
@@ -292,11 +292,11 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 	size_t i = 0;
 	for (auto& arg : func->args())
 	{
-		auto allocaInst = CreateEntryBlockAlloca(arg.getType(), fs.Parameters().at(i).Name());
+		auto allocaInst = CreateEntryBlockAlloca(arg.getType(), fs.Parameters.at(i).Name);
 
 		auto dbgArg = _debugInfo->DIBuilder.createParameterVariable(
 			sp, arg.getName(), i + 1, unit, lineNumber,
-			_debugInfo->GetType(fs.Parameters().at(i).Type()),
+			_debugInfo->GetType(fs.Parameters.at(i).Type),
 			true);
 
 		_debugInfo->DIBuilder.insertDeclare(allocaInst, dbgArg,
@@ -305,7 +305,7 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 											_builder.GetInsertBlock());
 
 		_builder.CreateStore(&arg, allocaInst);
-		_locals.emplace(fs.Parameters().at(i).Name(), allocaInst);
+		_locals.emplace(fs.Parameters.at(i).Name, allocaInst);
 		++i;
 	}
 
@@ -364,8 +364,8 @@ void Emitter::EmitVariableDeclaration(const BoundVariableDeclaration& node)
 
 	auto value = EmitExpression(*node.Initializer());
 	auto type = value->getType();
-	auto allocaInst = CreateEntryBlockAlloca(type, node.Variable()->Name());
-	_locals.emplace(node.Variable()->Name(), allocaInst);
+	auto allocaInst = CreateEntryBlockAlloca(type, node.Variable()->Name);
+	_locals.emplace(node.Variable()->Name, allocaInst);
 	_builder.CreateStore(value, allocaInst);
 }
 
@@ -394,7 +394,7 @@ void Emitter::EmitGotoStatement(const BoundGotoStatement& node)
 		FixPrevLabel();
 	} else
 	{
-		_diagnostics.ReportBasicBlockNotCreatedFromLabel(node.Label().Name());
+		_diagnostics.ReportBasicBlockNotCreatedFromLabel(node.Label().Name);
 	}
 }
 
@@ -425,7 +425,7 @@ void Emitter::EmitConditionalGotoStatement(const BoundConditionalGotoStatement& 
 		_builder.SetInsertPoint(exit);
 	} else
 	{
-		_diagnostics.ReportBasicBlockNotCreatedFromLabel(node.Label().Name());
+		_diagnostics.ReportBasicBlockNotCreatedFromLabel(node.Label().Name);
 	}
 }
 
@@ -515,7 +515,7 @@ llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)
 
 llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node)
 {
-	auto name = node.Variable()->Name();
+	auto name = node.Variable()->Name;
 	if (_locals.find(name) != _locals.end())
 	{
 		_debugInfo->EmitLocation(&node.Syntax());
@@ -524,7 +524,7 @@ llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node
 		return _builder.CreateLoad(v, string(name));
 	} else
 	{
-		_diagnostics.ReportVariableNotEmitted(node.Variable()->Name());
+		_diagnostics.ReportVariableNotEmitted(node.Variable()->Name);
 		return nullptr;
 	}
 }
@@ -532,7 +532,7 @@ llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node
 llvm::Value* Emitter::EmitAssignmentExpression(const BoundAssignmentExpression& node)
 {
 	auto value = EmitExpression(*node.Expression());
-	auto name = node.Variable()->Name();
+	auto name = node.Variable()->Name;
 	if (_locals.find(name) != _locals.end())
 	{
 		_debugInfo->EmitLocation(&node.Syntax());
@@ -541,7 +541,7 @@ llvm::Value* Emitter::EmitAssignmentExpression(const BoundAssignmentExpression& 
 		return _builder.CreateStore(value, allocaInst);
 	} else
 	{
-		_diagnostics.ReportVariableNotEmitted(node.Variable()->Name());
+		_diagnostics.ReportVariableNotEmitted(node.Variable()->Name);
 		return nullptr;
 	}
 }
@@ -575,7 +575,7 @@ llvm::Value* Emitter::EmitUnaryExpression(const BoundUnaryExpression& node)
 			throw std::invalid_argument(
 				BuildStringFrom("Unexpected unary operator ",
 								GetText(node.Op().SynKind()),
-								'(', node.Operand()->Type().Name(), ").")
+								'(', node.Operand()->Type().Name, ").")
 			);
 	}
 }
@@ -692,8 +692,8 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 			throw std::invalid_argument(
 				BuildStringFrom("Unexpected binary operator ",
 								GetText(node.Op().SynKind()),
-								'(', node.Left()->Type().Name(), ", ",
-								node.Right()->Type().Name(), ")")
+								'(', node.Left()->Type().Name, ", ",
+								node.Right()->Type().Name, ")")
 			);
 	}
 }
@@ -718,15 +718,15 @@ llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 		return _builder.CreateCall(_rndFunc, value);
 	}
 
-	auto callee = _module->getFunction(string(node.Function()->Name()));
+	auto callee = _module->getFunction(string(node.Function()->Name));
 	if (callee == nullptr)
 	{
-		_diagnostics.ReportFunctionDeclarationNotEmitted(node.Function()->Name());
+		_diagnostics.ReportFunctionDeclarationNotEmitted(node.Function()->Name);
 		return nullptr;
 	}
 	if (callee->arg_size() != node.Arguments().size())
 	{
-		_diagnostics.ReportWrongArgumentCountEmitted(node.Function()->Name(),
+		_diagnostics.ReportWrongArgumentCountEmitted(node.Function()->Name,
 													 node.Arguments().size(),
 													 callee->arg_size());
 		return nullptr;
@@ -738,7 +738,7 @@ llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 
 	if (callee->getReturnType()->isVoidTy())
 		return _builder.CreateCall(callee, args);
-	return _builder.CreateCall(callee, args, string(node.Function()->Name()));
+	return _builder.CreateCall(callee, args, string(node.Function()->Name));
 }
 
 llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& node)
@@ -771,8 +771,8 @@ llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& 
 		//      bool -> int
 		throw std::invalid_argument(
 			BuildStringFrom("Unexpected convertion from '",
-							node.Expression()->Type().Name(),
-							"' to '", node.Type().Name(), "'.")
+							node.Expression()->Type().Name,
+							"' to '", node.Type().Name, "'.")
 		);
 	}
 }
@@ -780,7 +780,7 @@ llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& 
 llvm::Value* Emitter::EmitPostfixExpression(const BoundPostfixExpression& node)
 {
 	auto value = EmitExpression(*node.Expression());
-	auto name = node.Variable()->Name();
+	auto name = node.Variable()->Name;
 	if (_locals.find(name) != _locals.end())
 	{
 		_debugInfo->EmitLocation(&node.Syntax());
@@ -810,7 +810,7 @@ llvm::Value* Emitter::EmitPostfixExpression(const BoundPostfixExpression& node)
 		}
 	} else
 	{
-		_diagnostics.ReportVariableNotEmitted(node.Variable()->Name());
+		_diagnostics.ReportVariableNotEmitted(node.Variable()->Name);
 		return nullptr;
 	}
 }
@@ -955,7 +955,7 @@ void Emitter::CreateBlocksFromLabels(const BoundBlockStatement& body)
 		if (it->Kind() == BoundNodeKind::LabelStatement)
 		{
 			auto& node = static_cast<const BoundLabelStatement&>(*it);
-			auto bb = llvm::BasicBlock::Create(_context, string(node.Label().Name()));
+			auto bb = llvm::BasicBlock::Create(_context, string(node.Label().Name));
 			_labelBBMap.emplace(node.Label(), bb);
 		}
 	}
