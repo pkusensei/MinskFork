@@ -10,26 +10,26 @@ namespace MCF {
 
 const vector<const SyntaxNode*> UsingDirective::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_keyword, _fileName);
+	return MakeVecOfRaw<SyntaxNode>(Keyword, FileName);
 }
 
 const vector<const SyntaxNode*> ParameterSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_identifier, _type);
+	return MakeVecOfRaw<SyntaxNode>(Identifier, Type);
 }
 
 const vector<const SyntaxNode*> FunctionDeclarationSyntax::GetChildren() const
 {
-	auto result = MakeVecOfRaw<SyntaxNode>(_funcKeyword, _identifier, _openParenthesisToken);
-	auto nodes = _parameters.GetWithSeparators();
+	auto result = MakeVecOfRaw<SyntaxNode>(FuncKeyword, Identifier, OpenParenthesisToken);
+	auto nodes = Parameters.GetWithSeparators();
 	result.insert(result.end(), nodes.begin(), nodes.end());
-	if (_type.has_value())
+	if (Type.has_value())
 	{
-		auto rest = MakeVecOfRaw<SyntaxNode>(_closeParenthesisToken, *_type, _body);
+		auto rest = MakeVecOfRaw<SyntaxNode>(CloseParenthesisToken, *Type, Body);
 		result.insert(result.end(), rest.begin(), rest.end());
 	} else
 	{
-		auto rest = MakeVecOfRaw<SyntaxNode>(_closeParenthesisToken, _body);
+		auto rest = MakeVecOfRaw<SyntaxNode>(CloseParenthesisToken, Body);
 		result.insert(result.end(), rest.begin(), rest.end());
 	}
 	return result;
@@ -37,14 +37,14 @@ const vector<const SyntaxNode*> FunctionDeclarationSyntax::GetChildren() const
 
 const vector<const SyntaxNode*> GlobalStatementSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_statement);
+	return MakeVecOfRaw<SyntaxNode>(Statement);
 }
 
 const vector<const SyntaxNode*> CompilationUnitSyntax::GetChildren() const
 {
 	auto result = MakeVecOfRaw<SyntaxNode, MemberSyntax>(
-		_members.begin(), _members.end());
-	auto rest = MakeVecOfRaw<SyntaxNode>(_endOfFileToken);
+		Members.begin(), Members.end());
+	auto rest = MakeVecOfRaw<SyntaxNode>(EndOfFileToken);
 	result.insert(result.end(), rest.begin(), rest.end());
 	return result;
 }
@@ -635,30 +635,30 @@ Parser::Parser(const SyntaxTree& tree)
 		{
 			if (!badTokens.empty())
 			{
-				auto leading = token.LeadingTrivia();
+				auto leading = token.LeadingTrivia;
 				auto index = 0;
 
 				for (const auto& tk : badTokens)
 				{
-					for (const auto& lt : tk.LeadingTrivia())
+					for (const auto& lt : tk.LeadingTrivia)
 					{
 						leading.insert(leading.cbegin() + index, lt);
 						++index;
 					}
 
 					leading.emplace(leading.cbegin() + index,
-									tree, SyntaxKind::SkippedTextTrivia, tk.Position(), tk.Text());
+									tree, SyntaxKind::SkippedTextTrivia, tk.Position, tk.Text);
 					++index;
 
-					for (const auto& tt : tk.TrailingTrivia())
+					for (const auto& tt : tk.TrailingTrivia)
 					{
 						leading.insert(leading.cbegin() + index, tt);
 						++index;
 					}
 				}
 				badTokens.clear();
-				_tokens.emplace_back(token.Tree(), token.Kind(), token.Position(), token.Text(),
-									 token.Value(), std::move(leading), token.TrailingTrivia());
+				_tokens.emplace_back(token.Tree(), token.Kind(), token.Position, token.Text,
+									 token.Value, std::move(leading), token.TrailingTrivia);
 			} else
 				_tokens.push_back(std::move(token));
 		}
@@ -693,7 +693,7 @@ SyntaxToken Parser::MatchToken(SyntaxKind kind)
 	if (current.Kind() == kind)
 		return NextToken().Clone();
 	_diagnostics.ReportUnexpectedToken(current.Location(), current.Kind(), kind);
-	return SyntaxToken(_tree, kind, current.Position(), string(), NULL_VALUE,
+	return SyntaxToken(_tree, kind, current.Position, string(), NULL_VALUE,
 					   vector<SyntaxTrivia>(), vector<SyntaxTrivia>());
 }
 
@@ -779,8 +779,8 @@ unique_ptr<MemberSyntax> Parser::ParseUsingDirective()
 	auto keyword = MatchToken(SyntaxKind::UsingKeyword);
 	auto fileNameToken = MatchToken(SyntaxKind::StringToken);
 
-	auto filename = fileNameToken.Value().GetValue<string>();
-	auto current = _tree.Text().FilePath();
+	auto filename = fileNameToken.Value.GetValue<string>();
+	auto current = _tree.Text().FilePath;
 	current.replace_filename(filename);
 	if (fs::exists(current))
 	{
@@ -945,8 +945,8 @@ unique_ptr<StatementSyntax> Parser::ParseContinueStatement()
 unique_ptr<StatementSyntax> Parser::ParseReturnStatement()
 {
 	auto keyword = MatchToken(SyntaxKind::ReturnKeyword);
-	auto keywordLine = _text.GetLineIndex(keyword.Span().Start());
-	auto currentLine = _text.GetLineIndex(Current().Span().Start());
+	auto keywordLine = _text.GetLineIndex(keyword.Span().Start);
+	auto currentLine = _text.GetLineIndex(Current().Span().Start);
 	auto isEof = Current().Kind() == SyntaxKind::EndOfFileToken;
 	auto sameLine = !isEof && keywordLine == currentLine;
 	auto expression = sameLine ? ParseExpression() : nullptr;
@@ -1014,7 +1014,7 @@ unique_ptr<ExpressionSyntax> Parser::ParseBinaryExpression(int parentPrecedence)
 				&& left->Kind() != SyntaxKind::NameExpression)
 			{
 				_diagnostics.ReportExpressionNotSupportPostfixOperator(
-					Current().Location(), Current().Text(), left->Kind());
+					Current().Location(), Current().Text, left->Kind());
 				break;
 			}
 			left = ParsePostfixExpression(std::move(left));
@@ -1040,18 +1040,18 @@ unique_ptr<ExpressionSyntax> Parser::ParsePostfixExpression(unique_ptr<Expressio
 	if (expression->Kind() == SyntaxKind::ParenthesizedExpression)
 	{
 		auto pre = static_cast<ParenthesizedExpressionSyntax*>(expression.get());
-		auto ae = static_cast<const AssignmentExpressionSyntax*>(pre->Expression());
-		return make_unique<PostfixExpressionSyntax>(_tree, ae->IdentifierToken(),
+		auto ae = static_cast<const AssignmentExpressionSyntax*>(pre->Expression.get());
+		return make_unique<PostfixExpressionSyntax>(_tree, ae->IdentifierToken,
 													operatorToken, std::move(expression));
 	} else if (expression->Kind() == SyntaxKind::PostfixExpression)
 	{
 		auto pfe = static_cast<PostfixExpressionSyntax*>(expression.get());
-		return make_unique<PostfixExpressionSyntax>(_tree, pfe->IdentifierToken(),
+		return make_unique<PostfixExpressionSyntax>(_tree, pfe->Identifier,
 													operatorToken, std::move(expression));
 	} else if (expression->Kind() == SyntaxKind::NameExpression)
 	{
 		auto ne = static_cast<NameExpressionSyntax*>(expression.get());
-		return make_unique<PostfixExpressionSyntax>(_tree, ne->IdentifierToken(),
+		return make_unique<PostfixExpressionSyntax>(_tree, ne->IdentifierToken,
 													operatorToken, std::move(expression));
 	} else
 		throw std::invalid_argument(BuildStringFrom("Unexpected expression: ",
@@ -1279,7 +1279,8 @@ SyntaxTree::ParseTokens(unique_ptr<SourceText> text, DiagnosticBag& diagnostics,
 			auto token = lexer.Lex();
 			if (token.Kind() == SyntaxKind::EndOfFileToken)
 				root = make_unique<CompilationUnitSyntax>(tree,
-														  vector<unique_ptr<MemberSyntax>>(), token.Clone());
+														  vector<unique_ptr<MemberSyntax>>(),
+														  token.Clone());
 
 			if (token.Kind() != SyntaxKind::EndOfFileToken || includeEndOfFile)
 				tokens.push_back(std::move(token));

@@ -309,7 +309,7 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 		++i;
 	}
 
-	_debugInfo->EmitLocation(body.Syntax());
+	_debugInfo->EmitLocation(&body.Syntax());
 
 	try
 	{
@@ -354,13 +354,13 @@ case BoundNodeKind::kind: Emit##kind(static_cast<const Bound##kind&>(node)); bre
 
 void Emitter::EmitNopStatement(const BoundNopStatement& node)
 {
-	_debugInfo->EmitLocation(node.Syntax());
+	_debugInfo->EmitLocation(&node.Syntax());
 	_builder.CreateCall(_nopIntrinsic);
 }
 
 void Emitter::EmitVariableDeclaration(const BoundVariableDeclaration& node)
 {
-	_debugInfo->EmitLocation(node.Syntax());
+	_debugInfo->EmitLocation(&node.Syntax());
 
 	auto value = EmitExpression(*node.Initializer());
 	auto type = value->getType();
@@ -431,7 +431,7 @@ void Emitter::EmitConditionalGotoStatement(const BoundConditionalGotoStatement& 
 
 void Emitter::EmitReturnStatement(const BoundReturnStatement& node)
 {
-	_debugInfo->EmitLocation(node.Syntax());
+	_debugInfo->EmitLocation(&node.Syntax());
 
 	if (node.Expression() != nullptr)
 		_builder.CreateRet(EmitExpression(*node.Expression()));
@@ -440,7 +440,7 @@ void Emitter::EmitReturnStatement(const BoundReturnStatement& node)
 
 void Emitter::EmitExpressionStatement(const BoundExpressionStatement& node)
 {
-	//_debugInfo->EmitLocation(node.Syntax());
+	//_debugInfo->EmitLocation(&node.Syntax());
 
 	EmitExpression(*node.Expression());
 }
@@ -470,7 +470,7 @@ case BoundNodeKind::kind: return Emit##kind(static_cast<const Bound##kind&>(node
 
 llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)
 {
-	_debugInfo->EmitLocation(node.Syntax());
+	_debugInfo->EmitLocation(&node.Syntax());
 
 	auto type = node.Type();
 	if (type == TYPE_BOOL)
@@ -518,7 +518,7 @@ llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node
 	auto name = node.Variable()->Name();
 	if (_locals.find(name) != _locals.end())
 	{
-		_debugInfo->EmitLocation(node.Syntax());
+		_debugInfo->EmitLocation(&node.Syntax());
 
 		auto v = _locals.at(name);
 		return _builder.CreateLoad(v, string(name));
@@ -535,7 +535,7 @@ llvm::Value* Emitter::EmitAssignmentExpression(const BoundAssignmentExpression& 
 	auto name = node.Variable()->Name();
 	if (_locals.find(name) != _locals.end())
 	{
-		_debugInfo->EmitLocation(node.Syntax());
+		_debugInfo->EmitLocation(&node.Syntax());
 
 		auto allocaInst = _locals.at(name);
 		return _builder.CreateStore(value, allocaInst);
@@ -548,7 +548,7 @@ llvm::Value* Emitter::EmitAssignmentExpression(const BoundAssignmentExpression& 
 
 llvm::Value* Emitter::EmitUnaryExpression(const BoundUnaryExpression& node)
 {
-	_debugInfo->EmitLocation(node.Syntax());
+	_debugInfo->EmitLocation(&node.Syntax());
 
 	auto value = EmitExpression(*node.Operand());
 	switch (node.Op().Kind())
@@ -582,7 +582,7 @@ llvm::Value* Emitter::EmitUnaryExpression(const BoundUnaryExpression& node)
 
 llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 {
-	_debugInfo->EmitLocation(node.Syntax());
+	_debugInfo->EmitLocation(&node.Syntax());
 
 	auto lhs = EmitExpression(*node.Left());
 	auto rhs = EmitExpression(*node.Right());
@@ -700,7 +700,7 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 
 llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 {
-	_debugInfo->EmitLocation(node.Syntax());
+	_debugInfo->EmitLocation(&node.Syntax());
 
 	if (*(node.Function()) == BUILTIN_INPUT)
 	{
@@ -743,7 +743,7 @@ llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 
 llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& node)
 {
-	_debugInfo->EmitLocation(node.Syntax());
+	_debugInfo->EmitLocation(&node.Syntax());
 
 	auto value = EmitExpression(*node.Expression());
 	if (value == nullptr)
@@ -783,7 +783,7 @@ llvm::Value* Emitter::EmitPostfixExpression(const BoundPostfixExpression& node)
 	auto name = node.Variable()->Name();
 	if (_locals.find(name) != _locals.end())
 	{
-		_debugInfo->EmitLocation(node.Syntax());
+		_debugInfo->EmitLocation(&node.Syntax());
 
 		auto unit = llvm::ConstantInt::get(_intType, 1, true);
 		auto allocaInst = _locals.at(name);

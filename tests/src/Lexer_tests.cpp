@@ -49,10 +49,10 @@ TEST_CASE("Lexer lexes unterminated string", "[Lexer]")
 
 	REQUIRE(tokens.size() == 1);
 	CHECK(MCF::SyntaxKind::StringToken == tokens[0].Kind());
-	CHECK(text == tokens[0].Text());
+	CHECK(text == tokens[0].Text);
 
 	REQUIRE(diagnostics.size() == 1);
-	CHECK(MCF::TextSpan(0, 1) == diagnostics[0].Location().Span());
+	CHECK(MCF::TextSpan(0, 1) == diagnostics[0].Location().Span);
 	CHECK("Unterminated string literal." == diagnostics[0].Message());
 }
 
@@ -64,7 +64,7 @@ TEST_CASE("Lexer lexes token", "[Lexer]")
 		auto [tokens, _] = MCF::SyntaxTree::ParseTokens(text);
 		REQUIRE(tokens.size() == 1);
 		CHECK(kind == tokens[0].Kind());
-		CHECK(text == tokens[0].Text());
+		CHECK(text == tokens[0].Text);
 	}
 }
 
@@ -76,9 +76,9 @@ TEST_CASE("Lexer lexes sparator", "[Lexer]")
 		auto [tokens, _] = MCF::SyntaxTree::ParseTokens(text, true);
 
 		REQUIRE(tokens.size() == 1);
-		REQUIRE(tokens.at(0).LeadingTrivia().size() == 1);
-		CHECK(kind == tokens.at(0).LeadingTrivia().at(0).Kind);
-		CHECK(text == tokens.at(0).LeadingTrivia().at(0).Text);
+		REQUIRE(tokens.at(0).LeadingTrivia.size() == 1);
+		CHECK(kind == tokens.at(0).LeadingTrivia.at(0).Kind);
+		CHECK(text == tokens.at(0).LeadingTrivia.at(0).Text);
 	}
 }
 
@@ -93,9 +93,9 @@ TEST_CASE("Lexer lexes token pairs", "[Lexer]")
 		REQUIRE(2 == tokens.size());
 
 		CHECK(t1kind == tokens[0].Kind());
-		CHECK(t1text == tokens[0].Text());
+		CHECK(t1text == tokens[0].Text);
 		CHECK(t2kind == tokens[1].Kind());
-		CHECK(t2text == tokens[1].Text());
+		CHECK(t2text == tokens[1].Text);
 	}
 }
 
@@ -110,15 +110,15 @@ TEST_CASE("Lexer lexes token pairs with separators", "[Lexer]")
 		REQUIRE(2 == tokens.size());
 
 		CHECK(t1kind == tokens[0].Kind());
-		CHECK(t1text == tokens[0].Text());
+		CHECK(t1text == tokens[0].Text);
 
-		REQUIRE(tokens.at(0).TrailingTrivia().size() == 1);
-		auto& separator = tokens.at(0).TrailingTrivia().at(0);
+		REQUIRE(tokens.at(0).TrailingTrivia.size() == 1);
+		auto& separator = tokens.at(0).TrailingTrivia.at(0);
 		CHECK(skind == separator.Kind);
 		CHECK(stext == separator.Text);
 
 		CHECK(t2kind == tokens[1].Kind());
-		CHECK(t2text == tokens[1].Text());
+		CHECK(t2text == tokens[1].Text);
 	}
 }
 
@@ -131,7 +131,7 @@ TEST_CASE("Lexer lexes identifiers", "[Lexer]")
 
 	REQUIRE(tokens.size() == 1);
 	CHECK(tokens.at(0).Kind() == MCF::SyntaxKind::IdentifierToken);
-	CHECK(tokens.at(0).Text() == name);
+	CHECK(tokens.at(0).Text == name);
 }
 
 TEST_CASE("GetText_RoundTrip")
@@ -145,7 +145,7 @@ TEST_CASE("GetText_RoundTrip")
 			REQUIRE(1 == tokens.size());
 
 			CHECK(kind == tokens[0].Kind());
-			CHECK(text == tokens[0].Text());
+			CHECK(text == tokens[0].Text);
 		}
 	}
 }

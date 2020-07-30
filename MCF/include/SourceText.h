@@ -14,37 +14,33 @@ namespace MCF {
 
 namespace fs = std::filesystem;
 
-class SourceText;
+struct SourceText;
 
-class TextSpan final
+struct TextSpan final
 {
-private:
-	size_t _start;
-	size_t _length;
+	size_t Start;
+	size_t Length;
 
 public:
 	constexpr explicit TextSpan(size_t start = 0, size_t length = 0) noexcept
-		:_start(start), _length(length)
+		:Start(start), Length(length)
 	{
 	}
 
-	constexpr size_t Start()const noexcept { return _start; }
-	constexpr size_t Length()const noexcept { return _length; }
-	constexpr size_t End()const noexcept { return Start() + Length(); }
-
+	constexpr size_t End()const noexcept { return Start + Length; }
 	constexpr bool OverlapsWith(const TextSpan& span)const noexcept
 	{
-		return Start() < span.End() && span.Start() < End();
+		return Start < span.End() && span.Start < End();
 	}
 
 	string ToString() const
 	{
-		return std::to_string(Start()) + ".." + std::to_string(End());
+		return std::to_string(Start) + ".." + std::to_string(End());
 	}
 
 	constexpr bool operator==(const TextSpan& other)const noexcept
 	{
-		return _start == other._start && _length == other._length;
+		return Start == other.Start && Length == other.Length;
 	}
 	constexpr bool operator!=(const TextSpan& other)const noexcept
 	{
@@ -56,77 +52,65 @@ public:
 	}
 };
 
-class TextLine final
+struct TextLine final
 {
-private:
-	const SourceText* _text;
-	size_t _start;
-	size_t _length;
-	size_t _lengthIncludingLineBreak;
+	const SourceText* Text;
+	size_t Start;
+	size_t Length;
+	size_t LengthIncludingLineBreak;
 
 public:
 	constexpr TextLine(const SourceText& text, size_t start, size_t length,
 					   size_t lengthWithBreak)noexcept
-		:_text(&text), _start(start), _length(length),
-		_lengthIncludingLineBreak(lengthWithBreak)
+		:Text(&text), Start(start),
+		Length(length), LengthIncludingLineBreak(lengthWithBreak)
 	{
 	}
 
-	~TextLine() = default;
-
-	constexpr const SourceText& Text()const noexcept { return *_text; }
-	constexpr size_t Start()const noexcept { return _start; }
-	constexpr size_t Length()const noexcept { return _length; }
-	constexpr size_t End()const noexcept { return _start + _length; }
-	constexpr size_t LengthIncludingLineBreak()const noexcept
-	{
-		return _lengthIncludingLineBreak;
-	}
+	constexpr size_t End()const noexcept { return Start + Length; }
 	constexpr TextSpan Span()const noexcept
 	{
-		return TextSpan(_start, _length);
+		return TextSpan(Start, Length);
 	}
 	constexpr TextSpan SpanIncludingLineBreak()const noexcept
 	{
-		return TextSpan(_start, _lengthIncludingLineBreak);
+		return TextSpan(Start, LengthIncludingLineBreak);
 	}
 	string_view ToString()const;
 
 };
 
-class MCF_API [[nodiscard]] SourceText final
+struct MCF_API [[nodiscard]] SourceText final
 {
-private:
-	string _text;
-	fs::path _filePath;
-	vector<TextLine> _lines;
+	string Text;
+	fs::path FilePath;
+	vector<TextLine> Lines;
 
+private:
 	static void AddLine(vector<TextLine>& result, const SourceText& sourceText,
 						size_t position, size_t lineStart, size_t lineBreakWidth);
 	static size_t GetLineBreakWidth(string_view text, size_t position);
 	static vector<TextLine> ParseLines(const SourceText& sourceText, string_view text);
 
-	explicit SourceText(string text, fs::path filePath = {})noexcept
-		:_text(std::move(text)), _filePath(std::move(filePath))
+	explicit SourceText(string text, fs::path filePath = {})
+		:Text(std::move(text)), FilePath(std::move(filePath)),
+		Lines{ ParseLines(*this, Text) }
 	{
-		_lines = ParseLines(*this, _text);
 	}
 
 public:
-	constexpr const fs::path& FilePath()const noexcept { return _filePath; }
-	constexpr const vector<TextLine>& Lines()const noexcept { return _lines; }
-	size_t Length()const noexcept { return _text.length(); }
-	char operator[](size_t sub) const { return _text.at(sub); }
+	size_t Length()const noexcept { return Text.length(); }
+	char operator[](size_t sub) const { return Text.at(sub); }
 	size_t GetLineIndex(size_t position)const noexcept;
 
-	string_view ToString()const noexcept { return _text; }
+	string_view ToString()const noexcept { return Text; }
 	constexpr string_view ToString(size_t start, size_t length)const
 	{
 		return ToString().substr(start, length);
 	}
 	constexpr string_view ToString(const TextSpan& span)const
 	{
-		return ToString(span.Start(), span.Length());
+		return ToString(span.Start, span.Length);
 	}
 
 	static SourceText From(string text, fs::path path = {})noexcept
@@ -140,38 +124,34 @@ public:
 
 };
 
-class TextLocation
+struct TextLocation final
 {
-private:
-	TextSpan _span;
-	const SourceText* _text;
+	TextSpan Span;
+	const SourceText* Text;
 
 public:
-	TextLocation(const SourceText& text, TextSpan span)noexcept
-		:_span(std::move(span)), _text(&text)
+	constexpr explicit TextLocation(const SourceText& text, TextSpan span)noexcept
+		:Span(std::move(span)), Text(&text)
 	{
 	}
 
-	constexpr const SourceText& Text()const noexcept { return *_text; }
-	constexpr const TextSpan& Span()const noexcept { return _span; }
-
-	constexpr const fs::path& FilePath()const noexcept { return Text().FilePath(); }
+	constexpr const fs::path& FilePath()const noexcept { return Text->FilePath; }
 	size_t StartLine()const noexcept
 	{
-		return Text().GetLineIndex(Span().Start());
+		return Text->GetLineIndex(Span.Start);
 	}
 	size_t EndLine()const noexcept
 	{
-		return Text().GetLineIndex(Span().End());
+		return Text->GetLineIndex(Span.End());
 	}
 	constexpr size_t StartCharacter() const
 	{
-		return Span().Start() - Text().Lines().at(StartLine()).Start();
+		return Span.Start - Text->Lines.at(StartLine()).Start;
 	}
 	constexpr size_t EndCharacter() const
 	{
-		return Span().End() > Text().Lines().at(EndLine()).End() ?
-			Span().End() - Text().Lines().at(EndLine()).End() : 0;
+		return Span.End() > Text->Lines.at(EndLine()).End() ?
+			Span.End() - Text->Lines.at(EndLine()).End() : 0;
 	}
 
 };

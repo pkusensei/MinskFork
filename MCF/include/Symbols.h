@@ -13,7 +13,7 @@
 
 namespace MCF {
 
-class FunctionDeclarationSyntax;
+struct FunctionDeclarationSyntax;
 
 enum class SymbolKind
 {

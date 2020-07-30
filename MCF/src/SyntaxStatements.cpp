@@ -6,83 +6,75 @@ namespace MCF {
 
 const vector<const SyntaxNode*> BlockStatementSyntax::GetChildren() const
 {
-	auto result = MakeVecOfRaw<SyntaxNode>(_openBraceToken);
+	auto result = MakeVecOfRaw<SyntaxNode>(OpenBraceToken);
 	auto rest = MakeVecOfRaw<SyntaxNode, StatementSyntax>(
-		_statements.begin(), _statements.end());
+		Statements.begin(), Statements.end());
 	result.insert(result.end(), rest.begin(), rest.end());
-	auto close = MakeVecOfRaw<SyntaxNode>(_closeBraceToken);
+	auto close = MakeVecOfRaw<SyntaxNode>(CloseBraceToken);
 	result.insert(result.end(), close.begin(), close.end());
-	return result;
-}
-
-const vector<const StatementSyntax*> BlockStatementSyntax::Statements() const
-{
-	auto result = vector<const StatementSyntax*>();
-	for (const auto& it : _statements)
-		result.emplace_back(it.get());
 	return result;
 }
 
 const vector<const SyntaxNode*> TypeClauseSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_colonToken, _identifier);
+	return MakeVecOfRaw<SyntaxNode>(ColonToken, Identifier);
 }
 
 const vector<const SyntaxNode*> VariableDeclarationSyntax::GetChildren() const
 {
-	if (_typeClause.has_value())
-		return MakeVecOfRaw<SyntaxNode>(_keyword, _identifier, *_typeClause,
-			_equalsToken, _initializer);
+	if (TypeClause.has_value())
+		return MakeVecOfRaw<SyntaxNode>(Keyword, Identifier, *TypeClause,
+										EqualsToken, Initializer);
 	else
-		return MakeVecOfRaw<SyntaxNode>(_keyword, _identifier,
-			_equalsToken, _initializer);
+		return MakeVecOfRaw<SyntaxNode>(Keyword, Identifier,
+										EqualsToken, Initializer);
 }
 
 const vector<const SyntaxNode*> ElseClauseSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_elseKeyword, _elseStatement);
+	return MakeVecOfRaw<SyntaxNode>(ElseKeyword, ElseStatement);
 }
 
 const vector<const SyntaxNode*> IfStatementSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_ifKeyword, _condition,
-		_thenStatement, _elseClause);
+	return MakeVecOfRaw<SyntaxNode>(IfKeyword, Condition,
+									ThenStatement, ElseClause);
 }
 
 const vector<const SyntaxNode*> WhileStatementSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_whileKeyword, _condition, _body);
+	return MakeVecOfRaw<SyntaxNode>(WhileKeyword, Condition, Body);
 }
 
 const vector<const SyntaxNode*> DoWhileStatementSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_doKeyword, _body, _whileKeyword, _condition);
+	return MakeVecOfRaw<SyntaxNode>(DoKeyword, Body, WhileKeyword, Condition);
 }
 
 const vector<const SyntaxNode*> ForStatementSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_keyword, _identifier, _equalsToken,
-		_lowerBound, _toKeyword, _upperBound, _body);
+	return MakeVecOfRaw<SyntaxNode>(Keyword, Identifier, EqualsToken,
+									LowerBound, ToKeyword, UpperBound, Body);
 }
 
 const vector<const SyntaxNode*> BreakStatementSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_keyword);
+	return MakeVecOfRaw<SyntaxNode>(Keyword);
 }
 
 const vector<const SyntaxNode*> ContinueStatementSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_keyword);
+	return MakeVecOfRaw<SyntaxNode>(Keyword);
 }
 
 const vector<const SyntaxNode*> ReturnStatementSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_keyword, _expression);
+	return MakeVecOfRaw<SyntaxNode>(Keyword, Expression);
 }
 
 const vector<const SyntaxNode*> ExpressionStatementSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_expression);
+	return MakeVecOfRaw<SyntaxNode>(Expression);
 }
 
 }//MCF

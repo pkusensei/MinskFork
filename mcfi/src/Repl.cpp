@@ -604,7 +604,7 @@ bool McfRepl::RenderLine(const Document & lines, size_t index, bool resetState)c
 		tree = MCF::SyntaxTree::Parse(text);
 	}
 
-	auto lineSpan = tree->Text().Lines()[index].Span();
+	auto lineSpan = tree->Text().Lines[index].Span();
 	auto classSpans = Classify(*tree, lineSpan);
 
 	for (const auto& span : classSpans)
@@ -785,8 +785,8 @@ bool McfRepl::IsCompleteSubmission(std::string_view text) const
 	if (lastTwoLinesAreBlank()) return true;
 
 	auto tree = MCF::SyntaxTree::Parse(text);
-	auto last = tree->Root()->Members().empty() ?
-		nullptr : tree->Root()->Members().back().get();
+	auto last = tree->Root()->Members.empty() ?
+		nullptr : tree->Root()->Members.back().get();
 	if (last == nullptr || last->GetLastToken().IsMissing())
 		return false;
 	return true;

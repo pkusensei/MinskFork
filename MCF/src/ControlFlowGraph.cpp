@@ -175,7 +175,7 @@ shared_ptr<BoundExpression> ControlFlowGraph::GraphBuilder::Negate(
 	auto op = BoundUnaryOperator::Bind(SyntaxKind::BangToken, TYPE_BOOL);
 	assert(op.IsUseful());
 
-	auto s = condition->Syntax();
+	auto& s = condition->Syntax();
 	auto negated = make_shared<BoundUnaryExpression>(s, op, std::move(condition));
 
 	if (negated->ConstantValue().HasValue())

@@ -4,11 +4,11 @@ namespace MCF {
 
 string_view TextLine::ToString() const
 {
-	return _text->ToString(Span());
+	return Text->ToString(Span());
 }
 
 void SourceText::AddLine(vector<TextLine>& result, const SourceText& sourceText,
-	size_t position, size_t lineStart, size_t lineBreakWidth)
+						 size_t position, size_t lineStart, size_t lineBreakWidth)
 {
 	auto lineLength = position - lineStart;
 	auto lineLengthWithLineBreak = lineLength + lineBreakWidth;
@@ -27,7 +27,7 @@ size_t SourceText::GetLineBreakWidth(string_view text, size_t position)
 }
 
 vector<TextLine> SourceText::ParseLines(const SourceText& sourceText,
-	string_view text)
+										string_view text)
 {
 	auto result = vector<TextLine>();
 	size_t position = 0;
@@ -53,12 +53,12 @@ vector<TextLine> SourceText::ParseLines(const SourceText& sourceText,
 size_t SourceText::GetLineIndex(size_t position) const noexcept
 {
 	size_t lower = 0;
-	size_t upper = _lines.size() - 1;
+	size_t upper = Lines.size() - 1;
 
 	while (lower <= upper)
 	{
 		auto index = lower + (upper - lower) / 2;
-		auto start = _lines.at(index).Start();
+		auto start = Lines.at(index).Start;
 		if (position == start)
 			return index;
 		else if (start > position)

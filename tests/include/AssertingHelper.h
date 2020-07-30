@@ -6,7 +6,7 @@
 
 namespace MCF {
 enum class SyntaxKind;
-class SyntaxNode;
+struct SyntaxNode;
 }
 
 class AssertingHelper final

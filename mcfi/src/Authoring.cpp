@@ -34,7 +34,7 @@ void AddClassification(SyntaxKind elementKind, const TextSpan& elementSpan,
 	if (!elementSpan.OverlapsWith(span))
 		return;
 
-	auto adjustedStart = std::max(elementSpan.Start(), span.Start());
+	auto adjustedStart = std::max(elementSpan.Start, span.Start);
 	auto adjustedEnd = std::min(elementSpan.End(), span.End());
 	auto adjustedSpan = TextSpan::FromBounds(adjustedStart, adjustedEnd);
 	auto classification = Classify(elementKind);
@@ -51,12 +51,12 @@ void ClassifyTrivia(const SyntaxTrivia& tr, const TextSpan& span,
 void ClassifyToken(const SyntaxToken& token, const TextSpan& span,
 				   std::vector<ClassifiedSpan>& result)
 {
-	std::for_each(token.LeadingTrivia().cbegin(), token.LeadingTrivia().cend(),
+	std::for_each(token.LeadingTrivia.cbegin(), token.LeadingTrivia.cend(),
 				  [&span, &result](const auto& lt) { ClassifyTrivia(lt, span, result); });
 
 	AddClassification(token.Kind(), token.Span(), span, result);
 
-	std::for_each(token.TrailingTrivia().cbegin(), token.TrailingTrivia().cend(),
+	std::for_each(token.TrailingTrivia.cbegin(), token.TrailingTrivia.cend(),
 				  [&span, &result](const auto& rt) { ClassifyTrivia(rt, span, result); });
 }
 

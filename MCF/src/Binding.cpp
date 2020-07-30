@@ -1,5 +1,6 @@
 #include "Binding.h"
 
+#include <cassert>
 #include <stack>
 #include <stdexcept>
 #include <unordered_set>
@@ -165,41 +166,41 @@ private:
 
 	Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbol* function);
 
-	void BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax);
+	void BindFunctionDeclaration(const FunctionDeclarationSyntax& syntax);
 
-	shared_ptr<BoundStatement> BindErrorStatement(const SyntaxNode* syntax);
-	shared_ptr<BoundStatement> BindGlobalStatement(const StatementSyntax* syntax);
-	shared_ptr<BoundStatement> BindStatement(const StatementSyntax* syntax, bool isGlobal = false);
-	shared_ptr<BoundStatement> BindStatementInternal(const StatementSyntax* syntax);
-	shared_ptr<BoundStatement> BindBlockStatement(const BlockStatementSyntax* syntax);
-	shared_ptr<BoundStatement> BindVariableDeclaration(const VariableDeclarationSyntax* syntax);
-	shared_ptr<BoundStatement> BindIfStatement(const IfStatementSyntax* syntax);
-	shared_ptr<BoundStatement> BindWhileStatement(const WhileStatementSyntax* syntax);
-	shared_ptr<BoundStatement> BindDoWhileStatement(const DoWhileStatementSyntax* syntax);
-	shared_ptr<BoundStatement> BindForStatement(const ForStatementSyntax* syntax);
-	auto BindLoopBody(const StatementSyntax* syntax)
+	shared_ptr<BoundStatement> BindErrorStatement(const SyntaxNode& syntax);
+	shared_ptr<BoundStatement> BindGlobalStatement(const StatementSyntax& syntax);
+	shared_ptr<BoundStatement> BindStatement(const StatementSyntax& syntax, bool isGlobal = false);
+	shared_ptr<BoundStatement> BindStatementInternal(const StatementSyntax& syntax);
+	shared_ptr<BoundStatement> BindBlockStatement(const BlockStatementSyntax& syntax);
+	shared_ptr<BoundStatement> BindVariableDeclaration(const VariableDeclarationSyntax& syntax);
+	shared_ptr<BoundStatement> BindIfStatement(const IfStatementSyntax& syntax);
+	shared_ptr<BoundStatement> BindWhileStatement(const WhileStatementSyntax& syntax);
+	shared_ptr<BoundStatement> BindDoWhileStatement(const DoWhileStatementSyntax& syntax);
+	shared_ptr<BoundStatement> BindForStatement(const ForStatementSyntax& syntax);
+	auto BindLoopBody(const StatementSyntax& syntax)
 		->std::tuple<shared_ptr<BoundStatement>, BoundLabel, BoundLabel>;
 
-	shared_ptr<BoundStatement> BindBreakStatement(const BreakStatementSyntax* syntax);
-	shared_ptr<BoundStatement> BindContinueStatement(const ContinueStatementSyntax* syntax);
-	shared_ptr<BoundStatement> BindReturnStatement(const ReturnStatementSyntax* syntax);
-	shared_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax* syntax);
+	shared_ptr<BoundStatement> BindBreakStatement(const BreakStatementSyntax& syntax);
+	shared_ptr<BoundStatement> BindContinueStatement(const ContinueStatementSyntax& syntax);
+	shared_ptr<BoundStatement> BindReturnStatement(const ReturnStatementSyntax& syntax);
+	shared_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax& syntax);
 
-	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,
+	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax& syntax,
 											   const TypeSymbol& targetType);
-	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax* syntax,
+	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax& syntax,
 											   bool canBeVoid = false);
-	shared_ptr<BoundExpression> BindExpressionInternal(const ExpressionSyntax* syntax);
-	shared_ptr<BoundExpression> BindParenthesizedExpression(const ParenthesizedExpressionSyntax* syntax);
-	shared_ptr<BoundExpression> BindLiteralExpression(const LiteralExpressionSyntax* syntax);
-	shared_ptr<BoundExpression> BindNameExpression(const NameExpressionSyntax* syntax);
-	shared_ptr<BoundExpression> BindAssignmentExpression(const AssignmentExpressionSyntax* syntax);
-	shared_ptr<BoundExpression> BindUnaryExpression(const UnaryExpressionSyntax* syntax);
-	shared_ptr<BoundExpression> BindBinaryExpression(const BinaryExpressionSyntax* syntax);
-	shared_ptr<BoundExpression> BindCallExpression(const CallExpressionSyntax* syntax);
-	shared_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax* syntax);
+	shared_ptr<BoundExpression> BindExpressionInternal(const ExpressionSyntax& syntax);
+	shared_ptr<BoundExpression> BindParenthesizedExpression(const ParenthesizedExpressionSyntax& syntax);
+	shared_ptr<BoundExpression> BindLiteralExpression(const LiteralExpressionSyntax& syntax);
+	shared_ptr<BoundExpression> BindNameExpression(const NameExpressionSyntax& syntax);
+	shared_ptr<BoundExpression> BindAssignmentExpression(const AssignmentExpressionSyntax& syntax);
+	shared_ptr<BoundExpression> BindUnaryExpression(const UnaryExpressionSyntax& syntax);
+	shared_ptr<BoundExpression> BindBinaryExpression(const BinaryExpressionSyntax& syntax);
+	shared_ptr<BoundExpression> BindCallExpression(const CallExpressionSyntax& syntax);
+	shared_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax& syntax);
 
-	shared_ptr<BoundExpression> BindConversion(const ExpressionSyntax* syntax,
+	shared_ptr<BoundExpression> BindConversion(const ExpressionSyntax& syntax,
 											   const TypeSymbol& type, bool allowExplicit = false);
 	shared_ptr<BoundExpression> BindConversion(
 		TextLocation diagLocation, shared_ptr<BoundExpression> syntax,
@@ -240,18 +241,18 @@ Binder::Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbo
 		}
 }
 
-void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax)
+void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax& syntax)
 {
 	auto parameters = vector<ParameterSymbol>();
 	auto seenParamNames = std::unordered_set<string_view>();
 
-	for (const auto& it : *(syntax->Parameters()))
+	for (const auto& it : syntax.Parameters)
 	{
 		if (it->Kind() == SyntaxKind::Parameter)
 		{
-			auto p = static_cast<ParameterSyntax*>(it.get());
-			auto paramName = p->Identifier().Text();
-			auto paramType = BindTypeClause(p->Type());
+			auto& p = static_cast<const ParameterSyntax&>(*it);
+			auto paramName = p.Identifier.Text;
+			auto paramType = BindTypeClause(p.Type);
 			auto [_, success] = seenParamNames.emplace(paramName);
 
 			if (success)
@@ -259,61 +260,61 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax* syntax)
 				auto param = ParameterSymbol(paramName, *paramType);
 				parameters.push_back(std::move(param));
 			} else
-				_diagnostics.ReportParameterAlreadyDeclared(p->Location(), paramName);
+				_diagnostics.ReportParameterAlreadyDeclared(p.Location(), paramName);
 		}
 	}
-	auto type = BindTypeClause(syntax->Type())
+	auto type = BindTypeClause(syntax.Type)
 		.value_or(TYPE_VOID);
-	auto function = make_shared<FunctionSymbol>(syntax->Identifier().Text(),
-												std::move(parameters), type, syntax);
+	auto function = make_shared<FunctionSymbol>(syntax.Identifier.Text,
+												std::move(parameters), type, &syntax);
 
-	if (!function->Declaration()->Identifier().Text().empty()
+	if (!function->Declaration()->Identifier.Text.empty()
 		&& !_scope->TryDeclareFunction(function))
 	{
-		_diagnostics.ReportSymbolAlreadyDeclared(syntax->Identifier().Location(),
+		_diagnostics.ReportSymbolAlreadyDeclared(syntax.Identifier.Location(),
 												 function->Name());
 	}
 }
 
-shared_ptr<BoundStatement> Binder::BindErrorStatement(const SyntaxNode* syntax)
+shared_ptr<BoundStatement> Binder::BindErrorStatement(const SyntaxNode& syntax)
 {
 	return make_shared<BoundExpressionStatement>(syntax,
 												 make_shared<BoundErrorExpression>(syntax));
 }
 
-shared_ptr<BoundStatement> Binder::BindGlobalStatement(const StatementSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindGlobalStatement(const StatementSyntax& syntax)
 {
 	return BindStatement(syntax, true);
 }
 
-shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax* syntax, bool isGlobal)
+shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax& syntax, bool isGlobal)
 {
 	auto result = BindStatementInternal(syntax);
 	if (!_isScript || !isGlobal)
 		if (result->Kind() == BoundNodeKind::ExpressionStatement)
 		{
-			auto es = static_cast<BoundExpressionStatement*>(result.get());
-			auto allowExpression = es->Expression()->Kind() == BoundNodeKind::ErrorExpression
-				|| es->Expression()->Kind() == BoundNodeKind::AssignmentExpression
-				|| es->Expression()->Kind() == BoundNodeKind::CallExpression
-				|| es->Expression()->Kind() == BoundNodeKind::CompoundAssignmentExpression
-				|| es->Expression()->Kind() == BoundNodeKind::PostfixExpression;
+			auto& es = static_cast<const BoundExpressionStatement&>(*result);
+			auto allowExpression = es.Expression()->Kind() == BoundNodeKind::ErrorExpression
+				|| es.Expression()->Kind() == BoundNodeKind::AssignmentExpression
+				|| es.Expression()->Kind() == BoundNodeKind::CallExpression
+				|| es.Expression()->Kind() == BoundNodeKind::CompoundAssignmentExpression
+				|| es.Expression()->Kind() == BoundNodeKind::PostfixExpression;
 			if (!allowExpression)
-				_diagnostics.ReportInvalidExpressionStatement(syntax->Location());
+				_diagnostics.ReportInvalidExpressionStatement(syntax.Location());
 		}
 	return result;
 }
 
-shared_ptr<BoundStatement> Binder::BindStatementInternal(const StatementSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindStatementInternal(const StatementSyntax& syntax)
 {
 #define BIND_STMT(kind) \
-case SyntaxKind::kind:                                 \
-{                                                      \
-	auto p = static_cast<const kind##Syntax*>(syntax); \
-	return Bind##kind(p);                              \
+case SyntaxKind::kind:                                  \
+{                                                       \
+	auto& p = static_cast<const kind##Syntax&>(syntax); \
+	return Bind##kind(p);                               \
 }
 
-	switch (syntax->Kind())
+	switch (syntax.Kind())
 	{
 		BIND_STMT(BlockStatement);
 		BIND_STMT(VariableDeclaration);
@@ -329,96 +330,91 @@ case SyntaxKind::kind:                                 \
 		default:
 			break;
 	}
-	throw std::invalid_argument(BuildStringFrom("Unexpected syntax: ", nameof(syntax->Kind())));
+	throw std::invalid_argument(BuildStringFrom("Unexpected syntax: ", nameof(syntax.Kind())));
 
 #undef BIND_STMT
 }
 
-shared_ptr<BoundStatement> Binder::BindBlockStatement(const BlockStatementSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindBlockStatement(const BlockStatementSyntax& syntax)
 {
 	auto result = vector<shared_ptr<BoundStatement>>();
 	_scope = make_unique<BoundScope>(std::move(_scope));
-	auto statements = syntax->Statements();
+	auto& statements = syntax.Statements;
 	for (const auto& it : statements)
-		result.push_back(BindStatement(it));
+		result.push_back(BindStatement(*it));
 	BoundScope::ResetToParent(_scope);
 	return make_shared<BoundBlockStatement>(syntax, std::move(result));
 }
 
-shared_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclarationSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclarationSyntax& syntax)
 {
-	auto readOnly = syntax->Keyword().Kind() == SyntaxKind::LetKeyword;
-	auto type = BindTypeClause(syntax->TypeClause());
-	auto init = BindExpression(syntax->Initializer());
+	auto readOnly = syntax.Keyword.Kind() == SyntaxKind::LetKeyword;
+	auto type = BindTypeClause(syntax.TypeClause);
+	auto init = BindExpression(*syntax.Initializer);
 	auto variableType = type.value_or(init->Type());
-	auto variable = BindVariableDeclaration(syntax->Identifier(), readOnly,
+	auto variable = BindVariableDeclaration(syntax.Identifier, readOnly,
 											variableType, init->ConstantValue());
-	auto convertInitializer = BindConversion(syntax->Identifier().Location(),
+	auto convertInitializer = BindConversion(syntax.Identifier.Location(),
 											 std::move(init), variableType);
 
 	return make_shared<BoundVariableDeclaration>(syntax, std::move(variable),
 												 std::move(convertInitializer));
 }
 
-shared_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax& syntax)
 {
-	auto condition = BindExpression(syntax->Condition(), TYPE_BOOL);
+	auto condition = BindExpression(*syntax.Condition, TYPE_BOOL);
 
 	if (condition->ConstantValue() != NULL_VALUE)
 	{
 		if (!condition->ConstantValue().GetValue<bool>())
-			_diagnostics.ReportUnreachableCode(*syntax->ThenStatement());
-		else if (syntax->ElseClause() != nullptr)
-			_diagnostics.ReportUnreachableCode(*syntax->ElseClause()->ElseStatement());
+			_diagnostics.ReportUnreachableCode(*syntax.ThenStatement);
+		else if (syntax.ElseClause != nullptr)
+			_diagnostics.ReportUnreachableCode(*syntax.ElseClause->ElseStatement);
 	}
 
-	auto thenStatement = BindStatement(syntax->ThenStatement());
+	auto thenStatement = BindStatement(*syntax.ThenStatement);
 	auto elseStatement =
-		syntax->ElseClause() == nullptr ?
-		nullptr : BindStatement(syntax->ElseClause()->ElseStatement());
+		syntax.ElseClause == nullptr ?
+		nullptr : BindStatement(*syntax.ElseClause->ElseStatement);
 	return make_shared<BoundIfStatement>(syntax, std::move(condition),
 										 std::move(thenStatement), std::move(elseStatement));
 }
 
-shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax& syntax)
 {
-	auto condition = BindExpression(syntax->Condition(),
-									TYPE_BOOL);
+	auto condition = BindExpression(*syntax.Condition, TYPE_BOOL);
 
 	if (condition->ConstantValue() != NULL_VALUE)
 	{
 		if (!condition->ConstantValue().GetValue<bool>())
-			_diagnostics.ReportUnreachableCode(*syntax->Body());
+			_diagnostics.ReportUnreachableCode(*syntax.Body);
 	}
 
-	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
+	auto [body, breakLabel, continueLabel] = BindLoopBody(*syntax.Body);
 	return make_shared<BoundWhileStatement>(syntax,
 											std::move(condition), body,
 											breakLabel, continueLabel);
 }
 
-shared_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSyntax& syntax)
 {
-	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
-	auto condition = BindExpression(syntax->Condition(),
-									TYPE_BOOL);
+	auto [body, breakLabel, continueLabel] = BindLoopBody(*syntax.Body);
+	auto condition = BindExpression(*syntax.Condition, TYPE_BOOL);
 	return make_shared<BoundDoWhileStatement>(syntax,
 											  body, std::move(condition),
 											  breakLabel, continueLabel);
 }
 
-shared_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax& syntax)
 {
-	auto lowerBound = BindExpression(syntax->LowerBound(),
-									 TYPE_INT);
-	auto upperBound = BindExpression(syntax->UpperBound(),
-									 TYPE_INT);
+	auto lowerBound = BindExpression(*syntax.LowerBound, TYPE_INT);
+	auto upperBound = BindExpression(*syntax.UpperBound, TYPE_INT);
 
 	_scope = make_unique<BoundScope>(std::move(_scope));
 
-	auto variable = BindVariableDeclaration(syntax->Identifier(), true,
-											TYPE_INT);
-	auto [body, breakLabel, continueLabel] = BindLoopBody(syntax->Body());
+	auto variable = BindVariableDeclaration(syntax.Identifier, true, TYPE_INT);
+	auto [body, breakLabel, continueLabel] = BindLoopBody(*syntax.Body);
 
 	BoundScope::ResetToParent(_scope);
 	return make_shared<BoundForStatement>(syntax,
@@ -427,7 +423,7 @@ shared_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax* sy
 										  body, breakLabel, continueLabel);
 }
 
-auto Binder::BindLoopBody(const StatementSyntax* syntax)
+auto Binder::BindLoopBody(const StatementSyntax& syntax)
 ->std::tuple<shared_ptr<BoundStatement>, BoundLabel, BoundLabel>
 {
 	++_labelCount;
@@ -441,34 +437,34 @@ auto Binder::BindLoopBody(const StatementSyntax* syntax)
 						   std::move(continueLabel));
 }
 
-shared_ptr<BoundStatement> Binder::BindBreakStatement(const BreakStatementSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindBreakStatement(const BreakStatementSyntax& syntax)
 {
 	if (_loopStack.empty())
 	{
-		_diagnostics.ReportInvalidBreakOrContinue(syntax->Keyword().Location(),
-												  syntax->Keyword().Text());
+		_diagnostics.ReportInvalidBreakOrContinue(syntax.Keyword.Location(),
+												  syntax.Keyword.Text);
 		return BindErrorStatement(syntax);
 	}
 	auto [brLabel, _] = _loopStack.top();
 	return make_shared<BoundGotoStatement>(syntax, brLabel);
 }
 
-shared_ptr<BoundStatement> Binder::BindContinueStatement(const ContinueStatementSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindContinueStatement(const ContinueStatementSyntax& syntax)
 {
 	if (_loopStack.empty())
 	{
-		_diagnostics.ReportInvalidBreakOrContinue(syntax->Keyword().Location(),
-												  syntax->Keyword().Text());
+		_diagnostics.ReportInvalidBreakOrContinue(syntax.Keyword.Location(),
+												  syntax.Keyword.Text);
 		return BindErrorStatement(syntax);
 	}
 	auto [_, conLabel] = _loopStack.top();
 	return make_shared<BoundGotoStatement>(syntax, conLabel);
 }
 
-shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSyntax& syntax)
 {
-	auto expression = syntax->Expression() ?
-		BindExpression(syntax->Expression()) : nullptr;
+	auto expression = syntax.Expression ?
+		BindExpression(*syntax.Expression) : nullptr;
 	if (_function == nullptr)
 	{
 		if (_isScript)
@@ -477,61 +473,61 @@ shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSynt
 				expression = make_shared<BoundLiteralExpression>(syntax, "");
 		} else if (expression != nullptr)
 			_diagnostics.ReportInvalidReturnWithValueInGlobalStatements(
-				syntax->Expression()->Location());
+				syntax.Expression->Location());
 	} else
 	{
 		if (_function->Type() == TYPE_VOID)
 		{
 			if (expression != nullptr)
-				_diagnostics.ReportInvalidReturnExpression(syntax->Expression()->Location(),
+				_diagnostics.ReportInvalidReturnExpression(syntax.Expression->Location(),
 														   _function->Name());
 		} else
 		{
 			if (expression == nullptr)
-				_diagnostics.ReportMissingReturnExpression(syntax->Keyword().Location(),
+				_diagnostics.ReportMissingReturnExpression(syntax.Keyword.Location(),
 														   _function->Type());
 			else
-				expression = BindConversion(syntax->Expression()->Location(),
+				expression = BindConversion(syntax.Expression->Location(),
 											std::move(expression), _function->Type());
 		}
 	}
 	return make_shared<BoundReturnStatement>(syntax, std::move(expression));
 }
 
-shared_ptr<BoundStatement> Binder::BindExpressionStatement(const ExpressionStatementSyntax* syntax)
+shared_ptr<BoundStatement> Binder::BindExpressionStatement(const ExpressionStatementSyntax& syntax)
 {
-	auto expression = BindExpression(syntax->Expression(), true);
+	auto expression = BindExpression(*syntax.Expression, true);
 	return make_shared<BoundExpressionStatement>(syntax, std::move(expression));
 }
 
-shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax* syntax,
+shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax& syntax,
 												   const TypeSymbol& targetType)
 {
 	return BindConversion(syntax, targetType);
 }
 
-shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax* syntax,
+shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax& syntax,
 												   bool canBeVoid)
 {
 	auto result = BindExpressionInternal(syntax);
 	if (!canBeVoid && result->Type() == TYPE_VOID)
 	{
-		_diagnostics.ReportExpressionMustHaveValue(syntax->Location());
+		_diagnostics.ReportExpressionMustHaveValue(syntax.Location());
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 	return result;
 }
 
-shared_ptr<BoundExpression> Binder::BindExpressionInternal(const ExpressionSyntax* syntax)
+shared_ptr<BoundExpression> Binder::BindExpressionInternal(const ExpressionSyntax& syntax)
 {
 #define BIND_EXPR(kind) \
-case SyntaxKind::kind:                                 \
-{                                                      \
-	auto p = static_cast<const kind##Syntax*>(syntax); \
-	return Bind##kind(p);                              \
+case SyntaxKind::kind:                                  \
+{                                                       \
+	auto& p = static_cast<const kind##Syntax&>(syntax); \
+	return Bind##kind(p);                               \
 }
 
-	switch (syntax->Kind())
+	switch (syntax.Kind())
 	{
 		BIND_EXPR(ParenthesizedExpression);
 		BIND_EXPR(LiteralExpression);
@@ -545,60 +541,60 @@ case SyntaxKind::kind:                                 \
 		default:
 			break;
 	}
-	throw std::invalid_argument(BuildStringFrom("Invalid expression: ", nameof(syntax->Kind())));
+	throw std::invalid_argument(BuildStringFrom("Invalid expression: ", nameof(syntax.Kind())));
 
 #undef BIND_EXPR
 }
 
-shared_ptr<BoundExpression> Binder::BindParenthesizedExpression(const ParenthesizedExpressionSyntax* syntax)
+shared_ptr<BoundExpression> Binder::BindParenthesizedExpression(const ParenthesizedExpressionSyntax& syntax)
 {
-	return BindExpression(syntax->Expression());
+	return BindExpression(*syntax.Expression);
 }
 
-shared_ptr<BoundExpression> Binder::BindLiteralExpression(const LiteralExpressionSyntax* syntax)
+shared_ptr<BoundExpression> Binder::BindLiteralExpression(const LiteralExpressionSyntax& syntax)
 {
-	return make_shared<BoundLiteralExpression>(syntax, syntax->Value());
+	return make_shared<BoundLiteralExpression>(syntax, syntax.Value);
 }
 
-shared_ptr<BoundExpression> Binder::BindNameExpression(const NameExpressionSyntax* syntax)
+shared_ptr<BoundExpression> Binder::BindNameExpression(const NameExpressionSyntax& syntax)
 {
-	if (syntax->IdentifierToken().IsMissing()) // NOTE this token was injected by Parser::MatchToken
+	if (syntax.IdentifierToken.IsMissing()) // NOTE this token was injected by Parser::MatchToken
 		return make_shared<BoundErrorExpression>(syntax);
 
-	auto var = BindVariableReference(syntax->IdentifierToken());
+	auto var = BindVariableReference(syntax.IdentifierToken);
 	if (var == nullptr)
 		return make_shared<BoundErrorExpression>(syntax);
 	return make_shared<BoundVariableExpression>(syntax, std::move(var));
 }
 
-shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExpressionSyntax* syntax)
+shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExpressionSyntax& syntax)
 {
-	auto name = syntax->IdentifierToken().Text();
-	auto boundExpression = BindExpression(syntax->Expression());
+	auto name = syntax.IdentifierToken.Text;
+	auto boundExpression = BindExpression(*syntax.Expression);
 
-	auto variable = BindVariableReference(syntax->IdentifierToken());
+	auto variable = BindVariableReference(syntax.IdentifierToken);
 	if (variable == nullptr)
 		return boundExpression;
 
 	if (variable->IsReadOnly())
-		_diagnostics.ReportCannotAssign(syntax->AssignmentToken().Location(), name);
+		_diagnostics.ReportCannotAssign(syntax.AssignmentToken.Location(), name);
 
-	if (syntax->AssignmentToken().Kind() != SyntaxKind::EqualsToken)
+	if (syntax.AssignmentToken.Kind() != SyntaxKind::EqualsToken)
 	{
 		auto equivalentOpKind =
-			GetBinaryOperatorOfAssignmentOperator(syntax->AssignmentToken().Kind());
+			GetBinaryOperatorOfAssignmentOperator(syntax.AssignmentToken.Kind());
 		auto op = BoundBinaryOperator::Bind(equivalentOpKind,
 											variable->Type(),
 											boundExpression->Type());
 		if (!op.IsUseful())
 		{
-			_diagnostics.ReportUndefinedBinaryOperator(syntax->AssignmentToken().Location(),
-													   syntax->AssignmentToken().Text(),
+			_diagnostics.ReportUndefinedBinaryOperator(syntax.AssignmentToken.Location(),
+													   syntax.AssignmentToken.Text,
 													   variable->Type(),
 													   boundExpression->Type());
 			return make_shared<BoundErrorExpression>(syntax);
 		}
-		auto convertExpression = BindConversion(syntax->Expression()->Location(),
+		auto convertExpression = BindConversion(syntax.Expression->Location(),
 												std::move(boundExpression), variable->Type());
 		return make_shared<BoundCompoundAssignmentExpression>(syntax,
 															  std::move(variable),
@@ -606,7 +602,7 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 															  std::move(convertExpression));
 	} else
 	{
-		auto convertExpression = BindConversion(syntax->Expression()->Location(),
+		auto convertExpression = BindConversion(syntax.Expression->Location(),
 												std::move(boundExpression), variable->Type());
 		return make_shared<BoundAssignmentExpression>(syntax,
 													  std::move(variable),
@@ -614,34 +610,34 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 	}
 }
 
-shared_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyntax* syntax)
+shared_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyntax& syntax)
 {
-	auto boundOperand = BindExpression(syntax->Operand());
+	auto boundOperand = BindExpression(*syntax.Operand);
 	if (boundOperand->Type() == TYPE_ERROR)
 		return make_shared<BoundErrorExpression>(syntax);
 
-	auto boundOperator = BoundUnaryOperator::Bind(syntax->OperatorToken().Kind(),
+	auto boundOperator = BoundUnaryOperator::Bind(syntax.OperatorToken.Kind(),
 												  boundOperand->Type());
 	if (boundOperator.IsUseful())
 	{
 		return make_shared<BoundUnaryExpression>(syntax, boundOperator, std::move(boundOperand));
 	} else
 	{
-		_diagnostics.ReportUndefinedUnaryOperator(syntax->OperatorToken().Location(),
-												  syntax->OperatorToken().Text(), boundOperand->Type());
+		_diagnostics.ReportUndefinedUnaryOperator(syntax.OperatorToken.Location(),
+												  syntax.OperatorToken.Text, boundOperand->Type());
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 }
 
-shared_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionSyntax* syntax)
+shared_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionSyntax& syntax)
 {
-	auto boundLeft = BindExpression(syntax->Left());
-	auto boundRight = BindExpression(syntax->Right());
+	auto boundLeft = BindExpression(*syntax.Left);
+	auto boundRight = BindExpression(*syntax.Right);
 	if (boundLeft->Type() == TYPE_ERROR
 		|| boundRight->Type() == TYPE_ERROR)
 		return make_shared<BoundErrorExpression>(syntax);
 
-	auto boundOperator = BoundBinaryOperator::Bind(syntax->OperatorToken().Kind(),
+	auto boundOperator = BoundBinaryOperator::Bind(syntax.OperatorToken.Kind(),
 												   boundLeft->Type(), boundRight->Type());
 	if (boundOperator.IsUseful())
 	{
@@ -649,73 +645,73 @@ shared_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 												  boundOperator, std::move(boundRight));
 	} else
 	{
-		_diagnostics.ReportUndefinedBinaryOperator(syntax->OperatorToken().Location(),
-												   syntax->OperatorToken().Text(), boundLeft->Type(), boundRight->Type());
+		_diagnostics.ReportUndefinedBinaryOperator(syntax.OperatorToken.Location(),
+												   syntax.OperatorToken.Text, boundLeft->Type(), boundRight->Type());
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 }
 
-shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSyntax* syntax)
+shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSyntax& syntax)
 {
-	if (syntax->Arguments().size() == 1)
+	if (syntax.Arguments.size() == 1)
 	{
-		auto type = LookupType(syntax->Identifier().Text());
+		auto type = LookupType(syntax.Identifier.Text);
 		if (type.has_value())
-			return BindConversion(syntax->Arguments()[0], *type, true);
+			return BindConversion(*syntax.Arguments[0], *type, true);
 	}
 
 	auto boundArguments = vector<shared_ptr<BoundExpression>>();
-	for (const auto& arg : syntax->Arguments())
+	for (const auto& arg : syntax.Arguments)
 	{
-		auto p = static_cast<ExpressionSyntax*>(arg.get());
+		auto& p = static_cast<ExpressionSyntax&>(*arg);
 		boundArguments.push_back(BindExpression(p));
 	}
 
-	auto sp = _scope->TryLookupSymbol(syntax->Identifier().Text());
+	auto sp = _scope->TryLookupSymbol(syntax.Identifier.Text);
 	if (sp == nullptr)
 	{
-		_diagnostics.ReportUndefinedFunction(syntax->Identifier().Location(),
-											 syntax->Identifier().Text());
+		_diagnostics.ReportUndefinedFunction(syntax.Identifier.Location(),
+											 syntax.Identifier.Text);
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 
 	if (sp->Kind() != SymbolKind::Function)
 	{
-		_diagnostics.ReportNotAFunction(syntax->Identifier().Location(),
-										syntax->Identifier().Text());
+		_diagnostics.ReportNotAFunction(syntax.Identifier.Location(),
+										syntax.Identifier.Text);
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 
 	auto function = std::static_pointer_cast<FunctionSymbol>(std::move(sp));
 
-	if (syntax->Arguments().size() != function->Parameters().size())
+	if (syntax.Arguments.size() != function->Parameters().size())
 	{
 		TextSpan span;
-		if (syntax->Arguments().size() > function->Parameters().size())
+		if (syntax.Arguments.size() > function->Parameters().size())
 		{
 			const SyntaxNode* firstExceedingNode = nullptr;
 			if (function->Parameters().size() > 0)
-				firstExceedingNode = syntax->Arguments().GetSeparator(function->Parameters().size() - 1);
+				firstExceedingNode = syntax.Arguments.GetSeparator(function->Parameters().size() - 1);
 			else
-				firstExceedingNode = syntax->Arguments()[0];
-			auto lastExceedingArg = syntax->Arguments()[syntax->Arguments().size() - 1];
+				firstExceedingNode = syntax.Arguments[0];
+			auto lastExceedingArg = syntax.Arguments[syntax.Arguments.size() - 1];
 
-			span = TextSpan::FromBounds(firstExceedingNode->Span().Start(),
+			span = TextSpan::FromBounds(firstExceedingNode->Span().Start,
 										lastExceedingArg->Span().End());
 		} else
 		{
-			span = syntax->CloseParenthesisToken().Span();
+			span = syntax.CloseParenthesisToken.Span();
 		}
-		auto location = TextLocation(syntax->Tree().Text(), span);
+		auto location = TextLocation(syntax.Tree().Text(), span);
 		_diagnostics.ReportWrongArgumentCount(
 			std::move(location), function->Name(),
-			function->Parameters().size(), syntax->Arguments().size());
+			function->Parameters().size(), syntax.Arguments.size());
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 
-	for (size_t i = 0; i < syntax->Arguments().size(); ++i)
+	for (size_t i = 0; i < syntax.Arguments.size(); ++i)
 	{
-		auto argLocation = syntax->Arguments()[i]->Location();
+		auto argLocation = syntax.Arguments[i]->Location();
 		auto& arg = boundArguments[i];
 		auto param = function->Parameters()[i];
 		boundArguments.at(i) = BindConversion(argLocation, arg, param.Type());
@@ -724,33 +720,33 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	return make_shared<BoundCallExpression>(syntax, function, boundArguments);
 }
 
-shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressionSyntax* syntax)
+shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressionSyntax& syntax)
 {
-	auto name = syntax->IdentifierToken().Text();
-	auto boundExpression = BindExpression(syntax->Expression());
+	auto name = syntax.Identifier.Text;
+	auto boundExpression = BindExpression(*syntax.Expression);
 
-	auto variable = BindVariableReference(syntax->IdentifierToken());
+	auto variable = BindVariableReference(syntax.Identifier);
 	if (variable == nullptr)
 		return make_shared<BoundErrorExpression>(syntax);
 
 	if (variable->IsReadOnly())
 	{
-		_diagnostics.ReportCannotAssign(syntax->Op().Location(), name);
+		_diagnostics.ReportCannotAssign(syntax.Op.Location(), name);
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 	if (boundExpression->Type() != variable->Type())
 	{
-		_diagnostics.ReportCannotConvert(syntax->Expression()->Location(),
+		_diagnostics.ReportCannotConvert(syntax.Expression->Location(),
 										 boundExpression->Type(), variable->Type());
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 	if (variable->Type() != TYPE_INT)
 	{
 		_diagnostics.ReportVariableNotSupportPostfixOperator(
-			syntax->Expression()->Location(), syntax->Op().Text(), variable->Type());
+			syntax.Expression->Location(), syntax.Op.Text, variable->Type());
 		return make_shared<BoundErrorExpression>(syntax);
 	}
-	switch (syntax->Op().Kind())
+	switch (syntax.Op.Kind())
 	{
 		case SyntaxKind::PlusPlusToken:
 			return make_shared<BoundPostfixExpression>(syntax, std::move(variable),
@@ -762,15 +758,15 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 													   std::move(boundExpression));
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected operator token: "
-														, nameof(syntax->Op().Kind())));
+														, nameof(syntax.Op.Kind())));
 	}
 }
 
-shared_ptr<BoundExpression> Binder::BindConversion(const ExpressionSyntax* syntax,
+shared_ptr<BoundExpression> Binder::BindConversion(const ExpressionSyntax& syntax,
 												   const TypeSymbol& type, bool allowExplicit)
 {
 	auto expression = BindExpression(syntax);
-	return BindConversion(syntax->Location(), std::move(expression), type, allowExplicit);
+	return BindConversion(syntax.Location(), std::move(expression), type, allowExplicit);
 }
 
 shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
@@ -797,7 +793,7 @@ shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
 shared_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& identifier,
 														   bool isReadOnly, const TypeSymbol& type, BoundConstant constant)
 {
-	auto name = identifier.Text().empty() ? "?" : identifier.Text();
+	auto name = identifier.Text.empty() ? "?" : identifier.Text;
 	auto declare = !identifier.IsMissing();
 	shared_ptr<VariableSymbol> variable = nullptr;
 	if (_function == nullptr)
@@ -812,7 +808,7 @@ shared_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& id
 
 shared_ptr<VariableSymbol> Binder::BindVariableReference(const SyntaxToken& identifier)
 {
-	auto name = identifier.Text();
+	auto name = identifier.Text;
 	auto var = _scope->TryLookupSymbol(name);
 	if (var == nullptr)
 	{
@@ -835,10 +831,10 @@ std::optional<TypeSymbol> Binder::BindTypeClause(const std::optional<TypeClauseS
 {
 	if (!syntax.has_value()) return std::nullopt;
 
-	auto type = LookupType(syntax->Identifier().Text());
+	auto type = LookupType(syntax->Identifier.Text);
 	if (!type.has_value())
-		_diagnostics.ReportUndefinedType(syntax->Identifier().Location(),
-										 syntax->Identifier().Text());
+		_diagnostics.ReportUndefinedType(syntax->Identifier.Location(),
+										 syntax->Identifier.Text);
 	return type;
 }
 
@@ -917,11 +913,11 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 	for (const auto& tree : trees)
 	{
 		auto syntax = tree->Root();
-		for (const auto& it : syntax->Members())
+		for (const auto& it : syntax->Members)
 		{
 			if (it->Kind() == SyntaxKind::FunctionDeclaration)
 			{
-				auto func = static_cast<FunctionDeclarationSyntax*>(it.get());
+				auto& func = static_cast<const FunctionDeclarationSyntax&>(*it);
 				binder.BindFunctionDeclaration(func);
 			}
 		}
@@ -930,13 +926,13 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 	for (const auto& tree : trees)
 	{
 		auto syntax = tree->Root();
-		for (const auto& it : syntax->Members())
+		for (const auto& it : syntax->Members)
 		{
 			if (it->Kind() == SyntaxKind::GlobalStatement)
 			{
-				auto globalStatement = static_cast<GlobalStatementSyntax*>(it.get());
-				globalStmts.push_back(globalStatement);
-				statements.push_back(binder.BindGlobalStatement(globalStatement->Statement()));
+				auto& globalStatement = static_cast<const GlobalStatementSyntax&>(*it);
+				globalStmts.push_back(&globalStatement);
+				statements.push_back(binder.BindGlobalStatement(*globalStatement.Statement));
 			}
 		}
 	}
@@ -945,7 +941,7 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 	std::for_each(trees.cbegin(), trees.cend(),
 				  [&firstGlobalStmtPerSynTree](const auto& tree)
 				  {
-					  auto& members = tree->Root()->Members();
+					  auto& members = tree->Root()->Members;
 					  auto it = std::find_if(members.cbegin(), members.cend(),
 											 [](const auto& it)
 											 {
@@ -975,7 +971,7 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 			if ((*it)->Type() != TYPE_VOID
 				|| !(*it)->Parameters().empty())
 				binder._diagnostics.ReportMainMustHaveCorrectSignature(
-					(*it)->Declaration()->Identifier().Location()
+					(*it)->Declaration()->Identifier.Location()
 				);
 			mainFunc = make_unique<FunctionSymbol>(**it);
 		}
@@ -984,7 +980,7 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 			if (mainFunc != nullptr)
 			{
 				binder._diagnostics.ReportCannotMixMainAndGlobalStatements(
-					mainFunc->Declaration()->Identifier().Location()
+					mainFunc->Declaration()->Identifier.Location()
 				);
 				for (const auto& gs : firstGlobalStmtPerSynTree)
 				{
@@ -1035,14 +1031,14 @@ BoundProgram Binder::BindProgram(bool isScript,
 	for (const auto& it : globalScope->Functions())
 	{
 		auto binder = Binder(isScript, std::make_unique<BoundScope>(*parentScope), it.get());
-		auto body = binder.BindStatement(it->Declaration()->Body());
+		auto body = binder.BindStatement(*it->Declaration()->Body);
 		auto lowerBody = Lower(*it, std::move(body));
 
 		if (it->Type() != TYPE_VOID
 			&& !ControlFlowGraph::AllPathsReturn(lowerBody.get()))
 		{
 			binder._diagnostics.ReportAllPathsMustReturn(
-				it->Declaration()->Identifier().Location());
+				it->Declaration()->Identifier.Location());
 		}
 		funcBodies.emplace(it.get(), std::move(lowerBody));
 
@@ -1050,12 +1046,14 @@ BoundProgram Binder::BindProgram(bool isScript,
 	}
 
 	auto cu = globalScope->Statements().empty() ? nullptr
-		: globalScope->Statements().front()->Syntax()->AncestorsAndSelf().back();
+		: globalScope->Statements().front()->Syntax().AncestorsAndSelf().back();
 
 	if (globalScope->MainFunc() != nullptr && !globalScope->Statements().empty())
 	{
+		assert(cu && "Local variable cu should be a valid pointer.");
+
 		auto body = Lower(*globalScope->MainFunc(),
-						  make_shared<BoundBlockStatement>(cu, globalScope->Statements()));
+						  make_shared<BoundBlockStatement>(*cu, globalScope->Statements()));
 		funcBodies.emplace(globalScope->MainFunc(), std::move(body));
 	} else if (globalScope->ScriptFunc() != nullptr)
 	{
@@ -1066,20 +1064,25 @@ BoundProgram Binder::BindProgram(bool isScript,
 		if (statements.size() == 1
 			&& statements.at(0)->Kind() == BoundNodeKind::ExpressionStatement)
 		{
-			auto es = static_cast<BoundExpressionStatement*>(statements.at(0).get());
-			if (es->Expression()->Type() != TYPE_VOID)
+			auto& es = static_cast<const BoundExpressionStatement&>(*statements.at(0));
+			if (es.Expression()->Type() != TYPE_VOID)
 			{
-				statements.at(0) = make_shared<BoundReturnStatement>(es->Expression()->Syntax(),
-																	 es->Expression());
+				statements.at(0) = make_shared<BoundReturnStatement>(es.Expression()->Syntax(),
+																	 es.Expression());
 			}
 		} else if (!statements.empty()
 				   && statements.back()->Kind() != BoundNodeKind::ReturnStatement)
 		{
-			auto nullValue = make_shared<BoundLiteralExpression>(cu, "");
-			statements.push_back(make_shared<BoundReturnStatement>(cu, nullValue));
+			assert(cu && "Local variable cu should be a valid pointer.");
+
+			auto nullValue = make_shared<BoundLiteralExpression>(*cu, "");
+			statements.push_back(make_shared<BoundReturnStatement>(*cu, nullValue));
 		}
+
+		assert(cu && "Local variable cu should be a valid pointer.");
+
 		auto body = Lower(*globalScope->ScriptFunc(),
-						  make_shared<BoundBlockStatement>(cu, std::move(statements)));
+						  make_shared<BoundBlockStatement>(*cu, std::move(statements)));
 		funcBodies.emplace(globalScope->ScriptFunc(), std::move(body));
 	}
 

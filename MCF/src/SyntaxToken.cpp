@@ -23,7 +23,7 @@ void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
 	{
 		auto token = static_cast<const SyntaxToken*>(node);
 
-		for (const auto& tr : token->LeadingTrivia())
+		for (const auto& tr : token->LeadingTrivia)
 		{
 			if (isToConsole)
 				SetConsoleColor(ConsoleColor::DarkGray);
@@ -37,7 +37,7 @@ void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
 	}
 
 	auto hasTrailingTrivia = isToken
-		&& !static_cast<const SyntaxToken*>(node)->TrailingTrivia().empty();
+		&& !static_cast<const SyntaxToken*>(node)->TrailingTrivia.empty();
 
 	auto tkMarker = !hasTrailingTrivia && isLast ? "+--" : "---";
 
@@ -53,9 +53,9 @@ void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
 	if (isToken)
 	{
 		auto token = static_cast<const SyntaxToken*>(node);
-		if (token->Value().HasValue())
+		if (token->Value.HasValue())
 		{
-			out << " " << token->Value();
+			out << " " << token->Value;
 		}
 	}
 
@@ -68,9 +68,9 @@ void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
 	{
 		auto token = static_cast<const SyntaxToken*>(node);
 
-		for (const auto& tr : token->TrailingTrivia())
+		for (const auto& tr : token->TrailingTrivia)
 		{
-			auto isLastTrailingTrivia = tr == token->TrailingTrivia().back();
+			auto isLastTrailingTrivia = tr == token->TrailingTrivia.back();
 			auto trMarker = isLast && isLastTrailingTrivia ? "+--" : "---";
 			if (isToConsole)
 				SetConsoleColor(ConsoleColor::DarkGray);
@@ -95,7 +95,7 @@ void SyntaxNode::PrettyPrint(std::ostream& out, const SyntaxNode* node,
 
 const SyntaxNode* SyntaxNode::Parent()const
 {
-	return _tree->GetParent(*this);
+	return Tree().GetParent(*this);
 }
 
 vector<const SyntaxNode*> SyntaxNode::Ancestors()const
@@ -123,7 +123,7 @@ TextSpan SyntaxNode::Span() const
 	auto children = GetChildren();
 	auto first = children.front()->Span();
 	auto last = children.back()->Span();
-	return TextSpan::FromBounds(first.Start(), last.End());
+	return TextSpan::FromBounds(first.Start, last.End());
 }
 
 TextSpan SyntaxNode::FullSpan()const
@@ -131,7 +131,7 @@ TextSpan SyntaxNode::FullSpan()const
 	auto children = GetChildren();
 	auto first = children.front()->FullSpan();
 	auto last = children.back()->FullSpan();
-	return TextSpan::FromBounds(first.Start(), last.End());
+	return TextSpan::FromBounds(first.Start, last.End());
 }
 
 TextLocation SyntaxNode::Location()const
@@ -161,41 +161,24 @@ TextSpan SyntaxTrivia::Span()const noexcept
 		: TextSpan(Position, 0);
 }
 
-bool SyntaxToken::operator==(const SyntaxToken& other) const noexcept
-{
-	return _kind == other._kind && _position == other._position
-		&& _text == other._text && _value == other._value;
-}
-
-bool SyntaxToken::operator!=(const SyntaxToken& other) const noexcept
-{
-	return !(*this == other);
-}
-
 const vector<const SyntaxNode*> SyntaxToken::GetChildren() const
 {
 	return vector<const SyntaxNode*>();
 }
 
-SyntaxToken SyntaxToken::Clone() const
-{
-	return SyntaxToken(Tree(), _kind, _position, _text, _value,
-					   _leadingTrivia, _trailingTrivia);
-}
-
 TextSpan SyntaxToken::Span() const
 {
-	return TextSpan(_position, _text.length());
+	return TextSpan(Position, Text.length());
 }
 
 TextSpan SyntaxToken::FullSpan()const
 {
-	auto start = _leadingTrivia.empty() ?
-		Span().Start()
-		: _leadingTrivia.front().Span().Start();
-	auto end = _trailingTrivia.empty() ?
+	auto start = LeadingTrivia.empty() ?
+		Span().Start
+		: LeadingTrivia.front().Span().Start;
+	auto end = TrailingTrivia.empty() ?
 		Span().End()
-		: _trailingTrivia.back().Span().End();
+		: TrailingTrivia.back().Span().End();
 	return TextSpan::FromBounds(start, end);
 }
 

@@ -6,48 +6,48 @@ namespace MCF {
 
 const vector<const SyntaxNode*> AssignmentExpressionSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_identifierToken, _assignmentToken, _expression);
+	return MakeVecOfRaw<SyntaxNode>(IdentifierToken, AssignmentToken, Expression);
 }
 
 const vector<const SyntaxNode*> UnaryExpressionSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_operatorToken, _operand);
+	return MakeVecOfRaw<SyntaxNode>(OperatorToken, Operand);
 }
 
 const vector<const SyntaxNode*> BinaryExpressionSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_left, _operatorToken, _right);
+	return MakeVecOfRaw<SyntaxNode>(Left, OperatorToken, Right);
 }
 
 const vector<const SyntaxNode*> ParenthesizedExpressionSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_openParenthesisToken, _expression,
-		_closeParenthesisToken);
+	return MakeVecOfRaw<SyntaxNode>(OpenParenthesisToken, Expression,
+									CloseParenthesisToken);
 }
 
 const vector<const SyntaxNode*> LiteralExpressionSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_literalToken);
+	return MakeVecOfRaw<SyntaxNode>(LiteralToken);
 }
 
 const vector<const SyntaxNode*> NameExpressionSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_identifierToken);
+	return MakeVecOfRaw<SyntaxNode>(IdentifierToken);
 }
 
 const vector<const SyntaxNode*> CallExpressionSyntax::GetChildren() const
 {
-	auto result = MakeVecOfRaw<SyntaxNode>(_identifier, _openParenthesisToken);
-	auto nodes = _arguments.GetWithSeparators();
+	auto result = MakeVecOfRaw<SyntaxNode>(Identifier, OpenParenthesisToken);
+	auto nodes = Arguments.GetWithSeparators();
 	result.insert(result.end(), nodes.begin(), nodes.end());
-	auto rest = MakeVecOfRaw<SyntaxNode>(_closeParenthesisToken);
+	auto rest = MakeVecOfRaw<SyntaxNode>(CloseParenthesisToken);
 	result.insert(result.end(), rest.begin(), rest.end());
 	return result;
 }
 
 const vector<const SyntaxNode*> PostfixExpressionSyntax::GetChildren() const
 {
-	return MakeVecOfRaw<SyntaxNode>(_identifier, _op, _expression);
+	return MakeVecOfRaw<SyntaxNode>(Identifier, Op, Expression);
 }
 
 }//MCF

@@ -13,22 +13,23 @@
 
 namespace MCF {
 
-class TextLocation;
-class TextSpan;
-class SyntaxToken;
+struct TextLocation;
+struct TextSpan;
+struct SyntaxToken;
 class SyntaxTree;
 
-class MCF_API SyntaxNode
+struct MCF_API SyntaxNode
 {
 private:
-	const SyntaxTree* _tree;
+	std::reference_wrapper<const SyntaxTree> _tree;
 
+private:
 	static void PrettyPrint(std::ostream& out, const SyntaxNode* node,
 							string indent = "", bool isLast = true);
 
 protected:
 	explicit SyntaxNode(const SyntaxTree& tree)noexcept
-		:_tree(&tree)
+		:_tree(std::cref(tree))
 	{
 	}
 
@@ -38,7 +39,7 @@ public:
 	virtual TextSpan Span()const;
 	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
 
-	constexpr const SyntaxTree& Tree()const noexcept { return *_tree; }
+	constexpr const SyntaxTree& Tree()const noexcept { return _tree; }
 	const SyntaxNode* Parent()const;
 	vector<const SyntaxNode*> Ancestors()const;
 	vector<const SyntaxNode*> AncestorsAndSelf()const;
@@ -75,15 +76,16 @@ struct MCF_API SyntaxTrivia final
 	}
 };
 
-class MCF_API [[nodiscard]] SyntaxToken final :public SyntaxNode
+struct MCF_API [[nodiscard]] SyntaxToken final :public SyntaxNode
 {
-private:
-	ValueType _value;
-	string_view _text;
-	size_t _position;
-	SyntaxKind _kind;
-	vector<SyntaxTrivia> _leadingTrivia;
-	vector<SyntaxTrivia> _trailingTrivia;
+	ValueType Value;
+
+	vector<SyntaxTrivia> LeadingTrivia;
+	vector<SyntaxTrivia> TrailingTrivia;
+
+	string_view Text;
+	size_t Position;
+	SyntaxKind SynKind;
 
 public:
 	SyntaxToken(const SyntaxTree& tree, SyntaxKind kind, size_t position,
@@ -91,30 +93,33 @@ public:
 				vector<SyntaxTrivia> leadingTrivia,
 				vector<SyntaxTrivia> trailingTrivia)noexcept
 		:SyntaxNode(tree),
-		_value(std::move(value)), _text(text),
-		_position(position), _kind(kind),
-		_leadingTrivia(std::move(leadingTrivia)),
-		_trailingTrivia(std::move(trailingTrivia))
+		Value(std::move(value)),
+		LeadingTrivia(std::move(leadingTrivia)),
+		TrailingTrivia(std::move(trailingTrivia)),
+		Text(text),	Position(position), SynKind(kind)
 	{
 	}
 
-	bool operator==(const SyntaxToken& other)const noexcept;
-	bool operator!=(const SyntaxToken& other)const noexcept;
+	SyntaxToken Clone()const { return *this; }
+
+	bool operator==(const SyntaxToken& other)const noexcept
+	{
+		return SynKind == other.SynKind && Position == other.Position
+			&& Text == other.Text && Value == other.Value;
+	}
+	bool operator!=(const SyntaxToken& other)const noexcept
+	{
+		return !(*this == other);
+	}
 
 	// Inherited via SyntaxNode
-	SyntaxKind Kind() const noexcept override { return _kind; }
+	SyntaxKind Kind() const noexcept override { return SynKind; }
 	TextSpan Span()const override;
 	const vector<const SyntaxNode*> GetChildren() const override;
 	TextSpan FullSpan()const override;
 
-	constexpr size_t Position() const noexcept { return _position; }
-	constexpr string_view Text() const { return _text; }
-	constexpr const ValueType& Value() const noexcept { return _value; }
-	constexpr const vector<SyntaxTrivia>& LeadingTrivia()const noexcept { return _leadingTrivia; }
-	constexpr const vector<SyntaxTrivia>& TrailingTrivia()const noexcept { return _trailingTrivia; }
-	constexpr bool IsMissing()const noexcept { return _text.empty(); }
+	constexpr bool IsMissing()const noexcept { return Text.empty(); }
 
-	SyntaxToken Clone()const;
 };
 
 template<typename T, typename = std::enable_if_t<std::is_base_of_v<SyntaxNode, T>>>

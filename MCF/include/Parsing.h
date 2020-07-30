@@ -18,9 +18,9 @@ namespace MCF {
 namespace fs = std::filesystem;
 
 class DiagnosticBag;
-class SourceText;
+struct SourceText;
 
-class MemberSyntax :public SyntaxNode
+struct MemberSyntax :public SyntaxNode
 {
 protected:
 	explicit MemberSyntax(const SyntaxTree& tree)
@@ -29,16 +29,15 @@ protected:
 	}
 };
 
-class UsingDirective final :public MemberSyntax
+struct UsingDirective final :public MemberSyntax
 {
-private:
-	SyntaxToken _keyword;
-	SyntaxToken _fileName;
+	SyntaxToken Keyword;
+	SyntaxToken FileName;
 
 public:
 	UsingDirective(const SyntaxTree& tree, SyntaxToken keyword, SyntaxToken fileName)
 		:MemberSyntax(tree),
-		_keyword(std::move(keyword)), _fileName(std::move(fileName))
+		Keyword(std::move(keyword)), FileName(std::move(fileName))
 	{
 	}
 
@@ -46,21 +45,18 @@ public:
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::UsingDirective; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	constexpr const SyntaxToken& Keyword()const noexcept { return _keyword; }
-	constexpr const SyntaxToken& FileName()const noexcept { return _fileName; }
 };
 
-class ParameterSyntax final :public SyntaxNode
+struct ParameterSyntax final :public SyntaxNode
 {
-private:
-	TypeClauseSyntax _type;
-	SyntaxToken _identifier;
+	TypeClauseSyntax Type;
+	SyntaxToken Identifier;
 
 public:
 	ParameterSyntax(const SyntaxTree& tree,
 					SyntaxToken identifier, TypeClauseSyntax type)
 		:SyntaxNode(tree),
-		_type(std::move(type)), _identifier(std::move(identifier))
+		Type(std::move(type)), Identifier(std::move(identifier))
 	{
 	}
 
@@ -68,20 +64,17 @@ public:
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::Parameter; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	constexpr const SyntaxToken& Identifier()const noexcept { return _identifier; }
-	constexpr const TypeClauseSyntax& Type()const noexcept { return _type; }
 };
 
-class FunctionDeclarationSyntax final :public MemberSyntax
+struct FunctionDeclarationSyntax final :public MemberSyntax
 {
-private:
-	std::optional<TypeClauseSyntax> _type;
-	SyntaxToken _funcKeyword;
-	SyntaxToken _identifier;
-	SyntaxToken _openParenthesisToken;
-	SyntaxToken _closeParenthesisToken;
-	SeparatedSyntaxList<ParameterSyntax> _parameters;
-	unique_ptr<BlockStatementSyntax> _body;
+	std::optional<TypeClauseSyntax> Type;
+	SyntaxToken FuncKeyword;
+	SyntaxToken Identifier;
+	SyntaxToken OpenParenthesisToken;
+	SyntaxToken CloseParenthesisToken;
+	SeparatedSyntaxList<ParameterSyntax> Parameters;
+	unique_ptr<BlockStatementSyntax> Body;
 
 public:
 	FunctionDeclarationSyntax(const SyntaxTree& tree, SyntaxToken funcKeyword, SyntaxToken identifier,
@@ -91,12 +84,12 @@ public:
 							  std::optional<TypeClauseSyntax> type,
 							  unique_ptr<BlockStatementSyntax> body)
 		:MemberSyntax(tree),
-		_type(std::move(type)),
-		_funcKeyword(std::move(funcKeyword)), _identifier(std::move(identifier)),
-		_openParenthesisToken(std::move(openParenthesisToken)),
-		_closeParenthesisToken(std::move(closeParenthesisToken)),
-		_parameters(std::move(params)),
-		_body(std::move(body))
+		Type(std::move(type)),
+		FuncKeyword(std::move(funcKeyword)), Identifier(std::move(identifier)),
+		OpenParenthesisToken(std::move(openParenthesisToken)),
+		CloseParenthesisToken(std::move(closeParenthesisToken)),
+		Parameters(std::move(params)),
+		Body(std::move(body))
 	{
 	}
 
@@ -104,24 +97,16 @@ public:
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::FunctionDeclaration; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	constexpr const SyntaxToken& FunctionKeyword()const noexcept { return _funcKeyword; }
-	constexpr const SyntaxToken& Identifier()const noexcept { return _identifier; }
-	constexpr const SyntaxToken& OpenParenthesisToken()const noexcept { return _openParenthesisToken; }
-	constexpr decltype(auto) Parameters()const noexcept { return &_parameters; }
-	constexpr const SyntaxToken& CloseParenthesisToken()const noexcept { return _closeParenthesisToken; }
-	constexpr const std::optional<TypeClauseSyntax>& Type()const noexcept { return _type; }
-	const BlockStatementSyntax* Body()const noexcept { return _body.get(); }
 };
 
-class GlobalStatementSyntax final :public MemberSyntax
+struct GlobalStatementSyntax final :public MemberSyntax
 {
-private:
-	unique_ptr<StatementSyntax> _statement;
+	unique_ptr<StatementSyntax> Statement;
 
 public:
 	GlobalStatementSyntax(const SyntaxTree& tree, unique_ptr<StatementSyntax> statement)
 		:MemberSyntax(tree),
-		_statement(std::move(statement))
+		Statement(std::move(statement))
 	{
 	}
 
@@ -129,20 +114,18 @@ public:
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::GlobalStatement; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	const StatementSyntax* Statement()const noexcept { return _statement.get(); }
 };
 
-class CompilationUnitSyntax final :public SyntaxNode
+struct CompilationUnitSyntax final :public SyntaxNode
 {
-private:
-	SyntaxToken _endOfFileToken;
-	vector<unique_ptr<MemberSyntax>> _members;
+	SyntaxToken EndOfFileToken;
+	vector<unique_ptr<MemberSyntax>> Members;
 
 public:
 	CompilationUnitSyntax(const SyntaxTree& tree, vector<unique_ptr<MemberSyntax>> members,
 						  SyntaxToken endOfFile)
 		:SyntaxNode(tree),
-		_endOfFileToken(std::move(endOfFile)), _members(std::move(members))
+		EndOfFileToken(std::move(endOfFile)), Members(std::move(members))
 	{
 	}
 
@@ -150,8 +133,6 @@ public:
 	SyntaxKind Kind() const noexcept override { return SyntaxKind::CompilationUnit; }
 	const vector<const SyntaxNode*> GetChildren() const override;
 
-	constexpr const vector<unique_ptr<MemberSyntax>>& Members()const noexcept { return _members; }
-	constexpr const SyntaxToken& EndOfFileToken()const noexcept { return _endOfFileToken; }
 };
 
 class MCF_API [[nodiscard]] SyntaxTree final

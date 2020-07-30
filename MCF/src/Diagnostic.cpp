@@ -350,69 +350,69 @@ void DiagnosticBag::ReportUnreachableCode(const SyntaxNode& node)
 		case SyntaxKind::BlockStatement:
 		{
 			auto& b = static_cast<const BlockStatementSyntax&>(node);
-			if (b.Statements().empty())
+			if (b.Statements.empty())
 				break;
-			ReportUnreachableCode(*b.Statements().front());
+			ReportUnreachableCode(*b.Statements.front());
 			break;
 		}
 		case SyntaxKind::VariableDeclaration:
 		{
 			auto& v = static_cast<const VariableDeclarationSyntax&>(node);
-			ReportUnreachableCode(v.Keyword().Location());
+			ReportUnreachableCode(v.Keyword.Location());
 			break;
 		}
 		case SyntaxKind::IfStatement:
 		{
 			auto& i = static_cast<const IfStatementSyntax&>(node);
-			ReportUnreachableCode(i.IfKeyword().Location());
+			ReportUnreachableCode(i.IfKeyword.Location());
 			break;
 		}
 		case SyntaxKind::WhileStatement:
 		{
 			auto& w = static_cast<const WhileStatementSyntax&>(node);
-			ReportUnreachableCode(w.WhileKeyword().Location());
+			ReportUnreachableCode(w.WhileKeyword.Location());
 			break;
 		}
 		case SyntaxKind::DoWhileStatement:
 		{
 			auto& d = static_cast<const DoWhileStatementSyntax&>(node);
-			ReportUnreachableCode(d.DoKeyword().Location());
+			ReportUnreachableCode(d.DoKeyword.Location());
 			break;
 		}
 		case SyntaxKind::ForStatement:
 		{
 			auto& f = static_cast<const ForStatementSyntax&>(node);
-			ReportUnreachableCode(f.Keyword().Location());
+			ReportUnreachableCode(f.Keyword.Location());
 			break;
 		}
 		case SyntaxKind::BreakStatement:
 		{
 			auto& b = static_cast<const BreakStatementSyntax&>(node);
-			ReportUnreachableCode(b.Keyword().Location());
+			ReportUnreachableCode(b.Keyword.Location());
 			break;
 		}
 		case SyntaxKind::ContinueStatement:
 		{
 			auto& c = static_cast<const ContinueStatementSyntax&>(node);
-			ReportUnreachableCode(c.Keyword().Location());
+			ReportUnreachableCode(c.Keyword.Location());
 			break;
 		}
 		case SyntaxKind::ReturnStatement:
 		{
 			auto& r = static_cast<const ReturnStatementSyntax&>(node);
-			ReportUnreachableCode(r.Keyword().Location());
+			ReportUnreachableCode(r.Keyword.Location());
 			break;
 		}
 		case SyntaxKind::ExpressionStatement:
 		{
-			auto e = static_cast<const ExpressionStatementSyntax&>(node).Expression();
+			auto& e = static_cast<const ExpressionStatementSyntax&>(node).Expression;
 			ReportUnreachableCode(*e);
 			break;
 		}
 		case SyntaxKind::CallExpression:
 		{
 			auto& c = static_cast<const CallExpressionSyntax&>(node);
-			ReportUnreachableCode(c.Identifier().Location());
+			ReportUnreachableCode(c.Identifier.Location());
 			break;
 		}
 		default:

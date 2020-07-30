@@ -4,7 +4,7 @@
 
 namespace MCF {
 
-class BoundNode;
+struct BoundNode;
 
 void Write(const BoundNode& node, std::ostream& out);
 

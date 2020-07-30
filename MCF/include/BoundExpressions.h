@@ -49,7 +49,7 @@ string_view nameof(BoundPostfixOperatorEnum kind);
 class BoundExpression :public BoundNode
 {
 protected:
-	explicit BoundExpression(const SyntaxNode* syntax)noexcept
+	explicit BoundExpression(const SyntaxNode& syntax)noexcept
 		:BoundNode(syntax)
 	{
 	}
@@ -62,7 +62,7 @@ public:
 class BoundErrorExpression final :public BoundExpression
 {
 public:
-	explicit BoundErrorExpression(const SyntaxNode* syntax)noexcept
+	explicit BoundErrorExpression(const SyntaxNode& syntax)noexcept
 		:BoundExpression(syntax)
 	{
 	}
@@ -176,7 +176,7 @@ private:
 	shared_ptr<BoundExpression> _operand;
 
 public:
-	explicit BoundUnaryExpression(const SyntaxNode* syntax,
+	explicit BoundUnaryExpression(const SyntaxNode& syntax,
 								  const BoundUnaryOperator& op,
 								  shared_ptr<BoundExpression> operand)noexcept
 		:BoundExpression(syntax),
@@ -203,7 +203,7 @@ private:
 	shared_ptr<BoundExpression> _right;
 
 public:
-	explicit BoundBinaryExpression(const SyntaxNode* syntax,
+	explicit BoundBinaryExpression(const SyntaxNode& syntax,
 								   shared_ptr<BoundExpression> left,
 								   BoundBinaryOperator op,
 								   shared_ptr<BoundExpression> right)noexcept
@@ -230,7 +230,7 @@ private:
 	shared_ptr<BoundExpression> _expression;
 
 public:
-	explicit BoundAssignmentExpression(const SyntaxNode* syntax,
+	explicit BoundAssignmentExpression(const SyntaxNode& syntax,
 									   shared_ptr<VariableSymbol> variable,
 									   shared_ptr<BoundExpression> expression)noexcept
 		:BoundExpression(syntax),
@@ -254,7 +254,7 @@ private:
 	shared_ptr<BoundExpression> _expression;
 
 public:
-	explicit BoundCompoundAssignmentExpression(const SyntaxNode* syntax,
+	explicit BoundCompoundAssignmentExpression(const SyntaxNode& syntax,
 											   shared_ptr<VariableSymbol> variable,
 											   BoundBinaryOperator op,
 											   shared_ptr<BoundExpression> expression)noexcept
@@ -280,7 +280,7 @@ private:
 	TypeSymbol _type;
 
 public:
-	explicit BoundLiteralExpression(const SyntaxNode* syntax, ValueType value)
+	explicit BoundLiteralExpression(const SyntaxNode& syntax, ValueType value)
 		:BoundExpression(syntax),
 		_constant(std::move(value)), _type(_constant.Type())
 	{
@@ -302,7 +302,7 @@ private:
 	shared_ptr<VariableSymbol> _variable;
 
 public:
-	explicit BoundVariableExpression(const SyntaxNode* syntax,
+	explicit BoundVariableExpression(const SyntaxNode& syntax,
 									 shared_ptr<VariableSymbol> variable)noexcept
 		:BoundExpression(syntax),
 		_variable(std::move(variable))
@@ -324,7 +324,7 @@ private:
 	shared_ptr<FunctionSymbol> _function;
 
 public:
-	explicit BoundCallExpression(const SyntaxNode* syntax,
+	explicit BoundCallExpression(const SyntaxNode& syntax,
 								 shared_ptr<FunctionSymbol> function,
 								 vector<shared_ptr<BoundExpression>> arguments)noexcept
 		:BoundExpression(syntax),
@@ -347,7 +347,7 @@ private:
 	shared_ptr<BoundExpression> _expression;
 
 public:
-	explicit BoundConversionExpression(const SyntaxNode* syntax,
+	explicit BoundConversionExpression(const SyntaxNode& syntax,
 									   const TypeSymbol& type,
 									   shared_ptr<BoundExpression> expression)noexcept
 		:BoundExpression(syntax),
@@ -370,7 +370,7 @@ private:
 	BoundPostfixOperatorEnum _kind;
 
 public:
-	explicit BoundPostfixExpression(const SyntaxNode* syntax,
+	explicit BoundPostfixExpression(const SyntaxNode& syntax,
 									shared_ptr<VariableSymbol> variable,
 									BoundPostfixOperatorEnum kind,
 									shared_ptr<BoundExpression> expression)noexcept

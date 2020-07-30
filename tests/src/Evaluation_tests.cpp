@@ -645,7 +645,7 @@ void AssertDiagnostics(std::string_view text, std::string_view diagnosticText)
 	for (size_t i = 0; i < expectedDiagnostoics.size(); ++i)
 	{
 		CHECK(expectedDiagnostoics[i] == diags[i].Message());
-		CHECK(annotatedText.Spans()[i] == diags[i].Location().Span());
+		CHECK(annotatedText.Spans()[i] == diags[i].Location().Span);
 	}
 
 }

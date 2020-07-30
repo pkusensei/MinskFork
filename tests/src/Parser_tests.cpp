@@ -115,7 +115,7 @@ namespace {
 const MCF::ExpressionSyntax* ParseExpression(const MCF::SyntaxTree& tree)
 {
 	auto root = tree.Root();
-	auto& members = root->Members();
+	auto& members = root->Members;
 	REQUIRE(1 == members.size());
 
 	auto p = members[0].get();
@@ -123,11 +123,11 @@ const MCF::ExpressionSyntax* ParseExpression(const MCF::SyntaxTree& tree)
 	REQUIRE(p->Kind() == MCF::SyntaxKind::GlobalStatement);
 
 	auto gs = static_cast<MCF::GlobalStatementSyntax*>(p);
-	auto s = gs->Statement();
+	auto s = gs->Statement.get();
 	REQUIRE(s->Kind() == MCF::SyntaxKind::ExpressionStatement);
 
 	auto es = static_cast<const MCF::ExpressionStatementSyntax*>(s);
-	return es->Expression();
+	return es->Expression.get();
 }
 
 std::vector<std::pair<MCF::SyntaxKind, MCF::SyntaxKind>> GetBinaryOperatorPairsData()

@@ -44,6 +44,6 @@ void AssertingHelper::AssertToken(MCF::SyntaxKind kind, std::string_view text)
 	REQUIRE(kind == _nodes[_position]->Kind());
 	REQUIRE(MCF::IsToken(kind));
 	auto p = static_cast<const MCF::SyntaxToken*>(_nodes[_position]);
-	REQUIRE(text == p->Text());
+	REQUIRE(text == p->Text);
 	++_position;
 }
