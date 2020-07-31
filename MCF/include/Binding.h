@@ -11,16 +11,15 @@ struct BoundBlockStatement;
 class DiagnosticBag;
 class SyntaxTree;
 
-class [[nodiscard]] BoundGlobalScope final
+struct [[nodiscard]] BoundGlobalScope final
 {
-private:
-	vector<shared_ptr<FunctionSymbol>> _functions;
-	vector<shared_ptr<VariableSymbol>> _variables;
-	vector<shared_ptr<BoundStatement>> _statements;
-	unique_ptr<DiagnosticBag> _diagnostics;
-	unique_ptr<FunctionSymbol> _main;
-	unique_ptr<FunctionSymbol> _script;
-	const BoundGlobalScope* _previous;
+	vector<shared_ptr<FunctionSymbol>> Functions;
+	vector<shared_ptr<VariableSymbol>> Variables;
+	vector<shared_ptr<BoundStatement>> Statements;
+	unique_ptr<DiagnosticBag> Diagnostics;
+	unique_ptr<FunctionSymbol> MainFunc;
+	unique_ptr<FunctionSymbol> ScriptFunc;
+	const BoundGlobalScope* Previous;
 
 public:
 	BoundGlobalScope(const BoundGlobalScope* previous,
@@ -30,39 +29,28 @@ public:
 					 vector<shared_ptr<FunctionSymbol>> functions,
 					 vector<shared_ptr<VariableSymbol>> variables,
 					 vector<shared_ptr<BoundStatement>> statements)
-		:_functions(std::move(functions)),
-		_variables(std::move(variables)),
-		_statements(std::move(statements)),
-		_diagnostics(std::move(diagnostics)),
-		_main(std::move(mainFunc)),
-		_script(std::move(scriptFunc)),
-		_previous(previous)
+		:Functions(std::move(functions)),
+		Variables(std::move(variables)),
+		Statements(std::move(statements)),
+		Diagnostics(std::move(diagnostics)),
+		MainFunc(std::move(mainFunc)),
+		ScriptFunc(std::move(scriptFunc)),
+		Previous(previous)
 	{
 	}
 
-	const DiagnosticBag& Diagnostics()const& noexcept { return *_diagnostics; }
-	DiagnosticBag Diagnostics()const&& noexcept { return std::move(*_diagnostics); }
-
-	constexpr const BoundGlobalScope* Previous()const noexcept { return _previous; }
-	const FunctionSymbol* MainFunc()const noexcept { return _main.get(); }
-	const FunctionSymbol* ScriptFunc()const noexcept { return _script.get(); }
-	constexpr const vector<shared_ptr<FunctionSymbol>>& Functions()const noexcept { return _functions; }
-	constexpr const vector<shared_ptr<VariableSymbol>>& Variables()const noexcept { return _variables; }
-	constexpr const vector<shared_ptr<BoundStatement>>& Statements()const noexcept { return _statements; }
 };
 
-class [[nodiscard]] BoundProgram final
+struct [[nodiscard]] BoundProgram final
 {
-public:
 	using FuncMap = SymbolMap<const FunctionSymbol*, unique_ptr<BoundBlockStatement>,
 		SymbolEqual>;
 
-private:
-	FuncMap _functions;
-	unique_ptr<BoundProgram> _previous;
-	unique_ptr<DiagnosticBag> _diagnostics;
-	const FunctionSymbol* _main;
-	const FunctionSymbol* _script;
+	FuncMap Functions;
+	unique_ptr<BoundProgram> Previous;
+	unique_ptr<DiagnosticBag> Diagnostics;
+	const FunctionSymbol* MainFunc;
+	const FunctionSymbol* ScriptFunc;
 
 public:
 	BoundProgram(unique_ptr<BoundProgram> previous,
@@ -70,21 +58,14 @@ public:
 				 const FunctionSymbol* mainFunc,
 				 const FunctionSymbol* scriptFunc,
 				 FuncMap functions)
-		:_functions(std::move(functions)),
-		_previous(std::move(previous)),
-		_diagnostics(std::move(diagnostics)),
-		_main(mainFunc),
-		_script(scriptFunc)
+		:Functions(std::move(functions)),
+		Previous(std::move(previous)),
+		Diagnostics(std::move(diagnostics)),
+		MainFunc(mainFunc),
+		ScriptFunc(scriptFunc)
 	{
 	}
 
-	const DiagnosticBag& Diagnostics()const& noexcept { return *_diagnostics; }
-	DiagnosticBag Diagnostics() const&& noexcept { return std::move(*_diagnostics); }
-
-	const BoundProgram* Previous()const noexcept { return _previous.get(); }
-	constexpr const FunctionSymbol* MainFunc()const noexcept { return _main; }
-	constexpr const FunctionSymbol* ScriptFunc()const noexcept { return _script; }
-	constexpr const FuncMap& Functions()const noexcept { return _functions; }
 };
 
 BoundGlobalScope BindGlobalScope(bool isScript,

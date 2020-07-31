@@ -646,7 +646,8 @@ shared_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 	} else
 	{
 		_diagnostics.ReportUndefinedBinaryOperator(syntax.OperatorToken.Location(),
-												   syntax.OperatorToken.Text, boundLeft->Type(), boundRight->Type());
+												   syntax.OperatorToken.Text, boundLeft->Type(),
+												   boundRight->Type());
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 }
@@ -763,7 +764,8 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 }
 
 shared_ptr<BoundExpression> Binder::BindConversion(const ExpressionSyntax& syntax,
-												   const TypeSymbol& type, bool allowExplicit)
+												   const TypeSymbol& type,
+												   bool allowExplicit)
 {
 	auto expression = BindExpression(syntax);
 	return BindConversion(syntax.Location(), std::move(expression), type, allowExplicit);
@@ -771,7 +773,8 @@ shared_ptr<BoundExpression> Binder::BindConversion(const ExpressionSyntax& synta
 
 shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
 												   shared_ptr<BoundExpression> expression,
-												   const TypeSymbol& type, bool allowExplicit)
+												   const TypeSymbol& type,
+												   bool allowExplicit)
 {
 	auto conversion = Classify(expression->Type(), type);
 	if (conversion == ConversionEnum::None)
@@ -791,7 +794,9 @@ shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
 }
 
 shared_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& identifier,
-														   bool isReadOnly, const TypeSymbol& type, BoundConstant constant)
+														   bool isReadOnly,
+														   const TypeSymbol& type,
+														   BoundConstant constant)
 {
 	auto name = identifier.Text.empty() ? "?" : identifier.Text;
 	auto declare = !identifier.IsMissing();
@@ -853,16 +858,16 @@ unique_ptr<BoundScope> Binder::CreateParentScope(const BoundGlobalScope* previou
 	while (previous != nullptr)
 	{
 		stack.emplace(previous);
-		previous = previous->Previous();
+		previous = previous->Previous;
 	}
 	auto parent = CreateRootScope();
 	while (!stack.empty())
 	{
 		auto current = stack.top();
 		auto scope = make_unique<BoundScope>(std::move(parent));
-		for (const auto& it : current->Functions())
+		for (const auto& it : current->Functions)
 			scope->TryDeclareFunction(it);
-		for (const auto& it : current->Variables())
+		for (const auto& it : current->Variables)
 			scope->TryDeclareVariable(it);
 		parent.swap(scope);
 		stack.pop();
@@ -883,13 +888,15 @@ unique_ptr<BoundScope> Binder::CreateRootScope()
 }
 
 BoundGlobalScope BindGlobalScope(bool isScript,
-								 const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees)
+								 const BoundGlobalScope* previous,
+								 const vector<const SyntaxTree*>& trees)
 {
 	return Binder::BindGlobalScope(isScript, previous, trees);
 }
 
 BoundGlobalScope Binder::BindGlobalScope(bool isScript,
-										 const BoundGlobalScope* previous, const vector<const SyntaxTree*>& trees)
+										 const BoundGlobalScope* previous,
+										 const vector<const SyntaxTree*>& trees)
 {
 	auto parentScope = CreateParentScope(previous);
 	auto binder = Binder(isScript, std::move(parentScope), nullptr);
@@ -963,6 +970,7 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 	{
 		if (!globalStmts.empty())
 		{
+			// TODO should this function also be name "main"? 
 			scriptFunc = make_unique<FunctionSymbol>("$eval", vector<ParameterSymbol>(),
 													 TYPE_ANY, nullptr);
 		}
@@ -1002,7 +1010,7 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 	auto diagnostics = std::move(binder).Diagnostics();
 	auto variables = binder._scope->GetDeclaredVariables();
 	if (previous != nullptr)
-		diagnostics.AddRangeFront(std::move(*previous).Diagnostics());
+		diagnostics.AddRangeFront(std::move(*previous->Diagnostics));
 	return BoundGlobalScope(previous,
 							make_unique<DiagnosticBag>(std::move(diagnostics)),
 							std::move(mainFunc), std::move(scriptFunc),
@@ -1021,10 +1029,10 @@ BoundProgram Binder::BindProgram(bool isScript,
 {
 	auto parentScope = CreateParentScope(globalScope);
 
-	if (!globalScope->Diagnostics().empty())
+	if (!globalScope->Diagnostics->empty())
 	{
 		return BoundProgram(std::move(previous),
-							make_unique<DiagnosticBag>(std::move(*globalScope).Diagnostics()),
+							make_unique<DiagnosticBag>(std::move(*globalScope->Diagnostics)),
 							nullptr, nullptr,
 							BoundProgram::FuncMap());
 	}
@@ -1032,7 +1040,7 @@ BoundProgram Binder::BindProgram(bool isScript,
 	auto funcBodies = BoundProgram::FuncMap();
 	auto diag = make_unique<DiagnosticBag>();
 
-	for (const auto& it : globalScope->Functions())
+	for (const auto& it : globalScope->Functions)
 	{
 		auto binder = Binder(isScript, std::make_unique<BoundScope>(*parentScope), it.get());
 		auto body = binder.BindStatement(*it->Declaration->Body);
@@ -1049,19 +1057,19 @@ BoundProgram Binder::BindProgram(bool isScript,
 		diag->AddRange(std::move(binder).Diagnostics());
 	}
 
-	auto cu = globalScope->Statements().empty() ? nullptr
-		: globalScope->Statements().front()->Syntax().AncestorsAndSelf().back();
+	auto cu = globalScope->Statements.empty() ? nullptr
+		: globalScope->Statements.front()->Syntax().AncestorsAndSelf().back();
 
-	if (globalScope->MainFunc() != nullptr && !globalScope->Statements().empty())
+	if (globalScope->MainFunc != nullptr && !globalScope->Statements.empty())
 	{
 		assert(cu && "Local variable cu should be a valid pointer.");
 
-		auto body = Lower(*globalScope->MainFunc(),
-						  make_shared<BoundBlockStatement>(*cu, globalScope->Statements()));
-		funcBodies.emplace(globalScope->MainFunc(), std::move(body));
-	} else if (globalScope->ScriptFunc() != nullptr)
+		auto body = Lower(*globalScope->MainFunc,
+						  make_shared<BoundBlockStatement>(*cu, globalScope->Statements));
+		funcBodies.emplace(globalScope->MainFunc.get(), std::move(body));
+	} else if (globalScope->ScriptFunc != nullptr)
 	{
-		auto statements = globalScope->Statements();
+		auto statements = globalScope->Statements;
 
 		// adds return to one-liner expression 
 		// otherwise return empty string ""
@@ -1085,13 +1093,13 @@ BoundProgram Binder::BindProgram(bool isScript,
 
 		assert(cu && "Local variable cu should be a valid pointer.");
 
-		auto body = Lower(*globalScope->ScriptFunc(),
+		auto body = Lower(*globalScope->ScriptFunc,
 						  make_shared<BoundBlockStatement>(*cu, std::move(statements)));
-		funcBodies.emplace(globalScope->ScriptFunc(), std::move(body));
+		funcBodies.emplace(globalScope->ScriptFunc.get(), std::move(body));
 	}
 
 	return BoundProgram(std::move(previous), std::move(diag),
-						globalScope->MainFunc(), globalScope->ScriptFunc(),
+						globalScope->MainFunc.get(), globalScope->ScriptFunc.get(),
 						std::move(funcBodies));
 }
 

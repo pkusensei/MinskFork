@@ -822,9 +822,9 @@ DiagnosticBag Emitter::Emit(const BoundProgram& program, const fs::path& outputP
 
 	auto result = DiagnosticBag();
 
-	for (const auto& [func, _] : program.Functions())
+	for (const auto& [func, _] : program.Functions)
 		EmitFunctionDeclaration(*func);
-	for (const auto& [func, body] : program.Functions())
+	for (const auto& [func, body] : program.Functions)
 		EmitFunctionBody(*func, *body);
 
 	if (!_diagnostics.empty())
@@ -1078,8 +1078,8 @@ extern "C" bool strEqual(const char *a, const char *b) noexcept
 DiagnosticBag Emit(const BoundProgram& program, const string& moduleName,
 				   const fs::path& srcPath, const fs::path& outPath)
 {
-	if (program.Diagnostics().HasErrors())
-		return std::move(program).Diagnostics();
+	if (program.Diagnostics->HasErrors())
+		return std::move(*program.Diagnostics);
 
 	auto e = Emitter(moduleName, srcPath);
 	auto d = e.Emit(program, outPath);

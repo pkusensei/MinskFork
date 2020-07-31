@@ -60,15 +60,15 @@ Evaluator::Evaluator(const BoundProgram& program, VarMap& variables)
 	auto current = &_program;
 	while (current != nullptr)
 	{
-		for (const auto& [key, value] : current->Functions())
+		for (const auto& [key, value] : current->Functions)
 			_functions.emplace(key, value.get());
-		current = current->Previous();
+		current = current->Previous.get();
 	}
 }
 
 ValueType Evaluator::Evaluate()
 {
-	auto function = _program.MainFunc() ? _program.MainFunc() : _program.ScriptFunc();
+	auto function = _program.MainFunc ? _program.MainFunc : _program.ScriptFunc;
 	if (function == nullptr)
 		return NULL_VALUE;
 	auto body = _functions.at(function);
@@ -434,12 +434,12 @@ const BoundGlobalScope* Compilation::GlobalScope()
 
 const vector<shared_ptr<FunctionSymbol>>& Compilation::Functions()
 {
-	return GlobalScope()->Functions();
+	return GlobalScope()->Functions;
 }
 
 const vector<shared_ptr<VariableSymbol>>& Compilation::Variables()
 {
-	return GlobalScope()->Variables();
+	return GlobalScope()->Variables;
 }
 
 const vector<const Symbol*> Compilation::GetSymbols()
@@ -497,9 +497,9 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 	//	}
 	//};
 
-	if (!GlobalScope()->Diagnostics().empty())
+	if (!GlobalScope()->Diagnostics->empty())
 	{
-		return EvaluationResult(GlobalScope()->Diagnostics(), NULL_VALUE);
+		return EvaluationResult(*GlobalScope()->Diagnostics, NULL_VALUE);
 	}
 
 	auto program = GetProgram();
@@ -508,34 +508,34 @@ EvaluationResult Compilation::Evaluate(VarMap& variables)
 	// NOTE program is generated on the fly and NOT kept anywhere.
 	//      It gets dropped by the end of this function
 	//      SO move all diagnostics out before that. 
-	if (program->Diagnostics().HasErrors())
+	if (program->Diagnostics->HasErrors())
 	{
-		_diagnostics->AddRange(std::move(*program).Diagnostics());
+		_diagnostics->AddRange(std::move(*program->Diagnostics));
 		return EvaluationResult(*_diagnostics, NULL_VALUE);
 	}
 
 	Evaluator evaluator(*program, variables);
 	auto value = evaluator.Evaluate();
 
-	_diagnostics->AddRange(std::move(*program).Diagnostics());
+	_diagnostics->AddRange(std::move(*program->Diagnostics));
 	return EvaluationResult(*_diagnostics, value);
 }
 
 void Compilation::EmitTree(std::ostream& out)
 {
-	if (GlobalScope()->MainFunc() != nullptr)
-		EmitTree(GlobalScope()->MainFunc(), out);
-	else if (GlobalScope()->ScriptFunc() != nullptr)
-		EmitTree(GlobalScope()->ScriptFunc(), out);
+	if (GlobalScope()->MainFunc != nullptr)
+		EmitTree(*GlobalScope()->MainFunc, out);
+	else if (GlobalScope()->ScriptFunc != nullptr)
+		EmitTree(*GlobalScope()->ScriptFunc, out);
 }
 
-void Compilation::EmitTree(const FunctionSymbol* symbol, std::ostream& out)
+void Compilation::EmitTree(const FunctionSymbol& symbol, std::ostream& out)
 {
 	auto program = GetProgram();
-	auto it = program->Functions().find(symbol);
-	if (it != program->Functions().cend())
+	auto it = program->Functions.find(&symbol);
+	if (it != program->Functions.cend())
 	{
-		symbol->WriteTo(out);
+		symbol.WriteTo(out);
 		out << '\n';
 		it->second->WriteTo(out);
 	}
@@ -551,7 +551,7 @@ DiagnosticBag Compilation::Emit(const string& moduleName,
 					  _diagnostics->AddRange(std::move(*tree).Diagnostics());
 				  });
 
-	_diagnostics->AddRange(std::move(*GlobalScope()).Diagnostics());
+	_diagnostics->AddRange(std::move(*GlobalScope()->Diagnostics));
 
 	if (_diagnostics->HasErrors())
 		return std::move(*_diagnostics);

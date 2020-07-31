@@ -6,7 +6,7 @@ namespace MCF {
 
 namespace fs = std::filesystem;
 
-class BoundProgram;
+struct BoundProgram;
 class DiagnosticBag;
 
 DiagnosticBag Emit(const BoundProgram& program,

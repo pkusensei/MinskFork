@@ -17,8 +17,8 @@ namespace fs = std::filesystem;
 class Diagnostic;
 class DiagnosticBag;
 
-class BoundGlobalScope;
-class BoundProgram;
+struct BoundGlobalScope;
+struct BoundProgram;
 class SyntaxTree;
 
 extern "C" using VarMap = SymbolMap<const VariableSymbol*, ValueType,
@@ -78,7 +78,7 @@ public:
 
 	EvaluationResult Evaluate(VarMap& variables);
 	void EmitTree(std::ostream& out);
-	void EmitTree(const FunctionSymbol* symbol, std::ostream& out);
+	void EmitTree(const FunctionSymbol& symbol, std::ostream& out);
 	DiagnosticBag Emit(const string& moduleName, const fs::path& srcPath,
 					   const fs::path& outPath);
 };
