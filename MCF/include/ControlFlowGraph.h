@@ -7,9 +7,9 @@
 
 namespace MCF {
 
-class BoundExpression;
-class BoundStatement;
-class BoundBlockStatement;
+struct BoundExpression;
+struct BoundStatement;
+struct BoundBlockStatement;
 
 class ControlFlowGraph final
 {

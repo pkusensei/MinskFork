@@ -54,13 +54,14 @@ public:
 
 struct MCF_API SyntaxTrivia final
 {
-	const SyntaxTree* Tree;
-	SyntaxKind Kind;
-	size_t Position;
 	string_view Text;
+	const SyntaxTree* Tree;
+	size_t Position;
+	SyntaxKind Kind;
 
-	SyntaxTrivia(const SyntaxTree& tree, SyntaxKind kind, size_t position, string_view text)
-		:Tree(&tree), Kind(kind), Position(position), Text(text)
+	SyntaxTrivia(const SyntaxTree& tree, SyntaxKind kind,
+				 size_t position, string_view text)noexcept
+		: Text(text), Tree(&tree), Position(position), Kind(kind)
 	{
 	}
 

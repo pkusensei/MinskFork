@@ -23,7 +23,7 @@ struct SourceText;
 struct MemberSyntax :public SyntaxNode
 {
 protected:
-	explicit MemberSyntax(const SyntaxTree& tree)
+	explicit MemberSyntax(const SyntaxTree& tree)noexcept
 		:SyntaxNode(tree)
 	{
 	}
@@ -35,7 +35,9 @@ struct UsingDirective final :public MemberSyntax
 	SyntaxToken FileName;
 
 public:
-	UsingDirective(const SyntaxTree& tree, SyntaxToken keyword, SyntaxToken fileName)
+	explicit UsingDirective(const SyntaxTree& tree,
+							SyntaxToken keyword,
+							SyntaxToken fileName)noexcept
 		:MemberSyntax(tree),
 		Keyword(std::move(keyword)), FileName(std::move(fileName))
 	{
@@ -53,8 +55,9 @@ struct ParameterSyntax final :public SyntaxNode
 	SyntaxToken Identifier;
 
 public:
-	ParameterSyntax(const SyntaxTree& tree,
-					SyntaxToken identifier, TypeClauseSyntax type)
+	explicit ParameterSyntax(const SyntaxTree& tree,
+							 SyntaxToken identifier,
+							 TypeClauseSyntax type)noexcept
 		:SyntaxNode(tree),
 		Type(std::move(type)), Identifier(std::move(identifier))
 	{
@@ -77,15 +80,18 @@ struct FunctionDeclarationSyntax final :public MemberSyntax
 	unique_ptr<BlockStatementSyntax> Body;
 
 public:
-	FunctionDeclarationSyntax(const SyntaxTree& tree, SyntaxToken funcKeyword, SyntaxToken identifier,
-							  SyntaxToken openParenthesisToken,
-							  SeparatedSyntaxList<ParameterSyntax> params,
-							  SyntaxToken closeParenthesisToken,
-							  std::optional<TypeClauseSyntax> type,
-							  unique_ptr<BlockStatementSyntax> body)
+	explicit FunctionDeclarationSyntax(const SyntaxTree& tree,
+									   SyntaxToken funcKeyword,
+									   SyntaxToken identifier,
+									   SyntaxToken openParenthesisToken,
+									   SeparatedSyntaxList<ParameterSyntax> params,
+									   SyntaxToken closeParenthesisToken,
+									   std::optional<TypeClauseSyntax> type,
+									   unique_ptr<BlockStatementSyntax> body)noexcept
 		:MemberSyntax(tree),
 		Type(std::move(type)),
-		FuncKeyword(std::move(funcKeyword)), Identifier(std::move(identifier)),
+		FuncKeyword(std::move(funcKeyword)),
+		Identifier(std::move(identifier)),
 		OpenParenthesisToken(std::move(openParenthesisToken)),
 		CloseParenthesisToken(std::move(closeParenthesisToken)),
 		Parameters(std::move(params)),
@@ -104,7 +110,8 @@ struct GlobalStatementSyntax final :public MemberSyntax
 	unique_ptr<StatementSyntax> Statement;
 
 public:
-	GlobalStatementSyntax(const SyntaxTree& tree, unique_ptr<StatementSyntax> statement)
+	explicit GlobalStatementSyntax(const SyntaxTree& tree,
+								   unique_ptr<StatementSyntax> statement)noexcept
 		:MemberSyntax(tree),
 		Statement(std::move(statement))
 	{
@@ -122,8 +129,9 @@ struct CompilationUnitSyntax final :public SyntaxNode
 	vector<unique_ptr<MemberSyntax>> Members;
 
 public:
-	CompilationUnitSyntax(const SyntaxTree& tree, vector<unique_ptr<MemberSyntax>> members,
-						  SyntaxToken endOfFile)
+	explicit CompilationUnitSyntax(const SyntaxTree& tree,
+								   vector<unique_ptr<MemberSyntax>> members,
+								   SyntaxToken endOfFile)noexcept
 		:SyntaxNode(tree),
 		EndOfFileToken(std::move(endOfFile)), Members(std::move(members))
 	{

@@ -71,7 +71,7 @@ BoundUnaryOperator BoundUnaryOperator::Bind(SyntaxKind synKind, const TypeSymbol
 {
 	for (const auto& op : operators)
 	{
-		if (op.SynKind() == synKind && op.OperandType() == type)
+		if (op.SynKind == synKind && op.OperandType == type)
 			return op;
 	}
 	return BoundUnaryOperator();
@@ -89,12 +89,12 @@ const std::array<BoundUnaryOperator, 4> BoundUnaryOperator::operators = {
 };
 
 BoundBinaryOperator BoundBinaryOperator::Bind(SyntaxKind synKind,
-	const TypeSymbol& leftType, const TypeSymbol& rightType)
+											  const TypeSymbol& leftType, const TypeSymbol& rightType)
 {
 	for (const auto& op : operators)
 	{
-		if (op.SynKind() == synKind && op.LeftType() == leftType
-			&& op.RightType() == rightType)
+		if (op.SynKind == synKind && op.LeftType == leftType
+			&& op.RightType == rightType)
 			return op;
 	}
 	return BoundBinaryOperator();
@@ -164,7 +164,7 @@ BoundConstant Fold(const BoundUnaryOperator& op, const BoundExpression& operand)
 {
 	if (operand.ConstantValue() != NULL_VALUE)
 	{
-		switch (op.Kind())
+		switch (op.Kind)
 		{
 			case BoundUnaryOperatorKind::Identity:
 				return BoundConstant(operand.ConstantValue().GetValue<IntegerType>());
@@ -176,7 +176,7 @@ BoundConstant Fold(const BoundUnaryOperator& op, const BoundExpression& operand)
 				return BoundConstant(~operand.ConstantValue().GetValue<IntegerType>());
 			default:
 				throw std::invalid_argument(BuildStringFrom("Unexpected unary operator '",
-					nameof(op.Kind()), "'."));
+															nameof(op.Kind), "'."));
 		}
 	}
 
@@ -184,12 +184,12 @@ BoundConstant Fold(const BoundUnaryOperator& op, const BoundExpression& operand)
 }
 
 BoundConstant Fold(const BoundExpression& left, const BoundBinaryOperator& op,
-	const BoundExpression& right)
+				   const BoundExpression& right)
 {
 	auto& lc = left.ConstantValue();
 	auto& rc = right.ConstantValue();
 
-	if (op.Kind() == BoundBinaryOperatorKind::LogicalAnd)
+	if (op.Kind == BoundBinaryOperatorKind::LogicalAnd)
 	{
 		if ((lc != NULL_VALUE && !lc.GetValue<bool>()) ||
 			(rc != NULL_VALUE && !rc.GetValue<bool>()))
@@ -198,7 +198,7 @@ BoundConstant Fold(const BoundExpression& left, const BoundBinaryOperator& op,
 		}
 	}
 
-	if (op.Kind() == BoundBinaryOperatorKind::LogicalOr)
+	if (op.Kind == BoundBinaryOperatorKind::LogicalOr)
 	{
 		if ((lc != NULL_VALUE && lc.GetValue<bool>()) ||
 			(rc != NULL_VALUE && rc.GetValue<bool>()))
@@ -210,7 +210,7 @@ BoundConstant Fold(const BoundExpression& left, const BoundBinaryOperator& op,
 	if (lc == NULL_VALUE || rc == NULL_VALUE)
 		return NULL_VALUE;
 
-	switch (op.Kind())
+	switch (op.Kind)
 	{
 		case BoundBinaryOperatorKind::Addition:
 			if (left.Type() == TYPE_INT)
@@ -258,7 +258,7 @@ BoundConstant Fold(const BoundExpression& left, const BoundBinaryOperator& op,
 			return BoundConstant(lc.GetValue<IntegerType>() >= rc.GetValue<IntegerType>());
 		default:
 			throw std::invalid_argument(BuildStringFrom("Unexpected binary operator '",
-				nameof(op.Kind()), "'."));
+														nameof(op.Kind), "'."));
 	}
 }
 

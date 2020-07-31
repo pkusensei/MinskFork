@@ -658,7 +658,7 @@ void McfRepl::EvaluateLs()
 			  [](const auto& a, const auto& b)
 			  {
 				  if (a->Kind() == b->Kind())
-					  return a->Name() < b->Name();
+					  return a->Name < b->Name;
 				  else
 					  return a->Kind() < b->Kind();
 			  });
@@ -698,7 +698,7 @@ void McfRepl::EvaluateDump(std::string_view name)const
 					 [name](const auto& it)
 					 {
 						 return it->Kind() == MCF::SymbolKind::Function
-							 && it->Name() == name;
+							 && it->Name == name;
 					 });
 	if (func == symbols.cend())
 	{

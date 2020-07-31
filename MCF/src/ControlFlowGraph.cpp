@@ -65,7 +65,7 @@ void ControlFlowGraph::BasicBlockBuilder::EndBlock()
 vector<unique_ptr<ControlFlowGraph::BasicBlock>>
 ControlFlowGraph::BasicBlockBuilder::Build(const BoundBlockStatement* block)
 {
-	for (const auto& statement : block->Statements())
+	for (const auto& statement : block->Statements)
 	{
 		switch (statement->Kind())
 		{
@@ -173,7 +173,7 @@ shared_ptr<BoundExpression> ControlFlowGraph::GraphBuilder::Negate(
 	assert(condition->Type() == TYPE_BOOL);
 
 	auto op = BoundUnaryOperator::Bind(SyntaxKind::BangToken, TYPE_BOOL);
-	assert(op.IsUseful());
+	assert(op.IsUseful);
 
 	auto& s = condition->Syntax();
 	auto negated = make_shared<BoundUnaryExpression>(s, op, std::move(condition));
@@ -198,7 +198,7 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 			if (statement->Kind() == BoundNodeKind::LabelStatement)
 			{
 				auto p = static_cast<BoundLabelStatement*>(statement);
-				_blockFromLabel.emplace(p->Label(), block.get());
+				_blockFromLabel.emplace(p->Label, block.get());
 			}
 		}
 	}
@@ -216,20 +216,20 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 				case BoundNodeKind::GotoStatement:
 				{
 					auto gs = static_cast<BoundGotoStatement*>(statement);
-					auto& toBlock = _blockFromLabel.at(gs->Label());
+					auto& toBlock = _blockFromLabel.at(gs->Label);
 					Connect(*current, *toBlock);
 					break;
 				}
 				case BoundNodeKind::ConditionalGotoStatement:
 				{
 					auto cgs = static_cast<BoundConditionalGotoStatement*>(statement);
-					auto& thenBlock = _blockFromLabel.at(cgs->Label());
+					auto& thenBlock = _blockFromLabel.at(cgs->Label);
 					auto& elseBlock = next;
-					auto negatedCondition = Negate(cgs->Condition());
-					auto thenCondition = cgs->JumpIfTrue() ?
-						cgs->Condition() : negatedCondition;
-					auto elseCondition = cgs->JumpIfTrue() ?
-						negatedCondition : cgs->Condition();
+					auto negatedCondition = Negate(cgs->Condition);
+					auto thenCondition = cgs->JumpIfTrue ?
+						cgs->Condition : negatedCondition;
+					auto elseCondition = cgs->JumpIfTrue ?
+						negatedCondition : cgs->Condition;
 					Connect(*current, *thenBlock, std::move(thenCondition));
 					Connect(*current, *elseBlock, std::move(elseCondition));
 					break;

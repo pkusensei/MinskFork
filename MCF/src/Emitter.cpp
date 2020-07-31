@@ -315,7 +315,7 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 	{
 		CreateBlocksFromLabels(body);
 
-		for (const auto& it : body.Statements())
+		for (const auto& it : body.Statements)
 			EmitStatement(*it);
 
 		llvm::verifyFunction(*func);
@@ -362,16 +362,16 @@ void Emitter::EmitVariableDeclaration(const BoundVariableDeclaration& node)
 {
 	_debugInfo->EmitLocation(&node.Syntax());
 
-	auto value = EmitExpression(*node.Initializer());
+	auto value = EmitExpression(*node.Initializer);
 	auto type = value->getType();
-	auto allocaInst = CreateEntryBlockAlloca(type, node.Variable()->Name);
-	_locals.emplace(node.Variable()->Name, allocaInst);
+	auto allocaInst = CreateEntryBlockAlloca(type, node.Variable->Name);
+	_locals.emplace(node.Variable->Name, allocaInst);
 	_builder.CreateStore(value, allocaInst);
 }
 
 void Emitter::EmitLabelStatement(const BoundLabelStatement& node)
 {
-	auto nextBlock = _labelBBMap.at(node.Label());
+	auto nextBlock = _labelBBMap.at(node.Label);
 
 	auto currentBlock = _builder.GetInsertBlock();
 	if (currentBlock->getTerminator() == nullptr)
@@ -379,7 +379,7 @@ void Emitter::EmitLabelStatement(const BoundLabelStatement& node)
 		_builder.CreateBr(nextBlock);
 		FixPrevLabel();
 	}
-	_labels.push_back(node.Label());
+	_labels.push_back(node.Label);
 
 	_function->getBasicBlockList().push_back(nextBlock);
 	_builder.SetInsertPoint(nextBlock);
@@ -387,31 +387,31 @@ void Emitter::EmitLabelStatement(const BoundLabelStatement& node)
 
 void Emitter::EmitGotoStatement(const BoundGotoStatement& node)
 {
-	if (_labelBBMap.find(node.Label()) != _labelBBMap.end())
+	if (_labelBBMap.find(node.Label) != _labelBBMap.end())
 	{
-		auto bb = _labelBBMap.at(node.Label());
+		auto bb = _labelBBMap.at(node.Label);
 		_builder.CreateBr(bb);
 		FixPrevLabel();
 	} else
 	{
-		_diagnostics.ReportBasicBlockNotCreatedFromLabel(node.Label().Name);
+		_diagnostics.ReportBasicBlockNotCreatedFromLabel(node.Label.Name);
 	}
 }
 
 void Emitter::EmitConditionalGotoStatement(const BoundConditionalGotoStatement& node)
 {
-	auto cond = EmitExpression(*node.Condition());
+	auto cond = EmitExpression(*node.Condition);
 	if (cond == nullptr)
 		return;
 
-	auto jumpIfTrue = node.JumpIfTrue() ?
+	auto jumpIfTrue = node.JumpIfTrue ?
 		llvm::ConstantInt::getTrue(_context)
 		: llvm::ConstantInt::getFalse(_context);
 	auto cmp = new llvm::ICmpInst(llvm::CmpInst::Predicate::ICMP_EQ, cond, jumpIfTrue);
 
-	if (_labelBBMap.find(node.Label()) != _labelBBMap.end())
+	if (_labelBBMap.find(node.Label) != _labelBBMap.end())
 	{
-		auto jumpTo = _labelBBMap.at(node.Label());
+		auto jumpTo = _labelBBMap.at(node.Label);
 		auto name = ".exit" + std::to_string(_gotoCount);
 		auto exit = llvm::BasicBlock::Create(_context, name);
 
@@ -425,7 +425,7 @@ void Emitter::EmitConditionalGotoStatement(const BoundConditionalGotoStatement& 
 		_builder.SetInsertPoint(exit);
 	} else
 	{
-		_diagnostics.ReportBasicBlockNotCreatedFromLabel(node.Label().Name);
+		_diagnostics.ReportBasicBlockNotCreatedFromLabel(node.Label.Name);
 	}
 }
 
@@ -433,8 +433,8 @@ void Emitter::EmitReturnStatement(const BoundReturnStatement& node)
 {
 	_debugInfo->EmitLocation(&node.Syntax());
 
-	if (node.Expression() != nullptr)
-		_builder.CreateRet(EmitExpression(*node.Expression()));
+	if (node.Expression != nullptr)
+		_builder.CreateRet(EmitExpression(*node.Expression));
 	else _builder.CreateRetVoid();
 }
 
@@ -442,7 +442,7 @@ void Emitter::EmitExpressionStatement(const BoundExpressionStatement& node)
 {
 	//_debugInfo->EmitLocation(&node.Syntax());
 
-	EmitExpression(*node.Expression());
+	EmitExpression(*node.Expression);
 }
 
 llvm::Value* Emitter::EmitExpression(const BoundExpression& node)
@@ -515,7 +515,7 @@ llvm::Value* Emitter::EmitLiteralExpression(const BoundLiteralExpression& node)
 
 llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node)
 {
-	auto name = node.Variable()->Name;
+	auto& name = node.Variable->Name;
 	if (_locals.find(name) != _locals.end())
 	{
 		_debugInfo->EmitLocation(&node.Syntax());
@@ -524,15 +524,15 @@ llvm::Value* Emitter::EmitVariableExpression(const BoundVariableExpression& node
 		return _builder.CreateLoad(v, string(name));
 	} else
 	{
-		_diagnostics.ReportVariableNotEmitted(node.Variable()->Name);
+		_diagnostics.ReportVariableNotEmitted(node.Variable->Name);
 		return nullptr;
 	}
 }
 
 llvm::Value* Emitter::EmitAssignmentExpression(const BoundAssignmentExpression& node)
 {
-	auto value = EmitExpression(*node.Expression());
-	auto name = node.Variable()->Name;
+	auto value = EmitExpression(*node.Expression);
+	auto name = node.Variable->Name;
 	if (_locals.find(name) != _locals.end())
 	{
 		_debugInfo->EmitLocation(&node.Syntax());
@@ -541,7 +541,7 @@ llvm::Value* Emitter::EmitAssignmentExpression(const BoundAssignmentExpression& 
 		return _builder.CreateStore(value, allocaInst);
 	} else
 	{
-		_diagnostics.ReportVariableNotEmitted(node.Variable()->Name);
+		_diagnostics.ReportVariableNotEmitted(node.Variable->Name);
 		return nullptr;
 	}
 }
@@ -550,8 +550,8 @@ llvm::Value* Emitter::EmitUnaryExpression(const BoundUnaryExpression& node)
 {
 	_debugInfo->EmitLocation(&node.Syntax());
 
-	auto value = EmitExpression(*node.Operand());
-	switch (node.Op().Kind())
+	auto value = EmitExpression(*node.Operand);
+	switch (node.Op.Kind)
 	{
 		case BoundUnaryOperatorKind::Identity:
 			return value;
@@ -574,8 +574,8 @@ llvm::Value* Emitter::EmitUnaryExpression(const BoundUnaryExpression& node)
 		default:
 			throw std::invalid_argument(
 				BuildStringFrom("Unexpected unary operator ",
-								GetText(node.Op().SynKind()),
-								'(', node.Operand()->Type().Name, ").")
+								GetText(node.Op.SynKind),
+								'(', node.Operand->Type().Name, ").")
 			);
 	}
 }
@@ -584,29 +584,29 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 {
 	_debugInfo->EmitLocation(&node.Syntax());
 
-	auto lhs = EmitExpression(*node.Left());
-	auto rhs = EmitExpression(*node.Right());
+	auto lhs = EmitExpression(*node.Left);
+	auto rhs = EmitExpression(*node.Right);
 
-	if (node.Op().Kind() == BoundBinaryOperatorKind::Addition)
+	if (node.Op.Kind == BoundBinaryOperatorKind::Addition)
 	{
-		if (node.Left()->Type() == TYPE_STRING
-			&& node.Right()->Type() == TYPE_STRING)
+		if (node.Left->Type() == TYPE_STRING
+			&& node.Right->Type() == TYPE_STRING)
 		{
 			return _builder.CreateCall(_strConcatFunc, { lhs, rhs });
 		}
 	}
 
-	if (node.Op().Kind() == BoundBinaryOperatorKind::Equals)
+	if (node.Op.Kind == BoundBinaryOperatorKind::Equals)
 	{
-		if (node.Left()->Type() == TYPE_ANY
-			&& node.Right()->Type() == TYPE_ANY)
+		if (node.Left->Type() == TYPE_ANY
+			&& node.Right->Type() == TYPE_ANY)
 		{
 			// HACK convert integral values into strings
 			auto lstr = ConvertToStr(lhs);
 			auto rstr = ConvertToStr(rhs);
 			return _builder.CreateCall(_strEqualFunc, { lstr, rstr });
-		} else if (node.Left()->Type() == TYPE_STRING
-				   && node.Right()->Type() == TYPE_STRING)
+		} else if (node.Left->Type() == TYPE_STRING
+				   && node.Right->Type() == TYPE_STRING)
 		{
 			// NOTE strings are stored either in
 			// a) runtime container
@@ -615,7 +615,7 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 		}
 	}
 
-	if (node.Op().Kind() == BoundBinaryOperatorKind::NotEquals)
+	if (node.Op.Kind == BoundBinaryOperatorKind::NotEquals)
 	{
 		auto compareToFalse = [this](llvm::CallInst* v)
 		{
@@ -626,15 +626,15 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 
 		llvm::CallInst* value = nullptr;
 
-		if (node.Left()->Type() == TYPE_ANY
-			&& node.Right()->Type() == TYPE_ANY)
+		if (node.Left->Type() == TYPE_ANY
+			&& node.Right->Type() == TYPE_ANY)
 		{
 			auto lstr = ConvertToStr(lhs);
 			auto rstr = ConvertToStr(rhs);
 			value = _builder.CreateCall(_strEqualFunc, { lstr, rstr });
 			return compareToFalse(value);
-		} else if (node.Left()->Type() == TYPE_STRING
-				   && node.Right()->Type() == TYPE_STRING)
+		} else if (node.Left->Type() == TYPE_STRING
+				   && node.Right->Type() == TYPE_STRING)
 		{
 			value = _builder.CreateCall(_strEqualFunc, { lhs, rhs });
 			return compareToFalse(value);
@@ -652,7 +652,7 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 		return _builder.Insert(op);
 	};
 
-	switch (node.Op().Kind())
+	switch (node.Op.Kind)
 	{
 		// TODO should these be macro-ed? 
 		case BoundBinaryOperatorKind::Addition:
@@ -691,9 +691,9 @@ llvm::Value* Emitter::EmitBinaryExpression(const BoundBinaryExpression& node)
 		default:
 			throw std::invalid_argument(
 				BuildStringFrom("Unexpected binary operator ",
-								GetText(node.Op().SynKind()),
-								'(', node.Left()->Type().Name, ", ",
-								node.Right()->Type().Name, ")")
+								GetText(node.Op.SynKind),
+								'(', node.Left->Type().Name, ", ",
+								node.Right->Type().Name, ")")
 			);
 	}
 }
@@ -702,50 +702,50 @@ llvm::Value* Emitter::EmitCallExpression(const BoundCallExpression& node)
 {
 	_debugInfo->EmitLocation(&node.Syntax());
 
-	if (*(node.Function()) == BUILTIN_INPUT)
+	if (*node.Function == BUILTIN_INPUT)
 	{
 		return _builder.CreateCall(_inputFunc);
-	} else if (*(node.Function()) == BUILTIN_PRINT)
+	} else if (*node.Function == BUILTIN_PRINT)
 	{
-		auto value = EmitExpression(*node.Arguments().at(0));
+		auto value = EmitExpression(*node.Arguments.at(0));
 
 		llvm::Value* str = ConvertToStr(value);
 		return _builder.CreateCall(_putsFunc, str);
 
-	} else if (*(node.Function()) == BUILTIN_RND)
+	} else if (*node.Function == BUILTIN_RND)
 	{
-		auto value = EmitExpression(*node.Arguments().at(0));
+		auto value = EmitExpression(*node.Arguments.at(0));
 		return _builder.CreateCall(_rndFunc, value);
 	}
 
-	auto callee = _module->getFunction(string(node.Function()->Name));
+	auto callee = _module->getFunction(string(node.Function->Name));
 	if (callee == nullptr)
 	{
-		_diagnostics.ReportFunctionDeclarationNotEmitted(node.Function()->Name);
+		_diagnostics.ReportFunctionDeclarationNotEmitted(node.Function->Name);
 		return nullptr;
 	}
-	if (callee->arg_size() != node.Arguments().size())
+	if (callee->arg_size() != node.Arguments.size())
 	{
-		_diagnostics.ReportWrongArgumentCountEmitted(node.Function()->Name,
-													 node.Arguments().size(),
+		_diagnostics.ReportWrongArgumentCountEmitted(node.Function->Name,
+													 node.Arguments.size(),
 													 callee->arg_size());
 		return nullptr;
 	}
 
 	auto args = vector<llvm::Value*>();
-	for (const auto& arg : node.Arguments())
+	for (const auto& arg : node.Arguments)
 		args.push_back(EmitExpression(*arg));
 
 	if (callee->getReturnType()->isVoidTy())
 		return _builder.CreateCall(callee, args);
-	return _builder.CreateCall(callee, args, string(node.Function()->Name));
+	return _builder.CreateCall(callee, args, string(node.Function->Name));
 }
 
 llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& node)
 {
 	_debugInfo->EmitLocation(&node.Syntax());
 
-	auto value = EmitExpression(*node.Expression());
+	auto value = EmitExpression(*node.Expression);
 	if (value == nullptr)
 		return nullptr;
 	if (node.Type() == TYPE_ANY)
@@ -771,7 +771,7 @@ llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& 
 		//      bool -> int
 		throw std::invalid_argument(
 			BuildStringFrom("Unexpected convertion from '",
-							node.Expression()->Type().Name,
+							node.Expression->Type().Name,
 							"' to '", node.Type().Name, "'.")
 		);
 	}
@@ -779,15 +779,15 @@ llvm::Value* Emitter::EmitConversionExpression(const BoundConversionExpression& 
 
 llvm::Value* Emitter::EmitPostfixExpression(const BoundPostfixExpression& node)
 {
-	auto value = EmitExpression(*node.Expression());
-	auto name = node.Variable()->Name;
+	auto value = EmitExpression(*node.Expression);
+	auto name = node.Variable->Name;
 	if (_locals.find(name) != _locals.end())
 	{
 		_debugInfo->EmitLocation(&node.Syntax());
 
 		auto unit = llvm::ConstantInt::get(_intType, 1, true);
 		auto allocaInst = _locals.at(name);
-		switch (node.OperatorKind())
+		switch (node.OperatorKind)
 		{
 			case BoundPostfixOperatorEnum::Increment:
 			{
@@ -810,7 +810,7 @@ llvm::Value* Emitter::EmitPostfixExpression(const BoundPostfixExpression& node)
 		}
 	} else
 	{
-		_diagnostics.ReportVariableNotEmitted(node.Variable()->Name);
+		_diagnostics.ReportVariableNotEmitted(node.Variable->Name);
 		return nullptr;
 	}
 }
@@ -950,13 +950,13 @@ llvm::AllocaInst* Emitter::CreateEntryBlockAlloca(llvm::Type* type, string_view 
 
 void Emitter::CreateBlocksFromLabels(const BoundBlockStatement& body)
 {
-	for (const auto& it : body.Statements())
+	for (const auto& it : body.Statements)
 	{
 		if (it->Kind() == BoundNodeKind::LabelStatement)
 		{
 			auto& node = static_cast<const BoundLabelStatement&>(*it);
-			auto bb = llvm::BasicBlock::Create(_context, string(node.Label().Name));
-			_labelBBMap.emplace(node.Label(), bb);
+			auto bb = llvm::BasicBlock::Create(_context, string(node.Label.Name));
+			_labelBBMap.emplace(node.Label, bb);
 		}
 	}
 }

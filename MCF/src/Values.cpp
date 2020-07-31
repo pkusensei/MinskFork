@@ -6,7 +6,7 @@
 
 namespace MCF {
 
-TypeSymbol ValueType::Type() const
+const TypeSymbol& ValueType::Type() const noexcept
 {
 	switch (_inner.index())
 	{
@@ -67,7 +67,7 @@ string ValueType::ToString() const
 		[](IntegerType arg) { return std::to_string(arg); },
 		[](const string& arg) { return arg; },
 		[](auto&&) { return "Null"s; }
-		}, _inner);
+					  }, _inner);
 }
 
 std::ostream& operator<<(std::ostream& out, const ValueType& value)

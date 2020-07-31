@@ -4,8 +4,8 @@
 
 namespace MCF {
 
-class BoundStatement;
-class BoundBlockStatement;
+struct BoundStatement;
+struct BoundBlockStatement;
 
 struct FunctionSymbol;
 

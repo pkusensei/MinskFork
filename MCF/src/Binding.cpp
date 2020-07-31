@@ -294,11 +294,11 @@ shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax& syntax, 
 		if (result->Kind() == BoundNodeKind::ExpressionStatement)
 		{
 			auto& es = static_cast<const BoundExpressionStatement&>(*result);
-			auto allowExpression = es.Expression()->Kind() == BoundNodeKind::ErrorExpression
-				|| es.Expression()->Kind() == BoundNodeKind::AssignmentExpression
-				|| es.Expression()->Kind() == BoundNodeKind::CallExpression
-				|| es.Expression()->Kind() == BoundNodeKind::CompoundAssignmentExpression
-				|| es.Expression()->Kind() == BoundNodeKind::PostfixExpression;
+			auto allowExpression = es.Expression->Kind() == BoundNodeKind::ErrorExpression
+				|| es.Expression->Kind() == BoundNodeKind::AssignmentExpression
+				|| es.Expression->Kind() == BoundNodeKind::CallExpression
+				|| es.Expression->Kind() == BoundNodeKind::CompoundAssignmentExpression
+				|| es.Expression->Kind() == BoundNodeKind::PostfixExpression;
 			if (!allowExpression)
 				_diagnostics.ReportInvalidExpressionStatement(syntax.Location());
 		}
@@ -586,7 +586,7 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 		auto op = BoundBinaryOperator::Bind(equivalentOpKind,
 											variable->Type,
 											boundExpression->Type());
-		if (!op.IsUseful())
+		if (!op.IsUseful)
 		{
 			_diagnostics.ReportUndefinedBinaryOperator(syntax.AssignmentToken.Location(),
 													   syntax.AssignmentToken.Text,
@@ -618,7 +618,7 @@ shared_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyn
 
 	auto boundOperator = BoundUnaryOperator::Bind(syntax.OperatorToken.Kind(),
 												  boundOperand->Type());
-	if (boundOperator.IsUseful())
+	if (boundOperator.IsUseful)
 	{
 		return make_shared<BoundUnaryExpression>(syntax, boundOperator, std::move(boundOperand));
 	} else
@@ -639,7 +639,7 @@ shared_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionS
 
 	auto boundOperator = BoundBinaryOperator::Bind(syntax.OperatorToken.Kind(),
 												   boundLeft->Type(), boundRight->Type());
-	if (boundOperator.IsUseful())
+	if (boundOperator.IsUseful)
 	{
 		return make_shared<BoundBinaryExpression>(syntax, std::move(boundLeft),
 												  boundOperator, std::move(boundRight));
@@ -1069,10 +1069,10 @@ BoundProgram Binder::BindProgram(bool isScript,
 			&& statements.at(0)->Kind() == BoundNodeKind::ExpressionStatement)
 		{
 			auto& es = static_cast<const BoundExpressionStatement&>(*statements.at(0));
-			if (es.Expression()->Type() != TYPE_VOID)
+			if (es.Expression->Type() != TYPE_VOID)
 			{
-				statements.at(0) = make_shared<BoundReturnStatement>(es.Expression()->Syntax(),
-																	 es.Expression());
+				statements.at(0) = make_shared<BoundReturnStatement>(es.Expression->Syntax(),
+																	 es.Expression);
 			}
 		} else if (!statements.empty()
 				   && statements.back()->Kind() != BoundNodeKind::ReturnStatement)

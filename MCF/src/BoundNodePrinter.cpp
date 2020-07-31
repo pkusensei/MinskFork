@@ -114,12 +114,12 @@ void BoundNodePrinter::WriteNestedExpression(int parentPrecedence,
 	{
 		auto u = static_cast<const BoundUnaryExpression&>(node);
 		WriteNestedExpression(parentPrecedence,
-							  GetUnaryOperatorPrecedence(u.Op().SynKind()), u);
+							  GetUnaryOperatorPrecedence(u.Op.SynKind), u);
 	} else if (node.Kind() == BoundNodeKind::BinaryExpression)
 	{
 		auto b = static_cast<const BoundBinaryExpression&>(node);
 		WriteNestedExpression(parentPrecedence,
-							  GetBinaryOperatorPrecedence(b.Op().SynKind()), b);
+							  GetBinaryOperatorPrecedence(b.Op.SynKind), b);
 	} else
 		Write(node);
 }
@@ -142,7 +142,7 @@ void BoundNodePrinter::WriteBlockStatement(const BoundBlockStatement& node)
 	_writer.WritePunctuation(SyntaxKind::OpenBraceToken);
 	_writer.WriteLine();
 	_writer.Indent();
-	for (const auto& it : node.Statements())
+	for (const auto& it : node.Statements)
 		Write(*it);
 	_writer.Dedent();
 	_writer.WritePunctuation(SyntaxKind::CloseBraceToken);
@@ -157,14 +157,14 @@ void BoundNodePrinter::WriteNopStatement()
 
 void BoundNodePrinter::WriteVariableDeclaration(const BoundVariableDeclaration& node)
 {
-	_writer.WriteKeyword(node.Variable()->IsReadOnly ?
+	_writer.WriteKeyword(node.Variable->IsReadOnly ?
 						 SyntaxKind::LetKeyword : SyntaxKind::VarKeyword);
 	_writer.WriteSpace();
-	_writer.WriteIdentifier(node.Variable()->Name);
+	_writer.WriteIdentifier(node.Variable->Name);
 	_writer.WriteSpace();
 	_writer.WritePunctuation(SyntaxKind::EqualsToken);
 	_writer.WriteSpace();
-	Write(*node.Initializer());
+	Write(*node.Initializer);
 	_writer.WriteLine();
 }
 
@@ -172,15 +172,15 @@ void BoundNodePrinter::WriteIfStatement(const BoundIfStatement& node)
 {
 	_writer.WriteKeyword(SyntaxKind::IfKeyword);
 	_writer.WriteSpace();
-	Write(*node.Condition());
+	Write(*node.Condition);
 	_writer.WriteLine();
-	WriteNestedStatement(*node.ThenStatement());
+	WriteNestedStatement(*node.ThenStatement);
 
-	if (node.ElseStatement() != nullptr)
+	if (node.ElseStatement != nullptr)
 	{
 		_writer.WriteKeyword(SyntaxKind::ElseKeyword);
 		_writer.WriteLine();
-		WriteNestedStatement(*node.ElseStatement());
+		WriteNestedStatement(*node.ElseStatement);
 	}
 }
 
@@ -188,19 +188,19 @@ void BoundNodePrinter::WriteWhileStatement(const BoundWhileStatement& node)
 {
 	_writer.WriteKeyword(SyntaxKind::WhileKeyword);
 	_writer.WriteSpace();
-	Write(*node.Condition());
+	Write(*node.Condition);
 	_writer.WriteLine();
-	WriteNestedStatement(*node.Body());
+	WriteNestedStatement(*node.Body);
 }
 
 void BoundNodePrinter::WriteDoWhileStatement(const BoundDoWhileStatement& node)
 {
 	_writer.WriteKeyword(SyntaxKind::DoKeyword);
 	_writer.WriteLine();
-	WriteNestedStatement(*node.Body());
+	WriteNestedStatement(*node.Body);
 	_writer.WriteKeyword(SyntaxKind::WhileKeyword);
 	_writer.WriteSpace();
-	Write(*node.Condition());
+	Write(*node.Condition);
 	_writer.WriteLine();
 }
 
@@ -208,23 +208,23 @@ void BoundNodePrinter::WriteForStatement(const BoundForStatement& node)
 {
 	_writer.WriteKeyword(SyntaxKind::ForKeyword);
 	_writer.WriteSpace();
-	_writer.WriteIdentifier(node.Variable()->Name);
+	_writer.WriteIdentifier(node.Variable->Name);
 	_writer.WriteSpace();
 	_writer.WritePunctuation(SyntaxKind::EqualsToken);
 	_writer.WriteSpace();
-	Write(*node.LowerBound());
+	Write(*node.LowerBound);
 	_writer.WriteSpace();
 	_writer.WriteKeyword(SyntaxKind::ToKeyword);
 	_writer.WriteSpace();
-	Write(*node.UpperBound());
+	Write(*node.UpperBound);
 	_writer.WriteLine();
-	WriteNestedStatement(*node.Body());
+	WriteNestedStatement(*node.Body);
 }
 
 void BoundNodePrinter::WriteLabelStatement(const BoundLabelStatement& node)
 {
 	_writer.Dedent();
-	_writer.WritePunctuation(node.Label().Name);
+	_writer.WritePunctuation(node.Label.Name);
 	_writer.WritePunctuation(SyntaxKind::ColonToken);
 	_writer.WriteLine();
 	_writer.Indent();
@@ -234,7 +234,7 @@ void BoundNodePrinter::WriteGotoStatement(const BoundGotoStatement& node)
 {
 	_writer.WriteKeyword("goto");
 	_writer.WriteSpace();
-	_writer.WriteIdentifier(node.Label().Name);
+	_writer.WriteIdentifier(node.Label.Name);
 	_writer.WriteLine();
 }
 
@@ -242,28 +242,28 @@ void BoundNodePrinter::WriteConditionalGotoStatement(const BoundConditionalGotoS
 {
 	_writer.WriteKeyword("goto");
 	_writer.WriteSpace();
-	_writer.WriteIdentifier(node.Label().Name);
+	_writer.WriteIdentifier(node.Label.Name);
 	_writer.WriteSpace();
-	_writer.WriteKeyword(node.JumpIfTrue() ? "if" : "unless");
+	_writer.WriteKeyword(node.JumpIfTrue ? "if" : "unless");
 	_writer.WriteSpace();
-	Write(*node.Condition());
+	Write(*node.Condition);
 	_writer.WriteLine();
 }
 
 void BoundNodePrinter::WriteReturnStatement(const BoundReturnStatement& node)
 {
 	_writer.WriteKeyword(SyntaxKind::ReturnKeyword);
-	if (node.Expression() != nullptr)
+	if (node.Expression != nullptr)
 	{
 		_writer.WriteSpace();
-		Write(*node.Expression());
+		Write(*node.Expression);
 	}
 	_writer.WriteLine();
 }
 
 void BoundNodePrinter::WriteExpressionStatement(const BoundExpressionStatement& node)
 {
-	Write(*node.Expression());
+	Write(*node.Expression);
 	_writer.WriteLine();
 }
 
@@ -290,42 +290,42 @@ void BoundNodePrinter::WriteLiteralExpression(const BoundLiteralExpression& node
 
 void BoundNodePrinter::WriteVariableExpression(const BoundVariableExpression& node)
 {
-	_writer.WriteIdentifier(node.Variable()->Name);
+	_writer.WriteIdentifier(node.Variable->Name);
 }
 
 void BoundNodePrinter::WriteAssignmentExpression(const BoundAssignmentExpression& node)
 {
-	_writer.WriteIdentifier(node.Variable()->Name);
+	_writer.WriteIdentifier(node.Variable->Name);
 	_writer.WriteSpace();
 	_writer.WritePunctuation(SyntaxKind::EqualsToken);
 	_writer.WriteSpace();
-	Write(*node.Expression());
+	Write(*node.Expression);
 }
 
 void BoundNodePrinter::WriteUnaryExpression(const BoundUnaryExpression& node)
 {
-	auto precedence = GetUnaryOperatorPrecedence(node.Op().SynKind());
-	_writer.WritePunctuation(node.Op().SynKind());
-	WriteNestedExpression(precedence, *node.Operand());
+	auto precedence = GetUnaryOperatorPrecedence(node.Op.SynKind);
+	_writer.WritePunctuation(node.Op.SynKind);
+	WriteNestedExpression(precedence, *node.Operand);
 }
 
 void BoundNodePrinter::WriteBinaryExpression(const BoundBinaryExpression& node)
 {
-	auto precedence = GetBinaryOperatorPrecedence(node.Op().SynKind());
-	WriteNestedExpression(precedence, *node.Left());
+	auto precedence = GetBinaryOperatorPrecedence(node.Op.SynKind);
+	WriteNestedExpression(precedence, *node.Left);
 	_writer.WriteSpace();
-	_writer.WritePunctuation(node.Op().SynKind());
+	_writer.WritePunctuation(node.Op.SynKind);
 	_writer.WriteSpace();
-	WriteNestedExpression(precedence, *node.Right());
+	WriteNestedExpression(precedence, *node.Right);
 }
 
 void BoundNodePrinter::WriteCallExpression(const BoundCallExpression& node)
 {
-	_writer.WriteIdentifier(node.Function()->Name);
+	_writer.WriteIdentifier(node.Function->Name);
 	_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
 
 	auto isFirst = true;
-	for (const auto& it : node.Arguments())
+	for (const auto& it : node.Arguments)
 	{
 		if (isFirst)
 			isFirst = false;
@@ -344,14 +344,14 @@ void BoundNodePrinter::WriteConversionExpression(const BoundConversionExpression
 {
 	_writer.WriteIdentifier(node.Type().Name);
 	_writer.WritePunctuation(SyntaxKind::OpenParenthesisToken);
-	Write(*node.Expression());
+	Write(*node.Expression);
 	_writer.WritePunctuation(SyntaxKind::CloseParenthesisToken);
 }
 
 void BoundNodePrinter::WritePostfixExpression(const BoundPostfixExpression& node)
 {
-	_writer.WriteIdentifier(node.Variable()->Name);
-	_writer.WritePunctuation(node.OperatorKind() == BoundPostfixOperatorEnum::Increment ?
+	_writer.WriteIdentifier(node.Variable->Name);
+	_writer.WritePunctuation(node.OperatorKind == BoundPostfixOperatorEnum::Increment ?
 							 SyntaxKind::PlusPlusToken : SyntaxKind::MinusMinusToken);
 }
 

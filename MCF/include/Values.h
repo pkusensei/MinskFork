@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <variant>
 
 #include "common.h"
@@ -30,7 +31,7 @@ public:
 	ValueType(const char* s) : _inner(string(s)) {}
 
 	constexpr bool HasValue()const noexcept { return !std::holds_alternative<std::monostate>(_inner); }
-	TypeSymbol Type()const;
+	const TypeSymbol& Type()const noexcept;
 
 	constexpr bool operator==(const ValueType& other)const { return _inner == other._inner; }
 	constexpr bool operator!=(const ValueType& other)const { return !(_inner == other._inner); }
@@ -41,7 +42,9 @@ public:
 	template<typename T>
 	constexpr decltype(auto) GetValue() const
 	{
-		return std::get<T>(_inner);
+		auto p = std::get_if<T>(&_inner);
+		assert(p && "Variant should contain valid value; otherwise logic ouside this class is wrong.");
+		return *p;
 	}
 };
 

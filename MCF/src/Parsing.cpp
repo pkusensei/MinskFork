@@ -779,7 +779,7 @@ unique_ptr<MemberSyntax> Parser::ParseUsingDirective()
 	auto keyword = MatchToken(SyntaxKind::UsingKeyword);
 	auto fileNameToken = MatchToken(SyntaxKind::StringToken);
 
-	auto filename = fileNameToken.Value.GetValue<string>();
+	auto& filename = fileNameToken.Value.GetValue<string>();
 	auto current = _tree.Text().FilePath;
 	current.replace_filename(filename);
 	if (fs::exists(current))
