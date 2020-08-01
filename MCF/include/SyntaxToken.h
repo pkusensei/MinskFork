@@ -39,7 +39,7 @@ public:
 	virtual TextSpan Span()const;
 	virtual const vector<const SyntaxNode*> GetChildren() const = 0;
 
-	constexpr const SyntaxTree& Tree()const noexcept { return _tree; }
+	const SyntaxTree& Tree()const noexcept { return _tree; }
 	const SyntaxNode* Parent()const;
 	vector<const SyntaxNode*> Ancestors()const;
 	vector<const SyntaxNode*> AncestorsAndSelf()const;

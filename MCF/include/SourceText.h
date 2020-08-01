@@ -144,11 +144,11 @@ public:
 	{
 		return Text->GetLineIndex(Span.End());
 	}
-	constexpr size_t StartCharacter() const
+	size_t StartCharacter() const
 	{
 		return Span.Start - Text->Lines.at(StartLine()).Start;
 	}
-	constexpr size_t EndCharacter() const
+	size_t EndCharacter() const
 	{
 		return Span.End() > Text->Lines.at(EndLine()).End() ?
 			Span.End() - Text->Lines.at(EndLine()).End() : 0;

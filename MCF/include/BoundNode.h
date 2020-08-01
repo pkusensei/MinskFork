@@ -53,7 +53,7 @@ public:
 	virtual ~BoundNode() = default;
 	virtual BoundNodeKind Kind() const noexcept = 0;
 
-	constexpr const SyntaxNode& Syntax()const noexcept { return _syntax; }
+	const SyntaxNode& Syntax()const noexcept { return _syntax; }
 	void WriteTo(std::ostream& out)const;
 	string ToString() const;
 };

@@ -707,7 +707,7 @@ void McfRepl::EvaluateDump(std::string_view name)const
 		MCF::ResetConsoleColor();
 		return;
 	}
-	compilation->EmitTree(static_cast<const MCF::FunctionSymbol*>(*func), std::cout);
+	compilation->EmitTree(static_cast<const MCF::FunctionSymbol&>(**func), std::cout);
 }
 
 void McfRepl::EvaluateLoad(std::string_view path)

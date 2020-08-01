@@ -92,7 +92,9 @@ void DebugInfo::EmitLocation(const SyntaxNode* node)
 	auto scope = LexicalBlocks.empty() ? CU : LexicalBlocks.back();
 	auto loc = node->Location();
 	Builder.SetCurrentDebugLocation(
-		llvm::DebugLoc::get(loc.StartLine(), loc.StartCharacter(), scope));
+		llvm::DebugLoc::get(static_cast<unsigned int>(loc.StartLine()),
+							static_cast<unsigned int>(loc.StartCharacter()),
+							scope));
 }
 
 llvm::DIType* DebugInfo::GetType(const TypeSymbol& ts)
@@ -279,9 +281,13 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 	auto lineNumber = fs.Declaration->Location().StartLine();
 	auto scopeLine = lineNumber;
 	auto sp = _debugInfo->DIBuilder.createFunction(
-		fcontext, string(fs.Name), llvm::StringRef(), unit, lineNumber,
-		_debugInfo->CreateFunctionType(fs), scopeLine,
-		llvm::DINode::FlagPrototyped, llvm::DISubprogram::SPFlagDefinition);
+		fcontext, string(fs.Name),
+		llvm::StringRef(), unit,
+		static_cast<unsigned int>(lineNumber),
+		_debugInfo->CreateFunctionType(fs),
+		static_cast<unsigned int>(scopeLine),
+		llvm::DINode::FlagPrototyped,
+		llvm::DISubprogram::SPFlagDefinition);
 	_function->setSubprogram(sp);
 
 	_debugInfo->LexicalBlocks.push_back(sp);
@@ -289,19 +295,19 @@ void Emitter::EmitFunctionBody(const FunctionSymbol& fs, const BoundBlockStateme
 
 	// Place all parameters into _locals table
 	_locals.clear();
-	size_t i = 0;
+	unsigned int i = 0;
 	for (auto& arg : func->args())
 	{
 		auto allocaInst = CreateEntryBlockAlloca(arg.getType(), fs.Parameters.at(i).Name);
 
 		auto dbgArg = _debugInfo->DIBuilder.createParameterVariable(
-			sp, arg.getName(), i + 1, unit, lineNumber,
+			sp, arg.getName(), i + 1, unit, static_cast<unsigned int>(lineNumber),
 			_debugInfo->GetType(fs.Parameters.at(i).Type),
 			true);
 
 		_debugInfo->DIBuilder.insertDeclare(allocaInst, dbgArg,
 											_debugInfo->DIBuilder.createExpression(),
-											llvm::DebugLoc::get(lineNumber, 0, sp),
+											llvm::DebugLoc::get(static_cast<unsigned int>(lineNumber), 0, sp),
 											_builder.GetInsertBlock());
 
 		_builder.CreateStore(&arg, allocaInst);
