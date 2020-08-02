@@ -798,9 +798,9 @@ shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBin
 {
 	auto cfg = ControlFlowGraph::Create(node.get());
 	auto reachableStmts = std::unordered_set<const BoundStatement*>();
-	for (const auto& block : cfg.Blocks())
+	for (const auto& block : cfg.Blocks)
 	{
-		for (const auto& p : block->Statements())
+		for (const auto& p : block->Statements)
 			reachableStmts.emplace(p);
 	}
 

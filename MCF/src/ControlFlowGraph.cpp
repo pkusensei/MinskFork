@@ -14,14 +14,14 @@ namespace MCF {
 
 string ControlFlowGraph::BasicBlock::ToString() const
 {
-	if (IsStart())
+	if (IsStart)
 		return "<Start>";
-	else if (IsEnd())
+	else if (IsEnd)
 		return "<End>";
 	else
 	{
 		auto s = std::ostringstream();
-		for (const auto& it : _statements)
+		for (const auto& it : Statements)
 			Write(*it, s);
 		return s.str();
 	}
@@ -29,9 +29,9 @@ string ControlFlowGraph::BasicBlock::ToString() const
 
 string ControlFlowGraph::BasicBlockBranch::ToString() const
 {
-	if (_condition == nullptr)
+	if (Condition == nullptr)
 		return string();
-	return _condition->ToString();
+	return Condition->ToString();
 }
 
 class ControlFlowGraph::BasicBlockBuilder final
@@ -55,7 +55,7 @@ void ControlFlowGraph::BasicBlockBuilder::EndBlock()
 		// NOTE using id to add == support
 		//      intends to have start as 1, end as 0
 		auto block = make_unique<BasicBlock>(++_blockId);
-		auto& s = block->Statements();
+		auto& s = block->Statements;
 		s.insert(s.end(), _statements.begin(), _statements.end());
 		_blocks.push_back(std::move(block));
 		_statements.clear();
@@ -133,8 +133,8 @@ void ControlFlowGraph::GraphBuilder::Connect(BasicBlock& from, BasicBlock& to,
 	auto branch = make_unique<BasicBlockBranch>(&from, &to, std::move(condition));
 	_branches.push_back(std::move(branch));
 	auto& last = _branches.back();
-	from.Outgoing().push_back(last.get());
-	to.Incoming().push_back(last.get());
+	from.Outgoing.push_back(last.get());
+	to.Incoming.push_back(last.get());
 }
 
 template<typename T, typename Pred>
@@ -152,15 +152,15 @@ void ControlFlowGraph::GraphBuilder::RemoveBlock(vector<unique_ptr<BasicBlock>>&
 		return [p = p](const auto& it) { return *it == *p; };
 	};
 
-	for (const auto& branch : block.Incoming())
+	for (const auto& branch : block.Incoming)
 	{
-		auto& outgoing = branch->From()->Outgoing();
+		auto& outgoing = branch->From->Outgoing;
 		VectorErase_If(outgoing, capturePtrToErase(branch));
 		VectorErase_If(_branches, capturePtrToErase(branch));
 	}
-	for (const auto& branch : block.Outgoing())
+	for (const auto& branch : block.Outgoing)
 	{
-		auto& incoming = branch->To()->Incoming();
+		auto& incoming = branch->To->Incoming;
 		VectorErase_If(incoming, capturePtrToErase(branch));
 		VectorErase_If(_branches, capturePtrToErase(branch));
 	}
@@ -192,7 +192,7 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 
 	for (auto& block : blocks)
 	{
-		for (const auto& statement : block->Statements())
+		for (const auto& statement : block->Statements)
 		{
 			_blockFromStatement.emplace(statement, block.get());
 			if (statement->Kind() == BoundNodeKind::LabelStatement)
@@ -208,9 +208,9 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 		auto& current = blocks.at(i);
 		auto& next = i == blocks.size() - 1 ? _end : blocks.at(i + 1);
 
-		for (const auto& statement : current->Statements())
+		for (const auto& statement : current->Statements)
 		{
-			auto isLastStatementInBlock = statement == current->Statements().back();
+			auto isLastStatementInBlock = statement == current->Statements.back();
 			switch (statement->Kind())
 			{
 				case BoundNodeKind::GotoStatement:
@@ -259,7 +259,7 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 		loopAgain = false;
 		for (auto& block : blocks)
 		{
-			if (block->Incoming().empty())
+			if (block->Incoming.empty())
 			{
 				RemoveBlock(blocks, *block);
 				loopAgain = true;
@@ -287,17 +287,17 @@ void ControlFlowGraph::WriteTo(std::ostream& out) const
 
 	out << "digraph G {" << NEW_LINE;
 
-	for (const auto& b : _blocks)
+	for (const auto& b : Blocks)
 	{
-		auto id = b->Id();
+		auto id = b->Id;
 		auto label = b->ToString();
 		label = quote(label);
 		out << "    N" << id << " [label = " << label << ", shape = box]" << NEW_LINE;
 	}
-	for (const auto& b : _branches)
+	for (const auto& b : Branches)
 	{
-		auto fromId = b->From()->Id();
-		auto toId = b->To()->Id();
+		auto fromId = b->From->Id;
+		auto toId = b->To->Id;
 		auto label = b->ToString();
 		label = quote(label);
 		out << "    N" << fromId << " -> N" << toId << " [label = " << label << "]" << NEW_LINE;
@@ -316,9 +316,9 @@ ControlFlowGraph ControlFlowGraph::Create(const BoundBlockStatement* body)
 bool ControlFlowGraph::AllPathsReturn(const BoundBlockStatement* body)
 {
 	auto graph = Create(body);
-	for (const auto& branch : graph.End()->Incoming())
+	for (const auto& branch : graph.End->Incoming)
 	{
-		auto& statements = branch->From()->Statements();
+		auto& statements = branch->From->Statements;
 		if (statements.empty()) return false;
 
 		auto& lastStatement = statements.back();
