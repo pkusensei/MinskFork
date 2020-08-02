@@ -123,7 +123,8 @@ public:
 
 };
 
-template<typename T, typename = std::enable_if_t<std::is_base_of_v<SyntaxNode, T>>>
+template<typename T>
+requires std::derived_from<T, SyntaxNode>
 class SeparatedSyntaxList final
 {
 private:

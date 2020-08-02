@@ -55,7 +55,7 @@ if(MSVC)
 	target_compile_options(${PROJECT_NAME} PRIVATE /Zc:alignedNew-)
 endif()
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 target_compile_definitions(
 	${PROJECT_NAME} PRIVATE 
 	-DMCF_EXPORTS 

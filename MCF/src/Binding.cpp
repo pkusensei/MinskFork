@@ -56,8 +56,9 @@ private:
 	std::unordered_map<string_view, shared_ptr<Symbol>> _symbols;
 	unique_ptr<BoundScope> _parent;
 
-	template<typename T, typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
-	bool TryDeclareSymbol(shared_ptr<T> symbol)
+	template<typename T>
+	requires std::derived_from<T, Symbol>
+		bool TryDeclareSymbol(shared_ptr<T> symbol)
 	{
 		auto name = symbol->Name;
 		if (_symbols.find(name) == _symbols.end() && !name.empty())
@@ -68,8 +69,8 @@ private:
 		return false;
 	}
 
-	template<typename T, typename Pred,
-		typename = std::enable_if_t<std::is_base_of_v<Symbol, T>>>
+	template<typename T, typename Pred>
+	requires std::derived_from<T, Symbol>
 		const vector<shared_ptr<T>> GetDeclaredSymbols(Pred&& pred) const
 	{
 		auto result = vector<shared_ptr<T>>();

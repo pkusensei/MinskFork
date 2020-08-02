@@ -8,16 +8,16 @@ namespace MCF {
 //since there's no reflection 
 //these help to reduce redundancy in GetChildren and like.
 
-template<typename Base, typename Derived,
-	typename = std::enable_if_t<std::is_base_of_v<Base, Derived>>>
-	decltype(auto) MakeVecOfRaw(const unique_ptr<Derived>& ptr)
+template<typename Base, typename Derived, template<typename...>typename Ptr>
+requires std::derived_from<Derived, Base>
+decltype(auto) MakeVecOfRaw(const Ptr<Derived>& ptr)
 {
-	return ptr == nullptr ? vector<const Base*>() : vector<const Base*>{ ptr.get() };
+	return ptr == nullptr ? vector<const Base*>{} : vector<const Base*>{ &(*ptr) };
 }
 
-template<typename Base, typename Derived,
-	typename = std::enable_if_t<std::is_base_of_v<Base, Derived>>>
-	decltype(auto) MakeVecOfRaw(const Derived& value)
+template<typename Base, typename Derived>
+requires std::derived_from<Derived, Base>
+decltype(auto) MakeVecOfRaw(const Derived& value)
 {
 	return vector<const Base*>{&value};
 }
@@ -32,15 +32,14 @@ decltype(auto) MakeVecOfRaw(const T& t, Args&... args)
 }
 
 //takes iterators begin and end from a container<unique_ptr<Derived>>
-template<typename Base, typename Derived, typename It,
-	typename = std::enable_if_t<
-	std::is_same_v<Derived,
-	typename std::iterator_traits<It>::value_type::element_type >>>
-	decltype(auto) MakeVecOfRaw(It start, It end)
+template<typename Base, typename Derived, typename It>
+requires std::same_as<Derived, typename std::iterator_traits<It>::value_type::element_type>
+&& std::derived_from<Derived, Base>
+decltype(auto) MakeVecOfRaw(It start, It end)
 {
-	auto result = vector<const Base*>();
+	auto result = vector<const Base*>{};
 	for (auto it = start; it != end; ++it)
-		result.emplace_back(it->get());
+		result.emplace_back(&**it);
 	return result;
 }
 

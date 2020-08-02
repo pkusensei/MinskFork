@@ -3,6 +3,13 @@
 #include <array>
 #include <unordered_map>
 
+// HACK force intellisense to work with <concepts>
+#ifndef __cpp_lib_concepts
+#define __cpp_lib_concepts
+#include <concepts>
+#undef __cpp_lib_concepts
+#endif
+
 #include "Values.h"
 
 // To suppress annoying MSVC warnings about exporting classes/functions
@@ -61,39 +68,43 @@ public:
 };
 
 template<typename T>
+concept Derefable = requires(const T & ptr) { *ptr; };
+
+template<Derefable T>
+struct PointeeType
+{
+	using type = std::remove_cvref_t<decltype(*std::declval<T>())>;
+};
+
+template<typename T>
+using PointeeType_t = typename PointeeType<T>::type;
+
+template<typename T>
 struct SymbolHash
 {
-	auto operator()(const T& s)const noexcept
-		->std::enable_if_t<std::is_base_of_v<Symbol, T>, size_t>
+	size_t operator()(const T& s)const noexcept
 	{
-		return std::hash<string_view>{}(s.Name);
+		if constexpr (std::derived_from<T, Symbol>)
+			return std::hash<string_view>{}(s.Name);
+		else if constexpr (std::derived_from<PointeeType_t<T>, Symbol>)
+			return std::hash<string_view>{}(s->Name);
 	}
+
 };
 
 template<typename T>
-struct SymbolHash<T*>
+struct SymbolEqual
 {
-	auto operator()(const T* p)const noexcept
-		->typename std::enable_if_t<std::is_base_of_v<Symbol, T>, size_t>
+	bool operator()(const T& s1, const T& s2)const noexcept
 	{
-		return std::hash<string_view>{}(p->Name);
+		if constexpr (std::derived_from<T, Symbol>)
+			return s1 == s2;
+		else if constexpr (std::derived_from<PointeeType_t<T>, Symbol>)
+			return *s1 == *s2;
 	}
 };
 
-template<typename...>
-struct SymbolEqual;
-
-template<typename T>
-struct SymbolEqual<T*>
-{
-	auto operator()(const T* p1, const T* p2)const noexcept
-		->typename std::enable_if_t<std::is_base_of_v<Symbol, T>, bool>
-	{
-		return (*p1) == (*p2);
-	}
-};
-
-template<typename Key, typename Value, template<typename...>typename KeyEqual = std::equal_to>
+template<typename Key, typename Value, template<typename...>typename KeyEqual = SymbolEqual>
 using SymbolMap = std::unordered_map<Key, Value, SymbolHash<Key>, KeyEqual<Key>>;
 
 enum class TypeEnum

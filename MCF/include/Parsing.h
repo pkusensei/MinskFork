@@ -158,8 +158,8 @@ private:
 	unique_ptr<CompilationUnitSyntax> _root;
 	unique_ptr<DiagnosticBag> _diagnostics;
 
-	template<typename ParseHandle,
-		typename = std::enable_if_t<std::is_invocable_v<ParseHandle, const SyntaxTree&>>>
+	template<typename ParseHandle>
+	requires std::regular_invocable<ParseHandle, const SyntaxTree&>
 		SyntaxTree(unique_ptr<SourceText> text, ParseHandle handle)
 		:_text(std::move(text))
 	{

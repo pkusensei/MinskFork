@@ -7,7 +7,8 @@
 
 namespace MCF {
 
-template<typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+template<typename T>
+requires requires{std::is_enum_v<T>; }
 T& operator++(T& value)
 {
 	auto tmp = std::underlying_type_t<T>(value);
@@ -15,14 +16,16 @@ T& operator++(T& value)
 	return value;
 }
 
-template<typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+template<typename T>
+requires requires{std::is_enum_v<T>; }
 T& operator++(T& value, int)
 {
 	return ++value;
 }
 
 //collects all enum values into one vector
-template<typename T, size_t N, typename = std::enable_if_t<std::is_enum_v<T>>>
+template<typename T, size_t N>
+requires requires{std::is_enum_v<T>; }
 const auto& GetAllEnumValue(T start, T end)
 {
 	auto build = [start, end]()constexpr
