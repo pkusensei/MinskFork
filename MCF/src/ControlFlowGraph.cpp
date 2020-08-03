@@ -45,7 +45,7 @@ private:
 	void StartBlock() { EndBlock(); }
 
 public:
-	[[nodiscard]] vector<unique_ptr<BasicBlock>> Build(const BoundBlockStatement* block);
+	[[nodiscard]] vector<unique_ptr<BasicBlock>> Build(const BoundBlockStatement& block);
 };
 
 void ControlFlowGraph::BasicBlockBuilder::EndBlock()
@@ -63,9 +63,9 @@ void ControlFlowGraph::BasicBlockBuilder::EndBlock()
 }
 
 vector<unique_ptr<ControlFlowGraph::BasicBlock>>
-ControlFlowGraph::BasicBlockBuilder::Build(const BoundBlockStatement* block)
+ControlFlowGraph::BasicBlockBuilder::Build(const BoundBlockStatement& block)
 {
-	for (const auto& statement : block->Statements)
+	for (const auto& statement : block.Statements)
 	{
 		switch (statement->Kind())
 		{
@@ -108,7 +108,7 @@ private:
 	shared_ptr<BoundExpression> Negate(const shared_ptr<BoundExpression>& condition)const;
 
 public:
-	GraphBuilder()
+	explicit GraphBuilder()
 		:_start(make_unique<BasicBlock>(1, true)),
 		_end(make_unique<BasicBlock>(0, false, true))
 	{
@@ -130,7 +130,7 @@ void ControlFlowGraph::GraphBuilder::Connect(BasicBlock& from, BasicBlock& to,
 			return;
 	}
 
-	auto branch = make_unique<BasicBlockBranch>(&from, &to, std::move(condition));
+	auto branch = make_unique<BasicBlockBranch>(from, to, std::move(condition));
 	_branches.push_back(std::move(branch));
 	auto& last = _branches.back();
 	from.Outgoing.push_back(last.get());
@@ -176,7 +176,7 @@ shared_ptr<BoundExpression> ControlFlowGraph::GraphBuilder::Negate(
 	assert(op.IsUseful);
 
 	auto& s = condition->Syntax();
-	auto negated = make_shared<BoundUnaryExpression>(s, op, std::move(condition));
+	auto negated = make_shared<BoundUnaryExpression>(s, op, condition);
 
 	if (negated->ConstantValue().HasValue())
 		return make_shared<BoundLiteralExpression>(s, negated->ConstantValue());
@@ -267,11 +267,11 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 			}
 		}
 	}
-	auto start = _start.get();
-	auto end = _end.get();
+
 	blocks.insert(blocks.begin(), std::move(_start));
 	blocks.push_back(std::move(_end));
-	return ControlFlowGraph(start, end, std::move(blocks), std::move(_branches));
+	return ControlFlowGraph{ *blocks.front(), *blocks.back(),
+		std::move(blocks), std::move(_branches) };
 }
 
 void ControlFlowGraph::WriteTo(std::ostream& out) const
@@ -305,7 +305,7 @@ void ControlFlowGraph::WriteTo(std::ostream& out) const
 	out << '}' << NEW_LINE;
 }
 
-ControlFlowGraph ControlFlowGraph::Create(const BoundBlockStatement* body)
+ControlFlowGraph ControlFlowGraph::Create(const BoundBlockStatement& body)
 {
 	auto blockBuilder = BasicBlockBuilder();
 	auto blocks = blockBuilder.Build(body);
@@ -313,7 +313,7 @@ ControlFlowGraph ControlFlowGraph::Create(const BoundBlockStatement* body)
 	return graphBuilder.Build(blocks);
 }
 
-bool ControlFlowGraph::AllPathsReturn(const BoundBlockStatement* body)
+bool ControlFlowGraph::AllPathsReturn(const BoundBlockStatement& body)
 {
 	auto graph = Create(body);
 	for (const auto& branch : graph.End->Incoming)

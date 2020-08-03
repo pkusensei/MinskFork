@@ -1048,7 +1048,7 @@ BoundProgram Binder::BindProgram(bool isScript,
 		auto lowerBody = Lower(*it, std::move(body));
 
 		if (it->Type != TYPE_VOID
-			&& !ControlFlowGraph::AllPathsReturn(lowerBody.get()))
+			&& !ControlFlowGraph::AllPathsReturn(*lowerBody))
 		{
 			binder._diagnostics.ReportAllPathsMustReturn(
 				it->Declaration->Identifier.Location());

@@ -13,22 +13,24 @@ struct BoundBlockStatement;
 
 struct ControlFlowGraph final
 {
+private:
 	struct BasicBlock;
 	struct BasicBlockBranch;
 	class BasicBlockBuilder;
 	class GraphBuilder;
 
+public:
 	vector<unique_ptr<BasicBlock>> Blocks;
 	vector<unique_ptr<BasicBlockBranch>> Branches;
-	BasicBlock* Start;
-	BasicBlock* End;
+	const BasicBlock* Start;
+	const BasicBlock* End;
 
 private:
-	explicit ControlFlowGraph(BasicBlock* start, BasicBlock* end,
+	explicit ControlFlowGraph(const BasicBlock& start, const BasicBlock& end,
 							  vector<unique_ptr<BasicBlock>> blocks,
 							  vector<unique_ptr<BasicBlockBranch>> branches)noexcept
 		:Blocks(std::move(blocks)), Branches(std::move(branches)),
-		Start(start), End(end)
+		Start(&start), End(&end)
 	{
 	}
 
@@ -36,8 +38,8 @@ public:
 
 	void WriteTo(std::ostream& out)const;
 
-	[[nodiscard]] static ControlFlowGraph Create(const BoundBlockStatement* body);
-	[[nodiscard]] static bool AllPathsReturn(const BoundBlockStatement* body);
+	[[nodiscard]] static ControlFlowGraph Create(const BoundBlockStatement& body);
+	[[nodiscard]] static bool AllPathsReturn(const BoundBlockStatement& body);
 };
 
 struct ControlFlowGraph::BasicBlock final
@@ -69,9 +71,9 @@ struct ControlFlowGraph::BasicBlockBranch final
 	BasicBlock* To;
 
 public:
-	BasicBlockBranch(BasicBlock* from, BasicBlock* to,
-					 shared_ptr<BoundExpression> condition = nullptr)noexcept
-		:Condition(std::move(condition)), From(from), To(to)
+	explicit BasicBlockBranch(BasicBlock& from, BasicBlock& to,
+							  shared_ptr<BoundExpression> condition = nullptr)noexcept
+		:Condition(std::move(condition)), From(&from), To(&to)
 	{
 	}
 

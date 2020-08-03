@@ -708,7 +708,7 @@ namespace {
 		} else
 		{
 			auto& value = node->ConstantValue().GetValue<string>();
-			if (value.empty()) 
+			if (value.empty())
 				continue;
 
 			builder += value;
@@ -756,6 +756,8 @@ shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBin
 	return BoundTreeRewriter::RewriteBinaryExpression(std::move(node));
 }
 
+namespace {
+
 [[nodiscard]] unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func,
 													  shared_ptr<BoundStatement> statement)
 {
@@ -796,7 +798,8 @@ shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBin
 
 [[nodiscard]] unique_ptr<BoundBlockStatement> RemoveDeadCode(unique_ptr<BoundBlockStatement> node)
 {
-	auto cfg = ControlFlowGraph::Create(node.get());
+	assert(node && "Invalid unique_ptr<BoundBlockStatement>.");
+	auto cfg = ControlFlowGraph::Create(*node);
 	auto reachableStmts = std::unordered_set<const BoundStatement*>();
 	for (const auto& block : cfg.Blocks)
 	{
@@ -818,6 +821,8 @@ shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBin
 
 	return make_unique<BoundBlockStatement>(s, std::move(result));
 }
+
+} // namespace
 
 unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func,
 									  shared_ptr<BoundStatement> statement)
