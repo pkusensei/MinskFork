@@ -5,18 +5,6 @@
 
 namespace MCF {
 
-bool StringStartsWith(string_view sample, string_view beginning)
-{
-	if (sample.length() < beginning.length())return false;
-	return std::equal(beginning.begin(), beginning.end(), sample.begin());
-}
-
-bool StringEndsWith(string_view sample, string_view ending)
-{
-	if (sample.length() < ending.length()) return false;
-	return std::equal(ending.rbegin(), ending.rend(), sample.rbegin());
-}
-
 string_view TrimString(string_view text)
 {
 	return TrimStringStart(TrimStringEnd(text));
@@ -24,8 +12,8 @@ string_view TrimString(string_view text)
 
 string_view TrimStringStart(string_view text)
 {
-	auto it = find_if(text.cbegin(), text.cend(),
-		[](char c) { return !std::isspace(c); });
+	auto it = std::find_if(text.cbegin(), text.cend(),
+						   [](char c) { return !std::isspace(c); });
 	if (it == text.cend())
 		return string_view();
 	text.remove_prefix(it - text.cbegin());
@@ -34,8 +22,8 @@ string_view TrimStringStart(string_view text)
 
 string_view TrimStringEnd(string_view text)
 {
-	auto it = find_if(text.crbegin(), text.crend(),
-		[](char c) { return !std::isspace(c); });
+	auto it = std::find_if(text.crbegin(), text.crend(),
+						   [](char c) { return !std::isspace(c); });
 	if (it == text.crend())
 		return string_view();
 	text.remove_suffix(it - text.crbegin());

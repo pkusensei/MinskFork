@@ -266,13 +266,13 @@ bool IsTrivia(SyntaxKind kind)noexcept
 
 bool IsKeyword(SyntaxKind kind)
 {
-	return StringEndsWith(nameof(kind), "Keyword");
+	return nameof(kind).ends_with("Keyword");
 }
 
 bool IsToken(SyntaxKind kind)
 {
 	return !IsTrivia(kind) &&
-		(IsKeyword(kind) || StringEndsWith(nameof(kind), "Token"));
+		(IsKeyword(kind) || nameof(kind).ends_with("Token"));
 }
 
 int GetUnaryOperatorPrecedence(SyntaxKind kind) noexcept

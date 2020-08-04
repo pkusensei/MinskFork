@@ -4,13 +4,18 @@
 #include <cctype>
 #include <sstream>
 
+// HACK force intellisense to work with <concepts>
+#ifndef __cpp_lib_concepts
+#define __cpp_lib_concepts
+#include <concepts>
+#undef __cpp_lib_concepts
+#endif
+
 #include "common.h"
 
 namespace MCF {
 
 /// string helpers
-MCF_API bool StringStartsWith(string_view sample, string_view beginning);
-MCF_API bool StringEndsWith(string_view sample, string_view ending);
 MCF_API string_view TrimString(string_view text);
 MCF_API string_view TrimStringStart(string_view text);
 MCF_API string_view TrimStringEnd(string_view text);
@@ -25,22 +30,19 @@ string BuildStringFrom(Args&&... args)
 }
 
 template<typename T>
+requires std::same_as<char, typename T::value_type>
+&& requires (const T& t) { std::cbegin(t); }
 bool StringIsBlank(const T& text)
 {
-	using It = decltype(text.cbegin());
-	static_assert(std::is_same_v<char,
-		typename std::iterator_traits<It>::value_type>);
-
+	using It = decltype(std::cbegin(text));
 	return text.empty() ||
-		std::all_of<It, int(*)(int)>(text.cbegin(), text.cend(), std::isspace); // NOTE just why? 
+		std::all_of<It, int(*)(int)>(std::cbegin(text), std::cend(text), std::isspace); // NOTE just why? 
 }
 
 template<typename It>
+requires std::same_as<char, typename std::iterator_traits<It>::value_type::value_type>
 string StringJoin(It begin, It end, char seperator = ' ')
 {
-	static_assert(std::is_same_v<char,
-		typename std::iterator_traits<It>::value_type::value_type>);
-
 	auto result = string();
 	for (; begin != end; ++begin)
 	{
@@ -53,11 +55,9 @@ string StringJoin(It begin, It end, char seperator = ' ')
 
 
 template<typename It>
+requires std::same_as<char, typename std::iterator_traits<It>::value_type>
 vector<string_view> StringSplit(It begin, It end, char delimiter = ' ')
 {
-	static_assert(std::is_same_v<char,
-		typename std::iterator_traits<It>::value_type>);
-
 	auto result = vector<string_view>();
 	if (begin == end)
 		return result;

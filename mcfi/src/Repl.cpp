@@ -188,7 +188,7 @@ void Repl::Run()
 			continue;
 
 		auto& lastItem = _submissionHistory.emplace_back(std::move(text));
-		if (lastItem.find(NEW_LINE) == lastItem.npos && MCF::StringStartsWith(lastItem, "#"))
+		if (lastItem.find(NEW_LINE) == lastItem.npos && lastItem.starts_with('#'))
 			EvaluateMetaCommand(lastItem);
 		else EvaluateSubmission(lastItem);
 
@@ -292,7 +292,7 @@ void Repl::HandleEnter(Document& document, SubmissionView& view)
 {
 	auto text = MCF::StringJoin(document.cbegin(), document.cend(), NEW_LINE);
 
-	if (MCF::StringStartsWith(text, "#") || IsCompleteSubmission(text))
+	if (text.starts_with('#') || IsCompleteSubmission(text))
 	{
 		_done = true;
 		return;
