@@ -72,8 +72,8 @@ public:
 	const vector<const SyntaxTree*> SyntaxTrees()const noexcept;
 
 	[[nodiscard]] const BoundGlobalScope* GlobalScope();
-	const vector<shared_ptr<FunctionSymbol>>& Functions();
-	const vector<shared_ptr<VariableSymbol>>& Variables();
+	const vector<unique_ptr<FunctionSymbol>>& Functions();
+	const vector<unique_ptr<VariableSymbol>>& Variables();
 	const vector<const Symbol*> GetSymbols();
 
 	EvaluationResult Evaluate(VarMap& variables);

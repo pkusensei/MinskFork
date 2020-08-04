@@ -53,32 +53,32 @@ ConversionEnum Classify(const TypeSymbol& from, const TypeSymbol& to)
 class BoundScope final
 {
 private:
-	std::unordered_map<string_view, shared_ptr<Symbol>> _symbols;
+	std::unordered_map<string_view, unique_ptr<Symbol>> _symbols;
 	unique_ptr<BoundScope> _parent;
 
 	template<typename T>
 	requires std::derived_from<T, Symbol>
-		bool TryDeclareSymbol(shared_ptr<T> symbol)
+		bool TryDeclareSymbol(unique_ptr<T> symbol)
 	{
 		auto name = symbol->Name;
-		if (_symbols.find(name) == _symbols.end() && !name.empty())
+		if (!name.empty())
 		{
-			_symbols.emplace(name, std::move(symbol));
-			return true;
+			auto [_, success] = _symbols.emplace(name, std::move(symbol));
+			return success;
 		}
 		return false;
 	}
 
 	template<typename T, typename Pred>
 	requires std::derived_from<T, Symbol>
-		const vector<shared_ptr<T>> GetDeclaredSymbols(Pred&& pred) const
+		const vector<unique_ptr<T>> GetDeclaredSymbols(Pred&& pred) const
 	{
-		auto result = vector<shared_ptr<T>>();
+		auto result = vector<unique_ptr<T>>();
 		for (const auto& [_, symbol] : _symbols)
 		{
 			if (std::forward<Pred>(pred)(symbol))
 			{
-				auto p = std::static_pointer_cast<T>(symbol);
+				auto p = symbol->UniqueCloneAs<T>();
 				result.push_back(std::move(p));
 			}
 		}
@@ -93,9 +93,11 @@ public:
 
 	// NOTE copy ctor vs shared_ptr? 
 	BoundScope(const BoundScope& other)
-		:_symbols(other._symbols),
+		:_symbols{},
 		_parent(other._parent ? make_unique<BoundScope>(*other._parent) : nullptr)
 	{
+		for (const auto& [key, value] : other._symbols)
+			_symbols.emplace(key, value->UniqueCloneAs<Symbol>());
 	}
 	BoundScope& operator=(const BoundScope&) = delete;
 
@@ -105,18 +107,18 @@ public:
 
 	const BoundScope* Parent()const noexcept { return _parent.get(); }
 
-	shared_ptr<Symbol> TryLookupSymbol(string_view name)const;
+	unique_ptr<Symbol> TryLookupSymbol(string_view name)const;
 
-	bool TryDeclareVariable(shared_ptr<VariableSymbol> variable)
+	bool TryDeclareVariable(unique_ptr<VariableSymbol> variable)
 	{
 		return TryDeclareSymbol(std::move(variable));
 	}
-	bool TryDeclareFunction(shared_ptr<FunctionSymbol> function)
+	bool TryDeclareFunction(unique_ptr<FunctionSymbol> function)
 	{
 		return TryDeclareSymbol(std::move(function));
 	}
 
-	const vector<shared_ptr<VariableSymbol>> GetDeclaredVariables()const
+	const vector<unique_ptr<VariableSymbol>> GetDeclaredVariables()const
 	{
 		auto pred = [](const auto& ptr)
 		{
@@ -124,7 +126,7 @@ public:
 		};
 		return GetDeclaredSymbols<VariableSymbol>(pred);
 	}
-	const vector<shared_ptr<FunctionSymbol>> GetDeclaredFunctions()const
+	const vector<unique_ptr<FunctionSymbol>> GetDeclaredFunctions()const
 	{
 		auto pred = [](const auto& ptr)
 		{
@@ -137,16 +139,15 @@ public:
 	static void ResetToParent(unique_ptr<BoundScope>& current)noexcept;
 };
 
-shared_ptr<Symbol> BoundScope::TryLookupSymbol(string_view name)const
+unique_ptr<Symbol> BoundScope::TryLookupSymbol(string_view name)const
 {
-	auto it = _symbols.find(name);
-	if (it == _symbols.cend())
+	if (!_symbols.contains(name))
 	{
 		if (_parent == nullptr)
 			return nullptr;
 		return _parent->TryLookupSymbol(name);
 	}
-	return it->second;
+	return _symbols.at(name)->UniqueCloneAs<Symbol>();
 }
 
 void BoundScope::ResetToParent(unique_ptr<BoundScope>& current)noexcept
@@ -206,9 +207,10 @@ private:
 	shared_ptr<BoundExpression> BindConversion(
 		TextLocation diagLocation, shared_ptr<BoundExpression> syntax,
 		const TypeSymbol& type, bool allowExplicit = false);
-	shared_ptr<VariableSymbol> BindVariableDeclaration(const SyntaxToken& identifier,
-													   bool isReadOnly, const TypeSymbol& type, BoundConstant constant = NULL_VALUE);
-	shared_ptr<VariableSymbol> BindVariableReference(const SyntaxToken& identifier);
+	unique_ptr<VariableSymbol> BindVariableDeclaration(const SyntaxToken& identifier,
+													   bool isReadOnly, const TypeSymbol& type,
+													   BoundConstant constant = NULL_VALUE);
+	unique_ptr<VariableSymbol> FindVariableInScope(const SyntaxToken& identifier);
 	std::optional<TypeSymbol> BindTypeClause(const std::optional<TypeClauseSyntax>& syntax);
 	std::optional<TypeSymbol> LookupType(string_view name)const;
 
@@ -237,7 +239,7 @@ Binder::Binder(bool isScript, unique_ptr<BoundScope> parent, const FunctionSymbo
 	if (function != nullptr)
 		for (const auto& p : function->Parameters)
 		{
-			shared_ptr<VariableSymbol> v = make_shared<ParameterSymbol>(p);
+			unique_ptr<VariableSymbol> v = make_unique<ParameterSymbol>(p);
 			_scope->TryDeclareVariable(std::move(v));
 		}
 }
@@ -266,14 +268,14 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax& syntax)
 	}
 	auto type = BindTypeClause(syntax.Type)
 		.value_or(TYPE_VOID);
-	auto function = make_shared<FunctionSymbol>(syntax.Identifier.Text,
+	auto function = make_unique<FunctionSymbol>(syntax.Identifier.Text,
 												std::move(parameters), type, &syntax);
-
+	auto name = function->Name;
 	if (!function->Declaration->Identifier.Text.empty()
-		&& !_scope->TryDeclareFunction(function))
+		&& !_scope->TryDeclareFunction(std::move(function)))
 	{
 		_diagnostics.ReportSymbolAlreadyDeclared(syntax.Identifier.Location(),
-												 function->Name);
+												 name);
 	}
 }
 
@@ -562,7 +564,7 @@ shared_ptr<BoundExpression> Binder::BindNameExpression(const NameExpressionSynta
 	if (syntax.IdentifierToken.IsMissing()) // NOTE this token was injected by Parser::MatchToken
 		return make_shared<BoundErrorExpression>(syntax);
 
-	auto var = BindVariableReference(syntax.IdentifierToken);
+	auto var = FindVariableInScope(syntax.IdentifierToken);
 	if (var == nullptr)
 		return make_shared<BoundErrorExpression>(syntax);
 	return make_shared<BoundVariableExpression>(syntax, std::move(var));
@@ -573,7 +575,7 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 	auto name = syntax.IdentifierToken.Text;
 	auto boundExpression = BindExpression(*syntax.Expression);
 
-	auto variable = BindVariableReference(syntax.IdentifierToken);
+	auto variable = FindVariableInScope(syntax.IdentifierToken);
 	if (variable == nullptr)
 		return boundExpression;
 
@@ -684,7 +686,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		return make_shared<BoundErrorExpression>(syntax);
 	}
 
-	auto function = std::static_pointer_cast<FunctionSymbol>(std::move(sp));
+	auto function = StaticUniquePtrCast<FunctionSymbol>(std::move(sp));
 
 	if (syntax.Arguments.size() != function->Parameters.size())
 	{
@@ -719,7 +721,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		boundArguments.at(i) = BindConversion(argLocation, arg, param.Type);
 	}
 
-	return make_shared<BoundCallExpression>(syntax, function, boundArguments);
+	return make_shared<BoundCallExpression>(syntax, std::move(function), boundArguments);
 }
 
 shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressionSyntax& syntax)
@@ -727,7 +729,7 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	auto name = syntax.Identifier.Text;
 	auto boundExpression = BindExpression(*syntax.Expression);
 
-	auto variable = BindVariableReference(syntax.Identifier);
+	auto variable = FindVariableInScope(syntax.Identifier);
 	if (variable == nullptr)
 		return make_shared<BoundErrorExpression>(syntax);
 
@@ -794,25 +796,26 @@ shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
 	return make_shared<BoundConversionExpression>(expression->Syntax(), type, std::move(expression));
 }
 
-shared_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& identifier,
+unique_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& identifier,
 														   bool isReadOnly,
 														   const TypeSymbol& type,
 														   BoundConstant constant)
 {
 	auto name = identifier.Text.empty() ? "?" : identifier.Text;
 	auto declare = !identifier.IsMissing();
-	shared_ptr<VariableSymbol> variable = nullptr;
+	unique_ptr<VariableSymbol> variable{ nullptr };
 	if (_function == nullptr)
-		variable = make_shared<GlobalVariableSymbol>(name, isReadOnly, type, std::move(constant));
+		variable = make_unique<GlobalVariableSymbol>(name, isReadOnly, type, std::move(constant));
 	else
-		variable = make_shared<LocalVariableSymbol>(name, isReadOnly, type, std::move(constant));
+		variable = make_unique<LocalVariableSymbol>(name, isReadOnly, type, std::move(constant));
 
-	if (declare && !_scope->TryDeclareVariable(variable))
+	if (declare &&
+		!_scope->TryDeclareVariable(variable->UniqueCloneAs<VariableSymbol>()))
 		_diagnostics.ReportSymbolAlreadyDeclared(identifier.Location(), name);
 	return variable;
 }
 
-shared_ptr<VariableSymbol> Binder::BindVariableReference(const SyntaxToken& identifier)
+unique_ptr<VariableSymbol> Binder::FindVariableInScope(const SyntaxToken& identifier)
 {
 	auto name = identifier.Text;
 	auto var = _scope->TryLookupSymbol(name);
@@ -824,7 +827,7 @@ shared_ptr<VariableSymbol> Binder::BindVariableReference(const SyntaxToken& iden
 	{
 		if (var->IsVariableSymbol())
 		{
-			return std::static_pointer_cast<VariableSymbol>(std::move(var));
+			return StaticUniquePtrCast<VariableSymbol>(std::move(var));
 		} else
 		{
 			_diagnostics.ReportNotAVariable(identifier.Location(), name);
@@ -867,9 +870,9 @@ unique_ptr<BoundScope> Binder::CreateParentScope(const BoundGlobalScope* previou
 		auto current = stack.top();
 		auto scope = make_unique<BoundScope>(std::move(parent));
 		for (const auto& it : current->Functions)
-			scope->TryDeclareFunction(it);
+			scope->TryDeclareFunction(it->UniqueCloneAs<FunctionSymbol>());
 		for (const auto& it : current->Variables)
-			scope->TryDeclareVariable(it);
+			scope->TryDeclareVariable(it->UniqueCloneAs<VariableSymbol>());
 		parent.swap(scope);
 		stack.pop();
 	}
@@ -883,7 +886,7 @@ unique_ptr<BoundScope> Binder::CreateRootScope()
 	{
 		assert(f && "Built-in functions should have been declared.");
 
-		result->TryDeclareFunction(make_shared<FunctionSymbol>(*f));
+		result->TryDeclareFunction(make_unique<FunctionSymbol>(*f));
 	}
 	return result;
 }
@@ -912,11 +915,7 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 	{
 		return BoundGlobalScope(previous,
 								make_unique<DiagnosticBag>(std::move(binder).Diagnostics()),
-								nullptr, nullptr,
-								vector<shared_ptr<FunctionSymbol>>(),
-								vector<shared_ptr<VariableSymbol>>(),
-								vector<shared_ptr<BoundStatement>>()
-		);
+								nullptr, nullptr, {}, {}, {});
 	}
 
 	auto statements = vector<shared_ptr<BoundStatement>>();

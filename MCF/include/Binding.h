@@ -13,8 +13,8 @@ class SyntaxTree;
 
 struct [[nodiscard]] BoundGlobalScope final
 {
-	vector<shared_ptr<FunctionSymbol>> Functions;
-	vector<shared_ptr<VariableSymbol>> Variables;
+	vector<unique_ptr<FunctionSymbol>> Functions;
+	vector<unique_ptr<VariableSymbol>> Variables;
 	vector<shared_ptr<BoundStatement>> Statements;
 	unique_ptr<DiagnosticBag> Diagnostics;
 	unique_ptr<FunctionSymbol> MainFunc;
@@ -26,8 +26,8 @@ public:
 					 unique_ptr<DiagnosticBag> diagnostics,
 					 unique_ptr<FunctionSymbol> mainFunc,
 					 unique_ptr<FunctionSymbol> scriptFunc,
-					 vector<shared_ptr<FunctionSymbol>> functions,
-					 vector<shared_ptr<VariableSymbol>> variables,
+					 vector<unique_ptr<FunctionSymbol>> functions,
+					 vector<unique_ptr<VariableSymbol>> variables,
 					 vector<shared_ptr<BoundStatement>> statements)
 		:Functions(std::move(functions)),
 		Variables(std::move(variables)),

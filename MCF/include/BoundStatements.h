@@ -47,12 +47,12 @@ struct BoundNopStatement final :public BoundStatement
 
 struct BoundVariableDeclaration final :public BoundStatement
 {
-	shared_ptr<VariableSymbol> Variable;
+	unique_ptr<VariableSymbol> Variable;
 	shared_ptr<BoundExpression> Initializer;
 
 public:
 	explicit BoundVariableDeclaration(const SyntaxNode& syntax,
-									  shared_ptr<VariableSymbol> variable,
+									  unique_ptr<VariableSymbol> variable,
 									  shared_ptr<BoundExpression> initializer)noexcept
 		:BoundStatement(syntax),
 		Variable(std::move(variable)), Initializer(std::move(initializer))
@@ -145,14 +145,14 @@ public:
 
 struct BoundForStatement final :public BoundLoopStatement
 {
-	shared_ptr<VariableSymbol> Variable;
+	unique_ptr<VariableSymbol> Variable;
 	shared_ptr<BoundExpression> LowerBound;
 	shared_ptr<BoundExpression> UpperBound;
 	shared_ptr<BoundStatement> Body;
 
 public:
 	explicit BoundForStatement(const SyntaxNode& syntax,
-							   shared_ptr<VariableSymbol> variable,
+							   unique_ptr<VariableSymbol> variable,
 							   shared_ptr<BoundExpression> lowerBound,
 							   shared_ptr<BoundExpression> upperBound,
 							   shared_ptr<BoundStatement> body,

@@ -42,9 +42,9 @@ enum class BoundPostfixOperatorEnum
 	Decrement,
 };
 
-string_view nameof(BoundUnaryOperatorKind kind);
-string_view nameof(BoundBinaryOperatorKind kind);
-string_view nameof(BoundPostfixOperatorEnum kind);
+string_view nameof(BoundUnaryOperatorKind kind)noexcept;
+string_view nameof(BoundBinaryOperatorKind kind)noexcept;
+string_view nameof(BoundPostfixOperatorEnum kind)noexcept;
 
 struct BoundExpression :public BoundNode
 {
@@ -105,7 +105,7 @@ private:
 
 public:
 
-	static BoundUnaryOperator Bind(SyntaxKind synKind, const TypeSymbol& type);
+	static BoundUnaryOperator Bind(SyntaxKind synKind, const TypeSymbol& type)noexcept;
 };
 
 struct BoundBinaryOperator final
@@ -152,7 +152,7 @@ private:
 public:
 
 	static BoundBinaryOperator Bind(SyntaxKind synKind,
-									const TypeSymbol& leftType, const TypeSymbol& rightType);
+									const TypeSymbol& leftType, const TypeSymbol& rightType)noexcept;
 
 };
 
@@ -210,12 +210,12 @@ public:
 
 struct BoundAssignmentExpression final : public BoundExpression
 {
-	shared_ptr<VariableSymbol> Variable;
+	unique_ptr<VariableSymbol> Variable;
 	shared_ptr<BoundExpression> Expression;
 
 public:
 	explicit BoundAssignmentExpression(const SyntaxNode& syntax,
-									   shared_ptr<VariableSymbol> variable,
+									   unique_ptr<VariableSymbol> variable,
 									   shared_ptr<BoundExpression> expression)noexcept
 		:BoundExpression(syntax),
 		Variable(std::move(variable)), Expression(std::move(expression))
@@ -231,12 +231,12 @@ public:
 struct BoundCompoundAssignmentExpression final :public BoundExpression
 {
 	BoundBinaryOperator Op;
-	shared_ptr<VariableSymbol> Variable;
+	unique_ptr<VariableSymbol> Variable;
 	shared_ptr<BoundExpression> Expression;
 
 public:
 	explicit BoundCompoundAssignmentExpression(const SyntaxNode& syntax,
-											   shared_ptr<VariableSymbol> variable,
+											   unique_ptr<VariableSymbol> variable,
 											   BoundBinaryOperator op,
 											   shared_ptr<BoundExpression> expression)noexcept
 		:BoundExpression(syntax),
@@ -275,11 +275,11 @@ public:
 
 struct BoundVariableExpression final : public BoundExpression
 {
-	shared_ptr<VariableSymbol> Variable;
+	unique_ptr<VariableSymbol> Variable;
 
 public:
 	explicit BoundVariableExpression(const SyntaxNode& syntax,
-									 shared_ptr<VariableSymbol> variable)noexcept
+									 unique_ptr<VariableSymbol> variable)noexcept
 		:BoundExpression(syntax),
 		Variable(std::move(variable))
 	{
@@ -295,11 +295,11 @@ public:
 struct BoundCallExpression final :public BoundExpression
 {
 	vector<shared_ptr<BoundExpression>> Arguments;
-	shared_ptr<FunctionSymbol> Function;
+	unique_ptr<FunctionSymbol> Function;
 
 public:
 	explicit BoundCallExpression(const SyntaxNode& syntax,
-								 shared_ptr<FunctionSymbol> function,
+								 unique_ptr<FunctionSymbol> function,
 								 vector<shared_ptr<BoundExpression>> arguments)noexcept
 		:BoundExpression(syntax),
 		Arguments(std::move(arguments)), Function(std::move(function))
@@ -334,13 +334,13 @@ public:
 
 struct BoundPostfixExpression final :public BoundExpression
 {
-	shared_ptr<VariableSymbol> Variable;
+	unique_ptr<VariableSymbol> Variable;
 	shared_ptr<BoundExpression> Expression;
 	BoundPostfixOperatorEnum OperatorKind;
 
 public:
 	explicit BoundPostfixExpression(const SyntaxNode& syntax,
-									shared_ptr<VariableSymbol> variable,
+									unique_ptr<VariableSymbol> variable,
 									BoundPostfixOperatorEnum kind,
 									shared_ptr<BoundExpression> expression)noexcept
 		:BoundExpression(syntax),

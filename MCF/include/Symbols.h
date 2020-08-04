@@ -43,10 +43,13 @@ protected:
 	{
 	}
 
+	virtual unique_ptr<Symbol> Clone()const = 0;
+
 public:
 	virtual ~Symbol() = default;
 
 	virtual SymbolKind Kind() const noexcept = 0;
+
 	void WriteTo(std::ostream& out)const;
 	string ToString() const;
 
@@ -64,6 +67,15 @@ public:
 		return Kind() == SymbolKind::GlobalVariable
 			|| Kind() == SymbolKind::LocalVariable
 			|| Kind() == SymbolKind::Parameter;
+	}
+
+	template<typename T>
+	requires std::derived_from<T, Symbol>
+		unique_ptr<T> UniqueCloneAs() const
+	{
+		if constexpr (std::is_same_v<T, Symbol>)
+			return Clone();
+		return StaticUniquePtrCast<T>(Clone());
 	}
 };
 
@@ -115,13 +127,18 @@ enum class TypeEnum
 struct TypeSymbol final :public Symbol
 {
 	// sizeof( string_view + vtable ) == 24
-public:
 	constexpr explicit TypeSymbol(string_view name)noexcept
 		:Symbol(name)
 	{
 	}
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Type; }
+
+protected:
+	unique_ptr<Symbol> Clone()const override
+	{
+		return make_unique<TypeSymbol>(Name);
+	}
 };
 
 inline const auto TYPE_ERROR = TypeSymbol("?");
@@ -148,35 +165,49 @@ public:
 
 };
 
-struct GlobalVariableSymbol final :public VariableSymbol
+template<typename Derived>
+struct VarSymbolT :public VariableSymbol
 {
-public:
+protected:
+	explicit VarSymbolT(string_view name, bool isReadOnly, TypeSymbol type,
+						BoundConstant constant)noexcept
+		:VariableSymbol(name, isReadOnly, std::move(type), std::move(constant))
+	{
+	}
+
+	unique_ptr<Symbol> Clone()const final
+	{
+		return UniqueClone<Derived, Symbol>(this);
+	}
+};
+
+struct GlobalVariableSymbol final :public VarSymbolT<GlobalVariableSymbol>
+{
 	explicit GlobalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
 								  BoundConstant constant)noexcept
-		:VariableSymbol(name, isReadOnly, std::move(type), std::move(constant))
+		:VarSymbolT<GlobalVariableSymbol>(name, isReadOnly, std::move(type), std::move(constant))
 	{
 	}
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::GlobalVariable; }
 };
 
-struct LocalVariableSymbol :public VariableSymbol
+struct LocalVariableSymbol :public VarSymbolT<LocalVariableSymbol>
 {
 public:
 	explicit LocalVariableSymbol(string_view name, bool isReadOnly, TypeSymbol type,
 								 BoundConstant constant)noexcept
-		:VariableSymbol(name, isReadOnly, std::move(type), std::move(constant))
+		:VarSymbolT<LocalVariableSymbol>(name, isReadOnly, std::move(type), std::move(constant))
 	{
 	}
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::LocalVariable; }
 };
 
-struct ParameterSymbol final : public LocalVariableSymbol
+struct ParameterSymbol final : public VarSymbolT<ParameterSymbol>
 {
-public:
 	explicit ParameterSymbol(string_view name, TypeSymbol type)noexcept
-		:LocalVariableSymbol(name, true, std::move(type), NULL_VALUE)
+		:VarSymbolT<ParameterSymbol>(name, true, std::move(type), NULL_VALUE)
 	{
 	}
 
@@ -207,6 +238,11 @@ public:
 	}
 
 	SymbolKind Kind() const noexcept override { return SymbolKind::Function; }
+protected:
+	unique_ptr<Symbol> Clone()const override
+	{
+		return make_unique<FunctionSymbol>(*this);
+	}
 
 };
 

@@ -4,7 +4,7 @@
 
 namespace MCF {
 
-string_view nameof(BoundUnaryOperatorKind kind)
+string_view nameof(BoundUnaryOperatorKind kind)noexcept
 {
 #define NAME(kind) \
 case BoundUnaryOperatorKind::kind: return #kind;
@@ -23,7 +23,7 @@ case BoundUnaryOperatorKind::kind: return #kind;
 #undef NAME
 }
 
-string_view nameof(BoundBinaryOperatorKind kind)
+string_view nameof(BoundBinaryOperatorKind kind)noexcept
 {
 #define NAME(kind) \
 case BoundBinaryOperatorKind::kind: return #kind;
@@ -54,7 +54,7 @@ case BoundBinaryOperatorKind::kind: return #kind;
 #undef NAME
 }
 
-string_view nameof(BoundPostfixOperatorEnum kind)
+string_view nameof(BoundPostfixOperatorEnum kind)noexcept
 {
 	switch (kind)
 	{
@@ -67,7 +67,7 @@ string_view nameof(BoundPostfixOperatorEnum kind)
 	}
 }
 
-BoundUnaryOperator BoundUnaryOperator::Bind(SyntaxKind synKind, const TypeSymbol& type)
+BoundUnaryOperator BoundUnaryOperator::Bind(SyntaxKind synKind, const TypeSymbol& type)noexcept
 {
 	for (const auto& op : operators)
 	{
@@ -89,7 +89,7 @@ const std::array<BoundUnaryOperator, 4> BoundUnaryOperator::operators = {
 };
 
 BoundBinaryOperator BoundBinaryOperator::Bind(SyntaxKind synKind,
-											  const TypeSymbol& leftType, const TypeSymbol& rightType)
+											  const TypeSymbol& leftType, const TypeSymbol& rightType)noexcept
 {
 	for (const auto& op : operators)
 	{

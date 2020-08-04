@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -32,11 +33,25 @@ using std::make_shared;
 
 using IntegerType = int;
 
+inline constexpr auto NEW_LINE = '\n';
+
 inline IntegerType StringToInteger(string_view s)
 {
 	return std::stoi(string(s));
 }
 
-inline constexpr auto NEW_LINE = '\n';
+template<typename To, typename From>
+requires std::derived_from<To, From>
+unique_ptr<To> StaticUniquePtrCast(unique_ptr<From> from)noexcept
+{
+	return unique_ptr<To>{static_cast<To*>(from.release())};
+}
+
+template<typename Derived, typename Ret = Derived, typename T>
+unique_ptr<Ret> UniqueClone(const T* p)
+{
+	assert(p && "Can only clone valid ptr.");
+	return make_unique<Derived>(static_cast<const Derived&>(*p));
+}
 
 }//MCF

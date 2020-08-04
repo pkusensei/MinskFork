@@ -432,12 +432,12 @@ const BoundGlobalScope* Compilation::GlobalScope()
 	return _globalScope.get();
 }
 
-const vector<shared_ptr<FunctionSymbol>>& Compilation::Functions()
+const vector<unique_ptr<FunctionSymbol>>& Compilation::Functions()
 {
 	return GlobalScope()->Functions;
 }
 
-const vector<shared_ptr<VariableSymbol>>& Compilation::Variables()
+const vector<unique_ptr<VariableSymbol>>& Compilation::Variables()
 {
 	return GlobalScope()->Variables;
 }
