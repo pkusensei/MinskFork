@@ -177,7 +177,7 @@ protected:
 
 	unique_ptr<Symbol> Clone()const final
 	{
-		return UniqueClone<Derived, Symbol>(this);
+		return UniqueClone<Derived, Symbol>(*this);
 	}
 };
 

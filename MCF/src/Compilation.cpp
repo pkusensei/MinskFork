@@ -21,8 +21,7 @@ namespace MCF {
 
 class Evaluator final
 {
-	using FuncMap = SymbolMap<const FunctionSymbol*, const BoundBlockStatement*,
-		SymbolEqual>;
+	using FuncMap = SymbolMap<const FunctionSymbol*, const BoundBlockStatement*>;
 
 private:
 	ValueType _lastValue;
@@ -78,7 +77,7 @@ ValueType Evaluator::Evaluate()
 ValueType Evaluator::EvaluateStatement(const BoundBlockStatement* body)
 {
 	auto labelToIndex = std::unordered_map<BoundLabel, size_t, LabelHash>();
-	auto statements = body->Statements;
+	auto& statements = body->Statements;
 	for (size_t i = 0; i < statements.size(); ++i)
 	{
 		auto ptr = statements.at(i).get();

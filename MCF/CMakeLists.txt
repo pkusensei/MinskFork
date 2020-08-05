@@ -4,6 +4,7 @@ add_library(MCF SHARED src/Binding.cpp
 	src/BoundExpressions.cpp
 	src/BoundNode.cpp
 	src/BoundNodePrinter.cpp
+	src/BoundStatements.cpp
 	src/Compilation.cpp
 	src/ConsoleHelper.cpp
 	src/ControlFlowGraph.cpp

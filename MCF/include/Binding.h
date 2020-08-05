@@ -15,7 +15,7 @@ struct [[nodiscard]] BoundGlobalScope final
 {
 	vector<unique_ptr<FunctionSymbol>> Functions;
 	vector<unique_ptr<VariableSymbol>> Variables;
-	vector<shared_ptr<BoundStatement>> Statements;
+	vector<unique_ptr<BoundStatement>> Statements;
 	unique_ptr<DiagnosticBag> Diagnostics;
 	unique_ptr<FunctionSymbol> MainFunc;
 	unique_ptr<FunctionSymbol> ScriptFunc;
@@ -28,7 +28,7 @@ public:
 					 unique_ptr<FunctionSymbol> scriptFunc,
 					 vector<unique_ptr<FunctionSymbol>> functions,
 					 vector<unique_ptr<VariableSymbol>> variables,
-					 vector<shared_ptr<BoundStatement>> statements)
+					 vector<unique_ptr<BoundStatement>> statements)
 		:Functions(std::move(functions)),
 		Variables(std::move(variables)),
 		Statements(std::move(statements)),
@@ -43,8 +43,7 @@ public:
 
 struct [[nodiscard]] BoundProgram final
 {
-	using FuncMap = SymbolMap<const FunctionSymbol*, unique_ptr<BoundBlockStatement>,
-		SymbolEqual>;
+	using FuncMap = SymbolMap<const FunctionSymbol*, unique_ptr<BoundBlockStatement>>;
 
 	FuncMap Functions;
 	unique_ptr<BoundProgram> Previous;

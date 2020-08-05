@@ -66,13 +66,13 @@ public:
 
 struct ControlFlowGraph::BasicBlockBranch final
 {
-	shared_ptr<BoundExpression> Condition;
+	unique_ptr<BoundExpression> Condition;
 	BasicBlock* From;
 	BasicBlock* To;
 
 public:
 	explicit BasicBlockBranch(BasicBlock& from, BasicBlock& to,
-							  shared_ptr<BoundExpression> condition = nullptr)noexcept
+							  unique_ptr<BoundExpression> condition = nullptr)noexcept
 		:Condition(std::move(condition)), From(&from), To(&to)
 	{
 	}

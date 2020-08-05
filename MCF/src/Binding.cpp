@@ -170,42 +170,42 @@ private:
 
 	void BindFunctionDeclaration(const FunctionDeclarationSyntax& syntax);
 
-	shared_ptr<BoundStatement> BindErrorStatement(const SyntaxNode& syntax);
-	shared_ptr<BoundStatement> BindGlobalStatement(const StatementSyntax& syntax);
-	shared_ptr<BoundStatement> BindStatement(const StatementSyntax& syntax, bool isGlobal = false);
-	shared_ptr<BoundStatement> BindStatementInternal(const StatementSyntax& syntax);
-	shared_ptr<BoundStatement> BindBlockStatement(const BlockStatementSyntax& syntax);
-	shared_ptr<BoundStatement> BindVariableDeclaration(const VariableDeclarationSyntax& syntax);
-	shared_ptr<BoundStatement> BindIfStatement(const IfStatementSyntax& syntax);
-	shared_ptr<BoundStatement> BindWhileStatement(const WhileStatementSyntax& syntax);
-	shared_ptr<BoundStatement> BindDoWhileStatement(const DoWhileStatementSyntax& syntax);
-	shared_ptr<BoundStatement> BindForStatement(const ForStatementSyntax& syntax);
+	unique_ptr<BoundStatement> BindErrorStatement(const SyntaxNode& syntax);
+	unique_ptr<BoundStatement> BindGlobalStatement(const StatementSyntax& syntax);
+	unique_ptr<BoundStatement> BindStatement(const StatementSyntax& syntax, bool isGlobal = false);
+	unique_ptr<BoundStatement> BindStatementInternal(const StatementSyntax& syntax);
+	unique_ptr<BoundStatement> BindBlockStatement(const BlockStatementSyntax& syntax);
+	unique_ptr<BoundStatement> BindVariableDeclaration(const VariableDeclarationSyntax& syntax);
+	unique_ptr<BoundStatement> BindIfStatement(const IfStatementSyntax& syntax);
+	unique_ptr<BoundStatement> BindWhileStatement(const WhileStatementSyntax& syntax);
+	unique_ptr<BoundStatement> BindDoWhileStatement(const DoWhileStatementSyntax& syntax);
+	unique_ptr<BoundStatement> BindForStatement(const ForStatementSyntax& syntax);
 	auto BindLoopBody(const StatementSyntax& syntax)
-		->std::tuple<shared_ptr<BoundStatement>, BoundLabel, BoundLabel>;
+		->std::tuple<unique_ptr<BoundStatement>, BoundLabel, BoundLabel>;
 
-	shared_ptr<BoundStatement> BindBreakStatement(const BreakStatementSyntax& syntax);
-	shared_ptr<BoundStatement> BindContinueStatement(const ContinueStatementSyntax& syntax);
-	shared_ptr<BoundStatement> BindReturnStatement(const ReturnStatementSyntax& syntax);
-	shared_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax& syntax);
+	unique_ptr<BoundStatement> BindBreakStatement(const BreakStatementSyntax& syntax);
+	unique_ptr<BoundStatement> BindContinueStatement(const ContinueStatementSyntax& syntax);
+	unique_ptr<BoundStatement> BindReturnStatement(const ReturnStatementSyntax& syntax);
+	unique_ptr<BoundStatement> BindExpressionStatement(const ExpressionStatementSyntax& syntax);
 
-	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax& syntax,
+	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax& syntax,
 											   const TypeSymbol& targetType);
-	shared_ptr<BoundExpression> BindExpression(const ExpressionSyntax& syntax,
+	unique_ptr<BoundExpression> BindExpression(const ExpressionSyntax& syntax,
 											   bool canBeVoid = false);
-	shared_ptr<BoundExpression> BindExpressionInternal(const ExpressionSyntax& syntax);
-	shared_ptr<BoundExpression> BindParenthesizedExpression(const ParenthesizedExpressionSyntax& syntax);
-	shared_ptr<BoundExpression> BindLiteralExpression(const LiteralExpressionSyntax& syntax);
-	shared_ptr<BoundExpression> BindNameExpression(const NameExpressionSyntax& syntax);
-	shared_ptr<BoundExpression> BindAssignmentExpression(const AssignmentExpressionSyntax& syntax);
-	shared_ptr<BoundExpression> BindUnaryExpression(const UnaryExpressionSyntax& syntax);
-	shared_ptr<BoundExpression> BindBinaryExpression(const BinaryExpressionSyntax& syntax);
-	shared_ptr<BoundExpression> BindCallExpression(const CallExpressionSyntax& syntax);
-	shared_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax& syntax);
+	unique_ptr<BoundExpression> BindExpressionInternal(const ExpressionSyntax& syntax);
+	unique_ptr<BoundExpression> BindParenthesizedExpression(const ParenthesizedExpressionSyntax& syntax);
+	unique_ptr<BoundExpression> BindLiteralExpression(const LiteralExpressionSyntax& syntax);
+	unique_ptr<BoundExpression> BindNameExpression(const NameExpressionSyntax& syntax);
+	unique_ptr<BoundExpression> BindAssignmentExpression(const AssignmentExpressionSyntax& syntax);
+	unique_ptr<BoundExpression> BindUnaryExpression(const UnaryExpressionSyntax& syntax);
+	unique_ptr<BoundExpression> BindBinaryExpression(const BinaryExpressionSyntax& syntax);
+	unique_ptr<BoundExpression> BindCallExpression(const CallExpressionSyntax& syntax);
+	unique_ptr<BoundExpression> BindPostfixExpression(const PostfixExpressionSyntax& syntax);
 
-	shared_ptr<BoundExpression> BindConversion(const ExpressionSyntax& syntax,
+	unique_ptr<BoundExpression> BindConversion(const ExpressionSyntax& syntax,
 											   const TypeSymbol& type, bool allowExplicit = false);
-	shared_ptr<BoundExpression> BindConversion(
-		TextLocation diagLocation, shared_ptr<BoundExpression> syntax,
+	unique_ptr<BoundExpression> BindConversion(
+		TextLocation diagLocation, unique_ptr<BoundExpression> syntax,
 		const TypeSymbol& type, bool allowExplicit = false);
 	unique_ptr<VariableSymbol> BindVariableDeclaration(const SyntaxToken& identifier,
 													   bool isReadOnly, const TypeSymbol& type,
@@ -279,18 +279,18 @@ void Binder::BindFunctionDeclaration(const FunctionDeclarationSyntax& syntax)
 	}
 }
 
-shared_ptr<BoundStatement> Binder::BindErrorStatement(const SyntaxNode& syntax)
+unique_ptr<BoundStatement> Binder::BindErrorStatement(const SyntaxNode& syntax)
 {
-	return make_shared<BoundExpressionStatement>(syntax,
-												 make_shared<BoundErrorExpression>(syntax));
+	return make_unique<BoundExpressionStatement>(syntax,
+												 make_unique<BoundErrorExpression>(syntax));
 }
 
-shared_ptr<BoundStatement> Binder::BindGlobalStatement(const StatementSyntax& syntax)
+unique_ptr<BoundStatement> Binder::BindGlobalStatement(const StatementSyntax& syntax)
 {
 	return BindStatement(syntax, true);
 }
 
-shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax& syntax, bool isGlobal)
+unique_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax& syntax, bool isGlobal)
 {
 	auto result = BindStatementInternal(syntax);
 	if (!_isScript || !isGlobal)
@@ -308,7 +308,7 @@ shared_ptr<BoundStatement> Binder::BindStatement(const StatementSyntax& syntax, 
 	return result;
 }
 
-shared_ptr<BoundStatement> Binder::BindStatementInternal(const StatementSyntax& syntax)
+unique_ptr<BoundStatement> Binder::BindStatementInternal(const StatementSyntax& syntax)
 {
 #define BIND_STMT(kind) \
 case SyntaxKind::kind:                                  \
@@ -338,18 +338,18 @@ case SyntaxKind::kind:                                  \
 #undef BIND_STMT
 }
 
-shared_ptr<BoundStatement> Binder::BindBlockStatement(const BlockStatementSyntax& syntax)
+unique_ptr<BoundStatement> Binder::BindBlockStatement(const BlockStatementSyntax& syntax)
 {
-	auto result = vector<shared_ptr<BoundStatement>>();
+	auto result = vector<unique_ptr<BoundStatement>>();
 	_scope = make_unique<BoundScope>(std::move(_scope));
 	auto& statements = syntax.Statements;
 	for (const auto& it : statements)
 		result.push_back(BindStatement(*it));
 	BoundScope::ResetToParent(_scope);
-	return make_shared<BoundBlockStatement>(syntax, std::move(result));
+	return make_unique<BoundBlockStatement>(syntax, std::move(result));
 }
 
-shared_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclarationSyntax& syntax)
+unique_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclarationSyntax& syntax)
 {
 	auto readOnly = syntax.Keyword.Kind() == SyntaxKind::LetKeyword;
 	auto type = BindTypeClause(syntax.TypeClause);
@@ -360,11 +360,11 @@ shared_ptr<BoundStatement> Binder::BindVariableDeclaration(const VariableDeclara
 	auto convertInitializer = BindConversion(syntax.Identifier.Location(),
 											 std::move(init), variableType);
 
-	return make_shared<BoundVariableDeclaration>(syntax, std::move(variable),
+	return make_unique<BoundVariableDeclaration>(syntax, std::move(variable),
 												 std::move(convertInitializer));
 }
 
-shared_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax& syntax)
+unique_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax& syntax)
 {
 	auto condition = BindExpression(*syntax.Condition, TYPE_BOOL);
 
@@ -380,11 +380,11 @@ shared_ptr<BoundStatement> Binder::BindIfStatement(const IfStatementSyntax& synt
 	auto elseStatement =
 		syntax.ElseClause == nullptr ?
 		nullptr : BindStatement(*syntax.ElseClause->ElseStatement);
-	return make_shared<BoundIfStatement>(syntax, std::move(condition),
+	return make_unique<BoundIfStatement>(syntax, std::move(condition),
 										 std::move(thenStatement), std::move(elseStatement));
 }
 
-shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax& syntax)
+unique_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax& syntax)
 {
 	auto condition = BindExpression(*syntax.Condition, TYPE_BOOL);
 
@@ -395,21 +395,21 @@ shared_ptr<BoundStatement> Binder::BindWhileStatement(const WhileStatementSyntax
 	}
 
 	auto [body, breakLabel, continueLabel] = BindLoopBody(*syntax.Body);
-	return make_shared<BoundWhileStatement>(syntax,
-											std::move(condition), body,
+	return make_unique<BoundWhileStatement>(syntax,
+											std::move(condition), std::move(body),
 											breakLabel, continueLabel);
 }
 
-shared_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSyntax& syntax)
+unique_ptr<BoundStatement> Binder::BindDoWhileStatement(const DoWhileStatementSyntax& syntax)
 {
 	auto [body, breakLabel, continueLabel] = BindLoopBody(*syntax.Body);
 	auto condition = BindExpression(*syntax.Condition, TYPE_BOOL);
-	return make_shared<BoundDoWhileStatement>(syntax,
-											  body, std::move(condition),
+	return make_unique<BoundDoWhileStatement>(syntax,
+											  std::move(body), std::move(condition),
 											  breakLabel, continueLabel);
 }
 
-shared_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax& syntax)
+unique_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax& syntax)
 {
 	auto lowerBound = BindExpression(*syntax.LowerBound, TYPE_INT);
 	auto upperBound = BindExpression(*syntax.UpperBound, TYPE_INT);
@@ -420,18 +420,18 @@ shared_ptr<BoundStatement> Binder::BindForStatement(const ForStatementSyntax& sy
 	auto [body, breakLabel, continueLabel] = BindLoopBody(*syntax.Body);
 
 	BoundScope::ResetToParent(_scope);
-	return make_shared<BoundForStatement>(syntax,
+	return make_unique<BoundForStatement>(syntax,
 										  std::move(variable),
 										  std::move(lowerBound), std::move(upperBound),
-										  body, breakLabel, continueLabel);
+										  std::move(body), breakLabel, continueLabel);
 }
 
 auto Binder::BindLoopBody(const StatementSyntax& syntax)
-->std::tuple<shared_ptr<BoundStatement>, BoundLabel, BoundLabel>
+->std::tuple<unique_ptr<BoundStatement>, BoundLabel, BoundLabel>
 {
 	++_labelCount;
-	auto breakLabel = BoundLabel("break" + std::to_string(_labelCount));
-	auto continueLabel = BoundLabel("continue" + std::to_string(_labelCount));
+	auto breakLabel = BoundLabel{ "break" + std::to_string(_labelCount) };
+	auto continueLabel = BoundLabel{ "continue" + std::to_string(_labelCount) };
 
 	_loopStack.emplace(breakLabel, continueLabel);
 	auto boundBody = BindStatement(syntax);
@@ -440,7 +440,7 @@ auto Binder::BindLoopBody(const StatementSyntax& syntax)
 						   std::move(continueLabel));
 }
 
-shared_ptr<BoundStatement> Binder::BindBreakStatement(const BreakStatementSyntax& syntax)
+unique_ptr<BoundStatement> Binder::BindBreakStatement(const BreakStatementSyntax& syntax)
 {
 	if (_loopStack.empty())
 	{
@@ -449,10 +449,10 @@ shared_ptr<BoundStatement> Binder::BindBreakStatement(const BreakStatementSyntax
 		return BindErrorStatement(syntax);
 	}
 	auto [brLabel, _] = _loopStack.top();
-	return make_shared<BoundGotoStatement>(syntax, brLabel);
+	return make_unique<BoundGotoStatement>(syntax, brLabel);
 }
 
-shared_ptr<BoundStatement> Binder::BindContinueStatement(const ContinueStatementSyntax& syntax)
+unique_ptr<BoundStatement> Binder::BindContinueStatement(const ContinueStatementSyntax& syntax)
 {
 	if (_loopStack.empty())
 	{
@@ -461,10 +461,10 @@ shared_ptr<BoundStatement> Binder::BindContinueStatement(const ContinueStatement
 		return BindErrorStatement(syntax);
 	}
 	auto [_, conLabel] = _loopStack.top();
-	return make_shared<BoundGotoStatement>(syntax, conLabel);
+	return make_unique<BoundGotoStatement>(syntax, conLabel);
 }
 
-shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSyntax& syntax)
+unique_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSyntax& syntax)
 {
 	auto expression = syntax.Expression ?
 		BindExpression(*syntax.Expression) : nullptr;
@@ -473,7 +473,7 @@ shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSynt
 		if (_isScript)
 		{
 			if (expression == nullptr)
-				expression = make_shared<BoundLiteralExpression>(syntax, "");
+				expression = make_unique<BoundLiteralExpression>(syntax, "");
 		} else if (expression != nullptr)
 			_diagnostics.ReportInvalidReturnWithValueInGlobalStatements(
 				syntax.Expression->Location());
@@ -494,34 +494,34 @@ shared_ptr<BoundStatement> Binder::BindReturnStatement(const ReturnStatementSynt
 											std::move(expression), _function->Type);
 		}
 	}
-	return make_shared<BoundReturnStatement>(syntax, std::move(expression));
+	return make_unique<BoundReturnStatement>(syntax, std::move(expression));
 }
 
-shared_ptr<BoundStatement> Binder::BindExpressionStatement(const ExpressionStatementSyntax& syntax)
+unique_ptr<BoundStatement> Binder::BindExpressionStatement(const ExpressionStatementSyntax& syntax)
 {
 	auto expression = BindExpression(*syntax.Expression, true);
-	return make_shared<BoundExpressionStatement>(syntax, std::move(expression));
+	return make_unique<BoundExpressionStatement>(syntax, std::move(expression));
 }
 
-shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax& syntax,
+unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax& syntax,
 												   const TypeSymbol& targetType)
 {
 	return BindConversion(syntax, targetType);
 }
 
-shared_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax& syntax,
+unique_ptr<BoundExpression> Binder::BindExpression(const ExpressionSyntax& syntax,
 												   bool canBeVoid)
 {
 	auto result = BindExpressionInternal(syntax);
 	if (!canBeVoid && result->Type() == TYPE_VOID)
 	{
 		_diagnostics.ReportExpressionMustHaveValue(syntax.Location());
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 	}
 	return result;
 }
 
-shared_ptr<BoundExpression> Binder::BindExpressionInternal(const ExpressionSyntax& syntax)
+unique_ptr<BoundExpression> Binder::BindExpressionInternal(const ExpressionSyntax& syntax)
 {
 #define BIND_EXPR(kind) \
 case SyntaxKind::kind:                                  \
@@ -549,28 +549,28 @@ case SyntaxKind::kind:                                  \
 #undef BIND_EXPR
 }
 
-shared_ptr<BoundExpression> Binder::BindParenthesizedExpression(const ParenthesizedExpressionSyntax& syntax)
+unique_ptr<BoundExpression> Binder::BindParenthesizedExpression(const ParenthesizedExpressionSyntax& syntax)
 {
 	return BindExpression(*syntax.Expression);
 }
 
-shared_ptr<BoundExpression> Binder::BindLiteralExpression(const LiteralExpressionSyntax& syntax)
+unique_ptr<BoundExpression> Binder::BindLiteralExpression(const LiteralExpressionSyntax& syntax)
 {
-	return make_shared<BoundLiteralExpression>(syntax, syntax.Value);
+	return make_unique<BoundLiteralExpression>(syntax, syntax.Value);
 }
 
-shared_ptr<BoundExpression> Binder::BindNameExpression(const NameExpressionSyntax& syntax)
+unique_ptr<BoundExpression> Binder::BindNameExpression(const NameExpressionSyntax& syntax)
 {
 	if (syntax.IdentifierToken.IsMissing()) // NOTE this token was injected by Parser::MatchToken
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 
 	auto var = FindVariableInScope(syntax.IdentifierToken);
 	if (var == nullptr)
-		return make_shared<BoundErrorExpression>(syntax);
-	return make_shared<BoundVariableExpression>(syntax, std::move(var));
+		return make_unique<BoundErrorExpression>(syntax);
+	return make_unique<BoundVariableExpression>(syntax, std::move(var));
 }
 
-shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExpressionSyntax& syntax)
+unique_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExpressionSyntax& syntax)
 {
 	auto name = syntax.IdentifierToken.Text;
 	auto boundExpression = BindExpression(*syntax.Expression);
@@ -595,11 +595,11 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 													   syntax.AssignmentToken.Text,
 													   variable->Type,
 													   boundExpression->Type());
-			return make_shared<BoundErrorExpression>(syntax);
+			return make_unique<BoundErrorExpression>(syntax);
 		}
 		auto convertExpression = BindConversion(syntax.Expression->Location(),
 												std::move(boundExpression), variable->Type);
-		return make_shared<BoundCompoundAssignmentExpression>(syntax,
+		return make_unique<BoundCompoundAssignmentExpression>(syntax,
 															  std::move(variable),
 															  std::move(op),
 															  std::move(convertExpression));
@@ -607,55 +607,55 @@ shared_ptr<BoundExpression> Binder::BindAssignmentExpression(const AssignmentExp
 	{
 		auto convertExpression = BindConversion(syntax.Expression->Location(),
 												std::move(boundExpression), variable->Type);
-		return make_shared<BoundAssignmentExpression>(syntax,
+		return make_unique<BoundAssignmentExpression>(syntax,
 													  std::move(variable),
 													  std::move(convertExpression));
 	}
 }
 
-shared_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyntax& syntax)
+unique_ptr<BoundExpression> Binder::BindUnaryExpression(const UnaryExpressionSyntax& syntax)
 {
 	auto boundOperand = BindExpression(*syntax.Operand);
 	if (boundOperand->Type() == TYPE_ERROR)
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 
 	auto boundOperator = BoundUnaryOperator::Bind(syntax.OperatorToken.Kind(),
 												  boundOperand->Type());
 	if (boundOperator.IsUseful)
 	{
-		return make_shared<BoundUnaryExpression>(syntax, boundOperator, std::move(boundOperand));
+		return make_unique<BoundUnaryExpression>(syntax, std::move(boundOperator), std::move(boundOperand));
 	} else
 	{
 		_diagnostics.ReportUndefinedUnaryOperator(syntax.OperatorToken.Location(),
 												  syntax.OperatorToken.Text, boundOperand->Type());
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 	}
 }
 
-shared_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionSyntax& syntax)
+unique_ptr<BoundExpression> Binder::BindBinaryExpression(const BinaryExpressionSyntax& syntax)
 {
 	auto boundLeft = BindExpression(*syntax.Left);
 	auto boundRight = BindExpression(*syntax.Right);
 	if (boundLeft->Type() == TYPE_ERROR
 		|| boundRight->Type() == TYPE_ERROR)
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 
 	auto boundOperator = BoundBinaryOperator::Bind(syntax.OperatorToken.Kind(),
 												   boundLeft->Type(), boundRight->Type());
 	if (boundOperator.IsUseful)
 	{
-		return make_shared<BoundBinaryExpression>(syntax, std::move(boundLeft),
-												  boundOperator, std::move(boundRight));
+		return make_unique<BoundBinaryExpression>(syntax, std::move(boundLeft),
+												  std::move(boundOperator), std::move(boundRight));
 	} else
 	{
 		_diagnostics.ReportUndefinedBinaryOperator(syntax.OperatorToken.Location(),
 												   syntax.OperatorToken.Text, boundLeft->Type(),
 												   boundRight->Type());
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 	}
 }
 
-shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSyntax& syntax)
+unique_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSyntax& syntax)
 {
 	if (syntax.Arguments.size() == 1)
 	{
@@ -664,7 +664,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 			return BindConversion(*syntax.Arguments[0], *type, true);
 	}
 
-	auto boundArguments = vector<shared_ptr<BoundExpression>>();
+	auto boundArguments = vector<unique_ptr<BoundExpression>>();
 	for (const auto& arg : syntax.Arguments)
 	{
 		auto& p = static_cast<ExpressionSyntax&>(*arg);
@@ -676,14 +676,14 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 	{
 		_diagnostics.ReportUndefinedFunction(syntax.Identifier.Location(),
 											 syntax.Identifier.Text);
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 	}
 
 	if (sp->Kind() != SymbolKind::Function)
 	{
 		_diagnostics.ReportNotAFunction(syntax.Identifier.Location(),
 										syntax.Identifier.Text);
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 	}
 
 	auto function = StaticUniquePtrCast<FunctionSymbol>(std::move(sp));
@@ -710,7 +710,7 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		_diagnostics.ReportWrongArgumentCount(
 			std::move(location), function->Name,
 			function->Parameters.size(), syntax.Arguments.size());
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 	}
 
 	for (size_t i = 0; i < syntax.Arguments.size(); ++i)
@@ -718,46 +718,46 @@ shared_ptr<BoundExpression> Binder::BindCallExpression(const CallExpressionSynta
 		auto argLocation = syntax.Arguments[i]->Location();
 		auto& arg = boundArguments[i];
 		auto& param = function->Parameters.at(i);
-		boundArguments.at(i) = BindConversion(argLocation, arg, param.Type);
+		boundArguments.at(i) = BindConversion(argLocation, arg->Clone(), param.Type);
 	}
 
-	return make_shared<BoundCallExpression>(syntax, std::move(function), boundArguments);
+	return make_unique<BoundCallExpression>(syntax, std::move(function), std::move(boundArguments));
 }
 
-shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressionSyntax& syntax)
+unique_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressionSyntax& syntax)
 {
 	auto name = syntax.Identifier.Text;
 	auto boundExpression = BindExpression(*syntax.Expression);
 
 	auto variable = FindVariableInScope(syntax.Identifier);
 	if (variable == nullptr)
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 
 	if (variable->IsReadOnly)
 	{
 		_diagnostics.ReportCannotAssign(syntax.Op.Location(), name);
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 	}
 	if (boundExpression->Type() != variable->Type)
 	{
 		_diagnostics.ReportCannotConvert(syntax.Expression->Location(),
 										 boundExpression->Type(), variable->Type);
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 	}
 	if (variable->Type != TYPE_INT)
 	{
 		_diagnostics.ReportVariableNotSupportPostfixOperator(
 			syntax.Expression->Location(), syntax.Op.Text, variable->Type);
-		return make_shared<BoundErrorExpression>(syntax);
+		return make_unique<BoundErrorExpression>(syntax);
 	}
 	switch (syntax.Op.Kind())
 	{
 		case SyntaxKind::PlusPlusToken:
-			return make_shared<BoundPostfixExpression>(syntax, std::move(variable),
+			return make_unique<BoundPostfixExpression>(syntax, std::move(variable),
 													   BoundPostfixOperatorEnum::Increment,
 													   std::move(boundExpression));
 		case SyntaxKind::MinusMinusToken:
-			return make_shared<BoundPostfixExpression>(syntax, std::move(variable),
+			return make_unique<BoundPostfixExpression>(syntax, std::move(variable),
 													   BoundPostfixOperatorEnum::Decrement,
 													   std::move(boundExpression));
 		default:
@@ -766,7 +766,7 @@ shared_ptr<BoundExpression> Binder::BindPostfixExpression(const PostfixExpressio
 	}
 }
 
-shared_ptr<BoundExpression> Binder::BindConversion(const ExpressionSyntax& syntax,
+unique_ptr<BoundExpression> Binder::BindConversion(const ExpressionSyntax& syntax,
 												   const TypeSymbol& type,
 												   bool allowExplicit)
 {
@@ -774,8 +774,8 @@ shared_ptr<BoundExpression> Binder::BindConversion(const ExpressionSyntax& synta
 	return BindConversion(syntax.Location(), std::move(expression), type, allowExplicit);
 }
 
-shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
-												   shared_ptr<BoundExpression> expression,
+unique_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
+												   unique_ptr<BoundExpression> expression,
 												   const TypeSymbol& type,
 												   bool allowExplicit)
 {
@@ -786,14 +786,14 @@ shared_ptr<BoundExpression> Binder::BindConversion(TextLocation diagLocation,
 			&& type != TYPE_ERROR)
 			_diagnostics.ReportCannotConvert(
 				std::move(diagLocation), expression->Type(), type);
-		return make_shared<BoundErrorExpression>(expression->Syntax());
+		return make_unique<BoundErrorExpression>(expression->Syntax());
 	}
 	if (!allowExplicit && conversion == ConversionEnum::Explicit)
 		_diagnostics.ReportCannotConvertImplicitly(std::move(diagLocation),
 												   expression->Type(), type);
 	if (conversion == ConversionEnum::Identity)
 		return expression;
-	return make_shared<BoundConversionExpression>(expression->Syntax(), type, std::move(expression));
+	return make_unique<BoundConversionExpression>(expression->Syntax(), type, std::move(expression));
 }
 
 unique_ptr<VariableSymbol> Binder::BindVariableDeclaration(const SyntaxToken& identifier,
@@ -918,8 +918,8 @@ BoundGlobalScope Binder::BindGlobalScope(bool isScript,
 								nullptr, nullptr, {}, {}, {});
 	}
 
-	auto statements = vector<shared_ptr<BoundStatement>>();
-	auto globalStmts = vector<const GlobalStatementSyntax*>();
+	auto statements = vector<unique_ptr<BoundStatement>>{};
+	auto globalStmts = vector<const GlobalStatementSyntax*>{};
 
 	for (const auto& tree : trees)
 	{
@@ -1064,12 +1064,19 @@ BoundProgram Binder::BindProgram(bool isScript,
 	{
 		assert(cu && "Local variable cu should be a valid pointer.");
 
+		auto stmts = vector<unique_ptr<BoundStatement>>{};
+		std::transform(globalScope->Statements.cbegin(), globalScope->Statements.cend(),
+					   std::back_inserter(stmts),
+					   [](const auto& it) { return it->Clone(); });
 		auto body = Lower(*globalScope->MainFunc,
-						  make_shared<BoundBlockStatement>(*cu, globalScope->Statements));
+						  make_unique<BoundBlockStatement>(*cu, std::move(stmts)));
 		funcBodies.emplace(globalScope->MainFunc.get(), std::move(body));
 	} else if (globalScope->ScriptFunc != nullptr)
 	{
-		auto statements = globalScope->Statements;
+		auto statements = vector<unique_ptr<BoundStatement>>{};
+		std::transform(globalScope->Statements.cbegin(), globalScope->Statements.cend(),
+					   std::back_inserter(statements),
+					   [](const auto& it) { return it->Clone(); });
 
 		// adds return to one-liner expression 
 		// otherwise return empty string ""
@@ -1079,22 +1086,22 @@ BoundProgram Binder::BindProgram(bool isScript,
 			auto& es = static_cast<const BoundExpressionStatement&>(*statements.at(0));
 			if (es.Expression->Type() != TYPE_VOID)
 			{
-				statements.at(0) = make_shared<BoundReturnStatement>(es.Expression->Syntax(),
-																	 es.Expression);
+				statements.at(0) = make_unique<BoundReturnStatement>(es.Expression->Syntax(),
+																	 es.Expression->Clone());
 			}
 		} else if (!statements.empty()
 				   && statements.back()->Kind() != BoundNodeKind::ReturnStatement)
 		{
 			assert(cu && "Local variable cu should be a valid pointer.");
 
-			auto nullValue = make_shared<BoundLiteralExpression>(*cu, "");
-			statements.push_back(make_shared<BoundReturnStatement>(*cu, nullValue));
+			auto nullValue = make_unique<BoundLiteralExpression>(*cu, "");
+			statements.push_back(make_unique<BoundReturnStatement>(*cu, std::move(nullValue)));
 		}
 
 		assert(cu && "Local variable cu should be a valid pointer.");
 
 		auto body = Lower(*globalScope->ScriptFunc,
-						  make_shared<BoundBlockStatement>(*cu, std::move(statements)));
+						  make_unique<BoundBlockStatement>(*cu, std::move(statements)));
 		funcBodies.emplace(globalScope->ScriptFunc.get(), std::move(body));
 	}
 

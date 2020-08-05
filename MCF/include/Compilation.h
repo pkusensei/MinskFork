@@ -21,8 +21,7 @@ struct BoundGlobalScope;
 struct BoundProgram;
 class SyntaxTree;
 
-extern "C" using VarMap = SymbolMap<const VariableSymbol*, ValueType,
-	SymbolEqual>;
+extern "C" using VarMap = SymbolMap<const VariableSymbol*, ValueType>;
 
 class MCF_API [[nodiscard]] EvaluationResult final
 {

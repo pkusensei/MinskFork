@@ -103,9 +103,9 @@ private:
 	unique_ptr<BasicBlock> _end;
 
 	void Connect(BasicBlock& from, BasicBlock& to,
-				 shared_ptr<BoundExpression> condition = nullptr);
+				 unique_ptr<BoundExpression> condition = nullptr);
 	void RemoveBlock(vector<unique_ptr<BasicBlock>>& blocks, BasicBlock& block);
-	shared_ptr<BoundExpression> Negate(const shared_ptr<BoundExpression>& condition)const;
+	unique_ptr<BoundExpression> Negate(const unique_ptr<BoundExpression>& condition)const;
 
 public:
 	explicit GraphBuilder()
@@ -118,12 +118,12 @@ public:
 };
 
 void ControlFlowGraph::GraphBuilder::Connect(BasicBlock& from, BasicBlock& to,
-											 shared_ptr<BoundExpression> condition)
+											 unique_ptr<BoundExpression> condition)
 {
 	if (condition && condition->Kind() == BoundNodeKind::LiteralExpression)
 	{
-		auto p = std::static_pointer_cast<BoundLiteralExpression>(condition);
-		if (p->Value().Type() == TYPE_BOOL && p->Value().ToBoolean())
+		auto p = static_cast<const BoundLiteralExpression*>(condition.get());
+		if (p && p->Value().Type() == TYPE_BOOL && p->Value().ToBoolean())
 		{
 			condition = nullptr;
 		} else
@@ -167,8 +167,8 @@ void ControlFlowGraph::GraphBuilder::RemoveBlock(vector<unique_ptr<BasicBlock>>&
 	VectorErase_If(blocks, capturePtrToErase(&block));
 }
 
-shared_ptr<BoundExpression> ControlFlowGraph::GraphBuilder::Negate(
-	const shared_ptr<BoundExpression>& condition) const
+unique_ptr<BoundExpression> ControlFlowGraph::GraphBuilder::Negate(
+	const unique_ptr<BoundExpression>& condition) const
 {
 	assert(condition->Type() == TYPE_BOOL);
 
@@ -176,10 +176,10 @@ shared_ptr<BoundExpression> ControlFlowGraph::GraphBuilder::Negate(
 	assert(op.IsUseful);
 
 	auto& s = condition->Syntax();
-	auto negated = make_shared<BoundUnaryExpression>(s, op, condition);
+	auto negated = make_unique<BoundUnaryExpression>(s, op, condition->Clone());
 
 	if (negated->ConstantValue().HasValue())
-		return make_shared<BoundLiteralExpression>(s, negated->ConstantValue());
+		return make_unique<BoundLiteralExpression>(s, negated->ConstantValue());
 	return negated;
 }
 
@@ -227,9 +227,9 @@ ControlFlowGraph ControlFlowGraph::GraphBuilder::Build(vector<unique_ptr<BasicBl
 					auto& elseBlock = next;
 					auto negatedCondition = Negate(cgs->Condition);
 					auto thenCondition = cgs->JumpIfTrue ?
-						cgs->Condition : negatedCondition;
+						cgs->Condition->Clone() : std::move(negatedCondition);
 					auto elseCondition = cgs->JumpIfTrue ?
-						negatedCondition : cgs->Condition;
+						std::move(negatedCondition) : cgs->Condition->Clone();
 					Connect(*current, *thenBlock, std::move(thenCondition));
 					Connect(*current, *elseBlock, std::move(elseCondition));
 					break;

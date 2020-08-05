@@ -112,12 +112,12 @@ void BoundNodePrinter::WriteNestedExpression(int parentPrecedence,
 {
 	if (node.Kind() == BoundNodeKind::UnaryExpression)
 	{
-		auto u = static_cast<const BoundUnaryExpression&>(node);
+		auto& u = static_cast<const BoundUnaryExpression&>(node);
 		WriteNestedExpression(parentPrecedence,
 							  GetUnaryOperatorPrecedence(u.Op.SynKind), u);
 	} else if (node.Kind() == BoundNodeKind::BinaryExpression)
 	{
-		auto b = static_cast<const BoundBinaryExpression&>(node);
+		auto& b = static_cast<const BoundBinaryExpression&>(node);
 		WriteNestedExpression(parentPrecedence,
 							  GetBinaryOperatorPrecedence(b.Op.SynKind), b);
 	} else

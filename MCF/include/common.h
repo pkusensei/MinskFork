@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -28,8 +27,6 @@ using std::vector;
 
 using std::unique_ptr;
 using std::make_unique;
-using std::shared_ptr;
-using std::make_shared;
 
 using IntegerType = int;
 
@@ -48,10 +45,9 @@ unique_ptr<To> StaticUniquePtrCast(unique_ptr<From> from)noexcept
 }
 
 template<typename Derived, typename Ret = Derived, typename T>
-unique_ptr<Ret> UniqueClone(const T* p)
+unique_ptr<Ret> UniqueClone(const T& p)
 {
-	assert(p && "Can only clone valid ptr.");
-	return make_unique<Derived>(static_cast<const Derived&>(*p));
+	return make_unique<Derived>(static_cast<const Derived&>(p));
 }
 
 }//MCF

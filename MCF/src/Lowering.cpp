@@ -36,140 +36,140 @@ template<typename Elem, typename T, typename... Args>
 }
 
 template<typename... Args>
-shared_ptr<BoundBlockStatement> Block(const SyntaxNode& syntax,
+unique_ptr<BoundBlockStatement> Block(const SyntaxNode& syntax,
 									  Args&&... statements)
 {
-	auto vec = MakeVec<shared_ptr<BoundStatement>>(std::forward<Args>(statements)...);
-	return make_shared<BoundBlockStatement>(syntax, std::move(vec));
+	auto vec = MakeVec<unique_ptr<BoundStatement>>(std::forward<Args>(statements)...);
+	return make_unique<BoundBlockStatement>(syntax, std::move(vec));
 }
 
-shared_ptr<BoundVariableDeclaration> VariableDeclaration(const SyntaxNode& syntax,
+unique_ptr<BoundVariableDeclaration> VariableDeclaration(const SyntaxNode& syntax,
 														 unique_ptr<VariableSymbol> symbol,
-														 shared_ptr<BoundExpression> initializer)
+														 unique_ptr<BoundExpression> initializer)
 {
-	return make_shared<BoundVariableDeclaration>(syntax, std::move(symbol), std::move(initializer));
+	return make_unique<BoundVariableDeclaration>(syntax, std::move(symbol), std::move(initializer));
 }
 
-shared_ptr<BoundVariableDeclaration> VariableDeclarationInternal(const SyntaxNode& syntax,
+unique_ptr<BoundVariableDeclaration> VariableDeclarationInternal(const SyntaxNode& syntax,
 																 string name,
-																 shared_ptr<BoundExpression> initializer,
+																 unique_ptr<BoundExpression> initializer,
 																 bool isReadOnly)
 {
 	auto local = make_unique<LocalVariableSymbol>(name, isReadOnly,
 												  initializer->Type(),
 												  initializer->ConstantValue());
-	return make_shared<BoundVariableDeclaration>(syntax, std::move(local), std::move(initializer));
+	return make_unique<BoundVariableDeclaration>(syntax, std::move(local), std::move(initializer));
 }
 
-[[maybe_unused]] shared_ptr<BoundVariableDeclaration> VariableDeclaration(const SyntaxNode& syntax, string name,
-																		  shared_ptr<BoundExpression> initializer)
+[[maybe_unused]] unique_ptr<BoundVariableDeclaration> VariableDeclaration(const SyntaxNode& syntax, string name,
+																		  unique_ptr<BoundExpression> initializer)
 {
 	return VariableDeclarationInternal(syntax, std::move(name), std::move(initializer), false);
 }
 
-shared_ptr<BoundVariableDeclaration> ConstantDeclaration(const SyntaxNode& syntax,
+unique_ptr<BoundVariableDeclaration> ConstantDeclaration(const SyntaxNode& syntax,
 														 string name,
-														 shared_ptr<BoundExpression> initializer)
+														 unique_ptr<BoundExpression> initializer)
 {
 	return VariableDeclarationInternal(syntax, std::move(name), std::move(initializer), true);
 }
 
-shared_ptr<BoundWhileStatement> While(const SyntaxNode& syntax, shared_ptr<BoundExpression> condition,
-									  shared_ptr<BoundStatement> body, BoundLabel breakLabel, BoundLabel continueLabel)
+unique_ptr<BoundWhileStatement> While(const SyntaxNode& syntax, unique_ptr<BoundExpression> condition,
+									  unique_ptr<BoundStatement> body, BoundLabel breakLabel, BoundLabel continueLabel)
 {
-	return make_shared<BoundWhileStatement>(syntax, std::move(condition), std::move(body),
+	return make_unique<BoundWhileStatement>(syntax, std::move(condition), std::move(body),
 											std::move(breakLabel), std::move(continueLabel));
 }
 
-shared_ptr<BoundGotoStatement> Goto(const SyntaxNode& syntax, BoundLabel label)
+unique_ptr<BoundGotoStatement> Goto(const SyntaxNode& syntax, BoundLabel label)
 {
-	return make_shared<BoundGotoStatement>(syntax, std::move(label));
+	return make_unique<BoundGotoStatement>(syntax, std::move(label));
 }
 
-shared_ptr<BoundConditionalGotoStatement> GotoTrue(const SyntaxNode& syntax,
+unique_ptr<BoundConditionalGotoStatement> GotoTrue(const SyntaxNode& syntax,
 												   BoundLabel label,
-												   shared_ptr<BoundExpression> condition)
+												   unique_ptr<BoundExpression> condition)
 {
-	return make_shared<BoundConditionalGotoStatement>(syntax, std::move(label),
+	return make_unique<BoundConditionalGotoStatement>(syntax, std::move(label),
 													  std::move(condition), true);
 }
 
-shared_ptr<BoundConditionalGotoStatement> GotoFalse(const SyntaxNode& syntax,
+unique_ptr<BoundConditionalGotoStatement> GotoFalse(const SyntaxNode& syntax,
 													BoundLabel label,
-													shared_ptr<BoundExpression> condition)
+													unique_ptr<BoundExpression> condition)
 {
-	return make_shared<BoundConditionalGotoStatement>(syntax, std::move(label),
+	return make_unique<BoundConditionalGotoStatement>(syntax, std::move(label),
 													  std::move(condition), false);
 }
 
-shared_ptr<BoundLabelStatement> Label(const SyntaxNode& syntax, BoundLabel label)
+unique_ptr<BoundLabelStatement> Label(const SyntaxNode& syntax, BoundLabel label)
 {
-	return make_shared<BoundLabelStatement>(syntax, std::move(label));
+	return make_unique<BoundLabelStatement>(syntax, std::move(label));
 }
 
-shared_ptr<BoundNopStatement> Nop(const SyntaxNode& syntax)
+unique_ptr<BoundNopStatement> Nop(const SyntaxNode& syntax)
 {
-	return make_shared<BoundNopStatement>(syntax);
+	return make_unique<BoundNopStatement>(syntax);
 }
 
-shared_ptr<BoundBinaryExpression> Binary(const SyntaxNode& syntax,
-										 shared_ptr<BoundExpression> left,
+unique_ptr<BoundBinaryExpression> Binary(const SyntaxNode& syntax,
+										 unique_ptr<BoundExpression> left,
 										 SyntaxKind kind,
-										 shared_ptr<BoundExpression> right)
+										 unique_ptr<BoundExpression> right)
 {
 	auto op = BoundBinaryOperator::Bind(kind, left->Type(), right->Type());
 	assert(op.IsUseful);
-	return make_shared<BoundBinaryExpression>(syntax, std::move(left),
+	return make_unique<BoundBinaryExpression>(syntax, std::move(left),
 											  std::move(op), std::move(right));
 }
 
-shared_ptr<BoundBinaryExpression> Add(const SyntaxNode& syntax,
-									  shared_ptr<BoundExpression> left,
-									  shared_ptr<BoundExpression> right)
+unique_ptr<BoundBinaryExpression> Add(const SyntaxNode& syntax,
+									  unique_ptr<BoundExpression> left,
+									  unique_ptr<BoundExpression> right)
 {
 	return Binary(syntax, std::move(left), SyntaxKind::PlusToken, std::move(right));
 }
 
-shared_ptr<BoundBinaryExpression> LessOrEqual(const SyntaxNode& syntax,
-											  shared_ptr<BoundExpression> left,
-											  shared_ptr<BoundExpression> right)
+unique_ptr<BoundBinaryExpression> LessOrEqual(const SyntaxNode& syntax,
+											  unique_ptr<BoundExpression> left,
+											  unique_ptr<BoundExpression> right)
 {
 	return Binary(syntax, std::move(left), SyntaxKind::LessOrEqualsToken, std::move(right));
 }
 
-shared_ptr<BoundLiteralExpression> Literal(const SyntaxNode& syntax, ValueType literal)
+unique_ptr<BoundLiteralExpression> Literal(const SyntaxNode& syntax, ValueType literal)
 {
 	assert(literal.Type() == TYPE_BOOL
 		   || literal.Type() == TYPE_INT
 		   || literal.Type() == TYPE_STRING);
 
-	return make_shared<BoundLiteralExpression>(syntax, std::move(literal));
+	return make_unique<BoundLiteralExpression>(syntax, std::move(literal));
 }
 
-shared_ptr<BoundExpressionStatement> Increment(const SyntaxNode& syntax,
-											   shared_ptr<BoundVariableExpression> variable)
+unique_ptr<BoundExpressionStatement> Increment(const SyntaxNode& syntax,
+											   unique_ptr<BoundVariableExpression> variable)
 {
-	auto increment = Add(syntax, variable, Literal(syntax, 1));
-	auto incrementAssign = make_shared<BoundAssignmentExpression>(syntax,
+	auto increment = Add(syntax, variable->Clone(), Literal(syntax, 1));
+	auto incrementAssign = make_unique<BoundAssignmentExpression>(syntax,
 																  variable->Variable->UniqueCloneAs<VariableSymbol>(),
 																  std::move(increment));
-	return make_shared<BoundExpressionStatement>(syntax, std::move(incrementAssign));
+	return make_unique<BoundExpressionStatement>(syntax, std::move(incrementAssign));
 }
 
-[[maybe_unused]] shared_ptr<BoundUnaryExpression> Not(const SyntaxNode& syntax,
-													  shared_ptr<BoundExpression> condition)
+[[maybe_unused]] unique_ptr<BoundUnaryExpression> Not(const SyntaxNode& syntax,
+													  unique_ptr<BoundExpression> condition)
 {
 	assert(condition->Type() == TYPE_BOOL);
 	auto op = BoundUnaryOperator::Bind(SyntaxKind::BangToken, TYPE_BOOL);
 	assert(op.IsUseful);
-	return make_shared<BoundUnaryExpression>(syntax, std::move(op), std::move(condition));
+	return make_unique<BoundUnaryExpression>(syntax, std::move(op), std::move(condition));
 }
 
-shared_ptr<BoundVariableExpression> Variable(const SyntaxNode& syntax,
-											 const shared_ptr<BoundVariableDeclaration>& variable)
+unique_ptr<BoundVariableExpression> Variable(const SyntaxNode& syntax,
+											 const BoundVariableDeclaration& variable)
 {
-	return make_shared<BoundVariableExpression>(syntax, 
-												variable->Variable->UniqueCloneAs<VariableSymbol>());
+	return make_unique<BoundVariableExpression>(syntax,
+												variable.Variable->UniqueCloneAs<VariableSymbol>());
 }
 
 } // namespace
@@ -177,44 +177,44 @@ shared_ptr<BoundVariableExpression> Variable(const SyntaxNode& syntax,
 class BoundTreeRewriter
 {
 protected:
-	virtual shared_ptr<BoundStatement> RewriteBlockStatement(shared_ptr<BoundBlockStatement> node);
-	virtual shared_ptr<BoundStatement> RewriteNopStatement(shared_ptr<BoundNopStatement> node);
-	virtual shared_ptr<BoundStatement> RewriteVariableDeclaration(shared_ptr<BoundVariableDeclaration> node);
-	virtual shared_ptr<BoundStatement> RewriteIfStatement(shared_ptr<BoundIfStatement> node);
-	virtual shared_ptr<BoundStatement> RewriteWhileStatement(shared_ptr<BoundWhileStatement> node);
-	virtual shared_ptr<BoundStatement> RewriteDoWhileStatement(shared_ptr<BoundDoWhileStatement> node);
-	virtual shared_ptr<BoundStatement> RewriteForStatement(shared_ptr<BoundForStatement> node);
-	virtual shared_ptr<BoundStatement> RewriteLabelStatement(shared_ptr<BoundLabelStatement> node);
-	virtual shared_ptr<BoundStatement> RewriteGotoStatement(shared_ptr<BoundGotoStatement> node);
-	virtual shared_ptr<BoundStatement> RewriteConditionalGotoStatement(shared_ptr<BoundConditionalGotoStatement> node);
-	virtual shared_ptr<BoundStatement> RewriteReturnStatement(shared_ptr<BoundReturnStatement> node);
-	virtual shared_ptr<BoundStatement> RewriteExpressionStatement(shared_ptr<BoundExpressionStatement> node);
+	virtual unique_ptr<BoundStatement> RewriteBlockStatement(unique_ptr<BoundBlockStatement> node);
+	virtual unique_ptr<BoundStatement> RewriteNopStatement(unique_ptr<BoundNopStatement> node);
+	virtual unique_ptr<BoundStatement> RewriteVariableDeclaration(unique_ptr<BoundVariableDeclaration> node);
+	virtual unique_ptr<BoundStatement> RewriteIfStatement(unique_ptr<BoundIfStatement> node);
+	virtual unique_ptr<BoundStatement> RewriteWhileStatement(unique_ptr<BoundWhileStatement> node);
+	virtual unique_ptr<BoundStatement> RewriteDoWhileStatement(unique_ptr<BoundDoWhileStatement> node);
+	virtual unique_ptr<BoundStatement> RewriteForStatement(unique_ptr<BoundForStatement> node);
+	virtual unique_ptr<BoundStatement> RewriteLabelStatement(unique_ptr<BoundLabelStatement> node);
+	virtual unique_ptr<BoundStatement> RewriteGotoStatement(unique_ptr<BoundGotoStatement> node);
+	virtual unique_ptr<BoundStatement> RewriteConditionalGotoStatement(unique_ptr<BoundConditionalGotoStatement> node);
+	virtual unique_ptr<BoundStatement> RewriteReturnStatement(unique_ptr<BoundReturnStatement> node);
+	virtual unique_ptr<BoundStatement> RewriteExpressionStatement(unique_ptr<BoundExpressionStatement> node);
 
-	virtual shared_ptr<BoundExpression> RewriteErrorExpression(shared_ptr<BoundErrorExpression> node);
-	virtual shared_ptr<BoundExpression> RewriteLiteralExpression(shared_ptr<BoundLiteralExpression> node);
-	virtual shared_ptr<BoundExpression> RewriteVariableExpression(shared_ptr<BoundVariableExpression> node);
-	virtual shared_ptr<BoundExpression> RewriteAssignmentExpression(shared_ptr<BoundAssignmentExpression> node);
-	virtual shared_ptr<BoundExpression> RewriteCompoundAssignmentExpression(shared_ptr<BoundCompoundAssignmentExpression> node);
-	virtual shared_ptr<BoundExpression> RewriteUnaryExpression(shared_ptr<BoundUnaryExpression> node);
-	virtual shared_ptr<BoundExpression> RewriteBinaryExpression(shared_ptr<BoundBinaryExpression> node);
-	virtual shared_ptr<BoundExpression> RewriteCallExpression(shared_ptr<BoundCallExpression> node);
-	virtual shared_ptr<BoundExpression> RewriteConversionExpression(shared_ptr<BoundConversionExpression> node);
-	virtual shared_ptr<BoundExpression> RewritePostfixExpression(shared_ptr<BoundPostfixExpression> node);
+	virtual unique_ptr<BoundExpression> RewriteErrorExpression(unique_ptr<BoundErrorExpression> node);
+	virtual unique_ptr<BoundExpression> RewriteLiteralExpression(unique_ptr<BoundLiteralExpression> node);
+	virtual unique_ptr<BoundExpression> RewriteVariableExpression(unique_ptr<BoundVariableExpression> node);
+	virtual unique_ptr<BoundExpression> RewriteAssignmentExpression(unique_ptr<BoundAssignmentExpression> node);
+	virtual unique_ptr<BoundExpression> RewriteCompoundAssignmentExpression(unique_ptr<BoundCompoundAssignmentExpression> node);
+	virtual unique_ptr<BoundExpression> RewriteUnaryExpression(unique_ptr<BoundUnaryExpression> node);
+	virtual unique_ptr<BoundExpression> RewriteBinaryExpression(unique_ptr<BoundBinaryExpression> node);
+	virtual unique_ptr<BoundExpression> RewriteCallExpression(unique_ptr<BoundCallExpression> node);
+	virtual unique_ptr<BoundExpression> RewriteConversionExpression(unique_ptr<BoundConversionExpression> node);
+	virtual unique_ptr<BoundExpression> RewritePostfixExpression(unique_ptr<BoundPostfixExpression> node);
 
 public:
 	virtual ~BoundTreeRewriter() = default;
 
-	virtual shared_ptr<BoundStatement> RewriteStatement(shared_ptr<BoundStatement> node);
-	virtual shared_ptr<BoundExpression> RewriteExpression(shared_ptr<BoundExpression> node);
+	virtual unique_ptr<BoundStatement> RewriteStatement(unique_ptr<BoundStatement> node);
+	virtual unique_ptr<BoundExpression> RewriteExpression(unique_ptr<BoundExpression> node);
 };
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(shared_ptr<BoundStatement> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteStatement(unique_ptr<BoundStatement> node)
 {
 #define REWRITE_STMT(kind) \
-case BoundNodeKind::kind:                                            \
-{                                                                    \
-	auto p = std::static_pointer_cast<Bound##kind>(std::move(node)); \
-	return Rewrite##kind(std::move(p));                              \
+case BoundNodeKind::kind:                                       \
+{                                                               \
+	auto p = StaticUniquePtrCast<Bound##kind>(std::move(node)); \
+	return Rewrite##kind(std::move(p));                         \
 }
 
 	switch (node->Kind())
@@ -242,15 +242,15 @@ case BoundNodeKind::kind:                                            \
 #undef REWRITE_STMT
 }
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(shared_ptr<BoundBlockStatement> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(unique_ptr<BoundBlockStatement> node)
 {
-	auto result = vector<shared_ptr<BoundStatement>>();
+	auto result = vector<unique_ptr<BoundStatement>>();
 	auto& statements = node->Statements;
 	for (size_t i = 0; i < statements.size(); ++i)
 	{
 		auto& oldStmt = statements.at(i);
-		auto newStmt = RewriteStatement(oldStmt);
-		if (newStmt == oldStmt)
+		auto newStmt = RewriteStatement(oldStmt->Clone());
+		if (*newStmt == *oldStmt)
 		{
 			if (!result.empty())
 				result.push_back(std::move(newStmt));
@@ -258,7 +258,7 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(shared_ptr<B
 		{
 			if (result.empty())
 				for (size_t j = 0; j < i; ++j)
-					result.push_back(statements.at(j));
+					result.push_back(std::move(statements.at(j)));
 			result.push_back(std::move(newStmt));
 		}
 	}
@@ -266,124 +266,126 @@ shared_ptr<BoundStatement> BoundTreeRewriter::RewriteBlockStatement(shared_ptr<B
 		return node;
 	auto& s = node->Syntax();
 
-	return make_shared<BoundBlockStatement>(s, std::move(result));
+	return make_unique<BoundBlockStatement>(s, std::move(result));
 }
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteNopStatement(shared_ptr<BoundNopStatement> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteNopStatement(unique_ptr<BoundNopStatement> node)
 {
 	return node;
 }
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteVariableDeclaration(shared_ptr<BoundVariableDeclaration> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteVariableDeclaration(unique_ptr<BoundVariableDeclaration> node)
 {
-	auto initializer = RewriteExpression(node->Initializer);
-	if (initializer == node->Initializer)
+	auto initializer = RewriteExpression(node->Initializer->Clone());
+	if (*initializer == *node->Initializer)
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundVariableDeclaration>(s, node->Variable->UniqueCloneAs<VariableSymbol>(),
-												 std::move(initializer));
+	return VariableDeclaration(s, node->Variable->UniqueCloneAs<VariableSymbol>(),
+							   std::move(initializer));
 }
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteIfStatement(shared_ptr<BoundIfStatement> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteIfStatement(unique_ptr<BoundIfStatement> node)
 {
-	auto condition = RewriteExpression(node->Condition);
-	auto thenStatement = RewriteStatement(node->ThenStatement);
+	auto condition = RewriteExpression(node->Condition->Clone());
+	auto thenStatement = RewriteStatement(node->ThenStatement->Clone());
 	auto elseStatement = node->ElseStatement == nullptr ?
-		nullptr : RewriteStatement(node->ElseStatement);
-	if (condition == node->Condition
-		&& thenStatement == node->ThenStatement
-		&& elseStatement == node->ElseStatement)
-		return node;
+		nullptr : RewriteStatement(node->ElseStatement->Clone());
+	if (*condition == *node->Condition
+		&& *thenStatement == *node->ThenStatement)
+	{
+		if (elseStatement && *elseStatement == *node->ElseStatement)
+			return node;
+	}
 	auto& s = node->Syntax();
-	return make_shared<BoundIfStatement>(s, std::move(condition),
+	return make_unique<BoundIfStatement>(s, std::move(condition),
 										 std::move(thenStatement), std::move(elseStatement));
 }
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteWhileStatement(shared_ptr<BoundWhileStatement> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteWhileStatement(unique_ptr<BoundWhileStatement> node)
 {
-	auto condition = RewriteExpression(node->Condition);
-	auto body = RewriteStatement(node->Body);
-	if (condition == node->Condition && body == node->Body)
+	auto condition = RewriteExpression(node->Condition->Clone());
+	auto body = RewriteStatement(node->Body->Clone());
+	if (*condition == *node->Condition && *body == *node->Body)
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundWhileStatement>(s, std::move(condition), std::move(body),
-											node->BreakLabel, node->ContinueLabel);
+	return While(s, std::move(condition), std::move(body),
+				 node->BreakLabel, node->ContinueLabel);
 }
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteDoWhileStatement(shared_ptr<BoundDoWhileStatement> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteDoWhileStatement(unique_ptr<BoundDoWhileStatement> node)
 {
-	auto body = RewriteStatement(node->Body);
-	auto condition = RewriteExpression(node->Condition);
-	if (body == node->Body && condition == node->Condition)
+	auto body = RewriteStatement(node->Body->Clone());
+	auto condition = RewriteExpression(node->Condition->Clone());
+	if (*body == *node->Body && *condition == *node->Condition)
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundDoWhileStatement>(s, std::move(body), std::move(condition),
+	return make_unique<BoundDoWhileStatement>(s, std::move(body), std::move(condition),
 											  node->BreakLabel, node->ContinueLabel);
 }
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteForStatement(shared_ptr<BoundForStatement> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteForStatement(unique_ptr<BoundForStatement> node)
 {
-	auto lowerBound = RewriteExpression(node->LowerBound);
-	auto upperBound = RewriteExpression(node->UpperBound);
-	auto body = RewriteStatement(node->Body);
-	if (lowerBound == node->LowerBound
-		&& upperBound == node->UpperBound
-		&& body == node->Body)
+	auto lowerBound = RewriteExpression(node->LowerBound->Clone());
+	auto upperBound = RewriteExpression(node->UpperBound->Clone());
+	auto body = RewriteStatement(node->Body->Clone());
+	if (*lowerBound == *node->LowerBound
+		&& *upperBound == *node->UpperBound
+		&& *body == *node->Body)
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundForStatement>(s, node->Variable->UniqueCloneAs<VariableSymbol>(),
+	return make_unique<BoundForStatement>(s, node->Variable->UniqueCloneAs<VariableSymbol>(),
 										  std::move(lowerBound), std::move(upperBound),
 										  std::move(body),
 										  node->BreakLabel, node->ContinueLabel);
 }
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteLabelStatement(shared_ptr<BoundLabelStatement> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteLabelStatement(unique_ptr<BoundLabelStatement> node)
 {
 	return node;
 }
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteGotoStatement(shared_ptr<BoundGotoStatement> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteGotoStatement(unique_ptr<BoundGotoStatement> node)
 {
 	return node;
 }
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteConditionalGotoStatement(shared_ptr<BoundConditionalGotoStatement> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteConditionalGotoStatement(unique_ptr<BoundConditionalGotoStatement> node)
 {
-	auto condition = RewriteExpression(node->Condition);
-	if (condition == node->Condition)
+	auto condition = RewriteExpression(node->Condition->Clone());
+	if (*condition == *node->Condition)
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundConditionalGotoStatement>(s, node->Label,
+	return make_unique<BoundConditionalGotoStatement>(s, node->Label,
 													  std::move(condition), node->JumpIfTrue);
 }
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteReturnStatement(shared_ptr<BoundReturnStatement> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteReturnStatement(unique_ptr<BoundReturnStatement> node)
 {
 	auto expression = node->Expression == nullptr ?
-		nullptr : RewriteExpression(node->Expression);
+		nullptr : RewriteExpression(node->Expression->Clone());
 
-	if (expression == node->Expression)
+	if (expression && *expression == *node->Expression)
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundReturnStatement>(s, std::move(expression));
+	return make_unique<BoundReturnStatement>(s, std::move(expression));
 }
 
-shared_ptr<BoundStatement> BoundTreeRewriter::RewriteExpressionStatement(shared_ptr<BoundExpressionStatement> node)
+unique_ptr<BoundStatement> BoundTreeRewriter::RewriteExpressionStatement(unique_ptr<BoundExpressionStatement> node)
 {
-	auto expression = RewriteExpression(node->Expression);
-	if (expression == node->Expression)
+	auto expression = RewriteExpression(node->Expression->Clone());
+	if (*expression == *node->Expression)
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundExpressionStatement>(s, std::move(expression));
+	return make_unique<BoundExpressionStatement>(s, std::move(expression));
 }
 
-shared_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(shared_ptr<BoundExpression> node)
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteExpression(unique_ptr<BoundExpression> node)
 {
 #define REWRITE_EXPR(kind) \
-case BoundNodeKind::kind:                                            \
-{                                                                    \
-	auto p = std::static_pointer_cast<Bound##kind>(std::move(node)); \
-	return Rewrite##kind(std::move(p));                              \
+case BoundNodeKind::kind:                                       \
+{                                                               \
+	auto p = StaticUniquePtrCast<Bound##kind>(std::move(node)); \
+	return Rewrite##kind(std::move(p));                         \
 }
 
 	switch (node->Kind())
@@ -409,72 +411,72 @@ case BoundNodeKind::kind:                                            \
 #undef REWRITE_EXPR
 }
 
-shared_ptr<BoundExpression> BoundTreeRewriter::RewriteErrorExpression(shared_ptr<BoundErrorExpression> node)
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteErrorExpression(unique_ptr<BoundErrorExpression> node)
 {
 	return node;
 }
 
-shared_ptr<BoundExpression> BoundTreeRewriter::RewriteLiteralExpression(shared_ptr<BoundLiteralExpression> node)
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteLiteralExpression(unique_ptr<BoundLiteralExpression> node)
 {
 	return node;
 }
 
-shared_ptr<BoundExpression> BoundTreeRewriter::RewriteVariableExpression(shared_ptr<BoundVariableExpression> node)
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteVariableExpression(unique_ptr<BoundVariableExpression> node)
 {
 	return node;
 }
 
-shared_ptr<BoundExpression> BoundTreeRewriter::RewriteAssignmentExpression(shared_ptr<BoundAssignmentExpression> node)
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteAssignmentExpression(unique_ptr<BoundAssignmentExpression> node)
 {
-	auto expression = RewriteExpression(node->Expression);
-	if (expression == node->Expression)
+	auto expression = RewriteExpression(node->Expression->Clone());
+	if (*expression == *node->Expression)
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundAssignmentExpression>(s, node->Variable->UniqueCloneAs<VariableSymbol>(),
+	return make_unique<BoundAssignmentExpression>(s, node->Variable->UniqueCloneAs<VariableSymbol>(),
 												  std::move(expression));
 }
 
-shared_ptr<BoundExpression> BoundTreeRewriter::RewriteCompoundAssignmentExpression(shared_ptr<BoundCompoundAssignmentExpression> node)
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteCompoundAssignmentExpression(unique_ptr<BoundCompoundAssignmentExpression> node)
 {
 	auto& s = node->Syntax();
 
-	auto variable = make_shared<BoundVariableExpression>(s, node->Variable->UniqueCloneAs<VariableSymbol>());
-	auto binary = make_shared<BoundBinaryExpression>(s, std::move(variable),
+	auto variable = make_unique<BoundVariableExpression>(s, node->Variable->UniqueCloneAs<VariableSymbol>());
+	auto binary = make_unique<BoundBinaryExpression>(s, std::move(variable),
 													 node->Op,
-													 node->Expression);
-	auto assignment = make_shared<BoundAssignmentExpression>(s, node->Variable->UniqueCloneAs<VariableSymbol>(),
+													 std::move(node->Expression));
+	auto assignment = make_unique<BoundAssignmentExpression>(s, node->Variable->UniqueCloneAs<VariableSymbol>(),
 															 std::move(binary));
 
 	return RewriteAssignmentExpression(std::move(assignment));
 }
 
-shared_ptr<BoundExpression> BoundTreeRewriter::RewriteUnaryExpression(shared_ptr<BoundUnaryExpression> node)
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteUnaryExpression(unique_ptr<BoundUnaryExpression> node)
 {
-	auto operand = RewriteExpression(node->Operand);
-	if (operand == node->Operand)
+	auto operand = RewriteExpression(node->Operand->Clone());
+	if (*operand == *node->Operand)
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundUnaryExpression>(s, node->Op, std::move(operand));
+	return make_unique<BoundUnaryExpression>(s, node->Op, std::move(operand));
 }
 
-shared_ptr<BoundExpression> BoundTreeRewriter::RewriteBinaryExpression(shared_ptr<BoundBinaryExpression> node)
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteBinaryExpression(unique_ptr<BoundBinaryExpression> node)
 {
-	auto left = RewriteExpression(node->Left);
-	auto right = RewriteExpression(node->Right);
-	if (left == node->Left && right == node->Right)
+	auto left = RewriteExpression(node->Left->Clone());
+	auto right = RewriteExpression(node->Right->Clone());
+	if (*left == *node->Left && *right == *node->Right)
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundBinaryExpression>(s, std::move(left), node->Op, std::move(right));
+	return make_unique<BoundBinaryExpression>(s, std::move(left), node->Op, std::move(right));
 }
 
-shared_ptr<BoundExpression> BoundTreeRewriter::RewriteCallExpression(shared_ptr<BoundCallExpression> node)
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteCallExpression(unique_ptr<BoundCallExpression> node)
 {
-	auto result = vector<shared_ptr<BoundExpression>>();
+	auto result = vector<unique_ptr<BoundExpression>>();
 	for (size_t i = 0; i < node->Arguments.size(); ++i)
 	{
 		auto& oldArg = node->Arguments.at(i);
-		auto newArg = RewriteExpression(oldArg);
-		if (newArg == oldArg)
+		auto newArg = RewriteExpression(oldArg->Clone());
+		if (*newArg == *oldArg)
 		{
 			if (!result.empty())
 				result.push_back(std::move(newArg));
@@ -482,53 +484,53 @@ shared_ptr<BoundExpression> BoundTreeRewriter::RewriteCallExpression(shared_ptr<
 		{
 			if (result.empty())
 				for (size_t j = 0; j < i; ++j)
-					result.push_back(node->Arguments.at(j));
+					result.push_back(std::move(node->Arguments.at(j)));
 			result.push_back(std::move(newArg));
 		}
 	}
 	if (result.empty())
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundCallExpression>(s, node->Function->UniqueCloneAs<FunctionSymbol>(),
+	return make_unique<BoundCallExpression>(s, node->Function->UniqueCloneAs<FunctionSymbol>(),
 											std::move(result));
 }
 
-shared_ptr<BoundExpression> BoundTreeRewriter::RewriteConversionExpression(shared_ptr<BoundConversionExpression> node)
+unique_ptr<BoundExpression> BoundTreeRewriter::RewriteConversionExpression(unique_ptr<BoundConversionExpression> node)
 {
-	auto expression = RewriteExpression(node->Expression);
-	if (expression == node->Expression)
+	auto expression = RewriteExpression(node->Expression->Clone());
+	if (*expression == *node->Expression)
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundConversionExpression>(s, node->Type(), std::move(expression));
+	return make_unique<BoundConversionExpression>(s, node->Type(), std::move(expression));
 }
 
-shared_ptr<BoundExpression> BoundTreeRewriter::RewritePostfixExpression(shared_ptr<BoundPostfixExpression> node)
+unique_ptr<BoundExpression> BoundTreeRewriter::RewritePostfixExpression(unique_ptr<BoundPostfixExpression> node)
 {
-	auto expression = RewriteExpression(node->Expression);
-	if (expression == node->Expression)
+	auto expression = RewriteExpression(node->Expression->Clone());
+	if (*expression == *node->Expression)
 		return node;
 	auto& s = node->Syntax();
-	return make_shared<BoundPostfixExpression>(s, node->Variable->UniqueCloneAs<VariableSymbol>(),
+	return make_unique<BoundPostfixExpression>(s, node->Variable->UniqueCloneAs<VariableSymbol>(),
 											   node->OperatorKind, std::move(expression));
 }
 
 class Lowerer final :public BoundTreeRewriter
 {
 protected:
-	shared_ptr<BoundStatement> RewriteIfStatement(shared_ptr<BoundIfStatement> node)override;
-	shared_ptr<BoundStatement> RewriteWhileStatement(shared_ptr<BoundWhileStatement> node)override;
-	shared_ptr<BoundStatement> RewriteDoWhileStatement(shared_ptr<BoundDoWhileStatement> node)override;
-	shared_ptr<BoundStatement> RewriteForStatement(shared_ptr<BoundForStatement> node)override;
-	shared_ptr<BoundStatement> RewriteConditionalGotoStatement(shared_ptr<BoundConditionalGotoStatement> node)override;
+	unique_ptr<BoundStatement> RewriteIfStatement(unique_ptr<BoundIfStatement> node)override;
+	unique_ptr<BoundStatement> RewriteWhileStatement(unique_ptr<BoundWhileStatement> node)override;
+	unique_ptr<BoundStatement> RewriteDoWhileStatement(unique_ptr<BoundDoWhileStatement> node)override;
+	unique_ptr<BoundStatement> RewriteForStatement(unique_ptr<BoundForStatement> node)override;
+	unique_ptr<BoundStatement> RewriteConditionalGotoStatement(unique_ptr<BoundConditionalGotoStatement> node)override;
 
-	shared_ptr<BoundExpression> RewriteBinaryExpression(shared_ptr<BoundBinaryExpression> node)override;
+	unique_ptr<BoundExpression> RewriteBinaryExpression(unique_ptr<BoundBinaryExpression> node)override;
 
 public:
-	shared_ptr<BoundExpression> RewriteExpression(shared_ptr<BoundExpression> node)override;
+	unique_ptr<BoundExpression> RewriteExpression(unique_ptr<BoundExpression> node)override;
 
 };
 
-shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStatement> node)
+unique_ptr<BoundStatement> Lowerer::RewriteIfStatement(unique_ptr<BoundIfStatement> node)
 {
 	auto& s = node->Syntax();
 
@@ -540,8 +542,8 @@ shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStateme
 		//      A std::move here might invalidate any BoundLabel
 		auto result = Block(
 			s,
-			GotoFalse(s, endLabel, node->Condition),
-			node->ThenStatement,
+			GotoFalse(s, endLabel, std::move(node->Condition)),
+			std::move(node->ThenStatement),
 			Label(s, endLabel)
 		);
 		return RewriteStatement(std::move(result));
@@ -551,11 +553,11 @@ shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStateme
 		auto endLabel = BoundLabel("end");
 		auto result = Block(
 			s,
-			GotoFalse(s, elseLabel, node->Condition),
-			node->ThenStatement,
+			GotoFalse(s, elseLabel, std::move(node->Condition)),
+			std::move(node->ThenStatement),
 			Goto(s, endLabel),
 			Label(s, elseLabel),
-			node->ElseStatement,
+			std::move(node->ElseStatement),
 			Label(s, endLabel)
 		);
 
@@ -563,7 +565,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteIfStatement(shared_ptr<BoundIfStateme
 	}
 }
 
-shared_ptr<BoundStatement> Lowerer::RewriteWhileStatement(shared_ptr<BoundWhileStatement> node)
+unique_ptr<BoundStatement> Lowerer::RewriteWhileStatement(unique_ptr<BoundWhileStatement> node)
 {
 	auto& s = node->Syntax();
 
@@ -572,16 +574,16 @@ shared_ptr<BoundStatement> Lowerer::RewriteWhileStatement(shared_ptr<BoundWhileS
 		s,
 		Goto(s, node->ContinueLabel),
 		Label(s, bodyLabel),
-		node->Body,
+		std::move(node->Body),
 		Label(s, node->ContinueLabel),
-		GotoTrue(s, bodyLabel, node->Condition),
+		GotoTrue(s, bodyLabel, std::move(node->Condition)),
 		Label(s, node->BreakLabel)
 	);
 
 	return RewriteStatement(std::move(result));
 }
 
-shared_ptr<BoundStatement> Lowerer::RewriteDoWhileStatement(shared_ptr<BoundDoWhileStatement> node)
+unique_ptr<BoundStatement> Lowerer::RewriteDoWhileStatement(unique_ptr<BoundDoWhileStatement> node)
 {
 	auto& s = node->Syntax();
 
@@ -589,39 +591,41 @@ shared_ptr<BoundStatement> Lowerer::RewriteDoWhileStatement(shared_ptr<BoundDoWh
 	auto result = Block(
 		s,
 		Label(s, bodyLabel),
-		node->Body,
+		std::move(node->Body),
 		Label(s, node->ContinueLabel),
-		GotoTrue(s, bodyLabel, node->Condition),
+		GotoTrue(s, bodyLabel, std::move(node->Condition)),
 		Label(s, node->BreakLabel)
 	);
 
 	return RewriteStatement(std::move(result));
 }
 
-shared_ptr<BoundStatement> Lowerer::RewriteForStatement(shared_ptr<BoundForStatement> node)
+unique_ptr<BoundStatement> Lowerer::RewriteForStatement(unique_ptr<BoundForStatement> node)
 {
 	auto& s = node->Syntax();
 
 	auto lowerBound = VariableDeclaration(s, node->Variable->UniqueCloneAs<VariableSymbol>(),
-										  node->LowerBound);
-	auto upperBound = ConstantDeclaration(s, "upperBound", node->UpperBound);
+										  std::move(node->LowerBound));
+	auto upperBound = ConstantDeclaration(s, "upperBound", std::move(node->UpperBound));
+	auto& lowerRef = *lowerBound;
+	auto& upperRef = *upperBound;
 	auto result = Block(
 		s,
-		lowerBound,
-		upperBound,
+		std::move(lowerBound),
+		std::move(upperBound),
 		While(s,
 			  LessOrEqual(
 				  s,
-				  Variable(s, lowerBound),
-				  Variable(s, upperBound)
+				  Variable(s, lowerRef),
+				  Variable(s, upperRef)
 			  ),
 			  Block(
 				  s,
-				  node->Body,
+				  std::move(node->Body),
 				  Label(s, node->ContinueLabel),
 				  Increment(
 					  s,
-					  Variable(s, lowerBound)
+					  Variable(s, lowerRef)
 				  )
 			  ),
 			  node->BreakLabel,
@@ -631,7 +635,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteForStatement(shared_ptr<BoundForState
 	return RewriteStatement(std::move(result));
 }
 
-shared_ptr<BoundStatement> Lowerer::RewriteConditionalGotoStatement(shared_ptr<BoundConditionalGotoStatement> node)
+unique_ptr<BoundStatement> Lowerer::RewriteConditionalGotoStatement(unique_ptr<BoundConditionalGotoStatement> node)
 {
 	auto& s = node->Syntax();
 
@@ -648,7 +652,7 @@ shared_ptr<BoundStatement> Lowerer::RewriteConditionalGotoStatement(shared_ptr<B
 	return BoundTreeRewriter::RewriteConditionalGotoStatement(std::move(node));
 }
 
-shared_ptr<BoundExpression> Lowerer::RewriteExpression(shared_ptr<BoundExpression> node)
+unique_ptr<BoundExpression> Lowerer::RewriteExpression(unique_ptr<BoundExpression> node)
 {
 	auto& s = node->Syntax();
 
@@ -663,21 +667,21 @@ shared_ptr<BoundExpression> Lowerer::RewriteExpression(shared_ptr<BoundExpressio
 
 namespace {
 
-[[nodiscard]] vector<shared_ptr<BoundExpression>> FlattenStrNodes(shared_ptr<BoundExpression> node)
+[[nodiscard]] vector<unique_ptr<BoundExpression>> FlattenStrNodes(unique_ptr<BoundExpression> node)
 {
-	auto result = vector<shared_ptr<BoundExpression>>();
+	auto result = vector<unique_ptr<BoundExpression>>{};
 	if (node->Kind() == BoundNodeKind::BinaryExpression)
 	{
-		auto b = static_cast<const BoundBinaryExpression*>(node.get());
-		if (b->Op.Kind == BoundBinaryOperatorKind::Addition
-			&& b->Left->Type() == TYPE_STRING
-			&& b->Right->Type() == TYPE_STRING)
+		auto& b = static_cast<BoundBinaryExpression&>(*node);
+		if (b.Op.Kind == BoundBinaryOperatorKind::Addition
+			&& b.Left->Type() == TYPE_STRING
+			&& b.Right->Type() == TYPE_STRING)
 		{
-			auto rest = FlattenStrNodes(b->Left);
+			auto rest = FlattenStrNodes(std::move(b.Left));
 			result.insert(result.end(), std::make_move_iterator(rest.begin()),
 						  std::make_move_iterator(rest.end()));
 
-			rest = FlattenStrNodes(b->Right);
+			rest = FlattenStrNodes(std::move(b.Right));
 			result.insert(result.end(), std::make_move_iterator(rest.begin()),
 						  std::make_move_iterator(rest.end()));
 		}
@@ -694,11 +698,11 @@ namespace {
 	return result;
 }
 
-[[nodiscard]] vector<shared_ptr<BoundExpression>> FoldStrConstants(const SyntaxNode& syntax,
-																   vector<shared_ptr<BoundExpression>> nodes)
+[[nodiscard]] vector<unique_ptr<BoundExpression>> FoldStrConstants(const SyntaxNode& syntax,
+																   vector<unique_ptr<BoundExpression>> nodes)
 {
-	auto result = vector<shared_ptr<BoundExpression>>();
-	auto builder = string();
+	auto result = vector<unique_ptr<BoundExpression>>{};
+	auto builder = string{};
 
 	for (auto& node : nodes)
 	{
@@ -725,8 +729,8 @@ namespace {
 	return result;
 }
 
-[[nodiscard]] shared_ptr<BoundExpression> ConstructStrConcatExpr(const SyntaxNode& syntax,
-																 vector<shared_ptr<BoundExpression>> nodes)
+[[nodiscard]] unique_ptr<BoundExpression> ConstructStrConcatExpr(const SyntaxNode& syntax,
+																 vector<unique_ptr<BoundExpression>> nodes)
 {
 	if (nodes.empty())
 	{
@@ -747,7 +751,7 @@ namespace {
 
 } //namespace
 
-shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBinaryExpression> node)
+unique_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(unique_ptr<BoundBinaryExpression> node)
 {
 	if (node->Op.Kind == BoundBinaryOperatorKind::Addition)
 	{
@@ -755,7 +759,9 @@ shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBin
 			&& node->Right->Type() == TYPE_STRING)
 		{
 			auto& s = node->Syntax();
-			return ConstructStrConcatExpr(s, FoldStrConstants(s, FlattenStrNodes(node)));
+			return ConstructStrConcatExpr(s,
+										  FoldStrConstants(s,
+														   FlattenStrNodes(std::move(node))));
 		}
 	}
 	return BoundTreeRewriter::RewriteBinaryExpression(std::move(node));
@@ -764,10 +770,10 @@ shared_ptr<BoundExpression> Lowerer::RewriteBinaryExpression(shared_ptr<BoundBin
 namespace {
 
 [[nodiscard]] unique_ptr<BoundBlockStatement> Flatten(const FunctionSymbol& func,
-													  shared_ptr<BoundStatement> statement)
+													  unique_ptr<BoundStatement> statement)
 {
-	auto result = vector<shared_ptr<BoundStatement>>();
-	auto stack = std::stack<shared_ptr<BoundStatement>>();
+	auto result = vector<unique_ptr<BoundStatement>>{};
+	auto stack = std::stack<unique_ptr<BoundStatement>>{};
 	auto& s = statement->Syntax();
 	stack.push(std::move(statement));
 
@@ -778,10 +784,10 @@ namespace {
 
 		if (current->Kind() == BoundNodeKind::BlockStatement)
 		{
-			auto p = static_cast<BoundBlockStatement*>(current.get());
-			auto& statements = p->Statements;
+			auto& p = static_cast<BoundBlockStatement&>(*current);
+			auto& statements = p.Statements;
 			for (auto it = statements.rbegin(); it != statements.rend(); ++it)
-				stack.push(*it);
+				stack.push(std::move(*it));
 		} else
 		{
 			result.push_back(std::move(current));
@@ -796,7 +802,7 @@ namespace {
 	if (func.Type == TYPE_VOID)
 	{
 		if (result.empty() || canFallThrough(*result.back()))
-			result.push_back(make_shared<BoundReturnStatement>(s, nullptr));
+			result.push_back(make_unique<BoundReturnStatement>(s, nullptr));
 	}
 	return make_unique<BoundBlockStatement>(s, std::move(result));
 }
@@ -805,19 +811,19 @@ namespace {
 {
 	assert(node && "Invalid unique_ptr<BoundBlockStatement>.");
 	auto cfg = ControlFlowGraph::Create(*node);
-	auto reachableStmts = std::unordered_set<const BoundStatement*>();
+	auto reachableStmts = std::unordered_set<const BoundStatement*>{};
 	for (const auto& block : cfg.Blocks)
 	{
 		for (const auto& p : block->Statements)
 			reachableStmts.emplace(p);
 	}
 
-	auto result = node->Statements;
+	auto result = std::move(node->Statements);
 	auto it = result.end();
 	while (it > result.begin())
 	{
 		--it;
-		if (reachableStmts.find(it->get()) == reachableStmts.end())
+		if (!reachableStmts.contains(it->get()))
 		{
 			it = result.erase(it);
 		}
@@ -830,7 +836,7 @@ namespace {
 } // namespace
 
 unique_ptr<BoundBlockStatement> Lower(const FunctionSymbol& func,
-									  shared_ptr<BoundStatement> statement)
+									  unique_ptr<BoundStatement> statement)
 {
 	auto lowerer = Lowerer();
 	auto result = lowerer.RewriteStatement(std::move(statement));

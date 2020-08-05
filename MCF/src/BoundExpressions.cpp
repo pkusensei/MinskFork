@@ -262,4 +262,111 @@ BoundConstant Fold(const BoundExpression& left, const BoundBinaryOperator& op,
 	}
 }
 
+bool BoundExpression::Equals(const BoundExpression& other)const noexcept
+{
+	if (std::addressof(Syntax()) == std::addressof(other.Syntax()))
+		return Kind() == other.Kind() && Type() == other.Type()
+			&& ConstantValue() == other.ConstantValue();
+	return false;
+}
+
+bool BoundUnaryExpression::Equals(const BoundExpression& other)const noexcept
+{
+	if (BoundExpression::Equals(other))
+	{
+		auto& u = static_cast<const BoundUnaryExpression&>(other);
+		return Op == u.Op && *Operand == *u.Operand;
+	}
+	return false;
+}
+
+bool BoundBinaryExpression::Equals(const BoundExpression& other)const noexcept
+{
+	if (BoundExpression::Equals(other))
+	{
+		auto& b = static_cast<const BoundBinaryExpression&>(other);
+		return Op == b.Op && *Left == *b.Left && *Right == *b.Right;
+	}
+	return false;
+}
+
+bool BoundAssignmentExpression::Equals(const BoundExpression& other)const noexcept
+{
+	if (BoundExpression::Equals(other))
+	{
+		auto& a = static_cast<const BoundAssignmentExpression&>(other);
+		return *Variable == *a.Variable && *Expression == *a.Expression;
+	}
+	return false;
+}
+
+bool BoundCompoundAssignmentExpression::Equals(const BoundExpression& other)const noexcept
+{
+	if (BoundExpression::Equals(other))
+	{
+		auto& c = static_cast<const BoundCompoundAssignmentExpression&>(other);
+		return Op == c.Op && *Variable == *c.Variable && *Expression == *c.Expression;
+	}
+	return false;
+}
+
+bool BoundVariableExpression::Equals(const BoundExpression& other)const noexcept
+{
+	if (BoundExpression::Equals(other))
+	{
+		auto& v = static_cast<const BoundVariableExpression&>(other);
+		return *Variable == *v.Variable;
+	}
+	return false;
+}
+
+unique_ptr<BoundExpression> BoundCallExpression::Clone() const
+{
+	auto args = vector<unique_ptr<BoundExpression>>{};
+	for (const auto& arg : Arguments)
+		args.push_back(arg->Clone());
+	return make_unique<BoundCallExpression>(Syntax(),
+											Function->UniqueCloneAs<FunctionSymbol>(),
+											std::move(args));
+}
+
+bool BoundCallExpression::Equals(const BoundExpression& other)const noexcept
+{
+	if (BoundExpression::Equals(other))
+	{
+		auto& f = static_cast<const BoundCallExpression&>(other);
+		if (*Function == *f.Function && Arguments.size() == f.Arguments.size())
+		{
+			return std::equal(Arguments.cbegin(), Arguments.cend(),
+							  f.Arguments.cbegin(),
+							  [](const auto& it1, const auto& it2)
+							  {
+								  return *it1 == *it2;
+							  });
+		}
+	}
+	return false;
+}
+
+bool BoundConversionExpression::Equals(const BoundExpression& other)const noexcept
+{
+	if (BoundExpression::Equals(other))
+	{
+		auto& c = static_cast<const BoundConversionExpression&>(other);
+		return *Expression == *c.Expression;
+	}
+	return false;
+}
+
+bool BoundPostfixExpression::Equals(const BoundExpression& other)const noexcept
+{
+	if (BoundExpression::Equals(other))
+	{
+		auto& p = static_cast<const BoundPostfixExpression&>(other);
+		return OperatorKind == p.OperatorKind && *Variable == *p.Variable
+			&& *Expression == *p.Expression;
+	}
+	return false;
+}
+
 } //MCF
